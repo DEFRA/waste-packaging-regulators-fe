@@ -12,7 +12,7 @@ permissions:
 
 env:
   AWS_REGION: eu-west-2
-  AWS_ACCOUNT_ID: "094954420758"
+  AWS_ACCOUNT_ID: '094954420758'
 
 jobs:
   build:
@@ -21,19 +21,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-#      Uncomment this section if you are going to also run sonarqube as it
-#      requires the output from the test coverage.
-#      - name: Test code and Create Test Coverage Reports
-#        uses: actions/setup-node@v4
-#        with:
-#          node-version-file: .nvmrc
-#          cache: npm
-#      - run: |
-#          npm ci
-#          npm run build:frontend
-#          npm test
+      - name: Test code and Create Test Coverage Reports
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: |
+          npm ci
+          npm run build:frontend
+          npm test
 
       - name: Build and Publish
         uses: DEFRA/cdp-build-action/build@main
