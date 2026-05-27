@@ -60,7 +60,7 @@ describe('context and cache', () => {
               href: '/about'
             }
           ],
-          serviceName: 'epr-regulator-frontend',
+          serviceName: 'waste-packaging-regulators-fe',
           serviceUrl: '/',
           features: {
             certificateOfCompliance: false
@@ -152,7 +152,7 @@ describe('context and cache', () => {
               href: '/about'
             }
           ],
-          serviceName: 'epr-regulator-frontend',
+          serviceName: 'waste-packaging-regulators-fe',
           serviceUrl: '/',
           features: {
             certificateOfCompliance: false

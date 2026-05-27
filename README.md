@@ -1,8 +1,8 @@
-# epr-regulator-frontend
+# waste-packaging-regulators-fe
 
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-regulator-frontend&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-regulator-frontend)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-regulator-frontend&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-regulator-frontend)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-regulator-frontend&metric=coverage)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-regulator-frontend)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_waste-packaging-regulators-fe&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=DEFRA_waste-packaging-regulators-fe)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_waste-packaging-regulators-fe&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=DEFRA_waste-packaging-regulators-fe)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_waste-packaging-regulators-fe&metric=coverage)](https://sonarcloud.io/summary/new_code?id=DEFRA_waste-packaging-regulators-fe)
 
 Core delivery platform Node.js Frontend Template.
 
@@ -39,7 +39,7 @@ easier to use the Node Version Manager [nvm](https://github.com/creationix/nvm)
 To use the correct version of Node.js for this application, via nvm:
 
 ```bash
-cd epr-regulator-frontend
+cd waste-packaging-regulators-fe
 nvm use
 ```
 
@@ -187,18 +187,18 @@ git config --global core.autocrlf false
 
 > [!TIP]
 > For Apple Silicon users, you may need to add `--platform linux/amd64` to the `docker run` command to ensure
-> compatibility fEx: `docker build --platform=linux/arm64 --no-cache --tag epr-regulator-frontend`
+> compatibility fEx: `docker build --platform=linux/arm64 --no-cache --tag waste-packaging-regulators-fe`
 
 Build:
 
 ```bash
-docker build --target development --no-cache --tag epr-regulator-frontend:development .
+docker build --target development --no-cache --tag waste-packaging-regulators-fe:development .
 ```
 
 Run:
 
 ```bash
-docker run -p 7154:7154 epr-regulator-frontend:development
+docker run -p 7154:7154 waste-packaging-regulators-fe:development
 ```
 
 ### Production image
@@ -206,13 +206,13 @@ docker run -p 7154:7154 epr-regulator-frontend:development
 Build:
 
 ```bash
-docker build --no-cache --tag epr-regulator-frontend .
+docker build --no-cache --tag waste-packaging-regulators-fe .
 ```
 
 Run:
 
 ```bash
-docker run -p 7154:7154 epr-regulator-frontend
+docker run -p 7154:7154 waste-packaging-regulators-fe
 ```
 
 ### Docker Compose
