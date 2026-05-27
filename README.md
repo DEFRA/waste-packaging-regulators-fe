@@ -1,8 +1,8 @@
-# waste-packaging-regulators-fe
+# epr-regulator-frontend
 
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_waste-packaging-regulators-fe&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=DEFRA_waste-packaging-regulators-fe)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_waste-packaging-regulators-fe&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=DEFRA_waste-packaging-regulators-fe)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_waste-packaging-regulators-fe&metric=coverage)](https://sonarcloud.io/summary/new_code?id=DEFRA_waste-packaging-regulators-fe)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-regulator-frontend&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-regulator-frontend)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-regulator-frontend&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-regulator-frontend)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-regulator-frontend&metric=coverage)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-regulator-frontend)
 
 Core delivery platform Node.js Frontend Template.
 
@@ -12,7 +12,9 @@ Core delivery platform Node.js Frontend Template.
 - [Redis](#redis)
 - [Local Development](#local-development)
   - [Setup](#setup)
+    - [Nix dev shell (optional)](#nix-dev-shell-optional)
   - [Development](#development)
+  - [HTTPS for local development](#https-for-local-development)
   - [Production](#production)
   - [Npm scripts](#npm-scripts)
   - [Update dependencies](#update-dependencies)
@@ -31,14 +33,17 @@ Core delivery platform Node.js Frontend Template.
 
 ### Node.js
 
-Please install Node Version Manager [nvm](https://github.com/creationix/nvm)
+Please install [Node.js](http://nodejs.org/) `>= v22` and [npm](https://nodejs.org/) `>= v9`. You will find it
+easier to use the Node Version Manager [nvm](https://github.com/creationix/nvm)
 
 To use the correct version of Node.js for this application, via nvm:
 
 ```bash
-cd waste-packaging-regulators-fe
+cd epr-regulator-frontend
 nvm use
 ```
+
+You can alternatively use [mise-en-place](https://mise.jdx.dev/) with [`idiomatic_version_file_enable_tools`](https://mise.jdx.dev/configuration.html#idiomatic-version-files) enabled which will respect the [`.nvmrc`](.nvmrc).
 
 ## Server-side Caching
 
@@ -91,13 +96,13 @@ Install application dependencies:
 npm install
 ```
 
-### Git hooks
+#### Nix dev shell (optional)
 
-Install git hooks (optional)
+[`flake.nix`](./flake.nix) provides a dev shell with tools used by this repo.
 
-```bash
-npm run git:hooks
-```
+Run `nix develop` or use [direnv](https://direnv.net/) to activate the development tools for this repo
+
+We have not added nodejs to the nix shell, preferring nvm/mise due to more precise version pinning in order to to avoid unexpected behaviour differences across minor node versions.
 
 ### Development
 
@@ -106,6 +111,37 @@ To run the application in `development` mode run:
 ```bash
 npm run dev
 ```
+
+### HTTPS for local development
+
+Azure AD B2C will only redirect back to an HTTPS URL, so the app needs to serve
+HTTPS locally for end-to-end auth flows to work.
+
+The server enables TLS automatically when **both** are true:
+
+1. `NODE_ENV=development` (set by `npm run dev` and `nodemon.json`)
+2. `certs/localhost-key.pem` and `certs/localhost-cert.pem` exist at the repo root
+
+In production the app continues to serve plain HTTP behind an edge terminator —
+this setup is dev-only.
+
+To generate a trusted local cert pair, install [mkcert] and run:
+
+```bash
+npm run setup:certs
+```
+
+Then start the app as normal:
+
+```bash
+npm run dev
+```
+
+The startup log will show `https://localhost:7154` once TLS is active. You will
+also want to set `AUTH_COOKIE_SECURE=true` in `run-dev.sh` so the session cookie
+is marked secure.
+
+[mkcert]: https://github.com/FiloSottile/mkcert
 
 ### Production
 
@@ -151,18 +187,18 @@ git config --global core.autocrlf false
 
 > [!TIP]
 > For Apple Silicon users, you may need to add `--platform linux/amd64` to the `docker run` command to ensure
-> compatibility fEx: `docker build --platform=linux/arm64 --no-cache --tag waste-packaging-regulators-fe`
+> compatibility fEx: `docker build --platform=linux/arm64 --no-cache --tag epr-regulator-frontend`
 
 Build:
 
 ```bash
-docker build --target development --no-cache --tag waste-packaging-regulators-fe:development .
+docker build --target development --no-cache --tag epr-regulator-frontend:development .
 ```
 
 Run:
 
 ```bash
-docker run -p 3000:3000 waste-packaging-regulators-fe:development
+docker run -p 7154:7154 epr-regulator-frontend:development
 ```
 
 ### Production image
@@ -170,20 +206,20 @@ docker run -p 3000:3000 waste-packaging-regulators-fe:development
 Build:
 
 ```bash
-docker build --no-cache --tag waste-packaging-regulators-fe .
+docker build --no-cache --tag epr-regulator-frontend .
 ```
 
 Run:
 
 ```bash
-docker run -p 3000:3000 waste-packaging-regulators-fe
+docker run -p 7154:7154 epr-regulator-frontend
 ```
 
 ### Docker Compose
 
 A local environment with:
 
-- Floci (replacing Localstack) for AWS services (S3, SQS)
+- Localstack for AWS services (S3, SQS)
 - Redis
 - MongoDB
 - This service.

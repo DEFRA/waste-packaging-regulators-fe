@@ -17,7 +17,7 @@ describe('#startServer', () => {
 
     createServerSpy = vi.spyOn(createServerImport, 'createServer')
     hapiServerSpy = vi.spyOn(hapi, 'server')
-  })
+  }, 120_000)
 
   afterAll(() => {
     vi.unstubAllEnvs()
@@ -41,7 +41,10 @@ describe('#startServer', () => {
         url: '/health'
       })
 
-      expect(result).toEqual({ message: 'success' })
+      expect(result).toEqual({
+        message: 'success',
+        features: { certificateOfCompliance: false }
+      })
       expect(statusCode).toBe(statusCodes.ok)
     })
   })

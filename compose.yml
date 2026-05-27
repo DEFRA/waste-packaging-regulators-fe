@@ -1,15 +1,26 @@
 version: '3.4'
 services:
-  floci:
-    image: hectorvent/floci:latest-aws
+
+  localstack:
+    image: localstack/localstack:3.0.2
     ports:
-      - '4566:4566'
+      - '4566:4566' # LocalStack Gateway
+      - '4510-4559:4510-4559' # external services port range
     env_file:
       - 'compose/aws.env'
     environment:
-      FLOCI_DEFAULT_REGION: eu-west-2
+      DEBUG: ${DEBUG:-1}
+      LS_LOG: WARN # Localstack DEBUG Level
+      SERVICES: s3,sqs,sns,firehose
+      LOCALSTACK_HOST: 127.0.0.1
     volumes:
-      - ./compose/floci/start.d:/etc/floci/init/start.d:ro
+      - '${TMPDIR:-/tmp}/localstack:/var/lib/localstack'
+      - ./compose/start-localstack.sh:/etc/localstack/init/ready.d/start-localstack.sh
+    healthcheck:
+      test: ['CMD', 'curl', 'localhost:4566']
+      interval: 5s
+      start_period: 5s
+      retries: 3
     networks:
       - cdp-tenant
 
@@ -17,49 +28,42 @@ services:
     image: redis:7.2.3-alpine3.18
     ports:
       - '6379:6379'
+    restart: always
     networks:
       - cdp-tenant
 
   mongodb:
-    image: mongo:7.0.28
+    image: mongo:6.0.13
     networks:
       - cdp-tenant
     ports:
       - '27017:27017'
     volumes:
-      - ./compose/mongo:/docker-entrypoint-initdb.d:ro
       - mongodb-data:/data
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.hello().ok"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
+    restart: always
 
-  ################################################################################
+################################################################################
 
   your-frontend:
     build: ./
     ports:
-      - '3000:3000'
+      - '7154:7154'
     links:
-      - 'floci:floci'
+      - 'localstack:localstack'
       - 'redis:redis'
     depends_on:
-      floci:
+      localstack:
         condition: service_healthy
       redis:
         condition: service_started
     env_file:
       - 'compose/aws.env'
     environment:
-      PORT: 3000
-      NODE_ENV: production
+      PORT: 7154
+      NODE_ENV: development
       REDIS_HOST: redis
-      LOG_FORMAT: pino-pretty
-      SESSION_COOKIE_SECURE: false
+      LOCALSTACK_ENDPOINT: http://localstack:4566
       USE_SINGLE_INSTANCE_CACHE: true
-      REDIS_TLS: false
     networks:
       - cdp-tenant
 
@@ -68,19 +72,19 @@ services:
   #   ports:
   #     - '3555:3555'
   #   links:
-  #     - 'foci:floci'
+  #     - 'localstack:localstack'
   #     - 'mongodb:mongodb'
   #   depends_on:
-  #     floci:
+  #     localstack:
   #       condition: service_healthy
   #     mongodb:
   #       condition: service_started
   #   env_file:
   #     - 'compose/aws.env'
   #   environment:
-  #     PORT: 3001
+  #     PORT: 3555
   #     NODE_ENV: development
-  #     MONGO_URI: mongodb://mongodb:27017/
+  #     LOCALSTACK_ENDPOINT: http://localstack:4566
   #   networks:
   #     - cdp-tenant
 

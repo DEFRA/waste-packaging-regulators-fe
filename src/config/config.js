@@ -1,10 +1,15 @@
 import convict from 'convict'
+import dotenv from 'dotenv'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import convictFormatWithValidator from 'convict-format-with-validator'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
+dotenv.config({
+  path: path.join(dirname, '../../.env'),
+  quiet: true
+})
 
 const fourHoursMs = 14400000
 const oneWeekMs = 604800000
@@ -25,14 +30,14 @@ export const config = convict({
   },
   host: {
     doc: 'The IP address to bind',
-    format: 'ipaddress',
-    default: '0.0.0.0',
+    format: String,
+    default: 'localhost',
     env: 'HOST'
   },
   port: {
     doc: 'The port to bind.',
     format: 'port',
-    default: 3000,
+    default: 7154,
     env: 'PORT'
   },
   staticCacheTimeout: {
@@ -44,7 +49,7 @@ export const config = convict({
   serviceName: {
     doc: 'Applications Service Name',
     format: String,
-    default: 'waste-packaging-regulators-fe'
+    default: 'epr-regulator-frontend'
   },
   root: {
     doc: 'Project root',
@@ -96,8 +101,7 @@ export const config = convict({
       format: Array,
       default: isProduction
         ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers']
-        : [],
-      env: 'LOG_REDACT'
+        : []
     }
   },
   httpProxy: {
@@ -179,7 +183,7 @@ export const config = convict({
     keyPrefix: {
       doc: 'Redis cache key prefix name used to isolate the cached results across multiple clients',
       format: String,
-      default: 'waste-packaging-regulators-fe:',
+      default: 'epr-regulator-frontend:',
       env: 'REDIS_KEY_PREFIX'
     },
     useSingleInstanceCache: {
@@ -213,6 +217,111 @@ export const config = convict({
       format: String,
       default: 'x-cdp-request-id',
       env: 'TRACING_HEADER'
+    }
+  },
+  auth: {
+    azureAdB2c: {
+      clientId: {
+        doc: 'Azure AD B2C Client ID',
+        format: String,
+        default: '',
+        env: 'AZURE_AD_B2C_CLIENT_ID'
+      },
+      clientSecret: {
+        doc: 'Azure AD B2C Client Secret',
+        format: String,
+        default: '',
+        env: 'AZURE_AD_B2C_CLIENT_SECRET',
+        sensitive: true
+      },
+      tenantName: {
+        doc: 'Azure AD B2C Tenant Name',
+        format: String,
+        default: '',
+        env: 'AZURE_AD_B2C_TENANT_NAME'
+      },
+      instance: {
+        doc: 'Azure AD B2C Instance (e.g., https://tenant.b2clogin.com)',
+        format: String,
+        default: '',
+        env: 'AZURE_AD_B2C_INSTANCE'
+      },
+      domain: {
+        doc: 'Azure AD B2C Domain (e.g., tenant.onmicrosoft.com)',
+        format: String,
+        default: '',
+        env: 'AZURE_AD_B2C_DOMAIN'
+      },
+      userFlow: {
+        doc: 'Azure AD B2C User Flow (e.g., B2C_1_signupsignin)',
+        format: String,
+        default: '',
+        env: 'AZURE_AD_B2C_USER_FLOW'
+      },
+      tenantId: {
+        doc: 'Azure AD B2C Tenant ID (GUID)',
+        format: String,
+        default: '',
+        env: 'AZURE_AD_B2C_TENANT_ID'
+      },
+      redirectUri: {
+        doc: 'OAuth redirect path or full URL (e.g. /login/b2c/callback or https://localhost:7154/login/b2c/callback). Optional.',
+        format: String,
+        default: '',
+        env: 'AZURE_AD_B2C_REDIRECT_URI'
+      },
+      postLogoutRedirectPath: {
+        doc: 'Path or absolute URL for B2C post_logout_redirect_uri (must be registered on the app registration).',
+        format: String,
+        default: '/signed-out',
+        env: 'AZURE_AD_B2C_POST_LOGOUT_REDIRECT_PATH'
+      },
+      cookiePassword: {
+        doc: 'Auth cookie password',
+        format: String,
+        default: 'secret-password-must-be-at-least-32-characters-long',
+        env: 'AUTH_COOKIE_PASSWORD',
+        sensitive: true
+      },
+      isSecure: {
+        doc: 'Is auth cookie secure',
+        format: Boolean,
+        default: isProduction,
+        env: 'AUTH_COOKIE_SECURE'
+      }
+    }
+  },
+  features: {
+    certificateOfCompliance: {
+      doc: 'Enable the Certificate of Compliance feature',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_CERTIFICATE_OF_COMPLIANCE'
+    }
+  },
+  services: {
+    gatewayApi: {
+      baseUrl: {
+        doc: 'Regulator Gateway base URL for account endpoints (e.g. http://localhost:8085)',
+        format: String,
+        default: 'http://localhost:8085',
+        env: 'GATEWAY_API_BASE_URL'
+      },
+      basicAuth: {
+        username: {
+          doc: 'Optional HTTP Basic Auth username for gateway API',
+          format: String,
+          default: '',
+          env: 'GATEWAY_API_BASIC_AUTH_USERNAME'
+        },
+        password: {
+          doc: 'Optional HTTP Basic Auth password for gateway API',
+          format: String,
+          default: '',
+          env: 'GATEWAY_API_BASIC_AUTH_PASSWORD',
+          sensitive: true
+        }
+      }
     }
   }
 })
