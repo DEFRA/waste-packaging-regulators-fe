@@ -1,0 +1,5 @@
+{% if params.value %}
+  <strong class="govuk-tag govuk-tag--green govuk-!-font-size-16">{{ params.trueText }}</strong>
+{% else %}
+  <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">{{ params.falseText }}</strong>
+{% endif %}
