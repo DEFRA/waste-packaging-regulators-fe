@@ -213,7 +213,9 @@ describe('#certificatesOfComplianceController', () => {
     })
 
     test('Should render Compliant tag for items where regulation43Met is true', async () => {
-      const trueItem = mockAcceptedItems.find((item) => item.regulation43Met === true)
+      const trueItem = mockAcceptedItems.find(
+        (item) => item.regulation43Met === true
+      )
       const { result } = await server.inject({
         method: 'GET',
         url: '/certificates-of-compliance?type=compliance-schemes&tab=accepted'
@@ -224,13 +226,17 @@ describe('#certificatesOfComplianceController', () => {
     })
 
     test('Should render Not compliant tag for items where regulation43Met is false', async () => {
-      const falseItem = mockAcceptedItems.find((item) => item.regulation43Met === false)
+      const falseItem = mockAcceptedItems.find(
+        (item) => item.regulation43Met === false
+      )
       const { result } = await server.inject({
         method: 'GET',
         url: '/certificates-of-compliance?type=compliance-schemes&tab=accepted'
       })
 
-      expect(result).toEqual(expect.stringContaining(falseItem.organisationName))
+      expect(result).toEqual(
+        expect.stringContaining(falseItem.organisationName)
+      )
       expect(result).toEqual(expect.stringContaining('Not compliant'))
     })
 

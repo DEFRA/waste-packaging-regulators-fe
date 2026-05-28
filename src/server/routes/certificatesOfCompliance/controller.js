@@ -2,8 +2,11 @@ import { getCertificatesOfComplianceViewModel } from './certificates-of-complian
 
 export const certificatesOfComplianceController = {
   async handler(request, h) {
-    const { type = 'compliance-schemes', tab = 'pending', page = '1' } =
-      request.query
+    const {
+      type = 'compliance-schemes',
+      tab = 'pending',
+      page = '1'
+    } = request.query
 
     const viewModel = await getCertificatesOfComplianceViewModel(
       type,
