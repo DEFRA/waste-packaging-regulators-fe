@@ -119,7 +119,7 @@ describe('Pagination component', () => {
     expect(prevHref).toContain(
       '/certificates-of-compliance?type=compliance-schemes'
     )
-    expect(prevHref).toContain('&amp;page=1')
-    expect(nextHref).toContain('&amp;page=3')
+    expect(prevHref).toContain('&page=1')
+    expect(nextHref).toContain('&page=3')
   })
 })
