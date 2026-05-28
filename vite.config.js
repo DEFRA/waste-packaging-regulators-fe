@@ -21,6 +21,7 @@ export default defineConfig({
         api: 'modern-compiler',
         importers: [new NodePackageImporter()],
         loadPaths: [
+          '.',
           'node_modules',
           'src/client/stylesheets',
           'src/server',
