@@ -1,11 +1,8 @@
 import { config } from '#/config/config.js'
-import { createLogger } from '#/server/common/helpers/logging/logger.js'
-
-const logger = createLogger()
+import { createWasteObligationsApiService } from '#/services/waste-obligations-api.service.js'
 
 // --- Mock data ---
-// This will be replaced with calls to APIs.
-// The model shape is correct, but it will be a combination of api calls.
+// Temporary — will be replaced by real API responses once endpoints are confirmed.
 // Exported so tests can assert against the same values without hardcoding them twice.
 
 export const mockSummary = {
@@ -67,38 +64,101 @@ const mockListByTab = {
   'not-submitted': mockNotSubmittedItems
 }
 
-// --- API calls ---
+// --- Response mapping ---
 
-async function getComplianceSummary(organisationType) {
-  const url = `${config.get('apiBaseUrl')}/compliance/summary?type=${organisationType}`
-
-  logger.debug({ url }, 'Fetching compliance summary')
-
-  // TODO: uncomment when the backend API is available
-  // const response = await fetch(url)
-  // if (!response.ok) {
-  //   throw new Error(`Compliance summary request failed with status ${response.status}`)
-  // }
-  // return response.json()
-
-  return mockSummary
+// Maps our organisationType URL param to the API's registrationType value
+const registrationTypeByOrganisationType = {
+  'compliance-schemes': 'ComplianceScheme',
+  'direct-producers': 'DirectProducer'
 }
 
-async function getComplianceList(organisationType, tab, page) {
-  const url = `${config.get('apiBaseUrl')}/compliance/list?type=${organisationType}&tab=${tab}&page=${page}`
+// Maps our tab name to the API's declaration status value
+const statusByTab = {
+  pending: 'Submitted',
+  accepted: 'Accepted'
+  // 'not-submitted': TODO — confirm with backend whether this is a separate endpoint or a different status
+}
 
-  logger.debug({ url }, 'Fetching compliance list')
+const PAGE_SIZE = 20
 
-  // TODO: uncomment when the backend API is available
-  // const response = await fetch(url)
-  // if (!response.ok) {
-  //   throw new Error(`Compliance list request failed with status ${response.status}`)
-  // }
-  // return response.json()
+function mapDeclarationToItem(declaration) {
+  const {
+    organisation,
+    obligationStatus,
+    isRegulation43Compliant,
+    created,
+    percentageMet
+  } = declaration
+  return {
+    id: organisation.referenceNumber ?? declaration.id,
+    organisationName:
+      organisation.name ??
+      organisation.complianceSchemeName ??
+      organisation.schemeOperatorName ??
+      'Unknown organisation',
+    recyclingObligationsMet: obligationStatus === 'Met',
+    regulation43Met: isRegulation43Compliant,
+    percentageMet: percentageMet ?? null,
+    dateSubmitted: created
+  }
+}
+
+// --- API calls ---
+
+async function getComplianceSummary(api, organisationType, traceId) {
+  if (config.get('useMockApi')) {
+    return mockSummary
+  }
+
+  const registrationType = registrationTypeByOrganisationType[organisationType]
+
+  const [pendingResult, acceptedResult] = await Promise.all([
+    api.listComplianceDeclarations(
+      { status: 'Submitted', registrationType, pageSize: 1 },
+      traceId
+    ),
+    api.listComplianceDeclarations(
+      { status: 'Accepted', registrationType, pageSize: 1 },
+      traceId
+    )
+  ])
 
   return {
-    items: mockListByTab[tab] ?? [],
-    totalPages: 6,
+    // TODO: confirm where complianceYear comes from
+    complianceYear: mockSummary.complianceYear,
+    totalPending: pendingResult.total,
+    totalAccepted: acceptedResult.total,
+    // TODO: not-submitted count — confirm endpoint/status with backend team
+    totalNotSubmitted: 0
+  }
+}
+
+async function getComplianceList(api, organisationType, tab, page, traceId) {
+  if (config.get('useMockApi')) {
+    return {
+      items: mockListByTab[tab] ?? [],
+      totalPages: 6,
+      currentPage: page
+    }
+  }
+
+  const status = statusByTab[tab]
+
+  if (!status) {
+    // TODO: not-submitted tab — confirm endpoint/status value with backend team
+    return { items: [], totalPages: 1, currentPage: page }
+  }
+
+  const registrationType = registrationTypeByOrganisationType[organisationType]
+
+  const data = await api.listComplianceDeclarations(
+    { status, registrationType, page, pageSize: PAGE_SIZE },
+    traceId
+  )
+
+  return {
+    items: data.complianceDeclarations.map(mapDeclarationToItem),
+    totalPages: Math.ceil(data.total / PAGE_SIZE) || 1,
     currentPage: page
   }
 }
@@ -112,18 +172,21 @@ async function getComplianceList(organisationType, tab, page) {
  * @param {string} organisationType - 'compliance-schemes' or 'direct-producers'
  * @param {string} tab - 'pending' | 'accepted' | 'not-submitted'
  * @param {number} currentPage - 1-based page number
+ * @param {string} [traceId] - request trace ID for upstream correlation
  * @returns {Promise<object>}
  */
 export async function getCertificatesOfComplianceViewModel(
   organisationType,
   tab,
-  currentPage
+  currentPage,
+  traceId
 ) {
+  const api = createWasteObligationsApiService()
   const baseUrl = `/certificates-of-compliance?type=${organisationType}&tab=${tab}`
 
   const [summary, list] = await Promise.all([
-    getComplianceSummary(organisationType),
-    getComplianceList(organisationType, tab, currentPage)
+    getComplianceSummary(api, organisationType, traceId),
+    getComplianceList(api, organisationType, tab, currentPage, traceId)
   ])
 
   return {
