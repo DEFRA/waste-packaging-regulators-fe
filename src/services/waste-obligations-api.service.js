@@ -14,13 +14,21 @@ export class WasteObligationsApiService extends BaseApiService {
     traceId
   ) {
     const params = new URLSearchParams()
-    if (status != null) params.set('status', status)
-    if (registrationType != null)
+    if (status != null) {
+      params.set('status', status)
+    }
+    if (registrationType != null) {
       params.set('registrationType', registrationType)
-    if (obligationYear != null)
+    }
+    if (obligationYear != null) {
       params.set('obligationYear', String(obligationYear))
-    if (page != null) params.set('page', String(page))
-    if (pageSize != null) params.set('pageSize', String(pageSize))
+    }
+    if (page != null) {
+      params.set('page', String(page))
+    }
+    if (pageSize != null) {
+      params.set('pageSize', String(pageSize))
+    }
 
     const qs = params.toString()
     return this.getJson(
