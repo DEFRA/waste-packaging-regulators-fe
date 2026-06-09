@@ -1,17 +1,21 @@
+import { config } from '#/config/config.js'
 import { getCertificatesOfComplianceViewModel } from './certificates-of-compliance.service.js'
 
 export const certificatesOfComplianceController = {
   async handler(request, h) {
     const {
-      type = 'compliance-schemes',
+      type = 'direct-producers',
       tab = 'pending',
       page = '1'
     } = request.query
 
+    const traceId = request.headers[config.get('tracing.header')]
+
     const viewModel = await getCertificatesOfComplianceViewModel(
       type,
       tab,
-      parseInt(page, 10)
+      parseInt(page, 10),
+      traceId
     )
 
     return h.view('certificatesOfCompliance/index', viewModel)

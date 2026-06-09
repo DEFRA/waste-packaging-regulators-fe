@@ -62,6 +62,12 @@ export const config = convict({
     format: Boolean,
     default: isProduction
   },
+  useMockApi: {
+    doc: 'Use mock API responses instead of calling real backend services. Defaults to true outside of production.',
+    format: Boolean,
+    default: !isProduction,
+    env: 'MOCK_API'
+  },
   isDevelopment: {
     doc: 'If this application running in the development environment',
     format: Boolean,
@@ -213,6 +219,76 @@ export const config = convict({
       format: String,
       default: 'x-cdp-request-id',
       env: 'TRACING_HEADER'
+    }
+  },
+  wasteOrganisationsApi: {
+    baseUrl: {
+      doc: 'Waste organisations API base URL',
+      format: String,
+      default: 'http://localhost:9090',
+      env: 'WASTE_ORGANISATIONS_API_BASE_URL'
+    },
+    authMode: {
+      doc: 'Authentication mode for waste organisations API',
+      format: ['basic', 'bearer', 'none'],
+      default: 'basic',
+      env: 'WASTE_ORGANISATIONS_API_AUTH_MODE'
+    },
+    clientId: {
+      doc: 'Client ID for waste APIs',
+      format: String,
+      default: 'Developer',
+      env: 'WASTE_ORGANISATIONS_API_CLIENT_ID'
+    },
+    clientSecret: {
+      doc: 'Client secret for waste APIs',
+      format: String,
+      default: 'developer-pwd',
+      env: 'WASTE_ORGANISATIONS_API_CLIENT_SECRET',
+      sensitive: true
+    },
+    xApiKey: {
+      doc: 'Ephemeral API key for local',
+      format: String,
+      nullable: true,
+      default: null,
+      env: 'WASTE_ORGANISATIONS_X_API_KEY',
+      sensitive: true
+    }
+  },
+  wasteObligationsApi: {
+    baseUrl: {
+      doc: 'Waste obligations API base URL',
+      format: String,
+      default: 'http://localhost:8080',
+      env: 'WASTE_OBLIGATIONS_API_BASE_URL'
+    },
+    authMode: {
+      doc: 'Authentication mode for waste obligations API',
+      format: ['basic', 'bearer', 'none'],
+      default: 'basic',
+      env: 'WASTE_OBLIGATIONS_API_AUTH_MODE'
+    },
+    clientId: {
+      doc: 'Client ID for waste obligations API',
+      format: String,
+      default: 'Developer',
+      env: 'WASTE_OBLIGATIONS_API_CLIENT_ID'
+    },
+    clientSecret: {
+      doc: 'Client secret for waste obligations API',
+      format: String,
+      default: 'developer-pwd',
+      env: 'WASTE_OBLIGATIONS_API_CLIENT_SECRET',
+      sensitive: true
+    },
+    xApiKey: {
+      doc: 'Ephemeral API key for local',
+      format: String,
+      nullable: true,
+      default: null,
+      env: 'WASTE_OBLIGATIONS_X_API_KEY',
+      sensitive: true
     }
   },
   apiBaseUrl: {

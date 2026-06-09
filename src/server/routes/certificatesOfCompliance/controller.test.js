@@ -51,7 +51,7 @@ describe('#certificatesOfComplianceController', () => {
   })
 
   describe('Organisation type navigation', () => {
-    test('Should default to compliance-schemes as the active nav item', async () => {
+    test('Should default to direct-producers as the active nav item', async () => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/certificates-of-compliance'
@@ -59,7 +59,7 @@ describe('#certificatesOfComplianceController', () => {
 
       expect(result).toEqual(
         expect.stringContaining(
-          '<strong class="govuk-service-navigation__active-fallback">Compliance schemes</strong>'
+          '<strong class="govuk-service-navigation__active-fallback">Direct producers</strong>'
         )
       )
     })
