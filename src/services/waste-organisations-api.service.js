@@ -9,43 +9,47 @@ export class WasteOrganisationsApiService extends BaseApiService {
     })
   }
 
-  async listComplianceDeclarations(
-    { status, registrationType, obligationYear, page, pageSize } = {},
+  async listComplianceOrganisations(
+    { registrationType, registrationYears } = {},
     traceId
   ) {
     const params = new URLSearchParams()
-    if (status != null) {
-      params.set('status', status)
-    }
+
+    params.set('statuses', 'REGISTERED')
+
     if (registrationType != null) {
-      params.set('registrationType', registrationType)
+      switch (registrationType) {
+        case 'ComplianceScheme':
+          params.set('registrations', 'COMPLIANCE_SCHEME')
+          break
+        case 'DirectProducer':
+          params.set('registrations', 'SMALL_PRODUCER,LARGE_PRODUCER')
+          break
+      }
     }
-    if (obligationYear != null) {
-      params.set('obligationYear', String(obligationYear))
-    }
-    if (page != null) {
-      params.set('page', String(page))
-    }
-    if (pageSize != null) {
-      params.set('pageSize', String(pageSize))
+    if (registrationYears != null) {
+      params.set('registrationYears', String(registrationYears))
     }
 
     const qs = params.toString()
-    // TODO: confirm endpoint path with backend team
     return this.getJson(
-      `/compliance-declarations${qs ? `?${qs}` : ''}`,
-      this.getTracingHeader(traceId)
+      `/organisations${qs ? `?${qs}` : ''}`,
+      this.getTracingHeader(traceId),
+      `organisations-${registrationType}`
     )
   }
 }
 
 export function createWasteOrganisationsApiService(options = {}) {
+  const xApiKey = config.get('wasteOrganisationsApi.xApiKey')
+
   return new WasteOrganisationsApiService({
     baseUrl: config.get('wasteOrganisationsApi.baseUrl'),
     authMode: config.get('wasteOrganisationsApi.authMode'),
     clientId: config.get('wasteOrganisationsApi.clientId'),
     clientSecret: config.get('wasteOrganisationsApi.clientSecret'),
     tracingHeader: config.get('tracing.header'),
+    headers: xApiKey ? { 'x-api-key': xApiKey } : undefined,
     ...options
   })
 }

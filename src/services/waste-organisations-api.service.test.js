@@ -17,7 +17,7 @@ function mockOkResponse(data) {
 }
 
 describe('WasteOrganisationsApiService', () => {
-  test('listComplianceDeclarations calls endpoint with no params when none provided', async () => {
+  test('listComplianceOrganisations calls endpoint with default params when none provided', async () => {
     const fetchImpl = vi
       .fn()
       .mockResolvedValue(
@@ -30,15 +30,15 @@ describe('WasteOrganisationsApiService', () => {
       fetchImpl
     })
 
-    await service.listComplianceDeclarations({})
+    await service.listComplianceOrganisations({})
 
     expect(fetchImpl).toHaveBeenCalledWith(
-      'http://localhost:9090/compliance-declarations',
+      'http://localhost:9090/organisations?statuses=REGISTERED',
       expect.objectContaining({ method: 'GET' })
     )
   })
 
-  test('listComplianceDeclarations builds query string from provided filters', async () => {
+  test('listComplianceOrganisations builds query string from provided filters', async () => {
     const fetchImpl = vi
       .fn()
       .mockResolvedValue(
@@ -51,18 +51,50 @@ describe('WasteOrganisationsApiService', () => {
       fetchImpl
     })
 
-    await service.listComplianceDeclarations(
+    await service.listComplianceOrganisations(
       {
-        status: 'Submitted',
         registrationType: 'ComplianceScheme',
-        page: 1,
-        pageSize: 20
+        registrationYears: [2025]
       },
       'trace-1'
     )
 
     expect(fetchImpl).toHaveBeenCalledWith(
-      'http://localhost:9090/compliance-declarations?status=Submitted&registrationType=ComplianceScheme&page=1&pageSize=20',
+      'http://localhost:9090/organisations?statuses=REGISTERED&registrations=COMPLIANCE_SCHEME&registrationYears=2025',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          Accept: 'application/json',
+          Authorization: expect.stringMatching(/^Basic /),
+          'x-cdp-request-id': 'trace-1'
+        })
+      })
+    )
+  })
+
+  test('listComplianceOrganisations builds query string from provided filters for DirectProducers', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(
+        mockOkResponse({ complianceDeclarations: [], total: 0 })
+      )
+    const service = new WasteOrganisationsApiService({
+      baseUrl: 'http://localhost:9090',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    await service.listComplianceOrganisations(
+      {
+        registrationType: 'DirectProducer',
+        registrationYears: [2025]
+      },
+      'trace-1'
+    )
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:9090/organisations?statuses=REGISTERED&registrations=SMALL_PRODUCER%2CLARGE_PRODUCER&registrationYears=2025',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({
@@ -94,12 +126,14 @@ describe('WasteOrganisationsApiService', () => {
       fetchImpl
     })
 
-    await expect(service.listComplianceDeclarations({})).rejects.toMatchObject({
-      name: 'ApiError',
-      status: 500,
-      title: 'Internal Server Error',
-      message: 'waste-organisations API request failed with status 500'
-    })
+    await expect(service.listComplianceOrganisations({})).rejects.toMatchObject(
+      {
+        name: 'ApiError',
+        status: 500,
+        title: 'Internal Server Error',
+        message: 'waste-organisations API request failed with status 500'
+      }
+    )
   })
 
   test('createWasteOrganisationsApiService creates service instance', () => {
@@ -111,5 +145,48 @@ describe('WasteOrganisationsApiService', () => {
     })
 
     expect(service).toBeInstanceOf(WasteOrganisationsApiService)
+  })
+
+  test('includes x-api-key header when configured', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(
+        mockOkResponse({ complianceDeclarations: [], total: 0 })
+      )
+    const service = new WasteOrganisationsApiService({
+      baseUrl: 'http://localhost:8080',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      headers: { 'x-api-key': 'test-api-key' },
+      fetchImpl
+    })
+
+    await service.listComplianceOrganisations({})
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: expect.objectContaining({ 'x-api-key': 'test-api-key' })
+      })
+    )
+  })
+
+  test('does not include x-api-key header when not configured', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(
+        mockOkResponse({ complianceDeclarations: [], total: 0 })
+      )
+    const service = new WasteOrganisationsApiService({
+      baseUrl: 'http://localhost:8080',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    await service.listComplianceOrganisations({})
+
+    const [, init] = fetchImpl.mock.calls[0]
+    expect(init.headers).not.toHaveProperty('x-api-key')
   })
 })

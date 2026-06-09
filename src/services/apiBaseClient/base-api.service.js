@@ -48,7 +48,6 @@ export class BaseApiService {
     return {
       ...this.headers,
       ...this.#getAuthHeader(),
-      ...this.#getEphemeralApiKey(),
       ...extraHeaders
     }
   }
@@ -211,12 +210,6 @@ export class BaseApiService {
     }
 
     return {}
-  }
-
-  #getEphemeralApiKey() {
-    if (this.xApiKey !== null) {
-      return { 'x-api-key': this.xApiKey }
-    }
   }
 
   async #parseProblemJsonBody(response) {

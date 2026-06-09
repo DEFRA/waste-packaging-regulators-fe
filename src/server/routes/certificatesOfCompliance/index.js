@@ -8,7 +8,10 @@ export const certificatesOfCompliance = {
         {
           method: 'GET',
           path: '/certificates-of-compliance',
-          ...certificatesOfComplianceController
+          options: {
+            auth: false,
+            ...certificatesOfComplianceController
+          }
         }
       ])
     }
