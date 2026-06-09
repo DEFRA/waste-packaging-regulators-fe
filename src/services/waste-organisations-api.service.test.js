@@ -4,7 +4,6 @@ import {
   createWasteOrganisationsApiService,
   WasteOrganisationsApiService
 } from './waste-organisations-api.service.js'
-import { WasteObligationsApiService } from '#/services/waste-obligations-api.service.js'
 
 function mockOkResponse(data) {
   return {
