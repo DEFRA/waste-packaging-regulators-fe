@@ -291,11 +291,77 @@ export const config = convict({
       sensitive: true
     }
   },
-  apiBaseUrl: {
-    doc: 'Base URL for the backend API',
-    format: String,
-    default: 'http://localhost:3001',
-    env: 'API_BASE_URL'
+  auth: {
+    azureAdB2c: {
+      clientId: {
+        doc: 'Azure AD B2C Client ID',
+        format: String,
+        default: '',
+        env: 'AZURE_AD_B2C_CLIENT_ID'
+      },
+      clientSecret: {
+        doc: 'Azure AD B2C Client Secret',
+        format: String,
+        default: '',
+        env: 'AZURE_AD_B2C_CLIENT_SECRET',
+        sensitive: true
+      },
+      tenantName: {
+        doc: 'Azure AD B2C Tenant Name',
+        format: String,
+        default: '',
+        env: 'AZURE_AD_B2C_TENANT_NAME'
+      },
+      instance: {
+        doc: 'Azure AD B2C Instance (e.g., https://tenant.b2clogin.com)',
+        format: String,
+        default: '',
+        env: 'AZURE_AD_B2C_INSTANCE'
+      },
+      domain: {
+        doc: 'Azure AD B2C Domain (e.g., tenant.onmicrosoft.com)',
+        format: String,
+        default: '',
+        env: 'AZURE_AD_B2C_DOMAIN'
+      },
+      userFlow: {
+        doc: 'Azure AD B2C User Flow (e.g., B2C_1_signupsignin)',
+        format: String,
+        default: '',
+        env: 'AZURE_AD_B2C_USER_FLOW'
+      },
+      redirectUri: {
+        doc: 'OAuth redirect path or full URL (e.g. /login/b2c/callback or https://localhost:3000/signin-oidc). Optional.',
+        format: String,
+        default: '',
+        env: 'AZURE_AD_B2C_REDIRECT_URI'
+      },
+      postLogoutRedirectPath: {
+        doc: 'Path or absolute URL for B2C post_logout_redirect_uri (must be registered on the app registration).',
+        format: String,
+        default: '/signed-out',
+        env: 'AZURE_AD_B2C_POST_LOGOUT_REDIRECT_PATH'
+      },
+      cookiePassword: {
+        doc: 'Auth cookie password',
+        format: String,
+        default: 'secret-password-must-be-at-least-32-characters-long',
+        env: 'AUTH_COOKIE_PASSWORD',
+        sensitive: true
+      },
+      isSecure: {
+        doc: 'Is auth cookie secure',
+        format: Boolean,
+        default: isProduction,
+        env: 'AUTH_COOKIE_SECURE'
+      },
+      logoutUrl: {
+        doc: 'Azure AD B2C Logout URL',
+        format: String,
+        default: '',
+        env: 'AZURE_AD_B2C_LOGOUT_URL'
+      }
+    }
   }
 })
 

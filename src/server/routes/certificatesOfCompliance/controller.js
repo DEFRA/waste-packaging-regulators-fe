@@ -3,6 +3,11 @@ import { getCertificatesOfComplianceViewModel } from './certificates-of-complian
 
 export const certificatesOfComplianceController = {
   async handler(request, h) {
+    if (!request.yar.get('user')) {
+      request.yar.set('returnTo', request.url.pathname + request.url.search)
+      return h.redirect('/signin-oidc')
+    }
+
     const {
       type = 'direct-producers',
       tab = 'pending',
