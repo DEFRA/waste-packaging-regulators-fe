@@ -78,10 +78,35 @@ describe('#certificatesOfComplianceController', () => {
       )
     })
 
+    test('Should set compliance-schemes as the active nav item when type=compliance-schemes', async () => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/certificates-of-compliance?type=compliance-schemes'
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toEqual(
+        expect.stringContaining(
+          '<strong class="govuk-service-navigation__active-fallback">Compliance schemes</strong>'
+        )
+      )
+    })
+
     test('Should preserve the active tab when switching organisation type', async () => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/certificates-of-compliance?type=direct-producers&tab=accepted'
+      })
+
+      expect(result).toEqual(
+        expect.stringContaining('type=direct-producers&tab=accepted')
+      )
+    })
+
+    test('Should include the current tab in the non-active organisation type nav link', async () => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/certificates-of-compliance?type=compliance-schemes&tab=accepted'
       })
 
       expect(result).toEqual(
@@ -189,6 +214,24 @@ describe('#certificatesOfComplianceController', () => {
       expect(result).not.toEqual(expect.stringContaining('pending submissions'))
       expect(result).not.toEqual(expect.stringContaining('not submitted'))
     })
+
+    test('Should not show the Date submitted column on the not-submitted tab', async () => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/certificates-of-compliance?tab=not-submitted'
+      })
+
+      expect(result).not.toEqual(expect.stringContaining('Date submitted'))
+    })
+
+    test('Should show the Date submitted column on the pending tab', async () => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/certificates-of-compliance?tab=pending'
+      })
+
+      expect(result).toEqual(expect.stringContaining('Date submitted'))
+    })
   })
 
   describe('Regulation 43 column', () => {
@@ -247,6 +290,26 @@ describe('#certificatesOfComplianceController', () => {
       })
 
       expect(result).toEqual(expect.stringContaining('Regulation 43'))
+    })
+
+    test('Should show Regulation 43 column header on the not-submitted tab for compliance-schemes', async () => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/certificates-of-compliance?type=compliance-schemes&tab=not-submitted'
+      })
+
+      expect(result).toEqual(expect.stringContaining('Regulation 43'))
+      expect(result).not.toEqual(expect.stringContaining('Percentage met'))
+    })
+
+    test('Should show Percentage met column header on the not-submitted tab for direct-producers', async () => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/certificates-of-compliance?type=direct-producers&tab=not-submitted'
+      })
+
+      expect(result).toEqual(expect.stringContaining('Percentage met'))
+      expect(result).not.toEqual(expect.stringContaining('Regulation 43'))
     })
   })
 
