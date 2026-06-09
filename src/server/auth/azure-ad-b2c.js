@@ -5,10 +5,6 @@
 /** Bell registers the OAuth state cookie as `bell-${provider.name}`. */
 export const BELL_AZURE_AD_B2C_COOKIE = 'bell-azure-ad-b2c'
 
-/**
- * Policy-scoped authority prefix used for B2C logout:
- * `{instance}/{domain}/{userFlow}` or `https://{tenant}.b2clogin.com/...`
- */
 export function getB2cAuthorityPrefix(cfg) {
   if (!cfg) return null
   if (cfg.instance && cfg.domain && cfg.userFlow) {
