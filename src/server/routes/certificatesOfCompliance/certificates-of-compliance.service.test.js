@@ -808,12 +808,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('maps obligationStatus other than Met to recyclingObligationsMet=false', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi
-            .fn()
-            .mockResolvedValue({
-              ...mockDetailData,
-              obligationStatus: 'NotMet'
-            })
+          getComplianceDeclaration: vi.fn().mockResolvedValue({
+            ...mockDetailData,
+            obligationStatus: 'NotMet'
+          })
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
@@ -827,12 +825,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('formats created date as human-readable string', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi
-            .fn()
-            .mockResolvedValue({
-              ...mockDetailData,
-              created: '2027-01-31T00:00:00Z'
-            })
+          getComplianceDeclaration: vi.fn().mockResolvedValue({
+            ...mockDetailData,
+            created: '2027-01-31T00:00:00Z'
+          })
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 

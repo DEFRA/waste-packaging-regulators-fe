@@ -10,14 +10,18 @@ export const mockSummary = {
 
 export const mockPendingItems = [
   {
-    id: '101411',
+    id: 'decl-101411',
+    organisationId: '497f6eca-6276-4993-bfeb-53cbbbba6f08',
+    organisationReferenceNumber: '101411',
     organisationName: 'Howco Group plc',
     recyclingObligationsMet: false,
     percentageMet: 97,
     dateSubmitted: '2027-01-31'
   },
   {
-    id: '204872',
+    id: 'decl-204872',
+    organisationId: 'b1e2c3d4-e5f6-7890-abcd-ef1234567890',
+    organisationReferenceNumber: '204872',
     organisationName: 'Greenfield Packaging Ltd',
     recyclingObligationsMet: false,
     percentageMet: 84,
@@ -27,7 +31,9 @@ export const mockPendingItems = [
 
 export const mockAcceptedItems = [
   {
-    id: '309145',
+    id: 'decl-309145',
+    organisationId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    organisationReferenceNumber: '309145',
     organisationName: 'Acme Compliance Co',
     recyclingObligationsMet: true,
     regulation43Met: true,
@@ -35,7 +41,9 @@ export const mockAcceptedItems = [
     dateSubmitted: '2027-01-15'
   },
   {
-    id: '412067',
+    id: 'decl-412067',
+    organisationId: 'c1d2e3f4-a5b6-7890-abcd-ef1234567890',
+    organisationReferenceNumber: '412067',
     organisationName: 'BlueSky Materials plc',
     recyclingObligationsMet: true,
     regulation43Met: false,
@@ -46,7 +54,9 @@ export const mockAcceptedItems = [
 
 export const mockNotSubmittedItems = [
   {
-    id: '518293',
+    id: null,
+    organisationId: 'd1e2f3a4-b5c6-7890-abcd-ef1234567890',
+    organisationReferenceNumber: '518293',
     organisationName: 'Redwood Retail Group',
     recyclingObligationsMet: false,
     percentageMet: 0,
