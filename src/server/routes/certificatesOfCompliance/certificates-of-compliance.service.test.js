@@ -268,7 +268,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
         expect(vm.items).toHaveLength(1)
         expect(vm.items[0]).toMatchObject({
-          id: 'REF001',
+          organisationReferenceNumber: 'REF001',
           organisationName: 'Test Org',
           recyclingObligationsMet: true,
           regulation43Met: true,
