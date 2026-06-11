@@ -1,69 +1,19 @@
 import { config } from '#/config/config.js'
 import { createWasteObligationsApiService } from '#/services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#/services/waste-organisations-api.service.js'
+import {
+  mockSummary,
+  mockListByTab,
+  mockDetailData
+} from './certificates-of-compliance.mock.js'
 
-// --- Mock data ---
-// Temporary — will be replaced by real API responses once endpoints are confirmed.
-// Exported so tests can assert against the same values without hardcoding them twice.
-
-export const mockSummary = {
-  complianceYear: '2026',
-  totalPending: 42,
-  totalAccepted: 156,
-  totalNotSubmitted: 8
-}
-
-export const mockPendingItems = [
-  {
-    id: '101411',
-    organisationName: 'Howco Group plc',
-    recyclingObligationsMet: false,
-    percentageMet: 97,
-    dateSubmitted: '2027-01-31'
-  },
-  {
-    id: '204872',
-    organisationName: 'Greenfield Packaging Ltd',
-    recyclingObligationsMet: false,
-    percentageMet: 84,
-    dateSubmitted: '2027-01-28'
-  }
-]
-
-export const mockAcceptedItems = [
-  {
-    id: '309145',
-    organisationName: 'Acme Compliance Co',
-    recyclingObligationsMet: true,
-    regulation43Met: true,
-    percentageMet: 112,
-    dateSubmitted: '2027-01-15'
-  },
-  {
-    id: '412067',
-    organisationName: 'BlueSky Materials plc',
-    recyclingObligationsMet: true,
-    regulation43Met: false,
-    percentageMet: 103,
-    dateSubmitted: '2027-01-10'
-  }
-]
-
-export const mockNotSubmittedItems = [
-  {
-    id: '518293',
-    organisationName: 'Redwood Retail Group',
-    recyclingObligationsMet: false,
-    percentageMet: 0,
-    dateSubmitted: null
-  }
-]
-
-const mockListByTab = {
-  pending: mockPendingItems,
-  accepted: mockAcceptedItems,
-  'not-submitted': mockNotSubmittedItems
-}
+export {
+  mockSummary,
+  mockDetailData,
+  mockPendingItems,
+  mockAcceptedItems,
+  mockNotSubmittedItems
+} from './certificates-of-compliance.mock.js'
 
 // --- Response mapping ---
 
@@ -77,13 +27,14 @@ const registrationTypeByOrganisationType = {
 const statusByTab = {
   pending: 'Submitted',
   accepted: 'Accepted'
-  // 'not-submitted': TODO — confirm with backend whether this is a separate endpoint or a different status
 }
 
 const PAGE_SIZE = 20
+const DECLARATIONS_BATCH_SIZE = 100
 
 function mapDeclarationToItem(declaration) {
   const {
+    id,
     organisation,
     obligationStatus,
     isRegulation43Compliant,
@@ -91,13 +42,15 @@ function mapDeclarationToItem(declaration) {
     percentageMet
   } = declaration
   return {
-    id: organisation.referenceNumber,
+    id,
+    organisationReferenceNumber: organisation.referenceNumber,
+    organisationId: organisation.id,
     organisationName:
       organisation.name ??
       organisation.complianceSchemeName ??
       organisation.schemeOperatorName ??
       'Unknown organisation',
-    recyclingObligationsMet: obligationStatus === 'Met',
+    recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
     regulation43Met: isRegulation43Compliant,
     percentageMet: percentageMet ?? null,
     dateSubmitted: created
@@ -116,8 +69,6 @@ function mapOrganisationToItem(organisation, organisationType) {
     organisationName
   }
 }
-
-const DECLARATIONS_BATCH_SIZE = 100
 
 async function fetchAllDeclarations(api, params, traceId) {
   const first = await api.listComplianceDeclarations(
@@ -261,18 +212,8 @@ async function getComplianceList(
   }
 }
 
-// --- View model ---
+// --- List page view model ---
 
-/**
- * Builds the complete view model for the certificates of compliance page.
- * Fires both API calls in parallel and assembles the result.
- *
- * @param {string} organisationType - 'compliance-schemes' or 'direct-producers'
- * @param {string} tab - 'pending' | 'accepted' | 'not-submitted'
- * @param {number} currentPage - 1-based page number
- * @param {string} [traceId] - request trace ID for upstream correlation
- * @returns {Promise<object>}
- */
 export async function getCertificatesOfComplianceViewModel(
   organisationType,
   tab,
@@ -315,5 +256,109 @@ export async function getCertificatesOfComplianceViewModel(
       totalPages: list.totalPages,
       baseUrl
     }
+  }
+}
+
+// --- Detail response mapping ---
+
+const organisationTypeDisplayNames = {
+  DirectProducer: 'Direct producer',
+  ComplianceScheme: 'Compliance scheme'
+}
+
+const GLASS_BREAKDOWN_MATERIALS = new Set(['GlassRemelt', 'RemainingGlass'])
+
+function formatDate(isoString) {
+  if (!isoString) return null
+  return new Date(isoString).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
+}
+
+function mapObligation(obligation) {
+  return {
+    name: obligation.material,
+    obligationToMeet: obligation.tonnages.obligated,
+    awaitingAcceptance: obligation.tonnages.awaitingAcceptance,
+    accepted: obligation.tonnages.accepted,
+    outstanding: obligation.tonnages.outstanding,
+    met: obligation.status?.toLowerCase() === 'met'
+  }
+}
+
+function computeTotals(rows) {
+  return {
+    obligationToMeet: rows.reduce((sum, r) => sum + r.obligationToMeet, 0),
+    awaitingAcceptance: rows.reduce((sum, r) => sum + r.awaitingAcceptance, 0),
+    accepted: rows.reduce((sum, r) => sum + r.accepted, 0),
+    outstanding: rows.reduce((sum, r) => sum + r.outstanding, 0),
+    met: rows.every((r) => r.met)
+  }
+}
+
+function mapDeclarationToDetail(data) {
+  const { organisation, obligationYear, obligations, obligationStatus, submitterName, created } =
+    data
+
+  const companyName =
+    organisation.name ??
+    organisation.complianceSchemeName ??
+    organisation.schemeOperatorName ??
+    'Unknown organisation'
+
+  const allMapped = obligations.map(mapObligation)
+  const materials = allMapped.filter(
+    (_, i) => !GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
+  )
+  const glassBreakdown = allMapped.filter((_, i) =>
+    GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
+  )
+
+  return {
+    complianceYear: String(obligationYear),
+    companyName,
+    recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
+    dateDeclarationSubmitted: formatDate(created),
+    organisationType:
+      organisationTypeDisplayNames[organisation.registrationType] ??
+      organisation.registrationType,
+    organisationRef: organisation.referenceNumber,
+    // TODO: these will come from the account API call
+    companiesHouseNumber: organisation.companiesHouseNumber ?? null,
+    nameOnAccount: organisation.nameOnAccount ?? null,
+    declarationEmailAddress: organisation.contactEmailAddress ?? null,
+    companyPhoneNumber: organisation.contactPhoneNumber ?? null,
+    declarationSignedBy: submitterName,
+    materials,
+    materialTotals: computeTotals(materials),
+    glassBreakdown,
+    glassBreakdownTotals: computeTotals(glassBreakdown)
+  }
+}
+
+// --- Detail API call ---
+
+async function getDeclarationDetail(obligationsApi, organisationId, id, traceId) {
+  if (config.get('useMockApi')) {
+    return mapDeclarationToDetail(mockDetailData)
+  }
+
+  const data = await obligationsApi.getComplianceDeclaration({ id, organisationId }, traceId)
+  return mapDeclarationToDetail(data)
+}
+
+// --- Detail page view model ---
+
+export async function getCertificateOfComplianceDetailViewModel(organisationId, id, traceId) {
+  const apiWasteObligation = createWasteObligationsApiService()
+
+  const detail = await getDeclarationDetail(apiWasteObligation, organisationId, id, traceId)
+
+  return {
+    heading: 'Certificate of compliance',
+    backlink: '/certificates-of-compliance',
+    ...detail
   }
 }

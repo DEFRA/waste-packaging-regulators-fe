@@ -30,9 +30,9 @@
       {% for item in items %}
         <tr class="govuk-table__row">
           <td class="govuk-table__cell">
-            <a href="#" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
+            <a href="./{{ item.organisationId }}/certificates-of-compliance/{{ item.id }}" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
           </td>
-          <td class="govuk-table__cell">{{ item.id }}</td>
+          <td class="govuk-table__cell">{{ item.organisationReferenceNumber }}</td>
           <td class="govuk-table__cell">
             {{ appStatusTag({ value: item.recyclingObligationsMet, trueText: 'Met', falseText: 'Not met' }) }}
           </td>

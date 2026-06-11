@@ -17,10 +17,12 @@ import { createWasteObligationsApiService } from '#/services/waste-obligations-a
 import { createWasteOrganisationsApiService } from '#/services/waste-organisations-api.service.js'
 import {
   getCertificatesOfComplianceViewModel,
+  getCertificateOfComplianceDetailViewModel,
   mockSummary,
   mockPendingItems,
   mockAcceptedItems,
-  mockNotSubmittedItems
+  mockNotSubmittedItems,
+  mockDetailData
 } from './certificates-of-compliance.service.js'
 
 const makeDeclaration = ({
@@ -113,6 +115,15 @@ describe('getCertificatesOfComplianceViewModel', () => {
         1
       )
       expect(vm.items).toEqual([])
+    })
+
+    test('getCertificateOfComplianceDetailViewModel returns mapped mock detail', async () => {
+      const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+      expect(vm.complianceYear).toBe(String(mockDetailData.obligationYear))
+      expect(vm.companyName).toBe(mockDetailData.organisation.name)
+      expect(vm.declarationSignedBy).toBe(mockDetailData.submitterName)
+      expect(vm.heading).toBe('Certificate of compliance')
+      expect(vm.backlink).toBe('/certificates-of-compliance')
     })
   })
 
@@ -683,6 +694,222 @@ describe('getCertificatesOfComplianceViewModel', () => {
           1
         )
         expect(vm.items[0].recyclingObligationsMet).toBe(false)
+      })
+    })
+
+    describe('getCertificateOfComplianceDetailViewModel — real API', () => {
+      test('calls getComplianceDeclaration with organisationId and id', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1', 'trace-z')
+
+        expect(mockApi.getComplianceDeclaration).toHaveBeenCalledWith(
+          { organisationId: 'org-abc', id: 'decl-1' },
+          'trace-z'
+        )
+      })
+
+      test('maps obligationYear to complianceYear string', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+
+        expect(vm.complianceYear).toBe(String(mockDetailData.obligationYear))
+      })
+
+      test('maps organisation.name to companyName', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+
+        expect(vm.companyName).toBe(mockDetailData.organisation.name)
+      })
+
+      test('falls back to complianceSchemeName when organisation.name is null', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue({
+            ...mockDetailData,
+            organisation: { ...mockDetailData.organisation, name: null, complianceSchemeName: 'Scheme Co' }
+          })
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+
+        expect(vm.companyName).toBe('Scheme Co')
+      })
+
+      test('falls back to "Unknown organisation" when all name fields are null', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue({
+            ...mockDetailData,
+            organisation: { ...mockDetailData.organisation, name: null, complianceSchemeName: null, schemeOperatorName: null }
+          })
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+
+        expect(vm.companyName).toBe('Unknown organisation')
+      })
+
+      test('maps obligationStatus=Met to recyclingObligationsMet=true', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue({ ...mockDetailData, obligationStatus: 'Met' })
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+
+        expect(vm.recyclingObligationsMet).toBe(true)
+      })
+
+      test('maps obligationStatus other than Met to recyclingObligationsMet=false', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue({ ...mockDetailData, obligationStatus: 'NotMet' })
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+
+        expect(vm.recyclingObligationsMet).toBe(false)
+      })
+
+      test('formats created date as human-readable string', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue({ ...mockDetailData, created: '2027-01-31T00:00:00Z' })
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+
+        expect(vm.dateDeclarationSubmitted).toBe('31 January 2027')
+      })
+
+      test('maps DirectProducer registrationType to display name', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+
+        expect(vm.organisationType).toBe('Direct producer')
+      })
+
+      test('maps ComplianceScheme registrationType to display name', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue({
+            ...mockDetailData,
+            organisation: { ...mockDetailData.organisation, registrationType: 'ComplianceScheme' }
+          })
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+
+        expect(vm.organisationType).toBe('Compliance scheme')
+      })
+
+      test('maps submitterName to declarationSignedBy', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+
+        expect(vm.declarationSignedBy).toBe(mockDetailData.submitterName)
+      })
+
+      test('splits obligations into materials and glassBreakdown', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+
+        const glassBreakdownMaterials = new Set(['GlassRemelt', 'RemainingGlass'])
+        const expectedMaterials = mockDetailData.obligations.filter(
+          (o) => !glassBreakdownMaterials.has(o.material)
+        )
+        const expectedGlass = mockDetailData.obligations.filter((o) =>
+          glassBreakdownMaterials.has(o.material)
+        )
+
+        expect(vm.materials).toHaveLength(expectedMaterials.length)
+        expect(vm.glassBreakdown).toHaveLength(expectedGlass.length)
+      })
+
+      test('computes materialTotals from main obligations', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+
+        const expectedTotal = mockDetailData.obligations
+          .filter((o) => !['GlassRemelt', 'RemainingGlass'].includes(o.material))
+          .reduce((sum, o) => sum + o.tonnages.obligated, 0)
+
+        expect(vm.materialTotals.obligationToMeet).toBe(expectedTotal)
+      })
+
+      test('materialTotals.met is false when any material is not met', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue({
+            ...mockDetailData,
+            obligations: mockDetailData.obligations.map((o, i) =>
+              i === 0 ? { ...o, status: 'NotMet' } : o
+            )
+          })
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+
+        expect(vm.materialTotals.met).toBe(false)
+      })
+
+      test('maps obligation tonnages correctly', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+        const aluminiumObligation = mockDetailData.obligations[0]
+        const aluminiumRow = vm.materials.find((m) => m.name === 'Aluminium')
+
+        expect(aluminiumRow).toMatchObject({
+          obligationToMeet: aluminiumObligation.tonnages.obligated,
+          awaitingAcceptance: aluminiumObligation.tonnages.awaitingAcceptance,
+          accepted: aluminiumObligation.tonnages.accepted,
+          outstanding: aluminiumObligation.tonnages.outstanding,
+          met: aluminiumObligation.status === 'Met'
+        })
+      })
+
+      test('passes through material name directly from API', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+
+        expect(vm.materials[0].name).toBe(mockDetailData.obligations[0].material)
       })
     })
 
