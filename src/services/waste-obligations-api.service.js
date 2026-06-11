@@ -37,8 +37,7 @@ export class WasteObligationsApiService extends BaseApiService {
     )
   }
 
-  async getComplianceDeclaration({id, organisationId}={}, traceId
-  ){
+  async getComplianceDeclaration({ id, organisationId } = {}, traceId) {
     return this.getJson(
       `/organisations/${organisationId}/compliance-declarations/${id}`,
       this.getTracingHeader(traceId)

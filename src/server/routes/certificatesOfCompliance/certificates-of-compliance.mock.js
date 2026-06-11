@@ -84,14 +84,102 @@ export const mockDetailData = {
   },
   obligationYear: 2026,
   obligations: [
-    { material: 'Aluminium', recyclingTarget: 1, tonnages: { material: 215, awaitingAcceptance: 0, accepted: 215, outstanding: 0, obligated: 215 }, status: 'Met' },
-    { material: 'Glass', recyclingTarget: 1, tonnages: { material: 0, awaitingAcceptance: 0, accepted: 0, outstanding: 0, obligated: 0 }, status: 'Met' },
-    { material: 'PaperBoardFibre', recyclingTarget: 1, tonnages: { material: 870, awaitingAcceptance: 0, accepted: 870, outstanding: 0, obligated: 870 }, status: 'Met' },
-    { material: 'Plastic', recyclingTarget: 1, tonnages: { material: 1740, awaitingAcceptance: 0, accepted: 1740, outstanding: 0, obligated: 1740 }, status: 'Met' },
-    { material: 'Steel', recyclingTarget: 1, tonnages: { material: 365, awaitingAcceptance: 0, accepted: 365, outstanding: 0, obligated: 365 }, status: 'Met' },
-    { material: 'Wood', recyclingTarget: 1, tonnages: { material: 80, awaitingAcceptance: 0, accepted: 80, outstanding: 0, obligated: 80 }, status: 'Met' },
-    { material: 'GlassRemelt', recyclingTarget: 1, tonnages: { material: 0, awaitingAcceptance: 0, accepted: 0, outstanding: 0, obligated: 0 }, status: 'Met' },
-    { material: 'RemainingGlass', recyclingTarget: 1, tonnages: { material: 0, awaitingAcceptance: 0, accepted: 0, outstanding: 0, obligated: 0 }, status: 'Met' }
+    {
+      material: 'Aluminium',
+      recyclingTarget: 1,
+      tonnages: {
+        material: 215,
+        awaitingAcceptance: 0,
+        accepted: 215,
+        outstanding: 0,
+        obligated: 215
+      },
+      status: 'Met'
+    },
+    {
+      material: 'Glass',
+      recyclingTarget: 1,
+      tonnages: {
+        material: 0,
+        awaitingAcceptance: 0,
+        accepted: 0,
+        outstanding: 0,
+        obligated: 0
+      },
+      status: 'Met'
+    },
+    {
+      material: 'PaperBoardFibre',
+      recyclingTarget: 1,
+      tonnages: {
+        material: 870,
+        awaitingAcceptance: 0,
+        accepted: 870,
+        outstanding: 0,
+        obligated: 870
+      },
+      status: 'Met'
+    },
+    {
+      material: 'Plastic',
+      recyclingTarget: 1,
+      tonnages: {
+        material: 1740,
+        awaitingAcceptance: 0,
+        accepted: 1740,
+        outstanding: 0,
+        obligated: 1740
+      },
+      status: 'Met'
+    },
+    {
+      material: 'Steel',
+      recyclingTarget: 1,
+      tonnages: {
+        material: 365,
+        awaitingAcceptance: 0,
+        accepted: 365,
+        outstanding: 0,
+        obligated: 365
+      },
+      status: 'Met'
+    },
+    {
+      material: 'Wood',
+      recyclingTarget: 1,
+      tonnages: {
+        material: 80,
+        awaitingAcceptance: 0,
+        accepted: 80,
+        outstanding: 0,
+        obligated: 80
+      },
+      status: 'Met'
+    },
+    {
+      material: 'GlassRemelt',
+      recyclingTarget: 1,
+      tonnages: {
+        material: 0,
+        awaitingAcceptance: 0,
+        accepted: 0,
+        outstanding: 0,
+        obligated: 0
+      },
+      status: 'Met'
+    },
+    {
+      material: 'RemainingGlass',
+      recyclingTarget: 1,
+      tonnages: {
+        material: 0,
+        awaitingAcceptance: 0,
+        accepted: 0,
+        outstanding: 0,
+        obligated: 0
+      },
+      status: 'Met'
+    }
   ],
   obligationStatus: 'Met',
   declarationText: { text: 'I declare...', language: 'en' },

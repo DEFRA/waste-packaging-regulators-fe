@@ -11,7 +11,11 @@ export const certificatesOfComplianceDetailController = {
     const { organisationId, id } = request.params
     const traceId = request.headers[config.get('tracing.header')]
 
-    const viewModel = await getCertificateOfComplianceDetailViewModel(organisationId, id, traceId)
+    const viewModel = await getCertificateOfComplianceDetailViewModel(
+      organisationId,
+      id,
+      traceId
+    )
 
     return h.view('certificatesOfCompliance/detail/index', viewModel)
   }

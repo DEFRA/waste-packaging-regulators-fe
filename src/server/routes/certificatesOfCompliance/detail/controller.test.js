@@ -86,7 +86,9 @@ describe('#certificatesOfComplianceDetailController', () => {
 
   it('should render the organisation ID', async () => {
     const response = await inject('/org-123/certificates-of-compliance/101411')
-    expect(response.payload).toContain(mockDetailData.organisation.referenceNumber)
+    expect(response.payload).toContain(
+      mockDetailData.organisation.referenceNumber
+    )
   })
 
   it('should render the declaration signer name', async () => {
@@ -105,7 +107,9 @@ describe('#certificatesOfComplianceDetailController', () => {
     const response = await inject('/org-123/certificates-of-compliance/101411')
     for (const obligation of expectedMaterials) {
       if (obligation.tonnages.obligated > 0) {
-        expect(response.payload).toContain(String(obligation.tonnages.obligated))
+        expect(response.payload).toContain(
+          String(obligation.tonnages.obligated)
+        )
       }
     }
   })

@@ -299,8 +299,14 @@ function computeTotals(rows) {
 }
 
 function mapDeclarationToDetail(data) {
-  const { organisation, obligationYear, obligations, obligationStatus, submitterName, created } =
-    data
+  const {
+    organisation,
+    obligationYear,
+    obligations,
+    obligationStatus,
+    submitterName,
+    created
+  } = data
 
   const companyName =
     organisation.name ??
@@ -340,21 +346,38 @@ function mapDeclarationToDetail(data) {
 
 // --- Detail API call ---
 
-async function getDeclarationDetail(obligationsApi, organisationId, id, traceId) {
+async function getDeclarationDetail(
+  obligationsApi,
+  organisationId,
+  id,
+  traceId
+) {
   if (config.get('useMockApi')) {
     return mapDeclarationToDetail(mockDetailData)
   }
 
-  const data = await obligationsApi.getComplianceDeclaration({ id, organisationId }, traceId)
+  const data = await obligationsApi.getComplianceDeclaration(
+    { id, organisationId },
+    traceId
+  )
   return mapDeclarationToDetail(data)
 }
 
 // --- Detail page view model ---
 
-export async function getCertificateOfComplianceDetailViewModel(organisationId, id, traceId) {
+export async function getCertificateOfComplianceDetailViewModel(
+  organisationId,
+  id,
+  traceId
+) {
   const apiWasteObligation = createWasteObligationsApiService()
 
-  const detail = await getDeclarationDetail(apiWasteObligation, organisationId, id, traceId)
+  const detail = await getDeclarationDetail(
+    apiWasteObligation,
+    organisationId,
+    id,
+    traceId
+  )
 
   return {
     heading: 'Certificate of compliance',

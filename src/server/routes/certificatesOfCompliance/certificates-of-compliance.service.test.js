@@ -118,7 +118,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
     })
 
     test('getCertificateOfComplianceDetailViewModel returns mapped mock detail', async () => {
-      const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+      const vm = await getCertificateOfComplianceDetailViewModel(
+        'org-abc',
+        'decl-1'
+      )
       expect(vm.complianceYear).toBe(String(mockDetailData.obligationYear))
       expect(vm.companyName).toBe(mockDetailData.organisation.name)
       expect(vm.declarationSignedBy).toBe(mockDetailData.submitterName)
@@ -704,7 +707,11 @@ describe('getCertificatesOfComplianceViewModel', () => {
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
-        await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1', 'trace-z')
+        await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1',
+          'trace-z'
+        )
 
         expect(mockApi.getComplianceDeclaration).toHaveBeenCalledWith(
           { organisationId: 'org-abc', id: 'decl-1' },
@@ -718,7 +725,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
-        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
 
         expect(vm.complianceYear).toBe(String(mockDetailData.obligationYear))
       })
@@ -729,7 +739,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
-        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
 
         expect(vm.companyName).toBe(mockDetailData.organisation.name)
       })
@@ -738,12 +751,19 @@ describe('getCertificatesOfComplianceViewModel', () => {
         const mockApi = {
           getComplianceDeclaration: vi.fn().mockResolvedValue({
             ...mockDetailData,
-            organisation: { ...mockDetailData.organisation, name: null, complianceSchemeName: 'Scheme Co' }
+            organisation: {
+              ...mockDetailData.organisation,
+              name: null,
+              complianceSchemeName: 'Scheme Co'
+            }
           })
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
-        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
 
         expect(vm.companyName).toBe('Scheme Co')
       })
@@ -752,45 +772,74 @@ describe('getCertificatesOfComplianceViewModel', () => {
         const mockApi = {
           getComplianceDeclaration: vi.fn().mockResolvedValue({
             ...mockDetailData,
-            organisation: { ...mockDetailData.organisation, name: null, complianceSchemeName: null, schemeOperatorName: null }
+            organisation: {
+              ...mockDetailData.organisation,
+              name: null,
+              complianceSchemeName: null,
+              schemeOperatorName: null
+            }
           })
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
-        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
 
         expect(vm.companyName).toBe('Unknown organisation')
       })
 
       test('maps obligationStatus=Met to recyclingObligationsMet=true', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue({ ...mockDetailData, obligationStatus: 'Met' })
+          getComplianceDeclaration: vi
+            .fn()
+            .mockResolvedValue({ ...mockDetailData, obligationStatus: 'Met' })
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
-        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
 
         expect(vm.recyclingObligationsMet).toBe(true)
       })
 
       test('maps obligationStatus other than Met to recyclingObligationsMet=false', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue({ ...mockDetailData, obligationStatus: 'NotMet' })
+          getComplianceDeclaration: vi
+            .fn()
+            .mockResolvedValue({
+              ...mockDetailData,
+              obligationStatus: 'NotMet'
+            })
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
-        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
 
         expect(vm.recyclingObligationsMet).toBe(false)
       })
 
       test('formats created date as human-readable string', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue({ ...mockDetailData, created: '2027-01-31T00:00:00Z' })
+          getComplianceDeclaration: vi
+            .fn()
+            .mockResolvedValue({
+              ...mockDetailData,
+              created: '2027-01-31T00:00:00Z'
+            })
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
-        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
 
         expect(vm.dateDeclarationSubmitted).toBe('31 January 2027')
       })
@@ -801,7 +850,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
-        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
 
         expect(vm.organisationType).toBe('Direct producer')
       })
@@ -810,12 +862,18 @@ describe('getCertificatesOfComplianceViewModel', () => {
         const mockApi = {
           getComplianceDeclaration: vi.fn().mockResolvedValue({
             ...mockDetailData,
-            organisation: { ...mockDetailData.organisation, registrationType: 'ComplianceScheme' }
+            organisation: {
+              ...mockDetailData.organisation,
+              registrationType: 'ComplianceScheme'
+            }
           })
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
-        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
 
         expect(vm.organisationType).toBe('Compliance scheme')
       })
@@ -826,7 +884,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
-        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
 
         expect(vm.declarationSignedBy).toBe(mockDetailData.submitterName)
       })
@@ -837,9 +898,15 @@ describe('getCertificatesOfComplianceViewModel', () => {
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
-        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
 
-        const glassBreakdownMaterials = new Set(['GlassRemelt', 'RemainingGlass'])
+        const glassBreakdownMaterials = new Set([
+          'GlassRemelt',
+          'RemainingGlass'
+        ])
         const expectedMaterials = mockDetailData.obligations.filter(
           (o) => !glassBreakdownMaterials.has(o.material)
         )
@@ -857,10 +924,15 @@ describe('getCertificatesOfComplianceViewModel', () => {
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
-        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
 
         const expectedTotal = mockDetailData.obligations
-          .filter((o) => !['GlassRemelt', 'RemainingGlass'].includes(o.material))
+          .filter(
+            (o) => !['GlassRemelt', 'RemainingGlass'].includes(o.material)
+          )
           .reduce((sum, o) => sum + o.tonnages.obligated, 0)
 
         expect(vm.materialTotals.obligationToMeet).toBe(expectedTotal)
@@ -877,7 +949,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
-        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
 
         expect(vm.materialTotals.met).toBe(false)
       })
@@ -888,7 +963,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
-        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
         const aluminiumObligation = mockDetailData.obligations[0]
         const aluminiumRow = vm.materials.find((m) => m.name === 'Aluminium')
 
@@ -907,9 +985,14 @@ describe('getCertificatesOfComplianceViewModel', () => {
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
-        const vm = await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
 
-        expect(vm.materials[0].name).toBe(mockDetailData.obligations[0].material)
+        expect(vm.materials[0].name).toBe(
+          mockDetailData.obligations[0].material
+        )
       })
     })
 
