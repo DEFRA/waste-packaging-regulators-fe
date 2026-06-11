@@ -1,5 +1,5 @@
 import { config } from '#/config/config.js'
-import { getCertificatesOfComplianceViewModel } from './certificates-of-compliance.service.js'
+import { getCertificatesOfComplianceViewModel } from '../certificates-of-compliance.service.js'
 
 export const certificatesOfComplianceController = {
   async handler(request, h) {
@@ -23,6 +23,6 @@ export const certificatesOfComplianceController = {
       traceId
     )
 
-    return h.view('certificatesOfCompliance/index', viewModel)
+    return h.view('certificatesOfCompliance/list/index', viewModel)
   }
 }

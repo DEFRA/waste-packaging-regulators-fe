@@ -5,7 +5,7 @@ import {
   mockPendingItems,
   mockAcceptedItems,
   mockNotSubmittedItems
-} from './certificates-of-compliance.service.js'
+} from '../certificates-of-compliance.service.js'
 
 describe('#certificatesOfComplianceController', () => {
   let server

@@ -6,7 +6,7 @@ import { health } from '../routes/health/index.js'
 import { auth } from '../routes/auth/index.js'
 import { serveStaticFiles } from './serve-static-files.js'
 import { config } from '#/config/config.js'
-import { certificatesOfCompliance } from '../routes/certificatesOfCompliance/index.js'
+import { certificatesOfComplianceList } from '../routes/certificatesOfCompliance/list/index.js'
 
 export const router = {
   plugin: {
