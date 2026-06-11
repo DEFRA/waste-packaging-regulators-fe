@@ -179,9 +179,9 @@ describe('#certificatesOfComplianceController', () => {
         )
       )
       expect(result).toEqual(expect.stringContaining('not submitted'))
-      mockNotSubmittedItems.forEach(({ organisationName, id }) => {
+      mockNotSubmittedItems.forEach(({ organisationName, organisationReferenceNumber }) => {
         expect(result).toEqual(expect.stringContaining(organisationName))
-        expect(result).toEqual(expect.stringContaining(id))
+        expect(result).toEqual(expect.stringContaining(organisationReferenceNumber))
       })
     })
 
