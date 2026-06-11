@@ -36,6 +36,14 @@ export class WasteObligationsApiService extends BaseApiService {
       this.getTracingHeader(traceId)
     )
   }
+
+  async getComplianceDeclaration({id, organisationId}={}, traceId
+  ){
+    return this.getJson(
+      `/organisations/${organisationId}/compliance-declarations/${id}`,
+      this.getTracingHeader(traceId)
+    )
+  }
 }
 
 export function createWasteObligationsApiService(options = {}) {

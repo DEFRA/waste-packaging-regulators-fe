@@ -166,6 +166,31 @@ describe('WasteObligationsApiService', () => {
     })
   })
 
+  test('getComplianceDeclaration calls the correct endpoint', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(mockOkResponse({ id: 'decl-1', status: 'Submitted' }))
+    const service = new WasteObligationsApiService({
+      baseUrl: 'http://localhost:8080',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    await service.getComplianceDeclaration(
+      { organisationId: 'org-abc', id: 'decl-1' },
+      'trace-2'
+    )
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:8080/organisations/org-abc/compliance-declarations/decl-1',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({ 'x-cdp-request-id': 'trace-2' })
+      })
+    )
+  })
+
   test('createWasteObligationsApiService creates service instance', () => {
     const service = createWasteObligationsApiService({
       baseUrl: 'http://localhost:8080',
