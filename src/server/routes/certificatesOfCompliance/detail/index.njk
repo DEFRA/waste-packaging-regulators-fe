@@ -1,0 +1,175 @@
+{% extends 'layouts/page.njk' %}
+{% from "status-tag/macro.njk" import appStatusTag %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <span class="govuk-caption-l govuk-!-margin-bottom-2">{{ complianceYear }} certificate of compliance</span>
+      <h1 class="govuk-heading-xl govuk-!-margin-bottom-4">{{ companyName }}</h1>
+
+      <div class="govuk-inset-text govuk-!-margin-top-0 govuk-!-margin-bottom-6">
+        <p class="govuk-body">The information on this certificate was correct at the time of submission.</p>
+      </div>
+
+      <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds">
+          <dl class="govuk-summary-list">
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Recycling obligations</dt>
+              <dd class="govuk-summary-list__value">
+                {{ appStatusTag({ value: recyclingObligationsMet, trueText: 'Met', falseText: 'Not met' }) }}
+              </dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Submitted on</dt>
+              <dd class="govuk-summary-list__value">{{ dateDeclarationSubmitted }}</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
+      <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds">
+          <dl class="govuk-summary-list govuk-!-margin-bottom-0">
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Organisation type</dt>
+              <dd class="govuk-summary-list__value">{{ organisationType }}</dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Organisation ID</dt>
+              <dd class="govuk-summary-list__value">{{ organisationRef }}</dd>
+            </div>
+            {# TODO: companiesHouseNumber, nameOnAccount, declarationEmailAddress, companyPhoneNumber — to come from a separate organisations API call #}
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Company number</dt>
+              <dd class="govuk-summary-list__value">
+                {{ companiesHouseNumber }}<br>
+                <a href="https://find-and-update.company-information.service.gov.uk/company/{{ companiesHouseNumber }}" class="govuk-link govuk-link--no-visited-state" target="_blank" rel="noopener noreferrer">View on Companies House<span class="govuk-visually-hidden"> (opens in new tab)</span></a>
+              </dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Name on account</dt>
+              <dd class="govuk-summary-list__value">{{ nameOnAccount }}</dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Email address</dt>
+              <dd class="govuk-summary-list__value">{{ declarationEmailAddress }}</dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Phone number</dt>
+              <dd class="govuk-summary-list__value">{{ companyPhoneNumber }}</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
+      <hr class="govuk-section-break govuk-section-break--l">
+      <hr class="govuk-section-break govuk-section-break--l">
+
+      <h2 class="govuk-heading-m govuk-!-margin-bottom-2">Declaration</h2>
+      <p class="govuk-body">{{ declarationSignedBy }} signed the declaration to verify that:</p>
+      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+        <li>they are an approved or delegated person who is eligible to submit this certificate of compliance on behalf of {{ companyName }}</li>
+        <li>the information they submitted is accurate</li>
+        <li>they understand that they may face enforcement action if they submit false or misleading information</li>
+      </ul>
+
+      <hr class="govuk-section-break govuk-section-break--l">
+
+      <h2 class="govuk-heading-m">Recycling obligations</h2>
+      <p class="govuk-body-m govuk-!-margin-bottom-3">All values are in tonnes.</p>
+
+      <table class="govuk-table">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th scope="col" class="govuk-table__header">Material</th>
+            <th scope="col" class="govuk-table__header govuk-table__header--numeric">Recycling obligations to meet</th>
+            <th scope="col" class="govuk-table__header govuk-table__header--numeric">Tonnage awaiting acceptance</th>
+            <th scope="col" class="govuk-table__header govuk-table__header--numeric">Tonnage accepted</th>
+            <th scope="col" class="govuk-table__header govuk-table__header--numeric">Tonnage outstanding</th>
+            <th scope="col" class="govuk-table__header">Status</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for material in materials %}
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">{{ material.name }}</td>
+              <td class="govuk-table__cell govuk-table__cell--numeric">{{ material.obligationToMeet }}</td>
+              <td class="govuk-table__cell govuk-table__cell--numeric">{{ material.awaitingAcceptance }}</td>
+              <td class="govuk-table__cell govuk-table__cell--numeric">{{ material.accepted }}</td>
+              <td class="govuk-table__cell govuk-table__cell--numeric">{{ material.outstanding }}</td>
+              <td class="govuk-table__cell">
+                {{ appStatusTag({ value: material.met, trueText: 'Met', falseText: 'Not met' }) }}
+              </td>
+            </tr>
+          {% endfor %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell govuk-!-font-weight-bold">Totals</td>
+            <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.obligationToMeet }}</td>
+            <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.awaitingAcceptance }}</td>
+            <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.accepted }}</td>
+            <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.outstanding }}</td>
+            <td class="govuk-table__cell">
+              {{ appStatusTag({ value: materialTotals.met, trueText: 'Met', falseText: 'Not met' }) }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 class="govuk-heading-s govuk-!-margin-top-8">Glass recycling obligation breakdown</h3>
+
+      <table class="govuk-table">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th scope="col" class="govuk-table__header">Material</th>
+            <th scope="col" class="govuk-table__header govuk-table__header--numeric">Recycling obligations to meet</th>
+            <th scope="col" class="govuk-table__header govuk-table__header--numeric">Tonnage awaiting acceptance</th>
+            <th scope="col" class="govuk-table__header govuk-table__header--numeric">Tonnage accepted</th>
+            <th scope="col" class="govuk-table__header govuk-table__header--numeric">Tonnage outstanding</th>
+            <th scope="col" class="govuk-table__header">Status</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for row in glassBreakdown %}
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">{{ row.name }}</td>
+              <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.obligationToMeet }}</td>
+              <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.awaitingAcceptance }}</td>
+              <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.accepted }}</td>
+              <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.outstanding }}</td>
+              <td class="govuk-table__cell">
+                {{ appStatusTag({ value: row.met, trueText: 'Met', falseText: 'Not met' }) }}
+              </td>
+            </tr>
+          {% endfor %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell govuk-!-font-weight-bold">Totals</td>
+            <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.obligationToMeet }}</td>
+            <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.awaitingAcceptance }}</td>
+            <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.accepted }}</td>
+            <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.outstanding }}</td>
+            <td class="govuk-table__cell">
+              {{ appStatusTag({ value: glassBreakdownTotals.met, trueText: 'Met', falseText: 'Not met' }) }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr class="govuk-section-break govuk-section-break--l">
+
+      <h2 class="govuk-heading-m">Current year</h2>
+      <p class="govuk-body">No data</p>
+
+      <hr class="govuk-section-break govuk-section-break--l">
+
+      <div class="govuk-button-group">
+        <a href="#" role="button" draggable="false" class="govuk-button" data-module="govuk-button">
+          Accept certificate
+        </a>
+        <a href="#" role="button" draggable="false" class="govuk-button govuk-button--secondary" data-module="govuk-button">
+          Cancel certificate
+        </a>
+      </div>
+    </div>
+  </div>
+{% endblock %}
