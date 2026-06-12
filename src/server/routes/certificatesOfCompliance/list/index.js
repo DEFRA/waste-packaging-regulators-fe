@@ -1,6 +1,6 @@
 import { certificatesOfComplianceController } from './controller.js'
 
-export const certificatesOfCompliance = {
+export const certificatesOfComplianceList = {
   plugin: {
     name: 'certificatesOfCompliance',
     register(server) {

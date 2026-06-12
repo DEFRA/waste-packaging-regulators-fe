@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 
-import { Engine as CatboxRedis } from '@hapi/catbox-redis'
+import CatboxRedis from '@hapi/catbox-redis'
 import { Engine as CatboxMemory } from '@hapi/catbox-memory'
 
 import { getCacheEngine } from './cache-engine.js'
