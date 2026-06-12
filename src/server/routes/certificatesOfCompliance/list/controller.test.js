@@ -179,10 +179,14 @@ describe('#certificatesOfComplianceController', () => {
         )
       )
       expect(result).toEqual(expect.stringContaining('not submitted'))
-      mockNotSubmittedItems.forEach(({ organisationName, organisationReferenceNumber }) => {
-        expect(result).toEqual(expect.stringContaining(organisationName))
-        expect(result).toEqual(expect.stringContaining(organisationReferenceNumber))
-      })
+      mockNotSubmittedItems.forEach(
+        ({ organisationName, organisationReferenceNumber }) => {
+          expect(result).toEqual(expect.stringContaining(organisationName))
+          expect(result).toEqual(
+            expect.stringContaining(organisationReferenceNumber)
+          )
+        }
+      )
     })
 
     test('Should not render other tab panels when a specific tab is active', async () => {
