@@ -1,4 +1,4 @@
-import { Engine as CatboxRedis } from '@hapi/catbox-redis'
+import CatboxRedis from '@hapi/catbox-redis'
 import { Engine as CatboxMemory } from '@hapi/catbox-memory'
 
 import { createLogger } from '../logging/logger.js'
