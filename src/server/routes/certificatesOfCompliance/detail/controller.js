@@ -4,12 +4,12 @@ import {
   getDeclarationSessionKey,
   readAndClearCertificateActionBannerFlags
 } from '../certificates-of-compliance.service.js'
+import { redirectToSignIn } from './actions-controller.js'
 
 export const certificatesOfComplianceDetailController = {
   async handler(request, h) {
     if (!request.yar.get('user')) {
-      request.yar.set('returnTo', request.url.pathname + request.url.search)
-      return h.redirect('/signin-oidc')
+      return redirectToSignIn(request, h)
     }
 
     const { organisationId, id } = request.params
