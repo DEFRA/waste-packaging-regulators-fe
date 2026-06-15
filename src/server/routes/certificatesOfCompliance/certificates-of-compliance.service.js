@@ -3,11 +3,9 @@ import { createWasteObligationsApiService } from '#/services/waste-obligations-a
 import { createWasteOrganisationsApiService } from '#/services/waste-organisations-api.service.js'
 import {
   mockSummary,
-  mockListByTab,
-  mockDetailData,
-  mockAcceptedItems,
-  mockQueriedDetailData,
-  mockCancelledDetailData
+  mockSummaryByOrganisationType,
+  mockListByOrganisationType,
+  getMockDetailDataById
 } from './certificates-of-compliance.mock.js'
 
 export {
@@ -15,7 +13,10 @@ export {
   mockDetailData,
   mockPendingItems,
   mockAcceptedItems,
-  mockNotSubmittedItems
+  mockNotSubmittedItems,
+  mockComplianceSchemePendingItems,
+  mockComplianceSchemeAcceptedItems,
+  mockComplianceSchemeDetailData
 } from './certificates-of-compliance.mock.js'
 
 // --- Response mapping ---
@@ -108,7 +109,7 @@ async function getComplianceSummary(
   traceId
 ) {
   if (config.get('useMockApi')) {
-    return mockSummary
+    return mockSummaryByOrganisationType[organisationType] ?? mockSummary
   }
 
   const registrationType = registrationTypeByOrganisationType[organisationType]
@@ -131,7 +132,7 @@ async function getComplianceSummary(
   )
 
   return {
-    // TODO: confirm where complianceYear comes from
+    // Real API does not yet expose compliance year; use mock default until available
     complianceYear: mockSummary.complianceYear,
     totalPending: pendingResult.total,
     totalAccepted: acceptedResult.total,
@@ -151,8 +152,9 @@ async function getComplianceList(
   traceId
 ) {
   if (config.get('useMockApi')) {
+    const listByTab = mockListByOrganisationType[organisationType] ?? {}
     return {
-      items: mockListByTab[tab] ?? [],
+      items: listByTab[tab] ?? [],
       totalPages: 6,
       currentPage: page
     }
@@ -550,7 +552,7 @@ function mapDeclarationToDetail(data, { organisationId, id } = {}) {
       organisation.registrationType,
     registrationType: organisation.registrationType,
     organisationRef: organisation.referenceNumber,
-    // TODO: these will come from the account API call
+    // Contact fields are on the organisation object from the obligations API response
     companiesHouseNumber: organisation.companiesHouseNumber ?? null,
     nameOnAccount: organisation.nameOnAccount ?? null,
     declarationEmailAddress: organisation.contactEmailAddress ?? null,
@@ -568,19 +570,6 @@ function mapDeclarationToDetail(data, { organisationId, id } = {}) {
         ? mapCancellationDetails(data.cancellationDetails)
         : null
   }
-}
-
-function getMockDetailDataById(id) {
-  if (id === mockQueriedDetailData.id) {
-    return mockQueriedDetailData
-  }
-  if (id === mockCancelledDetailData.id) {
-    return mockCancelledDetailData
-  }
-  if (mockAcceptedItems.some((item) => item.id === id)) {
-    return { ...mockDetailData, id, status: 'Accepted' }
-  }
-  return { ...mockDetailData, id }
 }
 
 // --- Detail API call ---

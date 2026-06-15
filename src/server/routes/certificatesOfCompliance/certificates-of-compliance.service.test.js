@@ -29,9 +29,12 @@ import {
   mockPendingItems,
   mockAcceptedItems,
   mockNotSubmittedItems,
-  mockDetailData
+  mockDetailData,
+  mockComplianceSchemePendingItems,
+  mockComplianceSchemeDetailData
 } from './certificates-of-compliance.service.js'
 import {
+  mockSummaryByOrganisationType,
   mockQueriedDetailData,
   mockCancelledDetailData
 } from './certificates-of-compliance.mock.js'
@@ -119,6 +122,30 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.items).toEqual(mockNotSubmittedItems)
     })
 
+    test('returns compliance-schemes mock summary data', async () => {
+      const vm = await getCertificatesOfComplianceViewModel(
+        'compliance-schemes',
+        'pending',
+        1
+      )
+      expect(vm.totalPending).toBe(
+        mockSummaryByOrganisationType['compliance-schemes'].totalPending
+      )
+      expect(vm.totalAccepted).toBe(
+        mockSummaryByOrganisationType['compliance-schemes'].totalAccepted
+      )
+    })
+
+    test('returns compliance-schemes mock pending items', async () => {
+      const vm = await getCertificatesOfComplianceViewModel(
+        'compliance-schemes',
+        'pending',
+        1
+      )
+      expect(vm.items[0].organisationName).toBe('EcoPack Compliance Ltd')
+      expect(vm.items[0].regulation43Met).toBe(false)
+    })
+
     test('returns empty array for unknown tab', async () => {
       const vm = await getCertificatesOfComplianceViewModel(
         'direct-producers',
@@ -152,6 +179,22 @@ describe('getCertificatesOfComplianceViewModel', () => {
         }
       })
       expect(vm.successBanner).toBeNull()
+    })
+
+    test('getCertificateOfComplianceDetailViewModel returns compliance-schemes mock detail', async () => {
+      const item = mockComplianceSchemePendingItems[0]
+      const vm = await getCertificateOfComplianceDetailViewModel(
+        item.organisationId,
+        item.id
+      )
+      expect(vm.companyName).toBe(
+        mockComplianceSchemeDetailData.organisation.complianceSchemeName
+      )
+      expect(vm.organisationType).toBe('Compliance scheme')
+      expect(vm.actions.labels).toEqual({
+        accept: 'Accept statement',
+        cancel: 'Cancel statement'
+      })
     })
 
     test('getCertificateOfComplianceDetailViewModel returns success banner when flagged', async () => {
