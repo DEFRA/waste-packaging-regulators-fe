@@ -159,11 +159,12 @@ describe('certificates of compliance — journey', () => {
       expect(response.payload).toContain('Cancel certificate')
     })
 
-    it('Accept certificate button is present for an accepted item', async () => {
+    it('does not show action buttons for an accepted item', async () => {
       const response = await inject(detailPathFor(mockAcceptedItems[0]))
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).toContain('Accept certificate')
+      expect(response.payload).not.toContain('Accept certificate')
+      expect(response.payload).not.toContain('/approve')
     })
 
     it('Accept certificate button links to the accept confirmation page', async () => {
