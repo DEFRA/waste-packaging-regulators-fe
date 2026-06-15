@@ -1,5 +1,9 @@
 import { config } from '#/config/config.js'
-import { getCertificateOfComplianceDetailViewModel } from '../certificates-of-compliance.service.js'
+import {
+  getCertificateOfComplianceDetailViewModel,
+  getDeclarationSessionKey,
+  readAndClearCertificateActionBannerFlags
+} from '../certificates-of-compliance.service.js'
 
 export const certificatesOfComplianceDetailController = {
   async handler(request, h) {
@@ -10,20 +14,19 @@ export const certificatesOfComplianceDetailController = {
 
     const { organisationId, id } = request.params
     const traceId = request.headers[config.get('tracing.header')]
+    const declarationKey = getDeclarationSessionKey(organisationId, id)
+    const bannerFlags = readAndClearCertificateActionBannerFlags(
+      request.yar,
+      declarationKey
+    )
 
     const viewModel = await getCertificateOfComplianceDetailViewModel(
       organisationId,
       id,
-      traceId
+      traceId,
+      bannerFlags
     )
 
-    const acceptSuccess = request.yar.flash('acceptSuccess').length > 0
-
-    return h.view('certificatesOfCompliance/detail/index', {
-      ...viewModel,
-      organisationId,
-      id,
-      acceptSuccess
-    })
+    return h.view('certificatesOfCompliance/detail/index', viewModel)
   }
 }

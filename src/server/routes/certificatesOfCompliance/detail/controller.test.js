@@ -132,4 +132,24 @@ describe('#certificatesOfComplianceDetailController', () => {
     const occurrences = (response.payload.match(/Totals/g) ?? []).length
     expect(occurrences).toBeGreaterThanOrEqual(2)
   })
+
+  it('should render action buttons for a pending certificate', async () => {
+    const response = await inject('/org-123/certificates-of-compliance/101411')
+    expect(response.payload).toContain('Accept certificate')
+    expect(response.payload).toContain('Cancel certificate')
+    expect(response.payload).toContain(
+      '/org-123/certificates-of-compliance/101411/approve'
+    )
+    expect(response.payload).toContain(
+      '/org-123/certificates-of-compliance/101411/cancel'
+    )
+  })
+
+  it('should not render action buttons for an accepted certificate', async () => {
+    const response = await inject(
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-309145'
+    )
+    expect(response.payload).not.toContain('/approve')
+    expect(response.payload).not.toContain('Accept certificate')
+  })
 })

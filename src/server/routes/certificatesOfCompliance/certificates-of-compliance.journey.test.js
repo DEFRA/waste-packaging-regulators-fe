@@ -167,88 +167,49 @@ describe('certificates of compliance — journey', () => {
       expect(response.payload).not.toContain('/approve')
     })
 
-    it('Accept certificate button links to the accept confirmation page', async () => {
+    it('approve flow redirects to detail with accepted banner', async () => {
       const item = mockPendingItems[0]
-      const response = await inject(detailPathFor(item))
-
-      expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).toContain(`href="${detailPathFor(item)}/accept"`)
-    })
-  })
-
-  describe('accept journey', () => {
-    const pathFor = (item) => `${detailPathFor(item)}/accept`
-
-    const nextCookie = (response, fallback) =>
-      response.headers['set-cookie']?.[0]?.split(';')[0] ?? fallback
-
-    const postAccept = (item, choice, cookie) =>
-      server.inject({
-        method: 'POST',
-        url: pathFor(item),
-        payload: `confirm-accept=${choice}`,
-        headers: {
-          cookie,
-          'content-type': 'application/x-www-form-urlencoded'
-        }
+      const approveResponse = await server.inject({
+        method: 'GET',
+        url: `${detailPathFor(item)}/approve`,
+        headers: { cookie: sessionCookie }
       })
 
-    it('GET accept renders the confirmation form with the organisation name', async () => {
-      const item = mockPendingItems[0]
-      const response = await inject(pathFor(item))
-
-      expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).toContain(mockDetailData.organisation.name)
-      expect(response.payload).toContain('confirm-accept')
-    })
-
-    it('choosing "no" returns to the detail page without the success banner', async () => {
-      const item = mockPendingItems[0]
-      const postResponse = await postAccept(item, 'no', sessionCookie)
-      expect(postResponse.statusCode).toBe(302)
-      expect(postResponse.headers.location).toBe(detailPathFor(item))
+      expect(approveResponse.statusCode).toBe(302)
+      expect(approveResponse.headers.location).toBe(detailPathFor(item))
 
       const detailResponse = await server.inject({
         method: 'GET',
         url: detailPathFor(item),
-        headers: { cookie: nextCookie(postResponse, sessionCookie) }
+        headers: {
+          cookie: mergeCookiesFromResponse(sessionCookie, approveResponse)
+        }
       })
-      expect(detailResponse.statusCode).toBe(statusCodes.ok)
-      expect(detailResponse.payload).not.toContain(
-        'Certificate has been accepted.'
-      )
-    })
 
-    it('choosing "yes" returns to the detail page with a one-shot success banner', async () => {
-      const item = mockPendingItems[0]
-      const postResponse = await postAccept(item, 'yes', sessionCookie)
-      expect(postResponse.statusCode).toBe(302)
-      expect(postResponse.headers.location).toBe(detailPathFor(item))
-
-      const cookieAfterPost = nextCookie(postResponse, sessionCookie)
-      const firstView = await server.inject({
-        method: 'GET',
-        url: detailPathFor(item),
-        headers: { cookie: cookieAfterPost }
-      })
-      expect(firstView.payload).toContain('Certificate accepted')
-      expect(firstView.payload).toContain('Certificate has been accepted.')
-
-      const secondView = await server.inject({
-        method: 'GET',
-        url: detailPathFor(item),
-        headers: { cookie: nextCookie(firstView, cookieAfterPost) }
-      })
-      expect(secondView.payload).not.toContain('Certificate has been accepted.')
-    })
-
-    it('submitting without a choice re-renders the form with an error summary', async () => {
-      const item = mockPendingItems[0]
-      const response = await postAccept(item, '', sessionCookie)
-
-      expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).toContain('There is a problem')
-      expect(response.payload).toContain('Select yes or no')
+      expect(detailResponse.payload).toContain('Certificate accepted')
     })
   })
 })
+
+function mergeCookiesFromResponse(cookie, response) {
+  const setCookie = response.headers['set-cookie']
+  if (!setCookie) {
+    return cookie
+  }
+
+  const cookies = Object.fromEntries(
+    cookie.split('; ').map((entry) => {
+      const [name, ...value] = entry.split('=')
+      return [name, value.join('=')]
+    })
+  )
+
+  for (const entry of setCookie) {
+    const [name, ...value] = entry.split(';')[0].split('=')
+    cookies[name] = value.join('=')
+  }
+
+  return Object.entries(cookies)
+    .map(([name, value]) => `${name}=${value}`)
+    .join('; ')
+}
