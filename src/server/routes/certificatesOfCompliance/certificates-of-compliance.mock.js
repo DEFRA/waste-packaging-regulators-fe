@@ -197,3 +197,25 @@ export const mockDetailData = {
   isRegulation43Compliant: true,
   audit: []
 }
+
+export const mockQueriedDetailData = {
+  ...mockDetailData,
+  id: 'decl-queried',
+  status: 'Queried',
+  queryDetails: {
+    queriedMaterials: 'Plastic, Steel',
+    reason: 'Tonnage figures do not match submitted evidence.',
+    dateQueried: '2026-03-17T00:00:00Z'
+  }
+}
+
+export const mockCancelledDetailData = {
+  ...mockDetailData,
+  id: 'decl-cancelled',
+  status: 'Cancelled',
+  cancellationDetails: {
+    reason: 'Submitted after the deadline.',
+    resubmissionRequested: true,
+    dateCancelled: '2026-03-10T00:00:00Z'
+  }
+}

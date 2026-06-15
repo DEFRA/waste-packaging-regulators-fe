@@ -18,12 +18,21 @@ import { createWasteOrganisationsApiService } from '#/services/waste-organisatio
 import {
   getCertificatesOfComplianceViewModel,
   getCertificateOfComplianceDetailViewModel,
+  buildCertificateDetailActions,
+  buildCertificateSuccessBanner,
+  mapDeclarationStatusToReviewStatus,
+  readAndClearCertificateActionBannerFlags,
+  certificateActionSessionKeys,
   mockSummary,
   mockPendingItems,
   mockAcceptedItems,
   mockNotSubmittedItems,
   mockDetailData
 } from './certificates-of-compliance.service.js'
+import {
+  mockQueriedDetailData,
+  mockCancelledDetailData
+} from './certificates-of-compliance.mock.js'
 
 const makeDeclaration = ({
   organisation: orgOverrides = {},
@@ -127,6 +136,37 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.declarationSignedBy).toBe(mockDetailData.submitterName)
       expect(vm.heading).toBe('Certificate of compliance')
       expect(vm.backlink).toBe('/certificates-of-compliance')
+      expect(vm.reviewStatus).toBe('Pending')
+      expect(vm.actions).toMatchObject({
+        showAccept: true,
+        showCancel: true,
+        labels: {
+          accept: 'Accept certificate',
+          cancel: 'Cancel certificate'
+        },
+        urls: {
+          accept: '/org-abc/certificates-of-compliance/decl-1/approve',
+          cancel: '/org-abc/certificates-of-compliance/decl-1/cancel'
+        }
+      })
+      expect(vm.successBanner).toBeNull()
+    })
+
+    test('getCertificateOfComplianceDetailViewModel returns success banner when flagged', async () => {
+      const vm = await getCertificateOfComplianceDetailViewModel(
+        'org-abc',
+        'decl-1',
+        undefined,
+        {
+          showApprovalBanner: true,
+          showQueryBanner: false,
+          showCancelBanner: false
+        }
+      )
+      expect(vm.successBanner).toEqual({
+        heading: 'Certificate accepted',
+        text: 'Certificate has been accepted.'
+      })
     })
   })
 
@@ -990,6 +1030,73 @@ describe('getCertificatesOfComplianceViewModel', () => {
           mockDetailData.obligations[0].material
         )
       })
+
+      test('maps Accepted status to Approved review status with no action buttons', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue({
+            ...mockDetailData,
+            status: 'Accepted'
+          })
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.reviewStatus).toBe('Approved')
+        expect(vm.actions).toMatchObject({
+          showAccept: false,
+          showCancel: false
+        })
+      })
+
+      test('maps Queried status with query details', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi
+            .fn()
+            .mockResolvedValue(mockQueriedDetailData)
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-queried'
+        )
+
+        expect(vm.reviewStatus).toBe('Queried')
+        expect(vm.actions).toMatchObject({
+          showAccept: true,
+          showCancel: true
+        })
+        expect(vm.queryDetails).toEqual({
+          queriedMaterials: mockQueriedDetailData.queryDetails.queriedMaterials,
+          reason: mockQueriedDetailData.queryDetails.reason,
+          dateQueried: '17 March 2026'
+        })
+      })
+
+      test('maps Cancelled status with cancellation details', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi
+            .fn()
+            .mockResolvedValue(mockCancelledDetailData)
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-cancelled'
+        )
+
+        expect(vm.reviewStatus).toBe('Cancelled')
+        expect(vm.cancellationDetails).toEqual({
+          reason: mockCancelledDetailData.cancellationDetails.reason,
+          resubmissionRequested: 'Yes',
+          dateCancelled: '10 March 2026'
+        })
+      })
     })
 
     describe('mapOrganisationToItem', () => {
@@ -1112,5 +1219,180 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.items[0].id).toBe('CH12345678')
       })
     })
+  })
+})
+
+describe('certificate detail action helpers', () => {
+  test('mapDeclarationStatusToReviewStatus maps known statuses', () => {
+    expect(mapDeclarationStatusToReviewStatus('Submitted')).toBe('Pending')
+    expect(mapDeclarationStatusToReviewStatus('Accepted')).toBe('Approved')
+    expect(mapDeclarationStatusToReviewStatus('Queried')).toBe('Queried')
+    expect(mapDeclarationStatusToReviewStatus('Cancelled')).toBe('Cancelled')
+    expect(mapDeclarationStatusToReviewStatus('Unknown')).toBe('Pending')
+  })
+
+  test('buildCertificateDetailActions shows buttons by review status', () => {
+    expect(
+      buildCertificateDetailActions(
+        'Pending',
+        'org-1',
+        'decl-1',
+        'DirectProducer'
+      )
+    ).toEqual({
+      showAccept: true,
+      showCancel: true,
+      labels: {
+        accept: 'Accept certificate',
+        cancel: 'Cancel certificate'
+      },
+      urls: {
+        accept: '/org-1/certificates-of-compliance/decl-1/approve',
+        cancel: '/org-1/certificates-of-compliance/decl-1/cancel'
+      }
+    })
+    expect(
+      buildCertificateDetailActions(
+        'Queried',
+        'org-1',
+        'decl-1',
+        'DirectProducer'
+      )
+    ).toMatchObject({
+      showAccept: true,
+      showCancel: true
+    })
+    expect(
+      buildCertificateDetailActions(
+        'Approved',
+        'org-1',
+        'decl-1',
+        'DirectProducer'
+      )
+    ).toMatchObject({
+      showAccept: false,
+      showCancel: false
+    })
+  })
+
+  test('buildCertificateDetailActions uses statement labels for compliance schemes', () => {
+    expect(
+      buildCertificateDetailActions(
+        'Pending',
+        'org-1',
+        'decl-1',
+        'ComplianceScheme'
+      ).labels
+    ).toEqual({
+      accept: 'Accept statement',
+      cancel: 'Cancel statement'
+    })
+  })
+
+  test('buildCertificateSuccessBanner returns copy by registration type', () => {
+    expect(
+      buildCertificateSuccessBanner(
+        {
+          showApprovalBanner: true,
+          showQueryBanner: false,
+          showCancelBanner: false
+        },
+        'DirectProducer'
+      )
+    ).toEqual({
+      heading: 'Certificate accepted',
+      text: 'Certificate has been accepted.'
+    })
+    expect(
+      buildCertificateSuccessBanner(
+        {
+          showApprovalBanner: false,
+          showQueryBanner: false,
+          showCancelBanner: true
+        },
+        'DirectProducer'
+      )
+    ).toEqual({
+      heading: 'Certificate cancelled',
+      text: 'Certificate has been cancelled and an email sent to the producer.'
+    })
+    expect(
+      buildCertificateSuccessBanner(
+        {
+          showApprovalBanner: true,
+          showQueryBanner: false,
+          showCancelBanner: false
+        },
+        'ComplianceScheme'
+      )
+    ).toEqual({
+      heading: 'Statement accepted',
+      text: 'Statement has been accepted.'
+    })
+    expect(
+      buildCertificateSuccessBanner(
+        {
+          showApprovalBanner: false,
+          showQueryBanner: false,
+          showCancelBanner: true
+        },
+        'ComplianceScheme'
+      )
+    ).toEqual({
+      heading: 'Statement cancelled',
+      text: 'Statement has been cancelled and an email sent to the compliance scheme.'
+    })
+    expect(
+      buildCertificateSuccessBanner(
+        {
+          showApprovalBanner: false,
+          showQueryBanner: true,
+          showCancelBanner: false
+        },
+        'DirectProducer'
+      )
+    ).toBeNull()
+    expect(
+      buildCertificateSuccessBanner(
+        {
+          showApprovalBanner: false,
+          showQueryBanner: false,
+          showCancelBanner: false
+        },
+        'DirectProducer'
+      )
+    ).toBeNull()
+  })
+
+  test('readAndClearCertificateActionBannerFlags reads and clears session keys', () => {
+    const session = {
+      data: {
+        [certificateActionSessionKeys.justApproved]: 'org-1/decl-1',
+        [certificateActionSessionKeys.justCancelled]: 'org-1/decl-2'
+      },
+      get(key) {
+        return this.data[key]
+      },
+      clear(key) {
+        delete this.data[key]
+      }
+    }
+
+    const flags = readAndClearCertificateActionBannerFlags(
+      session,
+      'org-1/decl-1'
+    )
+
+    expect(flags).toEqual({
+      showApprovalBanner: true,
+      showQueryBanner: false,
+      showCancelBanner: false
+    })
+    expect(
+      session.data[certificateActionSessionKeys.justApproved]
+    ).toBeUndefined()
+    expect(session.data[certificateActionSessionKeys.justCancelled]).toBe(
+      'org-1/decl-2'
+    )
   })
 })

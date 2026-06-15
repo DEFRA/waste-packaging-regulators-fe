@@ -4,7 +4,10 @@ import { createWasteOrganisationsApiService } from '#/services/waste-organisatio
 import {
   mockSummary,
   mockListByTab,
-  mockDetailData
+  mockDetailData,
+  mockAcceptedItems,
+  mockQueriedDetailData,
+  mockCancelledDetailData
 } from './certificates-of-compliance.mock.js'
 
 export {
@@ -266,6 +269,137 @@ const organisationTypeDisplayNames = {
   ComplianceScheme: 'Compliance scheme'
 }
 
+const certificateActionLabelsByRegistrationType = {
+  DirectProducer: {
+    accept: 'Accept certificate',
+    cancel: 'Cancel certificate'
+  },
+  ComplianceScheme: {
+    accept: 'Accept statement',
+    cancel: 'Cancel statement'
+  }
+}
+
+const certificateSuccessBannerCopyByRegistrationType = {
+  DirectProducer: {
+    accepted: {
+      heading: 'Certificate accepted',
+      text: 'Certificate has been accepted.'
+    },
+    cancelled: {
+      heading: 'Certificate cancelled',
+      text: 'Certificate has been cancelled and an email sent to the producer.'
+    }
+  },
+  ComplianceScheme: {
+    accepted: {
+      heading: 'Statement accepted',
+      text: 'Statement has been accepted.'
+    },
+    cancelled: {
+      heading: 'Statement cancelled',
+      text: 'Statement has been cancelled and an email sent to the compliance scheme.'
+    }
+  }
+}
+
+const reviewStatusByDeclarationStatus = {
+  Submitted: 'Pending',
+  Accepted: 'Approved',
+  Queried: 'Queried',
+  Cancelled: 'Cancelled'
+}
+
+export function mapDeclarationStatusToReviewStatus(status) {
+  return reviewStatusByDeclarationStatus[status] ?? 'Pending'
+}
+
+export function buildCertificateDetailActionUrls(organisationId, id) {
+  const base = `/${organisationId}/certificates-of-compliance/${id}`
+  return {
+    approve: `${base}/approve`,
+    query: `${base}/query`,
+    cancel: `${base}/cancel`
+  }
+}
+
+export function buildCertificateDetailActions(
+  reviewStatus,
+  organisationId,
+  id,
+  registrationType
+) {
+  const urls = buildCertificateDetailActionUrls(organisationId, id)
+  const labels =
+    certificateActionLabelsByRegistrationType[registrationType] ??
+    certificateActionLabelsByRegistrationType.DirectProducer
+  const showActions = reviewStatus === 'Pending' || reviewStatus === 'Queried'
+
+  return {
+    showAccept: showActions,
+    showCancel: showActions,
+    labels,
+    urls: {
+      accept: urls.approve,
+      cancel: urls.cancel
+    }
+  }
+}
+
+export function buildCertificateSuccessBanner(
+  { showApprovalBanner, showQueryBanner, showCancelBanner },
+  registrationType
+) {
+  const copyByType =
+    certificateSuccessBannerCopyByRegistrationType[registrationType] ??
+    certificateSuccessBannerCopyByRegistrationType.DirectProducer
+
+  if (showApprovalBanner) {
+    return copyByType.accepted
+  }
+  if (showCancelBanner) {
+    return copyByType.cancelled
+  }
+  if (showQueryBanner) {
+    return null
+  }
+  return null
+}
+
+export function getDeclarationSessionKey(organisationId, id) {
+  return `${organisationId}/${id}`
+}
+
+export const certificateActionSessionKeys = {
+  justApproved: 'coc-just-approved',
+  justQueried: 'coc-just-queried',
+  justCancelled: 'coc-just-cancelled'
+}
+
+export function readAndClearCertificateActionBannerFlags(
+  session,
+  declarationKey
+) {
+  const showApprovalBanner =
+    session.get(certificateActionSessionKeys.justApproved) === declarationKey
+  const showQueryBanner =
+    session.get(certificateActionSessionKeys.justQueried) === declarationKey
+  const showCancelBanner =
+    session.get(certificateActionSessionKeys.justCancelled) === declarationKey
+
+  if (showApprovalBanner) {
+    session.clear(certificateActionSessionKeys.justApproved)
+  }
+  if (showQueryBanner) {
+    session.clear(certificateActionSessionKeys.justQueried)
+  }
+  if (showCancelBanner) {
+    session.clear(certificateActionSessionKeys.justCancelled)
+  }
+
+  return { showApprovalBanner, showQueryBanner, showCancelBanner }
+}
+
 const GLASS_BREAKDOWN_MATERIALS = new Set(['GlassRemelt', 'RemainingGlass'])
 
 function formatDate(isoString) {
@@ -298,15 +432,46 @@ function computeTotals(rows) {
   }
 }
 
-function mapDeclarationToDetail(data) {
+function mapQueryDetails(queryDetails) {
+  if (!queryDetails) return null
+  return {
+    queriedMaterials: queryDetails.queriedMaterials ?? null,
+    reason: queryDetails.reason ?? null,
+    dateQueried: formatDate(queryDetails.dateQueried ?? queryDetails.actionDate)
+  }
+}
+
+function mapCancellationDetails(cancellationDetails) {
+  if (!cancellationDetails) return null
+  const resubmission = cancellationDetails.resubmissionRequested
+  return {
+    reason: cancellationDetails.reason ?? null,
+    resubmissionRequested:
+      resubmission === true
+        ? 'Yes'
+        : resubmission === false
+          ? 'No'
+          : (cancellationDetails.resubmissionRequestedDisplay ?? null),
+    dateCancelled: formatDate(
+      cancellationDetails.dateCancelled ?? cancellationDetails.actionDate
+    )
+  }
+}
+
+function mapDeclarationToDetail(data, { organisationId, id } = {}) {
   const {
     organisation,
     obligationYear,
     obligations,
     obligationStatus,
     submitterName,
-    created
+    created,
+    status
   } = data
+
+  const reviewStatus = mapDeclarationStatusToReviewStatus(status)
+  const resolvedOrganisationId = organisationId ?? organisation?.id ?? null
+  const resolvedId = id ?? data.id ?? null
 
   const companyName =
     organisation.name ??
@@ -322,14 +487,33 @@ function mapDeclarationToDetail(data) {
     GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
   )
 
+  const actions =
+    resolvedOrganisationId && resolvedId
+      ? buildCertificateDetailActions(
+          reviewStatus,
+          resolvedOrganisationId,
+          resolvedId,
+          organisation.registrationType
+        )
+      : {
+          showAccept: false,
+          showCancel: false,
+          labels: certificateActionLabelsByRegistrationType.DirectProducer,
+          urls: { accept: '#', cancel: '#' }
+        }
+
   return {
+    organisationId: resolvedOrganisationId,
+    declarationId: resolvedId,
     complianceYear: String(obligationYear),
     companyName,
+    reviewStatus,
     recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
     dateDeclarationSubmitted: formatDate(created),
     organisationType:
       organisationTypeDisplayNames[organisation.registrationType] ??
       organisation.registrationType,
+    registrationType: organisation.registrationType,
     organisationRef: organisation.referenceNumber,
     // TODO: these will come from the account API call
     companiesHouseNumber: organisation.companiesHouseNumber ?? null,
@@ -340,8 +524,28 @@ function mapDeclarationToDetail(data) {
     materials,
     materialTotals: computeTotals(materials),
     glassBreakdown,
-    glassBreakdownTotals: computeTotals(glassBreakdown)
+    glassBreakdownTotals: computeTotals(glassBreakdown),
+    actions,
+    queryDetails:
+      reviewStatus === 'Queried' ? mapQueryDetails(data.queryDetails) : null,
+    cancellationDetails:
+      reviewStatus === 'Cancelled'
+        ? mapCancellationDetails(data.cancellationDetails)
+        : null
   }
+}
+
+function getMockDetailDataById(id) {
+  if (id === mockQueriedDetailData.id) {
+    return mockQueriedDetailData
+  }
+  if (id === mockCancelledDetailData.id) {
+    return mockCancelledDetailData
+  }
+  if (mockAcceptedItems.some((item) => item.id === id)) {
+    return { ...mockDetailData, id, status: 'Accepted' }
+  }
+  return { ...mockDetailData, id }
 }
 
 // --- Detail API call ---
@@ -353,14 +557,17 @@ async function getDeclarationDetail(
   traceId
 ) {
   if (config.get('useMockApi')) {
-    return mapDeclarationToDetail(mockDetailData)
+    return mapDeclarationToDetail(getMockDetailDataById(id), {
+      organisationId,
+      id
+    })
   }
 
   const data = await obligationsApi.getComplianceDeclaration(
     { id, organisationId },
     traceId
   )
-  return mapDeclarationToDetail(data)
+  return mapDeclarationToDetail(data, { organisationId, id })
 }
 
 // --- Detail page view model ---
@@ -368,7 +575,8 @@ async function getDeclarationDetail(
 export async function getCertificateOfComplianceDetailViewModel(
   organisationId,
   id,
-  traceId
+  traceId,
+  bannerFlags = {}
 ) {
   const apiWasteObligation = createWasteObligationsApiService()
 
@@ -382,6 +590,10 @@ export async function getCertificateOfComplianceDetailViewModel(
   return {
     heading: 'Certificate of compliance',
     backlink: '/certificates-of-compliance',
+    successBanner: buildCertificateSuccessBanner(
+      bannerFlags,
+      detail.registrationType
+    ),
     ...detail
   }
 }
