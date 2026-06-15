@@ -151,12 +151,13 @@ describe('certificates of compliance — journey', () => {
   })
 
   describe('detail page actions', () => {
-    it('shows Accept certificate and Cancel certificate buttons', async () => {
+    it('shows Accept and Cancel certificate buttons for a pending direct producer', async () => {
       const response = await inject(detailPathFor(mockPendingItems[0]))
 
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(response.payload).toContain('Accept certificate')
       expect(response.payload).toContain('Cancel certificate')
+      expect(response.payload).not.toContain('Query')
     })
 
     it('does not show action buttons for an accepted item', async () => {
@@ -187,6 +188,28 @@ describe('certificates of compliance — journey', () => {
       })
 
       expect(detailResponse.payload).toContain('Certificate accepted')
+    })
+
+    it('cancel flow redirects to detail with cancelled banner styling', async () => {
+      const item = mockPendingItems[0]
+      const cancelResponse = await server.inject({
+        method: 'GET',
+        url: `${detailPathFor(item)}/cancel`,
+        headers: { cookie: sessionCookie }
+      })
+
+      expect(cancelResponse.statusCode).toBe(302)
+      expect(cancelResponse.headers.location).toBe(detailPathFor(item))
+
+      const detailResponse = await server.inject({
+        method: 'GET',
+        url: detailPathFor(item),
+        headers: {
+          cookie: mergeCookiesFromResponse(sessionCookie, cancelResponse)
+        }
+      })
+
+      expect(detailResponse.payload).toContain('Certificate cancelled')
     })
   })
 })
