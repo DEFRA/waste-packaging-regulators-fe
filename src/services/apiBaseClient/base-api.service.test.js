@@ -228,6 +228,38 @@ describe('BaseApiService', () => {
     )
   })
 
+  test('patchJson sends PATCH with JSON body', async () => {
+    const updated = { id: 'decl-1', status: 'Accepted' }
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: {
+        get: vi.fn().mockReturnValue('application/json')
+      },
+      json: vi.fn().mockResolvedValue(updated)
+    })
+    const service = new BaseApiService({
+      baseUrl: 'http://localhost',
+      fetchImpl,
+      serviceName: 'upstream'
+    })
+
+    const body = { status: 'Accepted', user: { id: 'user-1', email: 'a@b.c' } }
+    const result = await service.patchJson('/resource/1', body, {})
+
+    expect(result).toEqual(updated)
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost/resource/1',
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify(body),
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json'
+        })
+      })
+    )
+  })
+
   test('getCachedJson returns null when cache read fails', async () => {
     const logger = { warn: vi.fn() }
     const cacheClient = {

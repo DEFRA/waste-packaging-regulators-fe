@@ -114,6 +114,18 @@ export class BaseApiService {
     return this.#readJsonBodyIfPresent(response)
   }
 
+  async patchJson(path, body, headers) {
+    const response = await this.#fetchResponse('PATCH', path, {
+      headers: {
+        ...this.getHeaders(headers),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body ?? {})
+    })
+
+    return this.#readJsonBodyIfPresent(response)
+  }
+
   async deleteJson(path, headers) {
     const response = await this.#fetchResponse('DELETE', path, {
       headers: this.getHeaders(headers)
