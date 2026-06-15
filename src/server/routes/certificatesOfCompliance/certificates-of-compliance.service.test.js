@@ -21,6 +21,8 @@ import {
   buildCertificateDetailActions,
   buildCertificateSuccessBanner,
   mapDeclarationStatusToReviewStatus,
+  mapSessionUserToApiUser,
+  approveComplianceDeclaration,
   readAndClearCertificateActionBannerFlags,
   certificateActionSessionKeys,
   mockSummary,
@@ -1394,5 +1396,61 @@ describe('certificate detail action helpers', () => {
     expect(session.data[certificateActionSessionKeys.justCancelled]).toBe(
       'org-1/decl-2'
     )
+  })
+
+  test('mapSessionUserToApiUser maps profile credentials', () => {
+    expect(
+      mapSessionUserToApiUser({
+        profile: { sub: 'user-123', email: 'regulator@example.com' }
+      })
+    ).toEqual({
+      id: 'user-123',
+      email: 'regulator@example.com'
+    })
+  })
+
+  test('mapSessionUserToApiUser falls back for mock auth', () => {
+    expect(mapSessionUserToApiUser({ user: 'mock-user' })).toEqual({
+      id: 'mock-user',
+      email: 'mock-user@test.local'
+    })
+  })
+
+  describe('approveComplianceDeclaration', () => {
+    test('skips API call when useMockApi is true', async () => {
+      config.get.mockReturnValue(true)
+
+      await approveComplianceDeclaration(
+        'org-1',
+        'decl-1',
+        { user: 'mock-user' },
+        'trace-1'
+      )
+
+      expect(createWasteObligationsApiService).not.toHaveBeenCalled()
+    })
+
+    test('calls updateComplianceDeclaration when useMockApi is false', async () => {
+      config.get.mockReturnValue(false)
+      const mockApi = { updateComplianceDeclaration: vi.fn() }
+      createWasteObligationsApiService.mockReturnValue(mockApi)
+
+      await approveComplianceDeclaration(
+        'org-1',
+        'decl-1',
+        { profile: { sub: 'user-1', email: 'user@example.com' } },
+        'trace-1'
+      )
+
+      expect(mockApi.updateComplianceDeclaration).toHaveBeenCalledWith(
+        {
+          organisationId: 'org-1',
+          id: 'decl-1',
+          status: 'Accepted',
+          user: { id: 'user-1', email: 'user@example.com' }
+        },
+        'trace-1'
+      )
+    })
   })
 })

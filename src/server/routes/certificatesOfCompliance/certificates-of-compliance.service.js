@@ -400,6 +400,41 @@ export function readAndClearCertificateActionBannerFlags(
   return { showApprovalBanner, showQueryBanner, showCancelBanner }
 }
 
+export function mapSessionUserToApiUser(sessionUser) {
+  const profile = sessionUser?.profile
+  if (profile) {
+    const id = profile.sub ?? profile.oid ?? profile.id
+    const email = profile.email ?? profile.emails?.[0]
+    if (id && email) {
+      return { id, email }
+    }
+  }
+
+  return { id: 'mock-user', email: 'mock-user@test.local' }
+}
+
+export async function approveComplianceDeclaration(
+  organisationId,
+  id,
+  sessionUser,
+  traceId
+) {
+  if (config.get('useMockApi')) {
+    return null
+  }
+
+  const api = createWasteObligationsApiService()
+  return api.updateComplianceDeclaration(
+    {
+      organisationId,
+      id,
+      status: 'Accepted',
+      user: mapSessionUserToApiUser(sessionUser)
+    },
+    traceId
+  )
+}
+
 const GLASS_BREAKDOWN_MATERIALS = new Set(['GlassRemelt', 'RemainingGlass'])
 
 function formatDate(isoString) {
