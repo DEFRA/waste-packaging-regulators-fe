@@ -30,7 +30,11 @@
       {% for item in items %}
         <tr class="govuk-table__row">
           <td class="govuk-table__cell">
-            <a href="./{{ item.organisationId }}/certificates-of-compliance/{{ item.id }}" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
+            {% if item.organisationName == 'No data' %}
+              {{ item.organisationName }}
+            {% else %}
+              <a href="./{{ item.organisationId }}/certificates-of-compliance/{{ item.id }}" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
+            {% endif %}
           </td>
           <td class="govuk-table__cell">{{ item.organisationReferenceNumber }}</td>
           <td class="govuk-table__cell">

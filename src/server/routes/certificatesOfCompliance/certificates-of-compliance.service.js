@@ -1,4 +1,5 @@
 import { config } from '#/config/config.js'
+import { createAccountApiService } from '#/services/account-api.service.js'
 import { createWasteObligationsApiService } from '#/services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#/services/waste-organisations-api.service.js'
 import {
@@ -57,16 +58,47 @@ function mapDeclarationToItem(declaration) {
   }
 }
 
+// Builds a "Not submitted" row. The organisation name and 6-digit reference
+// number come from the Account API (resolved afterwards), so they default to
+// 'No data' here.
 function mapOrganisationToItem(organisation, organisationType) {
-  const organisationName =
-    organisation.registrationType === 'compliance-schemes'
-      ? (organisation.tradingName ??
-        organisation.name ??
-        'Unknown organisation')
-      : (organisation.name ?? 'Unknown organisation')
   return {
     id: organisation.companiesHouseNumber,
-    organisationName
+    organisationId: organisation.id,
+    organisationReferenceNumber: 'No data',
+    organisationName: 'No data'
+  }
+}
+
+// Resolves organisation name + reference number for "Not submitted" rows via the
+// Account API bulk lookup, mutating each item in place. Ids the Account API
+// cannot resolve (returned in notFoundExternalIds, or otherwise absent) keep
+// their 'No data' defaults so the rest of the row still renders. A non-2xx
+// Account API response throws, surfacing the GDS error page.
+async function resolveNotSubmittedOrganisationDetails(
+  accountApi,
+  items,
+  traceId
+) {
+  const externalIds = items.map((item) => item.organisationId).filter(Boolean)
+
+  if (externalIds.length === 0) {
+    return
+  }
+
+  const { organisations = [] } = await accountApi.getOrganisationsByExternalIds(
+    externalIds,
+    traceId
+  )
+
+  const detailsByExternalId = new Map(
+    organisations.map((org) => [org.externalId, org])
+  )
+
+  for (const item of items) {
+    const details = detailsByExternalId.get(item.organisationId)
+    item.organisationReferenceNumber = details?.referenceNumber ?? 'No data'
+    item.organisationName = details?.name ?? 'No data'
   }
 }
 
@@ -142,6 +174,7 @@ async function getComplianceSummary(
 async function getComplianceList(
   obligationsApi,
   organisationsApi,
+  accountApi,
   organisationType,
   tab,
   page,
@@ -187,8 +220,12 @@ async function getComplianceList(
 
     const totalPages = Math.ceil(allItems.length / PAGE_SIZE) || 1
     const start = (page - 1) * PAGE_SIZE
+    const items = allItems.slice(start, start + PAGE_SIZE)
+
+    await resolveNotSubmittedOrganisationDetails(accountApi, items, traceId)
+
     return {
-      items: allItems.slice(start, start + PAGE_SIZE),
+      items,
       totalPages,
       currentPage: page
     }
@@ -222,6 +259,7 @@ export async function getCertificatesOfComplianceViewModel(
 ) {
   const apiWasteObligation = createWasteObligationsApiService()
   const apiWasteOrganisation = createWasteOrganisationsApiService()
+  const apiAccount = createAccountApiService()
   const baseUrl = `/certificates-of-compliance?type=${organisationType}&tab=${tab}`
 
   const [summary, list] = await Promise.all([
@@ -234,6 +272,7 @@ export async function getCertificatesOfComplianceViewModel(
     getComplianceList(
       apiWasteObligation,
       apiWasteOrganisation,
+      apiAccount,
       organisationType,
       tab,
       currentPage,
