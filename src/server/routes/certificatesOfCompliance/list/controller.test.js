@@ -4,7 +4,8 @@ import {
   mockSummary,
   mockPendingItems,
   mockAcceptedItems,
-  mockNotSubmittedItems
+  mockNotSubmittedItems,
+  mockComplianceAcceptedItems
 } from '../certificates-of-compliance.service.js'
 
 describe('#certificatesOfComplianceController', () => {
@@ -233,7 +234,7 @@ describe('#certificatesOfComplianceController', () => {
     })
 
     test('Should render Compliant tag for items where regulation43Met is true', async () => {
-      const trueItem = mockAcceptedItems.find(
+      const trueItem = mockComplianceAcceptedItems.find(
         (item) => item.regulation43Met === true
       )
       const { result } = await inject(
@@ -245,7 +246,7 @@ describe('#certificatesOfComplianceController', () => {
     })
 
     test('Should render Not compliant tag for items where regulation43Met is false', async () => {
-      const falseItem = mockAcceptedItems.find(
+      const falseItem = mockComplianceAcceptedItems.find(
         (item) => item.regulation43Met === false
       )
       const { result } = await inject(

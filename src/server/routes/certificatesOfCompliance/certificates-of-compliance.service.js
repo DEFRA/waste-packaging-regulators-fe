@@ -3,16 +3,20 @@ import { createWasteObligationsApiService } from '#/services/waste-obligations-a
 import { createWasteOrganisationsApiService } from '#/services/waste-organisations-api.service.js'
 import {
   mockSummary,
-  mockListByTab,
-  mockDetailData
+  mockListByTypeAndTab,
+  mockDetailFor
 } from './certificates-of-compliance.mock.js'
 
 export {
   mockSummary,
   mockDetailData,
+  mockComplianceDetailData,
   mockPendingItems,
   mockAcceptedItems,
-  mockNotSubmittedItems
+  mockNotSubmittedItems,
+  mockCompliancePendingItems,
+  mockComplianceAcceptedItems,
+  mockComplianceNotSubmittedItems
 } from './certificates-of-compliance.mock.js'
 
 // --- Response mapping ---
@@ -149,7 +153,7 @@ async function getComplianceList(
 ) {
   if (config.get('useMockApi')) {
     return {
-      items: mockListByTab[tab] ?? [],
+      items: mockListByTypeAndTab[organisationType]?.[tab] ?? [],
       totalPages: 6,
       currentPage: page
     }
@@ -353,7 +357,7 @@ async function getDeclarationDetail(
   traceId
 ) {
   if (config.get('useMockApi')) {
-    return mapDeclarationToDetail(mockDetailData)
+    return mapDeclarationToDetail(mockDetailFor(id))
   }
 
   const data = await obligationsApi.getComplianceDeclaration(

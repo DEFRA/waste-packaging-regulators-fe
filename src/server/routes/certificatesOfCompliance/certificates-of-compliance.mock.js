@@ -64,10 +64,73 @@ export const mockNotSubmittedItems = [
   }
 ]
 
-export const mockListByTab = {
-  pending: mockPendingItems,
-  accepted: mockAcceptedItems,
-  'not-submitted': mockNotSubmittedItems
+export const mockCompliancePendingItems = [
+  {
+    id: 'decl-501822',
+    organisationId: '7c2a4f3d-9e8b-4d2a-9a1c-2b3a8e1f5d4a',
+    organisationReferenceNumber: '501822',
+    organisationName: 'Valpak Limited',
+    recyclingObligationsMet: false,
+    percentageMet: 91,
+    dateSubmitted: '2027-01-29'
+  },
+  {
+    id: 'decl-507314',
+    organisationId: '8d3b5e4c-af7c-5e3b-ab2d-3c4b9f2e6d5b',
+    organisationReferenceNumber: '507314',
+    organisationName: 'Veolia Compliance Scheme',
+    recyclingObligationsMet: false,
+    percentageMet: 88,
+    dateSubmitted: '2027-01-26'
+  }
+]
+
+export const mockComplianceAcceptedItems = [
+  {
+    id: 'decl-512908',
+    organisationId: '9e4c6f5d-bf8d-6f4c-bc3e-4d5cae3f7e6c',
+    organisationReferenceNumber: '512908',
+    organisationName: 'Biffpack Compliance Scheme',
+    recyclingObligationsMet: true,
+    regulation43Met: true,
+    percentageMet: 108,
+    dateSubmitted: '2027-01-12'
+  },
+  {
+    id: 'decl-516043',
+    organisationId: 'bf6e8f7d-d1af-8e6e-de50-6f7ecf509f8e',
+    organisationReferenceNumber: '516043',
+    organisationName: 'Ecosurety Compliance Scheme',
+    recyclingObligationsMet: true,
+    regulation43Met: false,
+    percentageMet: 101,
+    dateSubmitted: '2027-01-08'
+  }
+]
+
+export const mockComplianceNotSubmittedItems = [
+  {
+    id: null,
+    organisationId: 'af5d7e6c-c09e-7d5d-cd4f-5e6dbe4f8f7d',
+    organisationReferenceNumber: '518440',
+    organisationName: 'Wastepack Compliance Scheme',
+    recyclingObligationsMet: false,
+    percentageMet: 0,
+    dateSubmitted: null
+  }
+]
+
+export const mockListByTypeAndTab = {
+  'direct-producers': {
+    pending: mockPendingItems,
+    accepted: mockAcceptedItems,
+    'not-submitted': mockNotSubmittedItems
+  },
+  'compliance-schemes': {
+    pending: mockCompliancePendingItems,
+    accepted: mockComplianceAcceptedItems,
+    'not-submitted': mockComplianceNotSubmittedItems
+  }
 }
 
 // Matches the raw API response shape from GET /organisations/{organisationId}/compliance-declarations/{id}
@@ -196,4 +259,33 @@ export const mockDetailData = {
   submitterName: 'Catherine Morris',
   isRegulation43Compliant: true,
   audit: []
+}
+
+export const mockComplianceDetailData = {
+  ...mockDetailData,
+  id: 'decl-501822',
+  organisation: {
+    ...mockDetailData.organisation,
+    id: '7c2a4f3d-9e8b-4d2a-9a1c-2b3a8e1f5d4a',
+    registrationType: 'ComplianceScheme',
+    name: null,
+    complianceSchemeName: 'Valpak Limited',
+    schemeOperatorName: 'Valpak Operator Ltd',
+    referenceNumber: '501822',
+    nameOnAccount: 'Priya Patel',
+    contactEmailAddress: 'priya.patel@valpak.co.uk'
+  },
+  submitterName: 'Priya Patel'
+}
+
+const complianceSchemeDeclarationIds = new Set(
+  [...mockCompliancePendingItems, ...mockComplianceAcceptedItems]
+    .map((item) => item.id)
+    .filter(Boolean)
+)
+
+export function mockDetailFor(id) {
+  return complianceSchemeDeclarationIds.has(id)
+    ? mockComplianceDetailData
+    : mockDetailData
 }
