@@ -181,7 +181,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           cancel: 'Cancel certificate'
         },
         urls: {
-          accept: '/org-abc/certificates-of-compliance/decl-1/approve',
+          accept: '/org-abc/certificates-of-compliance/decl-1/accept',
           cancel: '/org-abc/certificates-of-compliance/decl-1/cancel'
         }
       })
@@ -1348,7 +1348,7 @@ describe('certificate detail action helpers', () => {
         cancel: 'Cancel certificate'
       },
       urls: {
-        accept: '/org-1/certificates-of-compliance/decl-1/approve',
+        accept: '/org-1/certificates-of-compliance/decl-1/accept',
         cancel: '/org-1/certificates-of-compliance/decl-1/cancel'
       }
     })

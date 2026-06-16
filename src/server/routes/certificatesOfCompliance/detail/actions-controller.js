@@ -29,46 +29,49 @@ function redirectToDetail(organisationId, id, h) {
   return h.redirect(`/${organisationId}/certificates-of-compliance/${id}`)
 }
 
+export async function runApproveAction(request, h) {
+  const { organisationId, id } = request.params
+  const traceId = request.headers[config.get('tracing.header')]
+  const declarationKey = getDeclarationSessionKey(organisationId, id)
+  const reviewStatus = await getComplianceDeclarationReviewStatus(
+    organisationId,
+    id,
+    traceId,
+    request.yar
+  )
+
+  if (reviewStatus === 'Approved') {
+    request.yar.set(certificateActionSessionKeys.justApproved, declarationKey)
+    return redirectToDetail(organisationId, id, h)
+  }
+
+  if (!canApproveComplianceDeclaration(reviewStatus)) {
+    return redirectToDetail(organisationId, id, h)
+  }
+
+  try {
+    await approveComplianceDeclaration(
+      organisationId,
+      id,
+      request.yar.get('user'),
+      traceId
+    )
+  } catch (error) {
+    handleApiError(request, error)
+  }
+
+  setMockDeclarationStatusOverride(request.yar, declarationKey, 'Approved')
+  request.yar.set(certificateActionSessionKeys.justApproved, declarationKey)
+
+  return redirectToDetail(organisationId, id, h)
+}
+
 export const certificatesOfComplianceApproveController = {
   async handler(request, h) {
     if (!request.yar.get('user')) {
       return redirectToSignIn(request, h)
     }
-
-    const { organisationId, id } = request.params
-    const traceId = request.headers[config.get('tracing.header')]
-    const declarationKey = getDeclarationSessionKey(organisationId, id)
-    const reviewStatus = await getComplianceDeclarationReviewStatus(
-      organisationId,
-      id,
-      traceId,
-      request.yar
-    )
-
-    if (reviewStatus === 'Approved') {
-      request.yar.set(certificateActionSessionKeys.justApproved, declarationKey)
-      return redirectToDetail(organisationId, id, h)
-    }
-
-    if (!canApproveComplianceDeclaration(reviewStatus)) {
-      return redirectToDetail(organisationId, id, h)
-    }
-
-    try {
-      await approveComplianceDeclaration(
-        organisationId,
-        id,
-        request.yar.get('user'),
-        traceId
-      )
-    } catch (error) {
-      handleApiError(request, error)
-    }
-
-    setMockDeclarationStatusOverride(request.yar, declarationKey, 'Approved')
-    request.yar.set(certificateActionSessionKeys.justApproved, declarationKey)
-
-    return redirectToDetail(organisationId, id, h)
+    return runApproveAction(request, h)
   }
 }
 
