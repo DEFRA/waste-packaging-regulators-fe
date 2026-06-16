@@ -3,7 +3,8 @@ import { statusCodes } from '#/server/common/constants/status-codes.js'
 import {
   mockPendingItems,
   mockAcceptedItems,
-  mockDetailData
+  mockDetailData,
+  mockCompliancePendingItems
 } from './certificates-of-compliance.mock.js'
 
 function detailPathFor(item) {
@@ -248,6 +249,23 @@ describe('certificates of compliance — journey', () => {
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(response.payload).toContain('There is a problem')
       expect(response.payload).toContain('Select yes or no')
+    })
+
+    it('shows "Statement accepted" banner copy for a Compliance Scheme', async () => {
+      const item = mockCompliancePendingItems[0]
+      const postResponse = await postAccept(item, 'yes', sessionCookie)
+      expect(postResponse.statusCode).toBe(302)
+
+      const detailResponse = await server.inject({
+        method: 'GET',
+        url: detailPathFor(item),
+        headers: { cookie: nextCookie(postResponse, sessionCookie) }
+      })
+      expect(detailResponse.payload).toContain('Statement accepted')
+      expect(detailResponse.payload).toContain('Statement has been accepted.')
+      expect(detailResponse.payload).not.toContain(
+        'Certificate has been accepted.'
+      )
     })
   })
 })

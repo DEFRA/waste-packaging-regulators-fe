@@ -4,9 +4,10 @@
 
 {% block content %}
   {% if acceptSuccess %}
+    {% set docType = "Statement" if isComplianceScheme else "Certificate" %}
     {{ govukNotificationBanner({
-      titleText: "Certificate accepted",
-      html: '<p class="govuk-body">Certificate has been accepted.</p>'
+      titleText: docType + " accepted",
+      html: '<p class="govuk-body">' + docType + ' has been accepted.</p>'
     }) }}
   {% endif %}
 
