@@ -1,0 +1,11 @@
+@use "govuk-frontend" as *;
+
+// Mirrors govuk-notification-banner--success: only the banner chrome colour changes.
+// GOV.UK Design System has no cancelled variant — default is blue Important,
+// success is green — so this uses legacy GOV.UK dark grey (#505A5F).
+@include govuk-exports("app/component/notification-banner") {
+  .app-notification-banner--cancelled {
+    border-color: #505a5f;
+    background-color: #505a5f;
+  }
+}

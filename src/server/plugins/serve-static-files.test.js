@@ -1,15 +1,16 @@
-import { startServer } from '#/server/common/helpers/start-server.js'
+import { createServer } from '#/server/server.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
 
 describe('#serveStaticFiles', () => {
   let server
 
   describe('When secure context is disabled', () => {
-    beforeEach(async () => {
-      server = await startServer()
+    beforeAll(async () => {
+      server = await createServer()
+      await server.initialize()
     })
 
-    afterEach(async () => {
+    afterAll(async () => {
       await server.stop({ timeout: 0 })
     })
 
