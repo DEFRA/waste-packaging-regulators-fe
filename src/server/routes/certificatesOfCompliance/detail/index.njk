@@ -217,17 +217,21 @@
       {% if actions.showAccept or actions.showCancel %}
         <div class="govuk-button-group">
           {% if actions.showAccept %}
-            {{ govukButton({
-              text: actions.labels.accept,
-              href: actions.urls.accept
-            }) }}
+            <form method="post" action="{{ actions.urls.accept }}" class="govuk-!-display-inline">
+              {{ govukButton({
+                text: actions.labels.accept,
+                preventDoubleClick: true
+              }) }}
+            </form>
           {% endif %}
           {% if actions.showCancel %}
-            {{ govukButton({
-              text: actions.labels.cancel,
-              href: actions.urls.cancel,
-              classes: "govuk-button--secondary"
-            }) }}
+            <form method="post" action="{{ actions.urls.cancel }}" class="govuk-!-display-inline">
+              {{ govukButton({
+                text: actions.labels.cancel,
+                preventDoubleClick: true,
+                classes: "govuk-button--secondary"
+              }) }}
+            </form>
           {% endif %}
         </div>
       {% endif %}

@@ -138,22 +138,23 @@ describe('#certificatesOfComplianceDetailController', () => {
     expect(response.payload).toContain('Accept certificate')
     expect(response.payload).toContain('Cancel certificate')
     expect(response.payload).toContain(
-      '/org-123/certificates-of-compliance/101411/approve'
+      'action="/org-123/certificates-of-compliance/101411/approve"'
     )
     expect(response.payload).toContain(
-      '/org-123/certificates-of-compliance/101411/cancel'
+      'action="/org-123/certificates-of-compliance/101411/cancel"'
     )
+    expect(response.payload).toContain('data-prevent-double-click="true"')
   })
 
   it('should render cancel only for an accepted certificate', async () => {
     const response = await inject(
       '/a1b2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-309145'
     )
-    expect(response.payload).not.toContain('/approve')
+    expect(response.payload).not.toContain('action="/approve"')
     expect(response.payload).not.toContain('Accept certificate')
     expect(response.payload).toContain('Cancel certificate')
     expect(response.payload).toContain(
-      '/a1b2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-309145/cancel'
+      'action="/a1b2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-309145/cancel"'
     )
   })
 })

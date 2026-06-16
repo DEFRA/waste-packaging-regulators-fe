@@ -24,6 +24,9 @@ import {
   mapSessionUserToApiUser,
   approveComplianceDeclaration,
   readAndClearCertificateActionBannerFlags,
+  canApproveComplianceDeclaration,
+  canCancelComplianceDeclaration,
+  setMockDeclarationStatusOverride,
   certificateActionSessionKeys,
   mockSummary,
   mockPendingItems,
@@ -254,11 +257,12 @@ describe('getCertificatesOfComplianceViewModel', () => {
       const vm = await getCertificateOfComplianceDetailViewModel(
         'org-abc',
         'decl-1',
-        undefined,
         {
-          showApprovalBanner: true,
-          showQueryBanner: false,
-          showCancelBanner: false
+          bannerFlags: {
+            showApprovalBanner: true,
+            showQueryBanner: false,
+            showCancelBanner: false
+          }
         }
       )
       expect(vm.successBanner).toEqual({
@@ -846,11 +850,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
-        await getCertificateOfComplianceDetailViewModel(
-          'org-abc',
-          'decl-1',
-          'trace-z'
-        )
+        await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1', {
+          traceId: 'trace-z'
+        })
 
         expect(mockApi.getComplianceDeclaration).toHaveBeenCalledWith(
           { organisationId: 'org-abc', id: 'decl-1' },
@@ -1497,6 +1499,52 @@ describe('certificate detail action helpers', () => {
     expect(session.data[certificateActionSessionKeys.justCancelled]).toBe(
       'org-1/decl-2'
     )
+  })
+
+  test('canApproveComplianceDeclaration and canCancelComplianceDeclaration match review status', () => {
+    expect(canApproveComplianceDeclaration('Pending')).toBe(true)
+    expect(canApproveComplianceDeclaration('Queried')).toBe(true)
+    expect(canApproveComplianceDeclaration('Approved')).toBe(false)
+    expect(canCancelComplianceDeclaration('Pending')).toBe(true)
+    expect(canCancelComplianceDeclaration('Approved')).toBe(true)
+    expect(canCancelComplianceDeclaration('Cancelled')).toBe(false)
+  })
+
+  test('setMockDeclarationStatusOverride stores status in session when useMockApi is true', () => {
+    config.get.mockReturnValue(true)
+    const session = {
+      data: {},
+      set(key, value) {
+        this.data[key] = value
+      }
+    }
+
+    setMockDeclarationStatusOverride(session, 'org-1/decl-1', 'Approved')
+
+    expect(session.data['coc-mock-status:org-1/decl-1']).toBe('Accepted')
+  })
+
+  test('getCertificateOfComplianceDetailViewModel applies mock status override from session', async () => {
+    config.get.mockReturnValue(true)
+    const session = {
+      data: { 'coc-mock-status:org-abc/decl-1': 'Accepted' },
+      get(key) {
+        return this.data[key]
+      }
+    }
+
+    const vm = await getCertificateOfComplianceDetailViewModel(
+      'org-abc',
+      'decl-1',
+      {
+        traceId: 'trace-1',
+        session
+      }
+    )
+
+    expect(vm.reviewStatus).toBe('Approved')
+    expect(vm.actions.showAccept).toBe(false)
+    expect(vm.actions.showCancel).toBe(true)
   })
 
   test('mapSessionUserToApiUser maps profile credentials', () => {

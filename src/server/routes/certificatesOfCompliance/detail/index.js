@@ -18,7 +18,7 @@ export const certificatesOfComplianceDetail = {
           }
         },
         {
-          method: 'GET',
+          method: 'POST',
           path: '/{organisationId}/certificates-of-compliance/{id}/approve',
           options: {
             auth: false,
@@ -26,7 +26,7 @@ export const certificatesOfComplianceDetail = {
           }
         },
         {
-          method: 'GET',
+          method: 'POST',
           path: '/{organisationId}/certificates-of-compliance/{id}/cancel',
           options: {
             auth: false,

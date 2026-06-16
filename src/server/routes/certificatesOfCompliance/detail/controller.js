@@ -23,8 +23,11 @@ export const certificatesOfComplianceDetailController = {
     const viewModel = await getCertificateOfComplianceDetailViewModel(
       organisationId,
       id,
-      traceId,
-      bannerFlags
+      {
+        traceId,
+        bannerFlags,
+        session: request.yar
+      }
     )
 
     return h.view('certificatesOfCompliance/detail/index', viewModel)

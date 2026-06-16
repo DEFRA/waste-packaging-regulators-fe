@@ -3,8 +3,12 @@ import { config } from '#/config/config.js'
 import { ApiError } from '#/services/apiBaseClient/api-error.js'
 import {
   approveComplianceDeclaration,
+  canApproveComplianceDeclaration,
+  canCancelComplianceDeclaration,
   certificateActionSessionKeys,
-  getDeclarationSessionKey
+  getComplianceDeclarationReviewStatus,
+  getDeclarationSessionKey,
+  setMockDeclarationStatusOverride
 } from '../certificates-of-compliance.service.js'
 
 export function redirectToSignIn(request, h) {
@@ -21,6 +25,10 @@ function handleApiError(request, error) {
   throw error
 }
 
+function redirectToDetail(organisationId, id, h) {
+  return h.redirect(`/${organisationId}/certificates-of-compliance/${id}`)
+}
+
 export const certificatesOfComplianceApproveController = {
   async handler(request, h) {
     if (!request.yar.get('user')) {
@@ -29,6 +37,22 @@ export const certificatesOfComplianceApproveController = {
 
     const { organisationId, id } = request.params
     const traceId = request.headers[config.get('tracing.header')]
+    const declarationKey = getDeclarationSessionKey(organisationId, id)
+    const reviewStatus = await getComplianceDeclarationReviewStatus(
+      organisationId,
+      id,
+      traceId,
+      request.yar
+    )
+
+    if (reviewStatus === 'Approved') {
+      request.yar.set(certificateActionSessionKeys.justApproved, declarationKey)
+      return redirectToDetail(organisationId, id, h)
+    }
+
+    if (!canApproveComplianceDeclaration(reviewStatus)) {
+      return redirectToDetail(organisationId, id, h)
+    }
 
     try {
       await approveComplianceDeclaration(
@@ -41,12 +65,10 @@ export const certificatesOfComplianceApproveController = {
       handleApiError(request, error)
     }
 
-    request.yar.set(
-      certificateActionSessionKeys.justApproved,
-      getDeclarationSessionKey(organisationId, id)
-    )
+    setMockDeclarationStatusOverride(request.yar, declarationKey, 'Approved')
+    request.yar.set(certificateActionSessionKeys.justApproved, declarationKey)
 
-    return h.redirect(`/${organisationId}/certificates-of-compliance/${id}`)
+    return redirectToDetail(organisationId, id, h)
   }
 }
 
@@ -57,12 +79,30 @@ export const certificatesOfComplianceCancelController = {
     }
 
     const { organisationId, id } = request.params
-
-    request.yar.set(
-      certificateActionSessionKeys.justCancelled,
-      getDeclarationSessionKey(organisationId, id)
+    const traceId = request.headers[config.get('tracing.header')]
+    const declarationKey = getDeclarationSessionKey(organisationId, id)
+    const reviewStatus = await getComplianceDeclarationReviewStatus(
+      organisationId,
+      id,
+      traceId,
+      request.yar
     )
 
-    return h.redirect(`/${organisationId}/certificates-of-compliance/${id}`)
+    if (reviewStatus === 'Cancelled') {
+      request.yar.set(
+        certificateActionSessionKeys.justCancelled,
+        declarationKey
+      )
+      return redirectToDetail(organisationId, id, h)
+    }
+
+    if (!canCancelComplianceDeclaration(reviewStatus)) {
+      return redirectToDetail(organisationId, id, h)
+    }
+
+    setMockDeclarationStatusOverride(request.yar, declarationKey, 'Cancelled')
+    request.yar.set(certificateActionSessionKeys.justCancelled, declarationKey)
+
+    return redirectToDetail(organisationId, id, h)
   }
 }

@@ -245,7 +245,7 @@ describe('certificates of compliance — journey', () => {
     it('approve flow redirects to detail with accepted banner styling', async () => {
       const item = mockPendingItems[0]
       const approveResponse = await server.inject({
-        method: 'GET',
+        method: 'POST',
         url: `${detailPathFor(item)}/approve`,
         headers: { cookie: sessionCookie }
       })
@@ -274,7 +274,7 @@ describe('certificates of compliance — journey', () => {
     it('compliance scheme approve flow shows statement accepted banner', async () => {
       const item = mockComplianceSchemePendingItems[0]
       const approveResponse = await server.inject({
-        method: 'GET',
+        method: 'POST',
         url: `${detailPathFor(item)}/approve`,
         headers: { cookie: sessionCookie }
       })
@@ -296,7 +296,7 @@ describe('certificates of compliance — journey', () => {
     it('cancel flow redirects to detail with cancelled banner styling', async () => {
       const item = mockPendingItems[0]
       const cancelResponse = await server.inject({
-        method: 'GET',
+        method: 'POST',
         url: `${detailPathFor(item)}/cancel`,
         headers: { cookie: sessionCookie }
       })
@@ -321,7 +321,7 @@ describe('certificates of compliance — journey', () => {
     it('compliance scheme cancel flow shows statement cancelled banner', async () => {
       const item = mockComplianceSchemePendingItems[0]
       const cancelResponse = await server.inject({
-        method: 'GET',
+        method: 'POST',
         url: `${detailPathFor(item)}/cancel`,
         headers: { cookie: sessionCookie }
       })
