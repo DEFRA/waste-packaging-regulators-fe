@@ -137,8 +137,9 @@ describe('#certificatesOfComplianceDetailController', () => {
     const response = await inject('/org-123/certificates-of-compliance/101411')
     expect(response.payload).toContain('Accept certificate')
     expect(response.payload).toContain('Cancel certificate')
+    // Accept is a link to the Yes/No confirmation page; Cancel posts directly.
     expect(response.payload).toContain(
-      'action="/org-123/certificates-of-compliance/101411/approve"'
+      'href="/org-123/certificates-of-compliance/101411/accept"'
     )
     expect(response.payload).toContain(
       'action="/org-123/certificates-of-compliance/101411/cancel"'
@@ -150,7 +151,6 @@ describe('#certificatesOfComplianceDetailController', () => {
     const response = await inject(
       '/a1b2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-309145'
     )
-    expect(response.payload).not.toContain('action="/approve"')
     expect(response.payload).not.toContain('Accept certificate')
     expect(response.payload).toContain('Cancel certificate')
     expect(response.payload).toContain(

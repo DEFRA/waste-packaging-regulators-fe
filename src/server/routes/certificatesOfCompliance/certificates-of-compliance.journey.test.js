@@ -345,6 +345,97 @@ describe('certificates of compliance — journey', () => {
       )
     })
   })
+
+  describe('accept confirmation journey', () => {
+    const acceptPathFor = (item) => `${detailPathFor(item)}/accept`
+
+    const postAccept = (item, choice, cookie) =>
+      server.inject({
+        method: 'POST',
+        url: acceptPathFor(item),
+        payload: `confirm-accept=${choice}`,
+        headers: {
+          cookie,
+          'content-type': 'application/x-www-form-urlencoded'
+        }
+      })
+
+    it('detail page Accept button links to the confirmation page', async () => {
+      const item = mockPendingItems[0]
+      const response = await inject(detailPathFor(item))
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.payload).toContain(`href="${acceptPathFor(item)}"`)
+    })
+
+    it('GET on the confirmation page renders the Yes/No form', async () => {
+      const item = mockPendingItems[0]
+      const response = await inject(acceptPathFor(item))
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.payload).toContain(mockDetailData.organisation.name)
+      expect(response.payload).toContain('confirm-accept')
+    })
+
+    it('"yes" runs the approve action and lands on detail with the accepted banner', async () => {
+      const item = mockPendingItems[0]
+      const yesResponse = await postAccept(item, 'yes', sessionCookie)
+      expect(yesResponse.statusCode).toBe(302)
+      expect(yesResponse.headers.location).toBe(detailPathFor(item))
+
+      const detailResponse = await server.inject({
+        method: 'GET',
+        url: detailPathFor(item),
+        headers: {
+          cookie: mergeCookiesFromResponse(sessionCookie, yesResponse)
+        }
+      })
+      expect(detailResponse.payload).toContain('Certificate accepted')
+      expect(detailResponse.payload).toContain('Certificate has been accepted.')
+    })
+
+    it('"no" returns to detail without invoking the approve action', async () => {
+      const item = mockPendingItems[0]
+      const noResponse = await postAccept(item, 'no', sessionCookie)
+      expect(noResponse.statusCode).toBe(302)
+      expect(noResponse.headers.location).toBe(detailPathFor(item))
+
+      const detailResponse = await server.inject({
+        method: 'GET',
+        url: detailPathFor(item),
+        headers: {
+          cookie: mergeCookiesFromResponse(sessionCookie, noResponse)
+        }
+      })
+      expect(detailResponse.statusCode).toBe(statusCodes.ok)
+      expect(detailResponse.payload).not.toContain('govuk-notification-banner')
+    })
+
+    it('submitting without a choice re-renders the form with an error summary', async () => {
+      const item = mockPendingItems[0]
+      const response = await postAccept(item, '', sessionCookie)
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.payload).toContain('There is a problem')
+      expect(response.payload).toContain('Select yes or no')
+    })
+
+    it('"yes" on a Compliance Scheme shows statement-accepted banner', async () => {
+      const item = mockComplianceSchemePendingItems[0]
+      const yesResponse = await postAccept(item, 'yes', sessionCookie)
+      expect(yesResponse.statusCode).toBe(302)
+
+      const detailResponse = await server.inject({
+        method: 'GET',
+        url: detailPathFor(item),
+        headers: {
+          cookie: mergeCookiesFromResponse(sessionCookie, yesResponse)
+        }
+      })
+      expect(detailResponse.payload).toContain('Statement accepted')
+      expect(detailResponse.payload).toContain('Statement has been accepted.')
+    })
+  })
 })
 
 function mergeCookiesFromResponse(cookie, response) {

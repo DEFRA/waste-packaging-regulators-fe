@@ -1,0 +1,42 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if errors %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: errors.summary
+        }) }}
+      {% endif %}
+
+      {% set docTypeLower = "statement" if registrationType == "ComplianceScheme" else "certificate" %}
+      <form method="post" action="/{{ organisationId }}/certificates-of-compliance/{{ id }}/accept" novalidate>
+        {{ govukRadios({
+          name: "confirm-accept",
+          fieldset: {
+            legend: {
+              text: "Are you sure you want to accept this " + docTypeLower + " for " + companyName + "?",
+              isPageHeading: true,
+              classes: "govuk-fieldset__legend--l"
+            }
+          },
+          errorMessage: errors.confirmAccept if errors,
+          items: [
+            { value: "yes", text: "Yes" },
+            { value: "no", text: "No" }
+          ]
+        }) }}
+
+        {{ govukButton({
+          text: "Continue",
+          preventDoubleClick: true
+        }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}
