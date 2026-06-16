@@ -17,6 +17,13 @@ export const certificatesOfComplianceDetailController = {
       traceId
     )
 
-    return h.view('certificatesOfCompliance/detail/index', viewModel)
+    const acceptSuccess = request.yar.flash('acceptSuccess').length > 0
+
+    return h.view('certificatesOfCompliance/detail/index', {
+      ...viewModel,
+      organisationId,
+      id,
+      acceptSuccess
+    })
   }
 }
