@@ -58,9 +58,7 @@ function mapDeclarationToItem(declaration) {
   }
 }
 
-// Builds a "Not submitted" row. The organisation name and 6-digit reference
-// number come from the Account API (resolved afterwards), so they default to
-// 'No data' here.
+// Name + reference number are resolved from the Account API; default to 'No data'.
 function mapOrganisationToItem(organisation, organisationType) {
   return {
     id: organisation.companiesHouseNumber,
@@ -70,11 +68,7 @@ function mapOrganisationToItem(organisation, organisationType) {
   }
 }
 
-// Resolves organisation name + reference number for "Not submitted" rows via the
-// Account API bulk lookup, mutating each item in place. Ids the Account API
-// cannot resolve (returned in notFoundExternalIds, or otherwise absent) keep
-// their 'No data' defaults so the rest of the row still renders. A non-2xx
-// Account API response throws, surfacing the GDS error page.
+// Fills name + reference number for "Not submitted" rows from the Account API bulk lookup.
 async function resolveNotSubmittedOrganisationDetails(
   accountApi,
   items,
