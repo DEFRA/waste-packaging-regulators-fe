@@ -77,7 +77,7 @@ function mapOrganisationToItem(organisation, organisationType) {
   return {
     id: null,
     organisationId: organisation.id,
-    organisationName: organisationName
+    organisationName
   }
 }
 
