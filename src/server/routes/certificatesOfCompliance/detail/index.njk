@@ -17,7 +17,11 @@
             <div class="govuk-summary-list__row">
               <dt class="govuk-summary-list__key">Recycling obligations</dt>
               <dd class="govuk-summary-list__value">
-                {{ appStatusTag({ value: recyclingObligationsMet, trueText: 'Met', falseText: 'Not met' }) }}
+                {% if declarationStatus == 'Unsubmitted' %}
+                  <strong class="govuk-tag govuk-tag--grey govuk-!-font-size-16">Unsubmitted</strong>
+                {% else %}
+                  {{ appStatusTag({ value: recyclingObligationsMet, trueText: 'Met', falseText: 'Not met' }) }}
+                {% endif %}
               </dd>
             </div>
             <div class="govuk-summary-list__row">

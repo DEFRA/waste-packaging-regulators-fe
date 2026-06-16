@@ -10,6 +10,7 @@ import {
 export {
   mockSummary,
   mockDetailData,
+  mockObligationData,
   mockPendingItems,
   mockAcceptedItems,
   mockNotSubmittedItems
@@ -325,6 +326,7 @@ function mapDeclarationToDetail(data) {
   return {
     complianceYear: String(obligationYear),
     companyName,
+    declarationStatus: data.status,
     recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
     dateDeclarationSubmitted: formatDate(created),
     organisationType:
@@ -344,6 +346,37 @@ function mapDeclarationToDetail(data) {
   }
 }
 
+function mapObligationToDetail(data, organisationId) {
+  const { obligations } = data
+
+  const allMapped = obligations.map(mapObligation)
+  const materials = allMapped.filter(
+    (_, i) => !GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
+  )
+  const glassBreakdown = allMapped.filter((_, i) =>
+    GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
+  )
+
+  return {
+    complianceYear: null,
+    companyName: null,
+    declarationStatus: 'Unsubmitted',
+    recyclingObligationsMet: false,
+    dateDeclarationSubmitted: null,
+    organisationType: null,
+    organisationRef: organisationId,
+    companiesHouseNumber: null,
+    nameOnAccount: null,
+    declarationEmailAddress: null,
+    companyPhoneNumber: null,
+    declarationSignedBy: null,
+    materials,
+    materialTotals: computeTotals(materials),
+    glassBreakdown,
+    glassBreakdownTotals: computeTotals(glassBreakdown)
+  }
+}
+
 // --- Detail API call ---
 
 async function getDeclarationDetail(
@@ -356,11 +389,20 @@ async function getDeclarationDetail(
     return mapDeclarationToDetail(mockDetailData)
   }
 
-  const data = await obligationsApi.getComplianceDeclaration(
+  const declaration = await obligationsApi.getComplianceDeclarationOrNull(
     { id, organisationId },
     traceId
   )
-  return mapDeclarationToDetail(data)
+
+  if (declaration != null) {
+    return mapDeclarationToDetail(declaration)
+  }
+
+  const obligationData = await obligationsApi.getComplianceObligation(
+    { organisationId },
+    traceId
+  )
+  return mapObligationToDetail(obligationData, organisationId)
 }
 
 // --- Detail page view model ---

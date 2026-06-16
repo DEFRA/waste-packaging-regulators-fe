@@ -22,7 +22,8 @@ import {
   mockPendingItems,
   mockAcceptedItems,
   mockNotSubmittedItems,
-  mockDetailData
+  mockDetailData,
+  mockObligationData
 } from './certificates-of-compliance.service.js'
 
 const makeDeclaration = ({
@@ -701,9 +702,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
     })
 
     describe('getCertificateOfComplianceDetailViewModel — real API', () => {
-      test('calls getComplianceDeclaration with organisationId and id', async () => {
+      test('calls getComplianceDeclarationOrNull with organisationId and id', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue(mockDetailData)
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
@@ -713,7 +714,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           'trace-z'
         )
 
-        expect(mockApi.getComplianceDeclaration).toHaveBeenCalledWith(
+        expect(mockApi.getComplianceDeclarationOrNull).toHaveBeenCalledWith(
           { organisationId: 'org-abc', id: 'decl-1' },
           'trace-z'
         )
@@ -721,7 +722,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('maps obligationYear to complianceYear string', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue(mockDetailData)
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
@@ -735,7 +736,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('maps organisation.name to companyName', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue(mockDetailData)
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
@@ -749,7 +750,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('falls back to complianceSchemeName when organisation.name is null', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue({
+          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue({
             ...mockDetailData,
             organisation: {
               ...mockDetailData.organisation,
@@ -770,7 +771,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('falls back to "Unknown organisation" when all name fields are null', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue({
+          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue({
             ...mockDetailData,
             organisation: {
               ...mockDetailData.organisation,
@@ -792,7 +793,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('maps obligationStatus=Met to recyclingObligationsMet=true', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi
+          getComplianceDeclarationOrNull: vi
             .fn()
             .mockResolvedValue({ ...mockDetailData, obligationStatus: 'Met' })
         }
@@ -808,7 +809,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('maps obligationStatus other than Met to recyclingObligationsMet=false', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue({
+          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue({
             ...mockDetailData,
             obligationStatus: 'NotMet'
           })
@@ -825,7 +826,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('formats created date as human-readable string', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue({
+          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue({
             ...mockDetailData,
             created: '2027-01-31T00:00:00Z'
           })
@@ -842,7 +843,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('maps DirectProducer registrationType to display name', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue(mockDetailData)
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
@@ -856,7 +857,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('maps ComplianceScheme registrationType to display name', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue({
+          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue({
             ...mockDetailData,
             organisation: {
               ...mockDetailData.organisation,
@@ -876,7 +877,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('maps submitterName to declarationSignedBy', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue(mockDetailData)
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
@@ -890,7 +891,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('splits obligations into materials and glassBreakdown', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue(mockDetailData)
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
@@ -916,7 +917,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('computes materialTotals from main obligations', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue(mockDetailData)
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
@@ -936,7 +937,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('materialTotals.met is false when any material is not met', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue({
+          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue({
             ...mockDetailData,
             obligations: mockDetailData.obligations.map((o, i) =>
               i === 0 ? { ...o, status: 'NotMet' } : o
@@ -955,7 +956,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('maps obligation tonnages correctly', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue(mockDetailData)
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
@@ -977,7 +978,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('passes through material name directly from API', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue(mockDetailData)
         }
         createWasteObligationsApiService.mockReturnValue(mockApi)
 
@@ -989,6 +990,141 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.materials[0].name).toBe(
           mockDetailData.obligations[0].material
         )
+      })
+
+      test('sets declarationStatus from declaration data.status', async () => {
+        const mockApi = {
+          getComplianceDeclarationOrNull: vi
+            .fn()
+            .mockResolvedValue({ ...mockDetailData, status: 'Submitted' })
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.declarationStatus).toBe('Submitted')
+      })
+
+      describe('fallback path — no declaration found', () => {
+        test('calls getComplianceObligation when getComplianceDeclarationOrNull returns null', async () => {
+          const mockApi = {
+            getComplianceDeclarationOrNull: vi.fn().mockResolvedValue(null),
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          }
+          createWasteObligationsApiService.mockReturnValue(mockApi)
+
+          await getCertificateOfComplianceDetailViewModel(
+            'org-abc',
+            'decl-1',
+            'trace-z'
+          )
+
+          expect(mockApi.getComplianceObligation).toHaveBeenCalledWith(
+            { organisationId: 'org-abc' },
+            'trace-z'
+          )
+        })
+
+        test('sets declarationStatus to Unsubmitted on fallback path', async () => {
+          const mockApi = {
+            getComplianceDeclarationOrNull: vi.fn().mockResolvedValue(null),
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          }
+          createWasteObligationsApiService.mockReturnValue(mockApi)
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'org-abc',
+            'decl-1'
+          )
+
+          expect(vm.declarationStatus).toBe('Unsubmitted')
+        })
+
+        test('sets recyclingObligationsMet to false on fallback path', async () => {
+          const mockApi = {
+            getComplianceDeclarationOrNull: vi.fn().mockResolvedValue(null),
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          }
+          createWasteObligationsApiService.mockReturnValue(mockApi)
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'org-abc',
+            'decl-1'
+          )
+
+          expect(vm.recyclingObligationsMet).toBe(false)
+        })
+
+        test('maps obligations from fallback data into materials', async () => {
+          const mockApi = {
+            getComplianceDeclarationOrNull: vi.fn().mockResolvedValue(null),
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          }
+          createWasteObligationsApiService.mockReturnValue(mockApi)
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'org-abc',
+            'decl-1'
+          )
+
+          const glassBreakdownMaterials = new Set(['GlassRemelt', 'RemainingGlass'])
+          const expectedMaterials = mockObligationData.obligations.filter(
+            (o) => !glassBreakdownMaterials.has(o.material)
+          )
+          expect(vm.materials).toHaveLength(expectedMaterials.length)
+          expect(vm.materials[0].name).toBe(
+            mockObligationData.obligations[0].material
+          )
+        })
+
+        test('sets org fields to null on fallback path', async () => {
+          const mockApi = {
+            getComplianceDeclarationOrNull: vi.fn().mockResolvedValue(null),
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          }
+          createWasteObligationsApiService.mockReturnValue(mockApi)
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'org-abc',
+            'decl-1'
+          )
+
+          expect(vm.companyName).toBeNull()
+          expect(vm.complianceYear).toBeNull()
+          expect(vm.dateDeclarationSubmitted).toBeNull()
+          expect(vm.organisationType).toBeNull()
+          expect(vm.declarationSignedBy).toBeNull()
+        })
+
+        test('sets organisationRef to organisationId on fallback path', async () => {
+          const mockApi = {
+            getComplianceDeclarationOrNull: vi.fn().mockResolvedValue(null),
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          }
+          createWasteObligationsApiService.mockReturnValue(mockApi)
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'org-abc',
+            'decl-1'
+          )
+
+          expect(vm.organisationRef).toBe('org-abc')
+        })
       })
     })
 
