@@ -76,8 +76,8 @@ function mapOrganisationToItem(organisation, organisationType) {
       : (organisation.name ?? 'Unknown organisation')
   return {
     id: null,
-    organisationId : organisation.id,
-    organisationName : organisationName
+    organisationId: organisation.id,
+    organisationName: organisationName
   }
 }
 

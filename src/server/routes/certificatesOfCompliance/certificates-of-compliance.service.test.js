@@ -1247,11 +1247,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
           }
           createWasteObligationsApiService.mockReturnValue(mockApi)
 
-          await getCertificateOfComplianceDetailViewModel(
-            'org-abc',
-            'decl-1',
-            { traceId: 'trace-z' }
-          )
+          await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1', {
+            traceId: 'trace-z'
+          })
 
           expect(mockApi.getComplianceObligation).toHaveBeenCalledWith(
             { organisationId: 'org-abc' },
