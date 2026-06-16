@@ -87,7 +87,6 @@ describe('#certificatesOfComplianceAcceptController', () => {
       expect(response.payload).toContain(
         `Are you sure you want to accept this statement for ${mockComplianceDetailData.organisation.complianceSchemeName}?`
       )
-      expect(response.payload).not.toContain('accept this certificate for')
     })
   })
 
@@ -130,9 +129,7 @@ describe('#certificatesOfComplianceAcceptController', () => {
         nextCookie(noResponse, cookie)
       )
       expect(detailResponse.statusCode).toBe(statusCodes.ok)
-      expect(detailResponse.payload).not.toContain(
-        'Certificate has been accepted.'
-      )
+      expect(detailResponse.payload).not.toContain('govuk-notification-banner')
     })
 
     it('redirects to the detail page when "yes" is chosen and sets the success flash', async () => {
@@ -154,13 +151,13 @@ describe('#certificatesOfComplianceAcceptController', () => {
       const cookie = await signIn()
       const yesResponse = await post(ACCEPT_URL, 'confirm-accept=yes', cookie)
       const firstView = await get(DETAIL_URL, nextCookie(yesResponse, cookie))
-      expect(firstView.payload).toContain('Certificate has been accepted.')
+      expect(firstView.payload).toContain('govuk-notification-banner')
 
       const secondView = await get(
         DETAIL_URL,
         nextCookie(firstView, nextCookie(yesResponse, cookie))
       )
-      expect(secondView.payload).not.toContain('Certificate has been accepted.')
+      expect(secondView.payload).not.toContain('govuk-notification-banner')
     })
   })
 })

@@ -214,9 +214,7 @@ describe('certificates of compliance — journey', () => {
         headers: { cookie: nextCookie(postResponse, sessionCookie) }
       })
       expect(detailResponse.statusCode).toBe(statusCodes.ok)
-      expect(detailResponse.payload).not.toContain(
-        'Certificate has been accepted.'
-      )
+      expect(detailResponse.payload).not.toContain('govuk-notification-banner')
     })
 
     it('choosing "yes" returns to the detail page with a one-shot success banner', async () => {
@@ -239,7 +237,7 @@ describe('certificates of compliance — journey', () => {
         url: detailPathFor(item),
         headers: { cookie: nextCookie(firstView, cookieAfterPost) }
       })
-      expect(secondView.payload).not.toContain('Certificate has been accepted.')
+      expect(secondView.payload).not.toContain('govuk-notification-banner')
     })
 
     it('submitting without a choice re-renders the form with an error summary', async () => {
@@ -263,9 +261,6 @@ describe('certificates of compliance — journey', () => {
       })
       expect(detailResponse.payload).toContain('Statement accepted')
       expect(detailResponse.payload).toContain('Statement has been accepted.')
-      expect(detailResponse.payload).not.toContain(
-        'Certificate has been accepted.'
-      )
     })
   })
 })
