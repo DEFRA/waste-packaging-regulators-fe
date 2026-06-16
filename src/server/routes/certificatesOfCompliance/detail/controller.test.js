@@ -145,11 +145,15 @@ describe('#certificatesOfComplianceDetailController', () => {
     )
   })
 
-  it('should not render action buttons for an accepted certificate', async () => {
+  it('should render cancel only for an accepted certificate', async () => {
     const response = await inject(
-      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-309145'
+      '/a1b2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-309145'
     )
     expect(response.payload).not.toContain('/approve')
     expect(response.payload).not.toContain('Accept certificate')
+    expect(response.payload).toContain('Cancel certificate')
+    expect(response.payload).toContain(
+      '/a1b2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-309145/cancel'
+    )
   })
 })

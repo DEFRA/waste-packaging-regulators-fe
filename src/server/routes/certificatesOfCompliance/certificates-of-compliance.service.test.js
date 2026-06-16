@@ -31,7 +31,11 @@ import {
   mockNotSubmittedItems,
   mockDetailData,
   mockComplianceSchemePendingItems,
-  mockComplianceSchemeDetailData
+  mockComplianceSchemeDetailData,
+  mockDirectProducerAcceptedDetailData,
+  mockDirectProducerCancelledDetailData,
+  mockComplianceSchemeAcceptedDetailData,
+  mockComplianceSchemeCancelledDetailData
 } from './certificates-of-compliance.service.js'
 import {
   mockSummaryByOrganisationType,
@@ -197,6 +201,55 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
     })
 
+    test('getCertificateOfComplianceDetailViewModel returns accepted direct producer detail', async () => {
+      const vm = await getCertificateOfComplianceDetailViewModel(
+        mockDirectProducerAcceptedDetailData.organisation.id,
+        mockDirectProducerAcceptedDetailData.id
+      )
+      expect(vm.companyName).toBe('Acme Compliance Co')
+      expect(vm.reviewStatus).toBe('Approved')
+      expect(vm.actions.showAccept).toBe(false)
+      expect(vm.actions.showCancel).toBe(true)
+    })
+
+    test('getCertificateOfComplianceDetailViewModel returns accepted compliance scheme detail', async () => {
+      const vm = await getCertificateOfComplianceDetailViewModel(
+        mockComplianceSchemeAcceptedDetailData.organisation.id,
+        mockComplianceSchemeAcceptedDetailData.id
+      )
+      expect(vm.companyName).toBe('Nationwide Packaging Scheme')
+      expect(vm.reviewStatus).toBe('Approved')
+      expect(vm.actions.showAccept).toBe(false)
+      expect(vm.actions.showCancel).toBe(true)
+      expect(vm.actions.labels.accept).toBe('Accept statement')
+    })
+
+    test('getCertificateOfComplianceDetailViewModel returns cancelled direct producer detail', async () => {
+      const vm = await getCertificateOfComplianceDetailViewModel(
+        mockDirectProducerCancelledDetailData.organisation.id,
+        mockDirectProducerCancelledDetailData.id
+      )
+      expect(vm.companyName).toBe('Greenfield Packaging Ltd')
+      expect(vm.reviewStatus).toBe('Cancelled')
+      expect(vm.actions.showAccept).toBe(false)
+      expect(vm.actions.showCancel).toBe(false)
+      expect(vm.cancellationDetails.reason).toBe(
+        mockDirectProducerCancelledDetailData.cancellationDetails.reason
+      )
+    })
+
+    test('getCertificateOfComplianceDetailViewModel returns cancelled compliance scheme detail', async () => {
+      const vm = await getCertificateOfComplianceDetailViewModel(
+        mockComplianceSchemeCancelledDetailData.organisation.id,
+        mockComplianceSchemeCancelledDetailData.id
+      )
+      expect(vm.companyName).toBe('GreenCircle Schemes')
+      expect(vm.reviewStatus).toBe('Cancelled')
+      expect(vm.actions.showAccept).toBe(false)
+      expect(vm.actions.showCancel).toBe(false)
+      expect(vm.cancellationDetails.resubmissionRequested).toBe('No')
+    })
+
     test('getCertificateOfComplianceDetailViewModel returns success banner when flagged', async () => {
       const vm = await getCertificateOfComplianceDetailViewModel(
         'org-abc',
@@ -210,7 +263,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
       )
       expect(vm.successBanner).toEqual({
         heading: 'Certificate accepted',
-        text: 'Certificate has been accepted.'
+        text: 'Certificate has been accepted.',
+        type: 'accepted'
       })
     })
   })
@@ -1076,7 +1130,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
       })
 
-      test('maps Accepted status to Approved review status with no action buttons', async () => {
+      test('maps Accepted status to Approved review status with cancel only', async () => {
         const mockApi = {
           getComplianceDeclaration: vi.fn().mockResolvedValue({
             ...mockDetailData,
@@ -1093,7 +1147,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.reviewStatus).toBe('Approved')
         expect(vm.actions).toMatchObject({
           showAccept: false,
-          showCancel: false
+          showCancel: true
         })
       })
 
@@ -1316,7 +1370,7 @@ describe('certificate detail action helpers', () => {
       )
     ).toMatchObject({
       showAccept: false,
-      showCancel: false
+      showCancel: true
     })
   })
 
@@ -1346,7 +1400,8 @@ describe('certificate detail action helpers', () => {
       )
     ).toEqual({
       heading: 'Certificate accepted',
-      text: 'Certificate has been accepted.'
+      text: 'Certificate has been accepted.',
+      type: 'accepted'
     })
     expect(
       buildCertificateSuccessBanner(
@@ -1359,7 +1414,8 @@ describe('certificate detail action helpers', () => {
       )
     ).toEqual({
       heading: 'Certificate cancelled',
-      text: 'Certificate has been cancelled and an email sent to the producer.'
+      text: 'Certificate has been cancelled and an email sent to the producer.',
+      type: 'cancelled'
     })
     expect(
       buildCertificateSuccessBanner(
@@ -1372,7 +1428,8 @@ describe('certificate detail action helpers', () => {
       )
     ).toEqual({
       heading: 'Statement accepted',
-      text: 'Statement has been accepted.'
+      text: 'Statement has been accepted.',
+      type: 'accepted'
     })
     expect(
       buildCertificateSuccessBanner(
@@ -1385,7 +1442,8 @@ describe('certificate detail action helpers', () => {
       )
     ).toEqual({
       heading: 'Statement cancelled',
-      text: 'Statement has been cancelled and an email sent to the compliance scheme.'
+      text: 'Statement has been cancelled and an email sent to the compliance scheme.',
+      type: 'cancelled'
     })
     expect(
       buildCertificateSuccessBanner(

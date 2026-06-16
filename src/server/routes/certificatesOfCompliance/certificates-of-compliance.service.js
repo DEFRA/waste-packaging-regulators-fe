@@ -16,7 +16,11 @@ export {
   mockNotSubmittedItems,
   mockComplianceSchemePendingItems,
   mockComplianceSchemeAcceptedItems,
-  mockComplianceSchemeDetailData
+  mockComplianceSchemeDetailData,
+  mockDirectProducerAcceptedDetailData,
+  mockDirectProducerCancelledDetailData,
+  mockComplianceSchemeAcceptedDetailData,
+  mockComplianceSchemeCancelledDetailData
 } from './certificates-of-compliance.mock.js'
 
 // --- Response mapping ---
@@ -335,11 +339,12 @@ export function buildCertificateDetailActions(
   const labels =
     certificateActionLabelsByRegistrationType[registrationType] ??
     certificateActionLabelsByRegistrationType.DirectProducer
-  const showActions = reviewStatus === 'Pending' || reviewStatus === 'Queried'
+  const showAccept = reviewStatus === 'Pending' || reviewStatus === 'Queried'
+  const showCancel = showAccept || reviewStatus === 'Approved'
 
   return {
-    showAccept: showActions,
-    showCancel: showActions,
+    showAccept,
+    showCancel,
     labels,
     urls: {
       accept: urls.approve,
@@ -357,10 +362,10 @@ export function buildCertificateSuccessBanner(
     certificateSuccessBannerCopyByRegistrationType.DirectProducer
 
   if (showApprovalBanner) {
-    return copyByType.accepted
+    return { ...copyByType.accepted, type: 'accepted' }
   }
   if (showCancelBanner) {
-    return copyByType.cancelled
+    return { ...copyByType.cancelled, type: 'cancelled' }
   }
   if (showQueryBanner) {
     return null
@@ -478,17 +483,22 @@ function mapQueryDetails(queryDetails) {
   }
 }
 
+function mapResubmissionRequestedDisplay(cancellationDetails) {
+  const resubmission = cancellationDetails.resubmissionRequested
+  if (resubmission === true) {
+    return 'Yes'
+  }
+  if (resubmission === false) {
+    return 'No'
+  }
+  return cancellationDetails.resubmissionRequestedDisplay ?? null
+}
+
 function mapCancellationDetails(cancellationDetails) {
   if (!cancellationDetails) return null
-  const resubmission = cancellationDetails.resubmissionRequested
   return {
     reason: cancellationDetails.reason ?? null,
-    resubmissionRequested:
-      resubmission === true
-        ? 'Yes'
-        : resubmission === false
-          ? 'No'
-          : (cancellationDetails.resubmissionRequestedDisplay ?? null),
+    resubmissionRequested: mapResubmissionRequestedDisplay(cancellationDetails),
     dateCancelled: formatDate(
       cancellationDetails.dateCancelled ?? cancellationDetails.actionDate
     )

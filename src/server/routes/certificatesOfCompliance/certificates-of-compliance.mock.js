@@ -300,6 +300,49 @@ export const mockComplianceSchemeDetailData = {
   audit: []
 }
 
+export const mockComplianceSchemeAcceptedDetailData = {
+  ...mockComplianceSchemeDetailData,
+  id: 'decl-cs-101',
+  created: '2027-01-12T00:00:00Z',
+  updated: '2027-01-12T00:00:00Z',
+  status: 'Accepted',
+  organisation: {
+    ...mockComplianceSchemeDetailData.organisation,
+    id: 'e1d2c3b4-a596-4878-9abc-def012345678',
+    complianceSchemeName: 'Nationwide Packaging Scheme',
+    schemeOperatorName: 'Nationwide Packaging Group',
+    referenceNumber: 'CS-2001'
+  },
+  isRegulation43Compliant: true
+}
+
+export const mockDirectProducerAcceptedDetailData = {
+  ...mockDetailData,
+  id: 'decl-309145',
+  created: '2027-01-15T00:00:00Z',
+  updated: '2027-01-15T00:00:00Z',
+  status: 'Accepted',
+  organisation: {
+    ...mockDetailData.organisation,
+    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    name: 'Acme Compliance Co',
+    referenceNumber: '309145'
+  }
+}
+
+export const mockDirectProducerAcceptedDetailDataSecondary = {
+  ...mockDirectProducerAcceptedDetailData,
+  id: 'decl-412067',
+  created: '2027-01-10T00:00:00Z',
+  updated: '2027-01-10T00:00:00Z',
+  organisation: {
+    ...mockDirectProducerAcceptedDetailData.organisation,
+    id: 'c1d2e3f4-a5b6-7890-abcd-ef1234567890',
+    name: 'BlueSky Materials plc',
+    referenceNumber: '412067'
+  }
+}
+
 export const mockQueriedDetailData = {
   ...mockDetailData,
   id: 'decl-queried',
@@ -322,10 +365,16 @@ export const mockComplianceSchemeQueriedDetailData = {
   }
 }
 
-export const mockCancelledDetailData = {
+export const mockDirectProducerCancelledDetailData = {
   ...mockDetailData,
-  id: 'decl-cancelled',
+  id: 'decl-dp-cancelled',
   status: 'Cancelled',
+  organisation: {
+    ...mockDetailData.organisation,
+    id: 'b1e2c3d4-e5f6-7890-abcd-ef1234567890',
+    name: 'Greenfield Packaging Ltd',
+    referenceNumber: '204872'
+  },
   cancellationDetails: {
     reason: 'Submitted after the deadline.',
     resubmissionRequested: true,
@@ -333,10 +382,19 @@ export const mockCancelledDetailData = {
   }
 }
 
+export const mockCancelledDetailData = mockDirectProducerCancelledDetailData
+
 export const mockComplianceSchemeCancelledDetailData = {
   ...mockComplianceSchemeDetailData,
   id: 'decl-cs-cancelled',
   status: 'Cancelled',
+  organisation: {
+    ...mockComplianceSchemeDetailData.organisation,
+    id: 'f3a2b1c0-d9e8-47f6-a5b4-c3d2e1f0a9b8',
+    complianceSchemeName: 'GreenCircle Schemes',
+    schemeOperatorName: 'GreenCircle Group',
+    referenceNumber: 'CS-1002'
+  },
   cancellationDetails: {
     reason: 'Incomplete member data submitted.',
     resubmissionRequested: false,
@@ -346,9 +404,13 @@ export const mockComplianceSchemeCancelledDetailData = {
 
 const mockDetailById = {
   'decl-101411': mockDetailData,
+  'decl-309145': mockDirectProducerAcceptedDetailData,
+  'decl-412067': mockDirectProducerAcceptedDetailDataSecondary,
+  'decl-dp-cancelled': mockDirectProducerCancelledDetailData,
   'decl-queried': mockQueriedDetailData,
-  'decl-cancelled': mockCancelledDetailData,
+  'decl-cancelled': mockDirectProducerCancelledDetailData,
   'decl-cs-001': mockComplianceSchemeDetailData,
+  'decl-cs-101': mockComplianceSchemeAcceptedDetailData,
   'decl-cs-queried': mockComplianceSchemeQueriedDetailData,
   'decl-cs-cancelled': mockComplianceSchemeCancelledDetailData
 }
@@ -358,23 +420,10 @@ export function getMockDetailDataById(id) {
     return mockDetailById[id]
   }
 
-  const allAccepted = [
-    ...mockAcceptedItems,
+  const isComplianceScheme = [
+    ...mockComplianceSchemePendingItems,
     ...mockComplianceSchemeAcceptedItems
-  ]
-  const acceptedItem = allAccepted.find((item) => item.id === id)
-  if (acceptedItem) {
-    const base = mockComplianceSchemeAcceptedItems.some(
-      (item) => item.id === id
-    )
-      ? mockComplianceSchemeDetailData
-      : mockDetailData
-    return { ...base, id, status: 'Accepted' }
-  }
-
-  const isComplianceScheme = mockComplianceSchemePendingItems.some(
-    (item) => item.id === id
-  )
+  ].some((item) => item.id === id)
   const base = isComplianceScheme
     ? mockComplianceSchemeDetailData
     : mockDetailData

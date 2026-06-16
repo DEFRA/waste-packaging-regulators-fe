@@ -119,6 +119,9 @@ describe('certificates of compliance action controllers', () => {
       expect(detailResponse.payload).toContain(
         'Certificate has been cancelled and an email sent to the producer.'
       )
+      expect(detailResponse.payload).toContain(
+        'app-notification-banner--cancelled'
+      )
     })
   })
 
