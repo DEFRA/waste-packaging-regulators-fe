@@ -195,7 +195,9 @@ describe('WasteObligationsApiService', () => {
     test('returns data when declaration exists', async () => {
       const fetchImpl = vi
         .fn()
-        .mockResolvedValue(mockOkResponse({ id: 'decl-1', status: 'Submitted' }))
+        .mockResolvedValue(
+          mockOkResponse({ id: 'decl-1', status: 'Submitted' })
+        )
       const service = new WasteObligationsApiService({
         baseUrl: 'http://localhost:8080',
         clientId: 'Developer',
@@ -267,5 +269,39 @@ describe('WasteObligationsApiService', () => {
     })
 
     expect(service).toBeInstanceOf(WasteObligationsApiService)
+  })
+
+  test('updateComplianceDeclaration calls the correct PATCH endpoint', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(mockOkResponse({ id: 'decl-1', status: 'Accepted' }))
+    const service = new WasteObligationsApiService({
+      baseUrl: 'http://localhost:8080',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    await service.updateComplianceDeclaration(
+      {
+        organisationId: 'org-abc',
+        id: 'decl-1',
+        status: 'Accepted',
+        user: { id: 'user-1', email: 'user@example.com' }
+      },
+      'trace-3'
+    )
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:8080/organisations/org-abc/compliance-declarations/decl-1',
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: 'Accepted',
+          user: { id: 'user-1', email: 'user@example.com' }
+        }),
+        headers: expect.objectContaining({ 'x-cdp-request-id': 'trace-3' })
+      })
+    )
   })
 })

@@ -3,8 +3,9 @@ import { createWasteObligationsApiService } from '#/services/waste-obligations-a
 import { createWasteOrganisationsApiService } from '#/services/waste-organisations-api.service.js'
 import {
   mockSummary,
-  mockListByTab,
-  mockDetailData
+  mockSummaryByOrganisationType,
+  mockListByOrganisationType,
+  getMockDetailDataById
 } from './certificates-of-compliance.mock.js'
 
 export {
@@ -13,7 +14,14 @@ export {
   mockObligationData,
   mockPendingItems,
   mockAcceptedItems,
-  mockNotSubmittedItems
+  mockNotSubmittedItems,
+  mockComplianceSchemePendingItems,
+  mockComplianceSchemeAcceptedItems,
+  mockComplianceSchemeDetailData,
+  mockDirectProducerAcceptedDetailData,
+  mockDirectProducerCancelledDetailData,
+  mockComplianceSchemeAcceptedDetailData,
+  mockComplianceSchemeCancelledDetailData
 } from './certificates-of-compliance.mock.js'
 
 // --- Response mapping ---
@@ -106,7 +114,7 @@ async function getComplianceSummary(
   traceId
 ) {
   if (config.get('useMockApi')) {
-    return mockSummary
+    return mockSummaryByOrganisationType[organisationType] ?? mockSummary
   }
 
   const registrationType = registrationTypeByOrganisationType[organisationType]
@@ -129,7 +137,7 @@ async function getComplianceSummary(
   )
 
   return {
-    // TODO: confirm where complianceYear comes from
+    // Real API does not yet expose compliance year; use mock default until available
     complianceYear: mockSummary.complianceYear,
     totalPending: pendingResult.total,
     totalAccepted: acceptedResult.total,
@@ -149,8 +157,9 @@ async function getComplianceList(
   traceId
 ) {
   if (config.get('useMockApi')) {
+    const listByTab = mockListByOrganisationType[organisationType] ?? {}
     return {
-      items: mockListByTab[tab] ?? [],
+      items: listByTab[tab] ?? [],
       totalPages: 6,
       currentPage: page
     }
@@ -267,6 +276,265 @@ const organisationTypeDisplayNames = {
   ComplianceScheme: 'Compliance scheme'
 }
 
+const certificateActionLabelsByRegistrationType = {
+  DirectProducer: {
+    accept: 'Accept certificate',
+    cancel: 'Cancel certificate'
+  },
+  ComplianceScheme: {
+    accept: 'Accept statement',
+    cancel: 'Cancel statement'
+  }
+}
+
+const certificateSuccessBannerCopyByRegistrationType = {
+  DirectProducer: {
+    accepted: {
+      heading: 'Certificate accepted',
+      text: 'Certificate has been accepted.'
+    },
+    cancelled: {
+      heading: 'Certificate cancelled',
+      text: 'Certificate has been cancelled and an email sent to the producer.'
+    }
+  },
+  ComplianceScheme: {
+    accepted: {
+      heading: 'Statement accepted',
+      text: 'Statement has been accepted.'
+    },
+    cancelled: {
+      heading: 'Statement cancelled',
+      text: 'Statement has been cancelled and an email sent to the compliance scheme.'
+    }
+  }
+}
+
+const reviewStatusByDeclarationStatus = {
+  Submitted: 'Pending',
+  Accepted: 'Approved',
+  Queried: 'Queried',
+  Cancelled: 'Cancelled'
+}
+
+export function mapDeclarationStatusToReviewStatus(status) {
+  return reviewStatusByDeclarationStatus[status] ?? 'Pending'
+}
+
+export function buildCertificateDetailActionUrls(organisationId, id) {
+  const base = `/${organisationId}/certificates-of-compliance/${id}`
+  return {
+    approve: `${base}/approve`,
+    query: `${base}/query`,
+    cancel: `${base}/cancel`
+  }
+}
+
+export function buildCertificateDetailActions(
+  reviewStatus,
+  organisationId,
+  id,
+  registrationType
+) {
+  const urls = buildCertificateDetailActionUrls(organisationId, id)
+  const labels =
+    certificateActionLabelsByRegistrationType[registrationType] ??
+    certificateActionLabelsByRegistrationType.DirectProducer
+  const showAccept = reviewStatus === 'Pending' || reviewStatus === 'Queried'
+  const showCancel = showAccept || reviewStatus === 'Approved'
+
+  return {
+    showAccept,
+    showCancel,
+    labels,
+    urls: {
+      accept: urls.approve,
+      cancel: urls.cancel
+    }
+  }
+}
+
+export function buildCertificateSuccessBanner(
+  { showApprovalBanner, showQueryBanner, showCancelBanner },
+  registrationType
+) {
+  const copyByType =
+    certificateSuccessBannerCopyByRegistrationType[registrationType] ??
+    certificateSuccessBannerCopyByRegistrationType.DirectProducer
+
+  if (showApprovalBanner) {
+    return { ...copyByType.accepted, type: 'accepted' }
+  }
+  if (showCancelBanner) {
+    return { ...copyByType.cancelled, type: 'cancelled' }
+  }
+  if (showQueryBanner) {
+    return null
+  }
+  return null
+}
+
+export function getDeclarationSessionKey(organisationId, id) {
+  return `${organisationId}/${id}`
+}
+
+export const certificateActionSessionKeys = {
+  justApproved: 'coc-just-approved',
+  justQueried: 'coc-just-queried',
+  justCancelled: 'coc-just-cancelled'
+}
+
+const declarationStatusByReviewStatus = {
+  Pending: 'Submitted',
+  Approved: 'Accepted',
+  Queried: 'Queried',
+  Cancelled: 'Cancelled'
+}
+
+function mockStatusSessionKey(declarationKey) {
+  return `coc-mock-status:${declarationKey}`
+}
+
+export function canApproveComplianceDeclaration(reviewStatus) {
+  return reviewStatus === 'Pending' || reviewStatus === 'Queried'
+}
+
+export function canCancelComplianceDeclaration(reviewStatus) {
+  return (
+    reviewStatus === 'Pending' ||
+    reviewStatus === 'Queried' ||
+    reviewStatus === 'Approved'
+  )
+}
+
+export function setMockDeclarationStatusOverride(
+  session,
+  declarationKey,
+  reviewStatus
+) {
+  if (!config.get('useMockApi')) {
+    return
+  }
+
+  const status = declarationStatusByReviewStatus[reviewStatus]
+  if (status) {
+    session.set(mockStatusSessionKey(declarationKey), status)
+  }
+}
+
+function applyMockDeclarationStatusOverride(data, declarationKey, session) {
+  if (!config.get('useMockApi') || !session) {
+    return data
+  }
+
+  const overrideStatus = session.get(mockStatusSessionKey(declarationKey))
+
+  if (!overrideStatus) {
+    return data
+  }
+
+  return { ...data, status: overrideStatus }
+}
+
+export function readAndClearCertificateActionBannerFlags(
+  session,
+  declarationKey
+) {
+  const showApprovalBanner =
+    session.get(certificateActionSessionKeys.justApproved) === declarationKey
+  const showQueryBanner =
+    session.get(certificateActionSessionKeys.justQueried) === declarationKey
+  const showCancelBanner =
+    session.get(certificateActionSessionKeys.justCancelled) === declarationKey
+
+  if (showApprovalBanner) {
+    session.clear(certificateActionSessionKeys.justApproved)
+  }
+  if (showQueryBanner) {
+    session.clear(certificateActionSessionKeys.justQueried)
+  }
+  if (showCancelBanner) {
+    session.clear(certificateActionSessionKeys.justCancelled)
+  }
+
+  return { showApprovalBanner, showQueryBanner, showCancelBanner }
+}
+
+async function getDeclarationDetail(
+  obligationsApi,
+  organisationId,
+  id,
+  { traceId, session } = {}
+) {
+  if (config.get('useMockApi')) {
+    const mockData = applyMockDeclarationStatusOverride(
+      getMockDetailDataById(id),
+      getDeclarationSessionKey(organisationId, id),
+      session
+    )
+    return mapDeclarationToDetail(mockData, {
+      organisationId,
+      id
+    })
+  }
+
+  const data = await obligationsApi.getComplianceDeclaration(
+    { id, organisationId },
+    traceId
+  )
+  return mapDeclarationToDetail(data, { organisationId, id })
+}
+
+export async function getComplianceDeclarationReviewStatus(
+  organisationId,
+  id,
+  traceId,
+  session
+) {
+  const api = createWasteObligationsApiService()
+  const detail = await getDeclarationDetail(api, organisationId, id, {
+    traceId,
+    session
+  })
+
+  return detail.reviewStatus
+}
+
+export function mapSessionUserToApiUser(sessionUser) {
+  const profile = sessionUser?.profile
+  if (profile) {
+    const id = profile.sub ?? profile.oid ?? profile.id
+    const email = profile.email ?? profile.emails?.[0]
+    if (id && email) {
+      return { id, email }
+    }
+  }
+
+  return { id: 'mock-user', email: 'mock-user@test.local' }
+}
+
+export async function approveComplianceDeclaration(
+  organisationId,
+  id,
+  sessionUser,
+  traceId
+) {
+  if (config.get('useMockApi')) {
+    return null
+  }
+
+  const api = createWasteObligationsApiService()
+  return api.updateComplianceDeclaration(
+    {
+      organisationId,
+      id,
+      status: 'Accepted',
+      user: mapSessionUserToApiUser(sessionUser)
+    },
+    traceId
+  )
+}
+
 const GLASS_BREAKDOWN_MATERIALS = new Set(['GlassRemelt', 'RemainingGlass'])
 
 function formatDate(isoString) {
@@ -299,15 +567,51 @@ function computeTotals(rows) {
   }
 }
 
-function mapDeclarationToDetail(data) {
+function mapQueryDetails(queryDetails) {
+  if (!queryDetails) return null
+  return {
+    queriedMaterials: queryDetails.queriedMaterials ?? null,
+    reason: queryDetails.reason ?? null,
+    dateQueried: formatDate(queryDetails.dateQueried ?? queryDetails.actionDate)
+  }
+}
+
+function mapResubmissionRequestedDisplay(cancellationDetails) {
+  const resubmission = cancellationDetails.resubmissionRequested
+  if (resubmission === true) {
+    return 'Yes'
+  }
+  if (resubmission === false) {
+    return 'No'
+  }
+  return cancellationDetails.resubmissionRequestedDisplay ?? null
+}
+
+function mapCancellationDetails(cancellationDetails) {
+  if (!cancellationDetails) return null
+  return {
+    reason: cancellationDetails.reason ?? null,
+    resubmissionRequested: mapResubmissionRequestedDisplay(cancellationDetails),
+    dateCancelled: formatDate(
+      cancellationDetails.dateCancelled ?? cancellationDetails.actionDate
+    )
+  }
+}
+
+function mapDeclarationToDetail(data, { organisationId, id } = {}) {
   const {
     organisation,
     obligationYear,
     obligations,
     obligationStatus,
     submitterName,
-    created
+    created,
+    status
   } = data
+
+  const reviewStatus = mapDeclarationStatusToReviewStatus(status)
+  const resolvedOrganisationId = organisationId ?? organisation?.id ?? null
+  const resolvedId = id ?? data.id ?? null
 
   const companyName =
     organisation.name ??
@@ -323,17 +627,36 @@ function mapDeclarationToDetail(data) {
     GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
   )
 
+  const actions =
+    resolvedOrganisationId && resolvedId
+      ? buildCertificateDetailActions(
+          reviewStatus,
+          resolvedOrganisationId,
+          resolvedId,
+          organisation.registrationType
+        )
+      : {
+          showAccept: false,
+          showCancel: false,
+          labels: certificateActionLabelsByRegistrationType.DirectProducer,
+          urls: { accept: '#', cancel: '#' }
+        }
+
   return {
+    organisationId: resolvedOrganisationId,
+    declarationId: resolvedId,
     complianceYear: String(obligationYear),
     companyName,
     declarationStatus: data.status,
+    reviewStatus,
     recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
     dateDeclarationSubmitted: formatDate(created),
     organisationType:
       organisationTypeDisplayNames[organisation.registrationType] ??
       organisation.registrationType,
+    registrationType: organisation.registrationType,
     organisationRef: organisation.referenceNumber,
-    // TODO: these will come from the account API call
+    // Contact fields are on the organisation object from the obligations API response
     companiesHouseNumber: organisation.companiesHouseNumber ?? null,
     nameOnAccount: organisation.nameOnAccount ?? null,
     declarationEmailAddress: organisation.contactEmailAddress ?? null,
@@ -342,7 +665,14 @@ function mapDeclarationToDetail(data) {
     materials,
     materialTotals: computeTotals(materials),
     glassBreakdown,
-    glassBreakdownTotals: computeTotals(glassBreakdown)
+    glassBreakdownTotals: computeTotals(glassBreakdown),
+    actions,
+    queryDetails:
+      reviewStatus === 'Queried' ? mapQueryDetails(data.queryDetails) : null,
+    cancellationDetails:
+      reviewStatus === 'Cancelled'
+        ? mapCancellationDetails(data.cancellationDetails)
+        : null
   }
 }
 
@@ -410,7 +740,7 @@ async function getDeclarationDetail(
 export async function getCertificateOfComplianceDetailViewModel(
   organisationId,
   id,
-  traceId
+  { traceId, bannerFlags = {}, session } = {}
 ) {
   const apiWasteObligation = createWasteObligationsApiService()
 
@@ -418,12 +748,16 @@ export async function getCertificateOfComplianceDetailViewModel(
     apiWasteObligation,
     organisationId,
     id,
-    traceId
+    { traceId, session }
   )
 
   return {
     heading: 'Certificate of compliance',
     backlink: '/certificates-of-compliance',
+    successBanner: buildCertificateSuccessBanner(
+      bannerFlags,
+      detail.registrationType
+    ),
     ...detail
   }
 }

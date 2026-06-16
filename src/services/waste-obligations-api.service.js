@@ -45,9 +45,28 @@ export class WasteObligationsApiService extends BaseApiService {
     )
   }
 
+  async updateComplianceDeclaration(
+    { organisationId, id, status, reason, user } = {},
+    traceId
+  ) {
+    const body = { status, user }
+    if (reason != null) {
+      body.reason = reason
+    }
+
+    return this.patchJson(
+      `/organisations/${organisationId}/compliance-declarations/${id}`,
+      body,
+      this.getTracingHeader(traceId)
+    )
+  }
+
   async getComplianceDeclarationOrNull({ id, organisationId } = {}, traceId) {
     try {
-      return await this.getComplianceDeclaration({ id, organisationId }, traceId)
+      return await this.getComplianceDeclaration(
+        { id, organisationId },
+        traceId
+      )
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) return null
       throw err
