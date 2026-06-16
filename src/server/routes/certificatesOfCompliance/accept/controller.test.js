@@ -1,11 +1,18 @@
 import { createServer } from '#/server/server.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
-import { mockDetailData } from '../certificates-of-compliance.service.js'
+import {
+  mockDetailData,
+  mockComplianceDetailData,
+  mockCompliancePendingItems
+} from '../certificates-of-compliance.service.js'
 
 const ORG_ID = 'org-123'
 const CERT_ID = '101411'
 const ACCEPT_URL = `/${ORG_ID}/certificates-of-compliance/${CERT_ID}/accept`
 const DETAIL_URL = `/${ORG_ID}/certificates-of-compliance/${CERT_ID}`
+
+const CS_ITEM = mockCompliancePendingItems[0]
+const CS_ACCEPT_URL = `/${CS_ITEM.organisationId}/certificates-of-compliance/${CS_ITEM.id}/accept`
 
 // hapi/yar stores the session in the cookie itself by default, so each
 // response carries an updated Set-Cookie that the next request must use.
@@ -71,6 +78,16 @@ describe('#certificatesOfComplianceAcceptController', () => {
       const cookie = await signIn()
       const response = await get(ACCEPT_URL, cookie)
       expect(response.payload).toContain(`href="${DETAIL_URL}"`)
+    })
+
+    it('uses "statement" wording for a Compliance Scheme declaration', async () => {
+      const cookie = await signIn()
+      const response = await get(CS_ACCEPT_URL, cookie)
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.payload).toContain(
+        `Are you sure you want to accept this statement for ${mockComplianceDetailData.organisation.complianceSchemeName}?`
+      )
+      expect(response.payload).not.toContain('accept this certificate for')
     })
   })
 

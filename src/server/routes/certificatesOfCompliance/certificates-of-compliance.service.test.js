@@ -790,6 +790,40 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.companyName).toBe('Unknown organisation')
       })
 
+      test('maps registrationType=ComplianceScheme to isComplianceScheme=true', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue({
+            ...mockDetailData,
+            organisation: {
+              ...mockDetailData.organisation,
+              registrationType: 'ComplianceScheme'
+            }
+          })
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.isComplianceScheme).toBe(true)
+      })
+
+      test('maps registrationType=DirectProducer to isComplianceScheme=false', async () => {
+        const mockApi = {
+          getComplianceDeclaration: vi.fn().mockResolvedValue(mockDetailData)
+        }
+        createWasteObligationsApiService.mockReturnValue(mockApi)
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.isComplianceScheme).toBe(false)
+      })
+
       test('maps obligationStatus=Met to recyclingObligationsMet=true', async () => {
         const mockApi = {
           getComplianceDeclaration: vi

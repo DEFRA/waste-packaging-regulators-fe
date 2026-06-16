@@ -21,20 +21,19 @@ function acceptPath(organisationId, id) {
 async function renderForm(request, h, { errors = null } = {}) {
   const { organisationId, id } = request.params
   const traceId = request.headers[config.get('tracing.header')]
-  const { companyName } = await getCertificateOfComplianceDetailViewModel(
-    organisationId,
-    id,
-    traceId
-  )
+  const { companyName, isComplianceScheme } =
+    await getCertificateOfComplianceDetailViewModel(organisationId, id, traceId)
+
+  const docType = isComplianceScheme ? 'statement' : 'certificate'
+  const title = `Accept ${docType} — ${companyName}`
 
   return h.view('certificatesOfCompliance/accept/index', {
-    pageTitle: errors
-      ? `Error: Accept certificate — ${companyName}`
-      : `Accept certificate — ${companyName}`,
+    pageTitle: errors ? `Error: ${title}` : title,
     backlink: detailPath(organisationId, id),
     organisationId,
     id,
     companyName,
+    isComplianceScheme,
     errors
   })
 }

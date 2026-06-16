@@ -14,12 +14,13 @@
         }) }}
       {% endif %}
 
+      {% set docTypeLower = "statement" if isComplianceScheme else "certificate" %}
       <form method="post" action="/{{ organisationId }}/certificates-of-compliance/{{ id }}/accept" novalidate>
         {{ govukRadios({
           name: "confirm-accept",
           fieldset: {
             legend: {
-              text: "Are you sure you want to accept this certificate for " + companyName + "?",
+              text: "Are you sure you want to accept this " + docTypeLower + " for " + companyName + "?",
               isPageHeading: true,
               classes: "govuk-fieldset__legend--l"
             }

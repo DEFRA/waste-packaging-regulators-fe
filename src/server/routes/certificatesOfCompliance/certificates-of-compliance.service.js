@@ -329,6 +329,7 @@ function mapDeclarationToDetail(data) {
   return {
     complianceYear: String(obligationYear),
     companyName,
+    isComplianceScheme: organisation.registrationType === 'ComplianceScheme',
     recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
     dateDeclarationSubmitted: formatDate(created),
     organisationType:
