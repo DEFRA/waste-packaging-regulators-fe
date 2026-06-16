@@ -12,3 +12,8 @@ coverage
 .envrc.local
 tsconfig.tsbuildinfo
 .env
+
+# Local Cursor / commit hook tooling
+.cursor/.gitignore
+.husky/prepare-commit-msg
+scripts/prepare-commit-msg.mjs

@@ -3,11 +3,20 @@ import { statusCodes } from '#/server/common/constants/status-codes.js'
 import {
   mockPendingItems,
   mockAcceptedItems,
-  mockDetailData
+  mockDetailData,
+  mockNotSubmittedItems,
+  mockComplianceSchemePendingItems,
+  mockComplianceSchemeAcceptedItems,
+  mockDirectProducerCancelledDetailData,
+  mockComplianceSchemeCancelledDetailData
 } from './certificates-of-compliance.mock.js'
 
 function detailPathFor(item) {
   return `/${item.organisationId}/certificates-of-compliance/${item.id}`
+}
+
+function detailPathForDetailData(detailData) {
+  return `/${detailData.organisation.id}/certificates-of-compliance/${detailData.id}`
 }
 
 describe('certificates of compliance — journey', () => {
@@ -53,7 +62,6 @@ describe('certificates of compliance — journey', () => {
       const listUrl =
         '/certificates-of-compliance?type=direct-producers&tab=pending'
 
-      // Step 1: unauthenticated request — stores returnTo in a new session
       const unauthResponse = await server.inject({
         method: 'GET',
         url: listUrl
@@ -89,6 +97,23 @@ describe('certificates of compliance — journey', () => {
         expect(response.payload).toContain(item.organisationName)
         expect(response.payload).toContain(
           `./${item.organisationId}/certificates-of-compliance/${item.id}`
+        )
+      }
+    })
+
+    it('not-submitted list shows organisation name without a detail link', async () => {
+      const response = await inject(
+        '/certificates-of-compliance?type=direct-producers&tab=not-submitted'
+      )
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      for (const item of mockNotSubmittedItems) {
+        expect(response.payload).toContain(item.organisationName)
+        expect(response.payload).not.toContain(
+          `./${item.organisationId}/certificates-of-compliance/null`
+        )
+        expect(response.payload).not.toContain(
+          `./${item.organisationId}/certificates-of-compliance/`
         )
       }
     })
@@ -146,108 +171,201 @@ describe('certificates of compliance — journey', () => {
       expect(
         detailResponse.payload,
         'Should get organisation name from detail page'
-      ).toContain(mockDetailData.organisation.name)
+      ).toContain(mockAcceptedItems[0].organisationName)
     })
   })
 
   describe('detail page actions', () => {
-    it('shows Accept certificate and Cancel certificate buttons', async () => {
+    it('shows Accept and Cancel certificate buttons for a pending direct producer', async () => {
       const response = await inject(detailPathFor(mockPendingItems[0]))
 
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(response.payload).toContain('Accept certificate')
       expect(response.payload).toContain('Cancel certificate')
+      expect(response.payload).not.toContain('Query')
     })
 
-    it('Accept certificate button is present for an accepted item', async () => {
-      const response = await inject(detailPathFor(mockAcceptedItems[0]))
-
-      expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).toContain('Accept certificate')
-    })
-
-    it('Accept certificate button links to the accept confirmation page', async () => {
-      const item = mockPendingItems[0]
+    it('shows Accept and Cancel statement buttons for a pending compliance scheme', async () => {
+      const item = mockComplianceSchemePendingItems[0]
       const response = await inject(detailPathFor(item))
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).toContain(`href="${detailPathFor(item)}/accept"`)
+      expect(response.payload).toContain('Accept statement')
+      expect(response.payload).toContain('Cancel statement')
+      expect(response.payload).not.toContain('Query')
     })
-  })
 
-  describe('accept journey', () => {
-    const pathFor = (item) => `${detailPathFor(item)}/accept`
-
-    const nextCookie = (response, fallback) =>
-      response.headers['set-cookie']?.[0]?.split(';')[0] ?? fallback
-
-    const postAccept = (item, choice, cookie) =>
-      server.inject({
-        method: 'POST',
-        url: pathFor(item),
-        payload: `confirm-accept=${choice}`,
-        headers: {
-          cookie,
-          'content-type': 'application/x-www-form-urlencoded'
-        }
-      })
-
-    it('GET accept renders the confirmation form with the organisation name', async () => {
-      const item = mockPendingItems[0]
-      const response = await inject(pathFor(item))
+    it('shows cancel only for an accepted direct producer', async () => {
+      const response = await inject(detailPathFor(mockAcceptedItems[0]))
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).toContain(mockDetailData.organisation.name)
-      expect(response.payload).toContain('confirm-accept')
+      expect(response.payload).not.toContain('Accept certificate')
+      expect(response.payload).not.toContain('/approve')
+      expect(response.payload).toContain('Cancel certificate')
+      expect(response.payload).toContain(
+        `${detailPathFor(mockAcceptedItems[0])}/cancel`
+      )
     })
 
-    it('choosing "no" returns to the detail page without the success banner', async () => {
+    it('shows cancel only for an accepted compliance scheme', async () => {
+      const item = mockComplianceSchemeAcceptedItems[0]
+      const response = await inject(detailPathFor(item))
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.payload).not.toContain('Accept statement')
+      expect(response.payload).not.toContain('/approve')
+      expect(response.payload).toContain('Cancel statement')
+      expect(response.payload).toContain(`${detailPathFor(item)}/cancel`)
+    })
+
+    it('shows no action buttons for a cancelled direct producer', async () => {
+      const response = await inject(
+        detailPathForDetailData(mockDirectProducerCancelledDetailData)
+      )
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.payload).not.toContain('Accept certificate')
+      expect(response.payload).not.toContain('Cancel certificate')
+      expect(response.payload).not.toContain('/approve')
+      expect(response.payload).not.toContain('/cancel')
+    })
+
+    it('shows no action buttons for a cancelled compliance scheme', async () => {
+      const response = await inject(
+        detailPathForDetailData(mockComplianceSchemeCancelledDetailData)
+      )
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.payload).not.toContain('Accept statement')
+      expect(response.payload).not.toContain('Cancel statement')
+      expect(response.payload).not.toContain('/approve')
+      expect(response.payload).not.toContain('/cancel')
+    })
+
+    it('approve flow redirects to detail with accepted banner styling', async () => {
       const item = mockPendingItems[0]
-      const postResponse = await postAccept(item, 'no', sessionCookie)
-      expect(postResponse.statusCode).toBe(302)
-      expect(postResponse.headers.location).toBe(detailPathFor(item))
+      const approveResponse = await server.inject({
+        method: 'POST',
+        url: `${detailPathFor(item)}/approve`,
+        headers: { cookie: sessionCookie }
+      })
+
+      expect(approveResponse.statusCode).toBe(302)
+      expect(approveResponse.headers.location).toBe(detailPathFor(item))
 
       const detailResponse = await server.inject({
         method: 'GET',
         url: detailPathFor(item),
-        headers: { cookie: nextCookie(postResponse, sessionCookie) }
+        headers: {
+          cookie: mergeCookiesFromResponse(sessionCookie, approveResponse)
+        }
       })
-      expect(detailResponse.statusCode).toBe(statusCodes.ok)
+
+      expect(detailResponse.payload).toContain('Certificate accepted')
+      expect(detailResponse.payload).toContain('Important')
       expect(detailResponse.payload).not.toContain(
-        'Certificate has been accepted.'
+        'govuk-notification-banner--success'
+      )
+      expect(detailResponse.payload).not.toContain(
+        'app-notification-banner--cancelled'
       )
     })
 
-    it('choosing "yes" returns to the detail page with a one-shot success banner', async () => {
-      const item = mockPendingItems[0]
-      const postResponse = await postAccept(item, 'yes', sessionCookie)
-      expect(postResponse.statusCode).toBe(302)
-      expect(postResponse.headers.location).toBe(detailPathFor(item))
+    it('compliance scheme approve flow shows statement accepted banner', async () => {
+      const item = mockComplianceSchemePendingItems[0]
+      const approveResponse = await server.inject({
+        method: 'POST',
+        url: `${detailPathFor(item)}/approve`,
+        headers: { cookie: sessionCookie }
+      })
 
-      const cookieAfterPost = nextCookie(postResponse, sessionCookie)
-      const firstView = await server.inject({
+      expect(approveResponse.statusCode).toBe(302)
+
+      const detailResponse = await server.inject({
         method: 'GET',
         url: detailPathFor(item),
-        headers: { cookie: cookieAfterPost }
+        headers: {
+          cookie: mergeCookiesFromResponse(sessionCookie, approveResponse)
+        }
       })
-      expect(firstView.payload).toContain('Certificate accepted')
-      expect(firstView.payload).toContain('Certificate has been accepted.')
 
-      const secondView = await server.inject({
-        method: 'GET',
-        url: detailPathFor(item),
-        headers: { cookie: nextCookie(firstView, cookieAfterPost) }
-      })
-      expect(secondView.payload).not.toContain('Certificate has been accepted.')
+      expect(detailResponse.payload).toContain('Statement accepted')
+      expect(detailResponse.payload).toContain('Important')
     })
 
-    it('submitting without a choice re-renders the form with an error summary', async () => {
+    it('cancel flow redirects to detail with cancelled banner styling', async () => {
       const item = mockPendingItems[0]
-      const response = await postAccept(item, '', sessionCookie)
+      const cancelResponse = await server.inject({
+        method: 'POST',
+        url: `${detailPathFor(item)}/cancel`,
+        headers: { cookie: sessionCookie }
+      })
 
-      expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).toContain('There is a problem')
-      expect(response.payload).toContain('Select yes or no')
+      expect(cancelResponse.statusCode).toBe(302)
+      expect(cancelResponse.headers.location).toBe(detailPathFor(item))
+
+      const detailResponse = await server.inject({
+        method: 'GET',
+        url: detailPathFor(item),
+        headers: {
+          cookie: mergeCookiesFromResponse(sessionCookie, cancelResponse)
+        }
+      })
+
+      expect(detailResponse.payload).toContain('Certificate cancelled')
+      expect(detailResponse.payload).toContain(
+        'app-notification-banner--cancelled'
+      )
+    })
+
+    it('compliance scheme cancel flow shows statement cancelled banner', async () => {
+      const item = mockComplianceSchemePendingItems[0]
+      const cancelResponse = await server.inject({
+        method: 'POST',
+        url: `${detailPathFor(item)}/cancel`,
+        headers: { cookie: sessionCookie }
+      })
+
+      expect(cancelResponse.statusCode).toBe(302)
+
+      const detailResponse = await server.inject({
+        method: 'GET',
+        url: detailPathFor(item),
+        headers: {
+          cookie: mergeCookiesFromResponse(sessionCookie, cancelResponse)
+        }
+      })
+
+      expect(detailResponse.payload).toContain('Statement cancelled')
+      expect(detailResponse.payload).toContain(
+        'Statement has been cancelled and an email sent to the compliance scheme.'
+      )
+      expect(detailResponse.payload).toContain(
+        'app-notification-banner--cancelled'
+      )
     })
   })
 })
+
+function mergeCookiesFromResponse(cookie, response) {
+  const setCookie = response.headers['set-cookie']
+  if (!setCookie) {
+    return cookie
+  }
+
+  const cookies = Object.fromEntries(
+    cookie.split('; ').map((entry) => {
+      const [name, ...value] = entry.split('=')
+      return [name, value.join('=')]
+    })
+  )
+
+  for (const entry of setCookie) {
+    const [name, ...value] = entry.split(';')[0].split('=')
+    cookies[name] = value.join('=')
+  }
+
+  return Object.entries(cookies)
+    .map(([name, value]) => `${name}=${value}`)
+    .join('; ')
+}

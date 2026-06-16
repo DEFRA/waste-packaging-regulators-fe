@@ -1,17 +1,22 @@
 {% extends 'layouts/page.njk' %}
 {% from "status-tag/macro.njk" import appStatusTag %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
 {% block content %}
-  {% if acceptSuccess %}
-    {{ govukNotificationBanner({
-      titleText: "Certificate accepted",
-      html: '<p class="govuk-body">Certificate has been accepted.</p>'
-    }) }}
-  {% endif %}
-
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
+      {% if successBanner %}
+        {{ govukNotificationBanner({
+          classes: 'app-notification-banner--cancelled' if successBanner.type == 'cancelled' else '',
+          html: '
+            <h3 class="govuk-notification-banner__heading">' ~ successBanner.heading ~ '</h3>
+            <p class="govuk-body govuk-!-margin-bottom-0">' ~ successBanner.text ~ '</p>
+          '
+        }) }}
+      {% endif %}
+
       <span class="govuk-caption-l govuk-!-margin-bottom-2">{{ complianceYear }} certificate of compliance</span>
       <h1 class="govuk-heading-xl govuk-!-margin-bottom-4">{{ companyName }}</h1>
 
@@ -47,7 +52,6 @@
               <dt class="govuk-summary-list__key">Organisation ID</dt>
               <dd class="govuk-summary-list__value">{{ organisationRef }}</dd>
             </div>
-            {# TODO: companiesHouseNumber, nameOnAccount, declarationEmailAddress, companyPhoneNumber — to come from a separate organisations API call #}
             <div class="govuk-summary-list__row">
               <dt class="govuk-summary-list__key">Company number</dt>
               <dd class="govuk-summary-list__value">
@@ -83,6 +87,46 @@
       </ul>
 
       <hr class="govuk-section-break govuk-section-break--l">
+
+      {% if queryDetails %}
+        <h2 class="govuk-heading-m">Query details</h2>
+        {{ govukSummaryList({
+          rows: [
+            {
+              key: { text: "Queried materials" },
+              value: { text: queryDetails.queriedMaterials }
+            },
+            {
+              key: { text: "Reason" },
+              value: { text: queryDetails.reason }
+            },
+            {
+              key: { text: "Date queried" },
+              value: { text: queryDetails.dateQueried }
+            }
+          ]
+        }) }}
+      {% endif %}
+
+      {% if cancellationDetails %}
+        <h2 class="govuk-heading-m">Cancellation details</h2>
+        {{ govukSummaryList({
+          rows: [
+            {
+              key: { text: "Reason" },
+              value: { text: cancellationDetails.reason }
+            },
+            {
+              key: { text: "Re-submission requested" },
+              value: { text: cancellationDetails.resubmissionRequested }
+            },
+            {
+              key: { text: "Date cancelled" },
+              value: { text: cancellationDetails.dateCancelled }
+            }
+          ]
+        }) }}
+      {% endif %}
 
       <h2 class="govuk-heading-m">Recycling obligations</h2>
       <p class="govuk-body-m govuk-!-margin-bottom-3">All values are in tonnes.</p>
@@ -170,14 +214,27 @@
 
       <hr class="govuk-section-break govuk-section-break--l">
 
-      <div class="govuk-button-group">
-        <a href="/{{ organisationId }}/certificates-of-compliance/{{ id }}/accept" role="button" draggable="false" class="govuk-button" data-module="govuk-button">
-          Accept certificate
-        </a>
-        <a href="#" role="button" draggable="false" class="govuk-button govuk-button--secondary" data-module="govuk-button">
-          Cancel certificate
-        </a>
-      </div>
+      {% if actions.showAccept or actions.showCancel %}
+        <div class="govuk-button-group">
+          {% if actions.showAccept %}
+            <form method="post" action="{{ actions.urls.accept }}" class="govuk-!-display-inline">
+              {{ govukButton({
+                text: actions.labels.accept,
+                preventDoubleClick: true
+              }) }}
+            </form>
+          {% endif %}
+          {% if actions.showCancel %}
+            <form method="post" action="{{ actions.urls.cancel }}" class="govuk-!-display-inline">
+              {{ govukButton({
+                text: actions.labels.cancel,
+                preventDoubleClick: true,
+                classes: "govuk-button--secondary"
+              }) }}
+            </form>
+          {% endif %}
+        </div>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

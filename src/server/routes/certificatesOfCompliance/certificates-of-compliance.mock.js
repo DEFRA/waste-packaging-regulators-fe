@@ -1,12 +1,22 @@
 // Mock data for certificates of compliance routes.
 // Used when useMockApi=true and exported so tests can assert against the same values.
 
-export const mockSummary = {
-  complianceYear: '2026',
-  totalPending: 42,
-  totalAccepted: 156,
-  totalNotSubmitted: 8
+export const mockSummaryByOrganisationType = {
+  'direct-producers': {
+    complianceYear: '2026',
+    totalPending: 42,
+    totalAccepted: 156,
+    totalNotSubmitted: 8
+  },
+  'compliance-schemes': {
+    complianceYear: '2026',
+    totalPending: 18,
+    totalAccepted: 64,
+    totalNotSubmitted: 3
+  }
 }
+
+export const mockSummary = mockSummaryByOrganisationType['direct-producers']
 
 export const mockPendingItems = [
   {
@@ -64,11 +74,168 @@ export const mockNotSubmittedItems = [
   }
 ]
 
+export const mockComplianceSchemePendingItems = [
+  {
+    id: 'decl-cs-001',
+    organisationId: '923fa611-571c-4948-ab7d-fbb75e75ed65',
+    organisationReferenceNumber: 'CS-1001',
+    organisationName: 'EcoPack Compliance Ltd',
+    recyclingObligationsMet: false,
+    regulation43Met: false,
+    percentageMet: 91,
+    dateSubmitted: '2027-01-20'
+  },
+  {
+    id: 'decl-cs-002',
+    organisationId: 'f3a2b1c0-d9e8-47f6-a5b4-c3d2e1f0a9b8',
+    organisationReferenceNumber: 'CS-1002',
+    organisationName: 'GreenCircle Schemes',
+    recyclingObligationsMet: false,
+    regulation43Met: true,
+    percentageMet: 88,
+    dateSubmitted: '2027-01-18'
+  }
+]
+
+export const mockComplianceSchemeAcceptedItems = [
+  {
+    id: 'decl-cs-101',
+    organisationId: 'e1d2c3b4-a596-4878-9abc-def012345678',
+    organisationReferenceNumber: 'CS-2001',
+    organisationName: 'Nationwide Packaging Scheme',
+    recyclingObligationsMet: true,
+    regulation43Met: true,
+    percentageMet: 105,
+    dateSubmitted: '2027-01-12'
+  }
+]
+
+export const mockComplianceSchemeNotSubmittedItems = [
+  {
+    id: null,
+    organisationId: 'a9b8c7d6-e5f4-3210-abcd-ef9876543210',
+    organisationReferenceNumber: 'CS-3001',
+    organisationName: 'FuturePack Operators',
+    recyclingObligationsMet: false,
+    regulation43Met: false,
+    percentageMet: 0,
+    dateSubmitted: null
+  }
+]
+
 export const mockListByTab = {
   pending: mockPendingItems,
   accepted: mockAcceptedItems,
   'not-submitted': mockNotSubmittedItems
 }
+
+export const mockListByOrganisationType = {
+  'direct-producers': mockListByTab,
+  'compliance-schemes': {
+    pending: mockComplianceSchemePendingItems,
+    accepted: mockComplianceSchemeAcceptedItems,
+    'not-submitted': mockComplianceSchemeNotSubmittedItems
+  }
+}
+
+const mockObligations = [
+  {
+    material: 'Aluminium',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 215,
+      awaitingAcceptance: 0,
+      accepted: 215,
+      outstanding: 0,
+      obligated: 215
+    },
+    status: 'Met'
+  },
+  {
+    material: 'Glass',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 0,
+      awaitingAcceptance: 0,
+      accepted: 0,
+      outstanding: 0,
+      obligated: 0
+    },
+    status: 'Met'
+  },
+  {
+    material: 'PaperBoardFibre',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 870,
+      awaitingAcceptance: 0,
+      accepted: 870,
+      outstanding: 0,
+      obligated: 870
+    },
+    status: 'Met'
+  },
+  {
+    material: 'Plastic',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 1740,
+      awaitingAcceptance: 0,
+      accepted: 1740,
+      outstanding: 0,
+      obligated: 1740
+    },
+    status: 'Met'
+  },
+  {
+    material: 'Steel',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 365,
+      awaitingAcceptance: 0,
+      accepted: 365,
+      outstanding: 0,
+      obligated: 365
+    },
+    status: 'Met'
+  },
+  {
+    material: 'Wood',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 80,
+      awaitingAcceptance: 0,
+      accepted: 80,
+      outstanding: 0,
+      obligated: 80
+    },
+    status: 'Met'
+  },
+  {
+    material: 'GlassRemelt',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 0,
+      awaitingAcceptance: 0,
+      accepted: 0,
+      outstanding: 0,
+      obligated: 0
+    },
+    status: 'Met'
+  },
+  {
+    material: 'RemainingGlass',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 0,
+      awaitingAcceptance: 0,
+      accepted: 0,
+      outstanding: 0,
+      obligated: 0
+    },
+    status: 'Met'
+  }
+]
 
 // Matches the raw API response shape from GET /organisations/{organisationId}/compliance-declarations/{id}
 export const mockDetailData = {
@@ -86,114 +253,179 @@ export const mockDetailData = {
     address: {},
     regulator: 'EA',
     regulatorEmail: 'ea@environment-agency.gov.uk',
-    // TODO: these will come from a separate organisations API call
+    // Mock fixture contact fields for local UI testing
     companiesHouseNumber: '12345678',
     nameOnAccount: 'John Smith',
     contactEmailAddress: 'john.smith@howco.co.uk',
     contactPhoneNumber: '01234 567890'
   },
   obligationYear: 2026,
-  obligations: [
-    {
-      material: 'Aluminium',
-      recyclingTarget: 1,
-      tonnages: {
-        material: 215,
-        awaitingAcceptance: 0,
-        accepted: 215,
-        outstanding: 0,
-        obligated: 215
-      },
-      status: 'Met'
-    },
-    {
-      material: 'Glass',
-      recyclingTarget: 1,
-      tonnages: {
-        material: 0,
-        awaitingAcceptance: 0,
-        accepted: 0,
-        outstanding: 0,
-        obligated: 0
-      },
-      status: 'Met'
-    },
-    {
-      material: 'PaperBoardFibre',
-      recyclingTarget: 1,
-      tonnages: {
-        material: 870,
-        awaitingAcceptance: 0,
-        accepted: 870,
-        outstanding: 0,
-        obligated: 870
-      },
-      status: 'Met'
-    },
-    {
-      material: 'Plastic',
-      recyclingTarget: 1,
-      tonnages: {
-        material: 1740,
-        awaitingAcceptance: 0,
-        accepted: 1740,
-        outstanding: 0,
-        obligated: 1740
-      },
-      status: 'Met'
-    },
-    {
-      material: 'Steel',
-      recyclingTarget: 1,
-      tonnages: {
-        material: 365,
-        awaitingAcceptance: 0,
-        accepted: 365,
-        outstanding: 0,
-        obligated: 365
-      },
-      status: 'Met'
-    },
-    {
-      material: 'Wood',
-      recyclingTarget: 1,
-      tonnages: {
-        material: 80,
-        awaitingAcceptance: 0,
-        accepted: 80,
-        outstanding: 0,
-        obligated: 80
-      },
-      status: 'Met'
-    },
-    {
-      material: 'GlassRemelt',
-      recyclingTarget: 1,
-      tonnages: {
-        material: 0,
-        awaitingAcceptance: 0,
-        accepted: 0,
-        outstanding: 0,
-        obligated: 0
-      },
-      status: 'Met'
-    },
-    {
-      material: 'RemainingGlass',
-      recyclingTarget: 1,
-      tonnages: {
-        material: 0,
-        awaitingAcceptance: 0,
-        accepted: 0,
-        outstanding: 0,
-        obligated: 0
-      },
-      status: 'Met'
-    }
-  ],
+  obligations: mockObligations,
   obligationStatus: 'Met',
   declarationText: { text: 'I declare...', language: 'en' },
   submitterName: 'Catherine Morris',
   isRegulation43Compliant: true,
   audit: []
+}
+
+export const mockComplianceSchemeDetailData = {
+  id: 'decl-cs-001',
+  created: '2027-01-20T00:00:00Z',
+  updated: '2027-01-20T00:00:00Z',
+  status: 'Submitted',
+  organisation: {
+    id: '923fa611-571c-4948-ab7d-fbb75e75ed65',
+    registrationType: 'ComplianceScheme',
+    name: null,
+    complianceSchemeName: 'EcoPack Compliance Ltd',
+    schemeOperatorName: 'EcoPack Group',
+    referenceNumber: 'CS-1001',
+    address: {},
+    regulator: 'EA',
+    regulatorEmail: 'ea@environment-agency.gov.uk',
+    companiesHouseNumber: '87654321',
+    nameOnAccount: 'Jane Doe',
+    contactEmailAddress: 'jane.doe@ecopack.co.uk',
+    contactPhoneNumber: '01987 654321'
+  },
+  obligationYear: 2026,
+  obligations: mockObligations,
+  obligationStatus: 'Met',
+  declarationText: {
+    text: 'I declare on behalf of the scheme...',
+    language: 'en'
+  },
+  submitterName: 'Jane Doe',
+  isRegulation43Compliant: false,
+  audit: []
+}
+
+export const mockComplianceSchemeAcceptedDetailData = {
+  ...mockComplianceSchemeDetailData,
+  id: 'decl-cs-101',
+  created: '2027-01-12T00:00:00Z',
+  updated: '2027-01-12T00:00:00Z',
+  status: 'Accepted',
+  organisation: {
+    ...mockComplianceSchemeDetailData.organisation,
+    id: 'e1d2c3b4-a596-4878-9abc-def012345678',
+    complianceSchemeName: 'Nationwide Packaging Scheme',
+    schemeOperatorName: 'Nationwide Packaging Group',
+    referenceNumber: 'CS-2001'
+  },
+  isRegulation43Compliant: true
+}
+
+export const mockDirectProducerAcceptedDetailData = {
+  ...mockDetailData,
+  id: 'decl-309145',
+  created: '2027-01-15T00:00:00Z',
+  updated: '2027-01-15T00:00:00Z',
+  status: 'Accepted',
+  organisation: {
+    ...mockDetailData.organisation,
+    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    name: 'Acme Compliance Co',
+    referenceNumber: '309145'
+  }
+}
+
+export const mockDirectProducerAcceptedDetailDataSecondary = {
+  ...mockDirectProducerAcceptedDetailData,
+  id: 'decl-412067',
+  created: '2027-01-10T00:00:00Z',
+  updated: '2027-01-10T00:00:00Z',
+  organisation: {
+    ...mockDirectProducerAcceptedDetailData.organisation,
+    id: 'c1d2e3f4-a5b6-7890-abcd-ef1234567890',
+    name: 'BlueSky Materials plc',
+    referenceNumber: '412067'
+  }
+}
+
+export const mockQueriedDetailData = {
+  ...mockDetailData,
+  id: 'decl-queried',
+  status: 'Queried',
+  queryDetails: {
+    queriedMaterials: 'Plastic, Steel',
+    reason: 'Tonnage figures do not match submitted evidence.',
+    dateQueried: '2026-03-17T00:00:00Z'
+  }
+}
+
+export const mockComplianceSchemeQueriedDetailData = {
+  ...mockComplianceSchemeDetailData,
+  id: 'decl-cs-queried',
+  status: 'Queried',
+  queryDetails: {
+    queriedMaterials: 'Plastic',
+    reason: 'Scheme member totals require clarification.',
+    dateQueried: '2026-03-15T00:00:00Z'
+  }
+}
+
+export const mockDirectProducerCancelledDetailData = {
+  ...mockDetailData,
+  id: 'decl-dp-cancelled',
+  status: 'Cancelled',
+  organisation: {
+    ...mockDetailData.organisation,
+    id: 'b1e2c3d4-e5f6-7890-abcd-ef1234567890',
+    name: 'Greenfield Packaging Ltd',
+    referenceNumber: '204872'
+  },
+  cancellationDetails: {
+    reason: 'Submitted after the deadline.',
+    resubmissionRequested: true,
+    dateCancelled: '2026-03-10T00:00:00Z'
+  }
+}
+
+export const mockCancelledDetailData = mockDirectProducerCancelledDetailData
+
+export const mockComplianceSchemeCancelledDetailData = {
+  ...mockComplianceSchemeDetailData,
+  id: 'decl-cs-cancelled',
+  status: 'Cancelled',
+  organisation: {
+    ...mockComplianceSchemeDetailData.organisation,
+    id: 'f3a2b1c0-d9e8-47f6-a5b4-c3d2e1f0a9b8',
+    complianceSchemeName: 'GreenCircle Schemes',
+    schemeOperatorName: 'GreenCircle Group',
+    referenceNumber: 'CS-1002'
+  },
+  cancellationDetails: {
+    reason: 'Incomplete member data submitted.',
+    resubmissionRequested: false,
+    dateCancelled: '2026-03-08T00:00:00Z'
+  }
+}
+
+const mockDetailById = {
+  'decl-101411': mockDetailData,
+  'decl-309145': mockDirectProducerAcceptedDetailData,
+  'decl-412067': mockDirectProducerAcceptedDetailDataSecondary,
+  'decl-dp-cancelled': mockDirectProducerCancelledDetailData,
+  'decl-queried': mockQueriedDetailData,
+  'decl-cancelled': mockDirectProducerCancelledDetailData,
+  'decl-cs-001': mockComplianceSchemeDetailData,
+  'decl-cs-101': mockComplianceSchemeAcceptedDetailData,
+  'decl-cs-queried': mockComplianceSchemeQueriedDetailData,
+  'decl-cs-cancelled': mockComplianceSchemeCancelledDetailData
+}
+
+export function getMockDetailDataById(id) {
+  if (mockDetailById[id]) {
+    return mockDetailById[id]
+  }
+
+  const isComplianceScheme = [
+    ...mockComplianceSchemePendingItems,
+    ...mockComplianceSchemeAcceptedItems
+  ].some((item) => item.id === id)
+  const base = isComplianceScheme
+    ? mockComplianceSchemeDetailData
+    : mockDetailData
+  return { ...base, id }
 }
