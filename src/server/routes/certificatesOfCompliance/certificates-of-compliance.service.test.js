@@ -1153,7 +1153,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('maps Accepted status to Approved review status with cancel only', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi.fn().mockResolvedValue({
+          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue({
             ...mockDetailData,
             status: 'Accepted'
           })
@@ -1174,7 +1174,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('maps Queried status with query details', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi
+          getComplianceDeclarationOrNull: vi
             .fn()
             .mockResolvedValue(mockQueriedDetailData)
         }
@@ -1199,7 +1199,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('maps Cancelled status with cancellation details', async () => {
         const mockApi = {
-          getComplianceDeclaration: vi
+          getComplianceDeclarationOrNull: vi
             .fn()
             .mockResolvedValue(mockCancelledDetailData)
         }
@@ -1247,7 +1247,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           await getCertificateOfComplianceDetailViewModel(
             'org-abc',
             'decl-1',
-            'trace-z'
+            { traceId: 'trace-z' }
           )
 
           expect(mockApi.getComplianceObligation).toHaveBeenCalledWith(

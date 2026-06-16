@@ -478,11 +478,20 @@ async function getDeclarationDetail(
     })
   }
 
-  const data = await obligationsApi.getComplianceDeclaration(
+  const declaration = await obligationsApi.getComplianceDeclarationOrNull(
     { id, organisationId },
     traceId
   )
-  return mapDeclarationToDetail(data, { organisationId, id })
+
+  if (declaration != null) {
+    return mapDeclarationToDetail(declaration, { organisationId, id })
+  }
+
+  const obligationData = await obligationsApi.getComplianceObligation(
+    { organisationId },
+    traceId
+  )
+  return mapObligationToDetail(obligationData, organisationId)
 }
 
 export async function getComplianceDeclarationReviewStatus(
@@ -705,34 +714,6 @@ function mapObligationToDetail(data, organisationId) {
     glassBreakdown,
     glassBreakdownTotals: computeTotals(glassBreakdown)
   }
-}
-
-// --- Detail API call ---
-
-async function getDeclarationDetail(
-  obligationsApi,
-  organisationId,
-  id,
-  traceId
-) {
-  if (config.get('useMockApi')) {
-    return mapDeclarationToDetail(mockDetailData)
-  }
-
-  const declaration = await obligationsApi.getComplianceDeclarationOrNull(
-    { id, organisationId },
-    traceId
-  )
-
-  if (declaration != null) {
-    return mapDeclarationToDetail(declaration)
-  }
-
-  const obligationData = await obligationsApi.getComplianceObligation(
-    { organisationId },
-    traceId
-  )
-  return mapObligationToDetail(obligationData, organisationId)
 }
 
 // --- Detail page view model ---
