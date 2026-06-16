@@ -191,6 +191,73 @@ describe('WasteObligationsApiService', () => {
     )
   })
 
+  describe('getComplianceDeclarationOrNull', () => {
+    test('returns data when declaration exists', async () => {
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValue(mockOkResponse({ id: 'decl-1', status: 'Submitted' }))
+      const service = new WasteObligationsApiService({
+        baseUrl: 'http://localhost:8080',
+        clientId: 'Developer',
+        clientSecret: 'developer-pwd',
+        fetchImpl
+      })
+
+      const result = await service.getComplianceDeclarationOrNull({
+        organisationId: 'org-abc',
+        id: 'decl-1'
+      })
+
+      expect(result).toMatchObject({ id: 'decl-1', status: 'Submitted' })
+    })
+
+    test('returns null when the API responds with 404', async () => {
+      const fetchImpl = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        headers: { get: vi.fn().mockReturnValue('application/problem+json') },
+        json: vi.fn().mockResolvedValue({ title: 'Not Found', status: 404 })
+      })
+      const service = new WasteObligationsApiService({
+        baseUrl: 'http://localhost:8080',
+        clientId: 'Developer',
+        clientSecret: 'developer-pwd',
+        fetchImpl
+      })
+
+      const result = await service.getComplianceDeclarationOrNull({
+        organisationId: 'org-abc',
+        id: 'decl-1'
+      })
+
+      expect(result).toBeNull()
+    })
+
+    test('re-throws non-404 API errors', async () => {
+      const fetchImpl = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        headers: { get: vi.fn().mockReturnValue('application/problem+json') },
+        json: vi
+          .fn()
+          .mockResolvedValue({ title: 'Internal Server Error', status: 500 })
+      })
+      const service = new WasteObligationsApiService({
+        baseUrl: 'http://localhost:8080',
+        clientId: 'Developer',
+        clientSecret: 'developer-pwd',
+        fetchImpl
+      })
+
+      await expect(
+        service.getComplianceDeclarationOrNull({
+          organisationId: 'org-abc',
+          id: 'decl-1'
+        })
+      ).rejects.toMatchObject({ name: 'ApiError', status: 500 })
+    })
+  })
+
   test('createWasteObligationsApiService creates service instance', () => {
     const service = createWasteObligationsApiService({
       baseUrl: 'http://localhost:8080',
