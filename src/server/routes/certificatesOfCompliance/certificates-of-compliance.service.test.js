@@ -554,7 +554,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
           1
         )
         expect(vm.items).toHaveLength(2)
-        expect(vm.items.map((i) => i.id)).toEqual(['CH002', 'CH003'])
+        expect(vm.items.map((i) => i.organisationName)).toEqual([
+          'Not Submitted A',
+          'Not Submitted B'
+        ])
       })
 
       test('excludes organisations present in accepted declarations', async () => {
@@ -596,7 +599,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           1
         )
         expect(vm.items).toHaveLength(1)
-        expect(vm.items[0].id).toBe('CH002')
+        expect(vm.items[0].organisationName).toBe('Not Submitted')
       })
 
       test('paginates not-submitted results correctly', async () => {
@@ -724,7 +727,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
         // sub-0 is in page 1 of submitted declarations, so only not-submitted-1 should appear
         expect(vm.items).toHaveLength(1)
-        expect(vm.items[0].id).toBe('CH999')
+        expect(vm.items[0].organisationName).toBe('Not Submitted')
       })
     })
 
@@ -1460,7 +1463,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.items[0].organisationName).toBe('Unknown organisation')
       })
 
-      test('uses companiesHouseNumber as item id', async () => {
+      test('sets id to null and organisationId to org id for not-submitted items', async () => {
         setupNotSubmittedTab([
           {
             id: 'org-1',
@@ -1474,7 +1477,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
           'not-submitted',
           1
         )
-        expect(vm.items[0].id).toBe('CH12345678')
+        expect(vm.items[0].id).toBeNull()
+        expect(vm.items[0].organisationId).toBe('org-1')
       })
     })
   })

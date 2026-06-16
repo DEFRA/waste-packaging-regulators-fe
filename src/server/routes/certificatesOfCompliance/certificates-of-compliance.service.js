@@ -5,6 +5,7 @@ import {
   mockSummary,
   mockSummaryByOrganisationType,
   mockListByOrganisationType,
+  mockObligationData,
   getMockDetailDataById
 } from './certificates-of-compliance.mock.js'
 
@@ -74,8 +75,9 @@ function mapOrganisationToItem(organisation, organisationType) {
         'Unknown organisation')
       : (organisation.name ?? 'Unknown organisation')
   return {
-    id: organisation.companiesHouseNumber,
-    organisationName
+    id: null,
+    organisationId : organisation.id,
+    organisationName : organisationName
   }
 }
 
@@ -467,6 +469,9 @@ async function getDeclarationDetail(
   { traceId, session } = {}
 ) {
   if (config.get('useMockApi')) {
+    if (!id) {
+      return mapObligationToDetail(mockObligationData, organisationId)
+    }
     const mockData = applyMockDeclarationStatusOverride(
       getMockDetailDataById(id),
       getDeclarationSessionKey(organisationId, id),
@@ -476,6 +481,14 @@ async function getDeclarationDetail(
       organisationId,
       id
     })
+  }
+
+  if (!id) {
+    const obligationData = await obligationsApi.getComplianceObligation(
+      { organisationId },
+      traceId
+    )
+    return mapObligationToDetail(obligationData, organisationId)
   }
 
   const declaration = await obligationsApi.getComplianceDeclarationOrNull(
