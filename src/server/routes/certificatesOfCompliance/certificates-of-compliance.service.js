@@ -5,12 +5,14 @@ import {
   mockSummary,
   mockSummaryByOrganisationType,
   mockListByOrganisationType,
+  mockObligationData,
   getMockDetailDataById
 } from './certificates-of-compliance.mock.js'
 
 export {
   mockSummary,
   mockDetailData,
+  mockObligationData,
   mockPendingItems,
   mockAcceptedItems,
   mockNotSubmittedItems,
@@ -73,7 +75,8 @@ function mapOrganisationToItem(organisation, organisationType) {
         'Unknown organisation')
       : (organisation.name ?? 'Unknown organisation')
   return {
-    id: organisation.companiesHouseNumber,
+    id: null,
+    organisationId: organisation.id,
     organisationName
   }
 }
@@ -467,6 +470,9 @@ async function getDeclarationDetail(
   { traceId, session } = {}
 ) {
   if (config.get('useMockApi')) {
+    if (!id) {
+      return mapObligationToDetail(mockObligationData, organisationId)
+    }
     const mockData = applyMockDeclarationStatusOverride(
       getMockDetailDataById(id),
       getDeclarationSessionKey(organisationId, id),
@@ -478,11 +484,28 @@ async function getDeclarationDetail(
     })
   }
 
-  const data = await obligationsApi.getComplianceDeclaration(
+  if (!id) {
+    const obligationData = await obligationsApi.getComplianceObligation(
+      { organisationId },
+      traceId
+    )
+    return mapObligationToDetail(obligationData, organisationId)
+  }
+
+  const declaration = await obligationsApi.getComplianceDeclarationOrNull(
     { id, organisationId },
     traceId
   )
-  return mapDeclarationToDetail(data, { organisationId, id })
+
+  if (declaration != null) {
+    return mapDeclarationToDetail(declaration, { organisationId, id })
+  }
+
+  const obligationData = await obligationsApi.getComplianceObligation(
+    { organisationId },
+    traceId
+  )
+  return mapObligationToDetail(obligationData, organisationId)
 }
 
 export async function getComplianceDeclarationReviewStatus(
@@ -647,6 +670,7 @@ function mapDeclarationToDetail(data, { organisationId, id } = {}) {
     declarationId: resolvedId,
     complianceYear: String(obligationYear),
     companyName,
+    declarationStatus: data.status,
     reviewStatus,
     recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
     dateDeclarationSubmitted: formatDate(created),
@@ -672,6 +696,37 @@ function mapDeclarationToDetail(data, { organisationId, id } = {}) {
       reviewStatus === 'Cancelled'
         ? mapCancellationDetails(data.cancellationDetails)
         : null
+  }
+}
+
+function mapObligationToDetail(data, organisationId) {
+  const { obligations } = data
+
+  const allMapped = obligations.map(mapObligation)
+  const materials = allMapped.filter(
+    (_, i) => !GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
+  )
+  const glassBreakdown = allMapped.filter((_, i) =>
+    GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
+  )
+
+  return {
+    complianceYear: null,
+    companyName: null,
+    declarationStatus: 'Unsubmitted',
+    recyclingObligationsMet: false,
+    dateDeclarationSubmitted: null,
+    organisationType: null,
+    organisationRef: organisationId,
+    companiesHouseNumber: null,
+    nameOnAccount: null,
+    declarationEmailAddress: null,
+    companyPhoneNumber: null,
+    declarationSignedBy: null,
+    materials,
+    materialTotals: computeTotals(materials),
+    glassBreakdown,
+    glassBreakdownTotals: computeTotals(glassBreakdown)
   }
 }
 
