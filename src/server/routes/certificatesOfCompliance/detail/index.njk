@@ -17,7 +17,7 @@
         }) }}
       {% endif %}
 
-      <span class="govuk-caption-l govuk-!-margin-bottom-2">{{ complianceYear }} certificate of compliance</span>
+      <span class="govuk-caption-l govuk-!-margin-bottom-2">{{ complianceTypeLabel }}</span>
       <h1 class="govuk-heading-xl govuk-!-margin-bottom-4">{{ companyName }}</h1>
 
       <div class="govuk-inset-text govuk-!-margin-top-0 govuk-!-margin-bottom-6">
@@ -32,11 +32,25 @@
               <dd class="govuk-summary-list__value">
                 {% if declarationStatus == 'Unsubmitted' %}
                   <strong class="govuk-tag govuk-tag--grey govuk-!-font-size-16">Unsubmitted</strong>
+                {% elif recyclingObligationsMet == null %}
+                  No data
                 {% else %}
                   {{ appStatusTag({ value: recyclingObligationsMet, trueText: 'Met', falseText: 'Not met' }) }}
                 {% endif %}
               </dd>
             </div>
+            {% if registrationType == 'ComplianceScheme' %}
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">Regulation 43</dt>
+                <dd class="govuk-summary-list__value">
+                  {% if regulation43Met == null %}
+                    No data
+                  {% else %}
+                    {{ appStatusTag({ value: regulation43Met, trueText: 'Compliant', falseText: 'Not compliant' }) }}
+                  {% endif %}
+                </dd>
+              </div>
+            {% endif %}
             <div class="govuk-summary-list__row">
               <dt class="govuk-summary-list__key">Submitted on</dt>
               <dd class="govuk-summary-list__value">{{ dateDeclarationSubmitted }}</dd>

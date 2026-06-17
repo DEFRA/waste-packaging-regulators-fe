@@ -102,7 +102,7 @@ describe('certificates of compliance — journey', () => {
       }
     })
 
-    it('not-submitted list shows organisation name without a detail link', async () => {
+    it('not-submitted list shows organisation name with a detail link including obligation year', async () => {
       const response = await inject(
         '/certificates-of-compliance?type=direct-producers&tab=not-submitted'
       )
@@ -110,11 +110,11 @@ describe('certificates of compliance — journey', () => {
       expect(response.statusCode).toBe(statusCodes.ok)
       for (const item of mockNotSubmittedItems) {
         expect(response.payload).toContain(item.organisationName)
-        expect(response.payload).not.toContain(
-          `./${item.organisationId}/certificates-of-compliance/null`
+        expect(response.payload).toContain(
+          `./${item.organisationId}/certificates-of-compliance?obligationYear=2026`
         )
         expect(response.payload).not.toContain(
-          `./${item.organisationId}/certificates-of-compliance/`
+          `./${item.organisationId}/certificates-of-compliance/null`
         )
       }
     })
