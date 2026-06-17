@@ -29,13 +29,16 @@
     <tbody class="govuk-table__body">
       {% for item in items %}
         <tr class="govuk-table__row">
-          <td class="govuk-table__cell">
-            {% if item.id and item.organisationName != 'No data' %}
+          {% if item.id == null %}
+            <td class="govuk-table__cell">
+              <a href="./{{ item.organisationId }}/certificates-of-compliance" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
+            </td>
+          {% else %}
+            <td class="govuk-table__cell">
               <a href="./{{ item.organisationId }}/certificates-of-compliance/{{ item.id }}" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
-            {% else %}
-              {{ item.organisationName }}
-            {% endif %}
-          </td>
+            </td>
+          {% endif %}
+
           <td class="govuk-table__cell">{{ item.organisationReferenceNumber }}</td>
           <td class="govuk-table__cell">
             {{ appStatusTag({ value: item.recyclingObligationsMet, trueText: 'Met', falseText: 'Not met' }) }}

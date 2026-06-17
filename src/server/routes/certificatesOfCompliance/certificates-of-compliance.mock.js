@@ -429,3 +429,104 @@ export function getMockDetailDataById(id) {
     : mockDetailData
   return { ...base, id }
 }
+
+export const mockObligationData = {
+  obligations: [
+    {
+      material: 'Aluminium',
+      recyclingTarget: 1,
+      tonnages: {
+        material: 0,
+        awaitingAcceptance: 0,
+        accepted: 0,
+        outstanding: 0,
+        obligated: 215
+      },
+      status: 'NoDataYet'
+    },
+    {
+      material: 'Glass',
+      recyclingTarget: 1,
+      tonnages: {
+        material: 0,
+        awaitingAcceptance: 0,
+        accepted: 0,
+        outstanding: 0,
+        obligated: 0
+      },
+      status: 'NoDataYet'
+    },
+    {
+      material: 'PaperBoardFibre',
+      recyclingTarget: 1,
+      tonnages: {
+        material: 0,
+        awaitingAcceptance: 0,
+        accepted: 0,
+        outstanding: 0,
+        obligated: 870
+      },
+      status: 'NoDataYet'
+    },
+    {
+      material: 'Plastic',
+      recyclingTarget: 1,
+      tonnages: {
+        material: 0,
+        awaitingAcceptance: 0,
+        accepted: 0,
+        outstanding: 0,
+        obligated: 1740
+      },
+      status: 'NoDataYet'
+    },
+    {
+      material: 'Steel',
+      recyclingTarget: 1,
+      tonnages: {
+        material: 0,
+        awaitingAcceptance: 0,
+        accepted: 0,
+        outstanding: 0,
+        obligated: 365
+      },
+      status: 'NoDataYet'
+    },
+    {
+      material: 'Wood',
+      recyclingTarget: 1,
+      tonnages: {
+        material: 0,
+        awaitingAcceptance: 0,
+        accepted: 0,
+        outstanding: 0,
+        obligated: 80
+      },
+      status: 'NoDataYet'
+    },
+    {
+      material: 'GlassRemelt',
+      recyclingTarget: 1,
+      tonnages: {
+        material: 0,
+        awaitingAcceptance: 0,
+        accepted: 0,
+        outstanding: 0,
+        obligated: 0
+      },
+      status: 'NoDataYet'
+    },
+    {
+      material: 'RemainingGlass',
+      recyclingTarget: 1,
+      tonnages: {
+        material: 0,
+        awaitingAcceptance: 0,
+        accepted: 0,
+        outstanding: 0,
+        obligated: 0
+      },
+      status: 'NoDataYet'
+    }
+  ]
+}
