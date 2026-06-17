@@ -565,7 +565,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
           1
         )
         expect(vm.items).toHaveLength(2)
-        expect(vm.items.map((i) => i.organisationId)).toEqual(['org-2', 'org-3'])
+        expect(vm.items.map((i) => i.organisationId)).toEqual([
+          'org-2',
+          'org-3'
+        ])
       })
 
       test('excludes organisations present in accepted declarations', async () => {
