@@ -1,5 +1,6 @@
 import { config } from '#/config/config.js'
 import { createAccountApiService } from '#/services/account-api.service.js'
+import { format, isDate, parseISO } from 'date-fns'
 import { createWasteObligationsApiService } from '#/services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#/services/waste-organisations-api.service.js'
 import {
@@ -7,6 +8,8 @@ import {
   mockSummaryByOrganisationType,
   mockListByOrganisationType,
   mockObligationData,
+  mockNotSubmittedItems,
+  mockComplianceSchemeNotSubmittedItems,
   getMockDetailDataById,
   getMockDeclarationsByOrgYear
 } from './certificates-of-compliance.mock.js'
@@ -43,6 +46,64 @@ const statusByTab = {
 
 const PAGE_SIZE = 20
 const DECLARATIONS_BATCH_SIZE = 100
+const NO_DATA = 'No data'
+
+export function displayOrNoData(value) {
+  return value == null || value === '' ? NO_DATA : value
+}
+
+function isComplianceSchemeRegistrationType(registrationType) {
+  return (
+    registrationType === 'ComplianceScheme' ||
+    registrationType === 'compliance-schemes'
+  )
+}
+
+export function buildComplianceTypeLabel(obligationYear, registrationType) {
+  if (obligationYear == null) {
+    return NO_DATA
+  }
+  const year = String(obligationYear)
+  const docType = isComplianceSchemeRegistrationType(registrationType)
+    ? 'statement of compliance'
+    : 'certificate of compliance'
+  return `${year} ${docType}`
+}
+
+function mapOrganisationName(organisation) {
+  if (isComplianceSchemeRegistrationType(organisation.registrationType)) {
+    return (
+      organisation.tradingName ??
+      organisation.name ??
+      organisation.complianceSchemeName ??
+      'Unknown organisation'
+    )
+  }
+  return organisation.name ?? 'Unknown organisation'
+}
+
+function findMockNotSubmittedOrganisation(organisationId) {
+  const complianceSchemeItem = mockComplianceSchemeNotSubmittedItems.find(
+    (item) => item.organisationId === organisationId
+  )
+  if (complianceSchemeItem) {
+    return { ...complianceSchemeItem, registrationType: 'ComplianceScheme' }
+  }
+  const directProducerItem = mockNotSubmittedItems.find(
+    (item) => item.organisationId === organisationId
+  )
+  if (directProducerItem) {
+    return { ...directProducerItem, registrationType: 'DirectProducer' }
+  }
+  return null
+}
+
+function mapRecyclingObligationsMet(obligationStatus) {
+  if (obligationStatus == null) {
+    return null
+  }
+  return obligationStatus.toLowerCase() === 'met'
+}
 
 function mapDeclarationToItem(declaration) {
   const {
