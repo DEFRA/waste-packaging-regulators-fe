@@ -136,6 +136,28 @@ describe('WasteOrganisationsApiService', () => {
     )
   })
 
+  test('getOrganisation calls the correct endpoint', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(mockOkResponse({ id: 'org-abc', name: 'Test Org' }))
+    const service = new WasteOrganisationsApiService({
+      baseUrl: 'http://localhost:9090',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    await service.getOrganisation({ organisationId: 'org-abc' }, 'trace-2')
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:9090/organisations/org-abc',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({ 'x-cdp-request-id': 'trace-2' })
+      })
+    )
+  })
+
   test('createWasteOrganisationsApiService creates service instance', () => {
     const service = createWasteOrganisationsApiService({
       baseUrl: 'http://localhost:9090',

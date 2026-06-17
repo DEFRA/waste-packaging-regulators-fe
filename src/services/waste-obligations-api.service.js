@@ -84,11 +84,16 @@ export class WasteObligationsApiService extends BaseApiService {
   }
 
   async getComplianceObligation(
-    { organisationId, complianceYear } = {},
+    { organisationId, obligationYear } = {},
     traceId
   ) {
+    const params = new URLSearchParams()
+    if (obligationYear != null) {
+      params.set('obligationYear', String(obligationYear))
+    }
+    const qs = params.toString()
     return this.getJson(
-      `/organisations/${organisationId}/obligations?obligationYear=${complianceYear}`,
+      `/organisations/${organisationId}/obligations${qs ? `?${qs}` : ''}`,
       this.getTracingHeader(traceId)
     )
   }

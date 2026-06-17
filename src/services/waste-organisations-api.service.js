@@ -38,6 +38,13 @@ export class WasteOrganisationsApiService extends BaseApiService {
       `organisations-${registrationType}`
     )
   }
+
+  async getOrganisation({ organisationId } = {}, traceId) {
+    return this.getJson(
+      `/organisations/${organisationId}`,
+      this.getTracingHeader(traceId)
+    )
+  }
 }
 
 export function createWasteOrganisationsApiService(options = {}) {
