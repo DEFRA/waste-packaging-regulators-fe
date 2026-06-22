@@ -68,17 +68,24 @@ function mapDeclarationToItem(declaration) {
   }
 }
 
-// Name + reference number are resolved from the Account API; default to 'No data'.
+// Reference number is resolved from the Account API (default 'No data'); the
+// organisation name keeps its compliance-scheme-aware derivation.
 function mapOrganisationToItem(organisation, organisationType) {
+  const organisationName =
+    organisation.registrationType === 'compliance-schemes'
+      ? (organisation.tradingName ??
+        organisation.name ??
+        'Unknown organisation')
+      : (organisation.name ?? 'Unknown organisation')
   return {
     id: null,
     organisationId: organisation.id,
     organisationReferenceNumber: 'No data',
-    organisationName: 'No data'
+    organisationName
   }
 }
 
-// Fills name + reference number for "Not submitted" rows from the Account API bulk lookup.
+// Fills the 6-digit reference number for "Not submitted" rows from the Account API bulk lookup.
 async function resolveNotSubmittedOrganisationDetails(
   accountApi,
   items,
@@ -102,7 +109,6 @@ async function resolveNotSubmittedOrganisationDetails(
   for (const item of items) {
     const details = detailsByExternalId.get(item.organisationId)
     item.organisationReferenceNumber = details?.referenceNumber ?? 'No data'
-    item.organisationName = details?.name ?? 'No data'
   }
 }
 

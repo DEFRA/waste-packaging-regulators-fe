@@ -1381,8 +1381,14 @@ describe('getCertificatesOfComplianceViewModel', () => {
         })
       }
 
-      test('sets organisationId from the org id and defaults details to "No data"', async () => {
-        setupNotSubmittedTab([{ id: 'org-guid-1' }])
+      test('defaults reference number to "No data" and keeps the organisation name', async () => {
+        setupNotSubmittedTab([
+          {
+            id: 'org-guid-1',
+            name: 'Redwood Retail Group',
+            registrationType: 'DirectProducer'
+          }
+        ])
         mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
           organisations: [],
           notFoundExternalIds: ['org-guid-1']
@@ -1397,22 +1403,33 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.items[0]).toMatchObject({
           organisationId: 'org-guid-1',
           organisationReferenceNumber: 'No data',
-          organisationName: 'No data'
+          organisationName: 'Redwood Retail Group'
         })
       })
 
-      test('resolves reference number and name from the Account API', async () => {
-        setupNotSubmittedTab([{ id: 'org-guid-1' }, { id: 'org-guid-2' }])
+      test('resolves the reference number from the Account API; name comes from the organisation record', async () => {
+        setupNotSubmittedTab([
+          {
+            id: 'org-guid-1',
+            name: 'Redwood Retail Group',
+            registrationType: 'DirectProducer'
+          },
+          {
+            id: 'org-guid-2',
+            name: 'Maple Manufacturing',
+            registrationType: 'DirectProducer'
+          }
+        ])
         mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
           organisations: [
             {
               externalId: 'org-guid-1',
-              name: 'Redwood Retail Group',
+              name: 'Ignored Account Name',
               referenceNumber: '518293'
             },
             {
               externalId: 'org-guid-2',
-              name: 'Maple Manufacturing',
+              name: 'Ignored Account Name',
               referenceNumber: '600124'
             }
           ],
@@ -1439,13 +1456,24 @@ describe('getCertificatesOfComplianceViewModel', () => {
         ])
       })
 
-      test('shows "No data" for unresolved ids while other rows render', async () => {
-        setupNotSubmittedTab([{ id: 'org-guid-1' }, { id: 'org-guid-2' }])
+      test('shows "No data" reference number for unresolved ids while other rows render', async () => {
+        setupNotSubmittedTab([
+          {
+            id: 'org-guid-1',
+            name: 'Redwood Retail Group',
+            registrationType: 'DirectProducer'
+          },
+          {
+            id: 'org-guid-2',
+            name: 'Maple Manufacturing',
+            registrationType: 'DirectProducer'
+          }
+        ])
         mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
           organisations: [
             {
               externalId: 'org-guid-1',
-              name: 'Redwood Retail Group',
+              name: 'Ignored Account Name',
               referenceNumber: '518293'
             }
           ],
@@ -1465,7 +1493,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.items[1]).toMatchObject({
           organisationId: 'org-guid-2',
           organisationReferenceNumber: 'No data',
-          organisationName: 'No data'
+          organisationName: 'Maple Manufacturing'
         })
       })
 

@@ -7,6 +7,7 @@ import {
   mockNotSubmittedItems,
   mockComplianceSchemePendingItems,
   mockComplianceSchemeAcceptedItems,
+  mockComplianceSchemeNotSubmittedItems,
   mockDirectProducerCancelledDetailData,
   mockComplianceSchemeCancelledDetailData
 } from './certificates-of-compliance.mock.js'
@@ -115,6 +116,18 @@ describe('certificates of compliance — journey', () => {
         expect(response.payload).not.toContain(
           `./${item.organisationId}/certificates-of-compliance/`
         )
+      }
+    })
+
+    it('compliance scheme not-submitted list shows the organisation ID (reference number)', async () => {
+      const response = await inject(
+        '/certificates-of-compliance?type=compliance-schemes&tab=not-submitted'
+      )
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      for (const item of mockComplianceSchemeNotSubmittedItems) {
+        expect(response.payload).toContain(item.organisationReferenceNumber)
+        expect(response.payload).toContain(item.organisationName)
       }
     })
 
