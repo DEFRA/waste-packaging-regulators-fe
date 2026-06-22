@@ -135,10 +135,19 @@ export class BaseApiService {
   }
 
   async #fetchResponse(method, path, init) {
-    const response = await this.fetchImpl(this.buildUrl(path), {
-      method,
-      ...init
-    })
+    const url = this.buildUrl(path)
+    let response
+
+    try {
+      response = await this.fetchImpl(url, { method, ...init })
+    } catch (cause) {
+      throw ApiError.networkFailure({
+        serviceName: this.serviceName,
+        method,
+        url,
+        cause
+      })
+    }
 
     if (!response.ok) {
       const errorBody = await this.#parseProblemJsonBody(response)
@@ -146,7 +155,10 @@ export class BaseApiService {
       throw ApiError.from({
         message: `${this.serviceName} API request failed with status ${response.status}`,
         status: response.status,
-        body: errorBody
+        body: errorBody,
+        serviceName: this.serviceName,
+        method,
+        url
       })
     }
 

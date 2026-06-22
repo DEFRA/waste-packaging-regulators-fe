@@ -76,7 +76,32 @@ describe('BaseApiService', () => {
     await expect(service.getJson('/fail', {}, 'ck')).rejects.toMatchObject({
       name: 'ApiError',
       status: 502,
-      title: 'Bad Gateway'
+      title: 'Bad Gateway',
+      serviceName: 'upstream',
+      method: 'GET',
+      url: 'http://localhost/fail'
+    })
+  })
+
+  test('getJson wraps fetch network failures with upstream context', async () => {
+    const cause = Object.assign(new TypeError('fetch failed'), {
+      cause: Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:8080'), {
+        code: 'ECONNREFUSED'
+      })
+    })
+    const fetchImpl = vi.fn().mockRejectedValue(cause)
+    const service = new BaseApiService({
+      baseUrl: 'http://localhost:8080',
+      fetchImpl,
+      serviceName: 'waste-obligations'
+    })
+
+    await expect(service.getJson('/things', {}, null)).rejects.toMatchObject({
+      name: 'ApiError',
+      serviceName: 'waste-obligations',
+      method: 'GET',
+      url: 'http://localhost:8080/things',
+      cause
     })
   })
 

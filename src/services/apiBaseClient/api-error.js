@@ -1,16 +1,21 @@
 export class ApiError extends Error {
   constructor({
-    status,
+    status = null,
     type = null,
     title = null,
     detail = null,
     instance = null,
     traceId = null,
     errors = null,
-    message = null
+    message = null,
+    serviceName = null,
+    method = null,
+    url = null,
+    cause = undefined
   }) {
     super(
-      message ?? detail ?? title ?? `API request failed with status ${status}`
+      message ?? detail ?? title ?? `API request failed with status ${status}`,
+      cause !== undefined ? { cause } : undefined
     )
     this.name = 'ApiError'
     this.status = status
@@ -20,9 +25,12 @@ export class ApiError extends Error {
     this.instance = instance
     this.traceId = traceId
     this.errors = errors
+    this.serviceName = serviceName
+    this.method = method
+    this.url = url
   }
 
-  static from({ message, status, body }) {
+  static from({ message, status, body, serviceName, method, url }) {
     return new ApiError({
       status,
       message,
@@ -31,7 +39,21 @@ export class ApiError extends Error {
       detail: body?.detail ?? null,
       instance: body?.instance ?? null,
       traceId: body?.traceId ?? null,
-      errors: body?.errors ?? null
+      errors: body?.errors ?? null,
+      serviceName,
+      method,
+      url
+    })
+  }
+
+  static networkFailure({ serviceName, method, url, cause }) {
+    const reason = cause?.code ?? cause?.message ?? 'network error'
+    return new ApiError({
+      message: `${serviceName} ${method} ${url} failed: ${reason}`,
+      serviceName,
+      method,
+      url,
+      cause
     })
   }
 }

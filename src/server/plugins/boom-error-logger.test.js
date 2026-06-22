@@ -38,6 +38,48 @@ describe('#serializeError', () => {
     })
   })
 
+  test('includes upstream context (status, service_name, method, url) when present', () => {
+    const err = Object.assign(new Error('upstream broke'), {
+      status: 502,
+      serviceName: 'waste-obligations',
+      method: 'GET',
+      url: 'http://localhost:8080/things'
+    })
+
+    expect(serializeError(err)).toMatchObject({
+      message: 'upstream broke',
+      status: 502,
+      service_name: 'waste-obligations',
+      method: 'GET',
+      url: 'http://localhost:8080/things'
+    })
+  })
+
+  test('walks AggregateError.errors[] (e.g. undici multi-IP connect)', () => {
+    const v4 = Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:8080'), {
+      code: 'ECONNREFUSED'
+    })
+    const v6 = Object.assign(new Error('connect ECONNREFUSED ::1:8080'), {
+      code: 'ECONNREFUSED'
+    })
+    const aggregate = new AggregateError([v4, v6], '')
+    aggregate.code = 'ECONNREFUSED'
+
+    const out = serializeError(aggregate)
+
+    expect(out.type).toBe('AggregateError')
+    expect(out.code).toBe('ECONNREFUSED')
+    expect(out.errors).toHaveLength(2)
+    expect(out.errors[0]).toMatchObject({
+      message: 'connect ECONNREFUSED 127.0.0.1:8080',
+      code: 'ECONNREFUSED'
+    })
+    expect(out.errors[1]).toMatchObject({
+      message: 'connect ECONNREFUSED ::1:8080',
+      code: 'ECONNREFUSED'
+    })
+  })
+
   test('walks .cause recursively', () => {
     const root = Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:8080'), {
       code: 'ECONNREFUSED',

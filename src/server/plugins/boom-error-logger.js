@@ -15,6 +15,13 @@ export function serializeError(err) {
 
   if (err.code !== undefined) out.code = err.code
   if (err.errno !== undefined) out.errno = err.errno
+  if (err.status !== undefined && err.status !== null) out.status = err.status
+  if (err.serviceName) out.service_name = err.serviceName
+  if (err.method) out.method = err.method
+  if (err.url) out.url = err.url
+  if (Array.isArray(err.errors) && err.errors.length > 0) {
+    out.errors = err.errors.map(serializeError).filter(Boolean)
+  }
   if (err.cause !== undefined) out.cause = serializeError(err.cause)
 
   return out
