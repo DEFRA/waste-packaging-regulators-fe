@@ -105,6 +105,101 @@ describe('BaseApiService', () => {
     })
   })
 
+  describe('upstream call logging', () => {
+    function makeLogger() {
+      return { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+    }
+
+    test('logs a successful GET at info with ECS shape', async () => {
+      const fetchImpl = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockResolvedValue({})
+      })
+      const logger = makeLogger()
+      const service = new BaseApiService({
+        baseUrl: 'http://localhost:8080',
+        fetchImpl,
+        logger,
+        serviceName: 'waste-obligations'
+      })
+
+      await service.getJson('/things?q=1', {}, null)
+
+      expect(logger.info).toHaveBeenCalledTimes(1)
+      const [payload, message] = logger.info.mock.calls[0]
+
+      expect(message).toMatch(
+        /^waste-obligations GET http:\/\/localhost:8080\/things\?q=1 200 \(\d+ms\)$/
+      )
+      expect(payload).toMatchObject({
+        service: { target: { name: 'waste-obligations' } },
+        http: { request: { method: 'GET' }, response: { status_code: 200 } },
+        url: { full: 'http://localhost:8080/things?q=1' },
+        event: {
+          category: 'http',
+          kind: 'event',
+          action: 'upstream-request',
+          outcome: 'success'
+        }
+      })
+      expect(typeof payload.event.duration).toBe('number')
+    })
+
+    test('logs a 4xx response at warn', async () => {
+      const fetchImpl = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        headers: { get: vi.fn().mockReturnValue('application/json') },
+        json: vi.fn().mockResolvedValue({})
+      })
+      const logger = makeLogger()
+      const service = new BaseApiService({
+        baseUrl: 'http://localhost',
+        fetchImpl,
+        logger,
+        serviceName: 'upstream'
+      })
+
+      await expect(service.getJson('/missing', {}, null)).rejects.toMatchObject({
+        status: 404
+      })
+
+      expect(logger.warn).toHaveBeenCalledTimes(1)
+      expect(logger.warn.mock.calls[0][0]).toMatchObject({
+        http: { response: { status_code: 404 } },
+        event: { outcome: 'failure' }
+      })
+      expect(logger.error).not.toHaveBeenCalled()
+    })
+
+    test('logs a network failure at error and rethrows ApiError', async () => {
+      const cause = new TypeError('fetch failed')
+      const fetchImpl = vi.fn().mockRejectedValue(cause)
+      const logger = makeLogger()
+      const service = new BaseApiService({
+        baseUrl: 'http://localhost:8080',
+        fetchImpl,
+        logger,
+        serviceName: 'waste-obligations'
+      })
+
+      await expect(
+        service.getJson('/things', {}, null)
+      ).rejects.toMatchObject({ name: 'ApiError', cause })
+
+      expect(logger.error).toHaveBeenCalledTimes(1)
+      const [payload, message] = logger.error.mock.calls[0]
+      expect(message).toContain('network-error')
+      expect(payload).toMatchObject({
+        service: { target: { name: 'waste-obligations' } },
+        url: { full: 'http://localhost:8080/things' },
+        event: { outcome: 'failure', action: 'upstream-request' }
+      })
+      expect(payload.http.response).toBeUndefined()
+    })
+  })
+
   test('postJson returns parsed json when content-type is application/json', async () => {
     const created = { id: '1' }
     const fetchImpl = vi.fn().mockResolvedValue({

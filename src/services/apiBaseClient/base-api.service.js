@@ -136,11 +136,18 @@ export class BaseApiService {
 
   async #fetchResponse(method, path, init) {
     const url = this.buildUrl(path)
+    const startedAt = performance.now()
     let response
 
     try {
       response = await this.fetchImpl(url, { method, ...init })
     } catch (cause) {
+      this.#logUpstreamCall({
+        method,
+        url,
+        durationMs: this.#elapsedMs(startedAt),
+        error: cause
+      })
       throw ApiError.networkFailure({
         serviceName: this.serviceName,
         method,
@@ -148,6 +155,13 @@ export class BaseApiService {
         cause
       })
     }
+
+    this.#logUpstreamCall({
+      method,
+      url,
+      durationMs: this.#elapsedMs(startedAt),
+      statusCode: response.status
+    })
 
     if (!response.ok) {
       const errorBody = await this.#parseProblemJsonBody(response)
@@ -163,6 +177,46 @@ export class BaseApiService {
     }
 
     return response
+  }
+
+  #elapsedMs(startedAt) {
+    return Math.round(performance.now() - startedAt)
+  }
+
+  #logUpstreamCall({ method, url, durationMs, statusCode = null, error = null }) {
+    const ok = !error && statusCode !== null && statusCode < 400
+    let level
+    if (error || (statusCode !== null && statusCode >= 500)) {
+      level = 'error'
+    } else if (statusCode !== null && statusCode >= 400) {
+      level = 'warn'
+    } else {
+      level = 'info'
+    }
+
+    const upper = method.toUpperCase()
+    const statusLabel = statusCode ?? 'network-error'
+
+    this.logger[level](
+      {
+        service: { target: { name: this.serviceName } },
+        http: {
+          request: { method: upper },
+          ...(statusCode !== null
+            ? { response: { status_code: statusCode } }
+            : {})
+        },
+        url: { full: url },
+        event: {
+          category: 'http',
+          kind: 'event',
+          action: 'upstream-request',
+          outcome: ok ? 'success' : 'failure',
+          duration: durationMs * 1_000_000
+        }
+      },
+      `${this.serviceName} ${upper} ${url} ${statusLabel} (${durationMs}ms)`
+    )
   }
 
   async #readJsonBodyIfPresent(response) {
