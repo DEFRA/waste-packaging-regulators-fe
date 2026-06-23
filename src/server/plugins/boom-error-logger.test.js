@@ -81,10 +81,13 @@ describe('#serializeError', () => {
   })
 
   test('walks .cause recursively', () => {
-    const root = Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:8080'), {
-      code: 'ECONNREFUSED',
-      errno: -111
-    })
+    const root = Object.assign(
+      new Error('connect ECONNREFUSED 127.0.0.1:8080'),
+      {
+        code: 'ECONNREFUSED',
+        errno: -111
+      }
+    )
     const wrapped = new TypeError('fetch failed', { cause: root })
     const outer = new Error('upstream request failed', { cause: wrapped })
 

@@ -45,8 +45,7 @@ export const boomErrorLogger = {
           return h.continue
         }
 
-        const level =
-          statusCode >= SERVER_ERROR_THRESHOLD ? 'error' : 'warn'
+        const level = statusCode >= SERVER_ERROR_THRESHOLD ? 'error' : 'warn'
 
         request.logger[level](
           {

@@ -161,9 +161,11 @@ describe('BaseApiService', () => {
         serviceName: 'upstream'
       })
 
-      await expect(service.getJson('/missing', {}, null)).rejects.toMatchObject({
-        status: 404
-      })
+      await expect(service.getJson('/missing', {}, null)).rejects.toMatchObject(
+        {
+          status: 404
+        }
+      )
 
       expect(logger.warn).toHaveBeenCalledTimes(1)
       expect(logger.warn.mock.calls[0][0]).toMatchObject({
@@ -184,9 +186,10 @@ describe('BaseApiService', () => {
         serviceName: 'waste-obligations'
       })
 
-      await expect(
-        service.getJson('/things', {}, null)
-      ).rejects.toMatchObject({ name: 'ApiError', cause })
+      await expect(service.getJson('/things', {}, null)).rejects.toMatchObject({
+        name: 'ApiError',
+        cause
+      })
 
       expect(logger.error).toHaveBeenCalledTimes(1)
       const [payload, message] = logger.error.mock.calls[0]

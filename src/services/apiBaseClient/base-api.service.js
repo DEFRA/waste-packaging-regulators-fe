@@ -183,7 +183,13 @@ export class BaseApiService {
     return Math.round(performance.now() - startedAt)
   }
 
-  #logUpstreamCall({ method, url, durationMs, statusCode = null, error = null }) {
+  #logUpstreamCall({
+    method,
+    url,
+    durationMs,
+    statusCode = null,
+    error = null
+  }) {
     const ok = !error && statusCode !== null && statusCode < 400
     let level
     if (error || (statusCode !== null && statusCode >= 500)) {

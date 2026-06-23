@@ -35,9 +35,12 @@ describe('ApiError', () => {
   })
 
   test('networkFailure carries cause, service and request context', () => {
-    const cause = Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:8080'), {
-      code: 'ECONNREFUSED'
-    })
+    const cause = Object.assign(
+      new Error('connect ECONNREFUSED 127.0.0.1:8080'),
+      {
+        code: 'ECONNREFUSED'
+      }
+    )
 
     const error = ApiError.networkFailure({
       serviceName: 'waste-obligations',
@@ -69,6 +72,8 @@ describe('ApiError', () => {
       cause
     })
 
-    expect(error.message).toBe('foo POST http://example.test/x failed: socket hang up')
+    expect(error.message).toBe(
+      'foo POST http://example.test/x failed: socket hang up'
+    )
   })
 })
