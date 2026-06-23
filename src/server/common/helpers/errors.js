@@ -25,10 +25,6 @@ export function catchAll(request, h) {
   const statusCode = response.output.statusCode
   const errorMessage = statusCodeMessage(statusCode)
 
-  if (statusCode >= statusCodes.internalServerError) {
-    request.logger.error(response?.stack)
-  }
-
   return h
     .view('error/index', {
       pageTitle: errorMessage,

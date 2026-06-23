@@ -12,6 +12,7 @@ import { nunjucksConfig } from '#/config/nunjucks/nunjucks.js'
 import { setupProxy } from './common/helpers/proxy/setup-proxy.js'
 import { requestTracing } from './plugins/request-tracing.js'
 import { requestLogger } from './plugins/request-logger.js'
+import { boomErrorLogger } from './plugins/boom-error-logger.js'
 import { sessionCache } from './plugins/session-cache.js'
 import { getCacheEngine } from './common/helpers/session-cache/cache-engine.js'
 import { secureContext } from '@defra/hapi-secure-context'
@@ -91,6 +92,7 @@ export async function createServer() {
     bell,
     requestLogger,
     requestTracing,
+    boomErrorLogger,
     metrics,
     secureContext,
     pulse,
