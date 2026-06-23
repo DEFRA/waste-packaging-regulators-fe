@@ -291,6 +291,41 @@ export const config = convict({
       sensitive: true
     }
   },
+  accountApi: {
+    baseUrl: {
+      doc: 'Account API base URL — the Regulator Gateway that proxies Account API endpoints',
+      format: String,
+      default: 'http://localhost:3001',
+      env: 'ACCOUNT_API_BASE_URL'
+    },
+    authMode: {
+      doc: 'Authentication mode for the Account API',
+      format: ['basic', 'bearer', 'none'],
+      default: 'basic',
+      env: 'ACCOUNT_API_AUTH_MODE'
+    },
+    clientId: {
+      doc: 'Client ID for the Account API',
+      format: String,
+      default: 'Developer',
+      env: 'ACCOUNT_API_CLIENT_ID'
+    },
+    clientSecret: {
+      doc: 'Client secret for the Account API',
+      format: String,
+      default: 'developer-pwd',
+      env: 'ACCOUNT_API_CLIENT_SECRET',
+      sensitive: true
+    },
+    xApiKey: {
+      doc: 'Ephemeral API key for local',
+      format: String,
+      nullable: true,
+      default: null,
+      env: 'ACCOUNT_API_X_API_KEY',
+      sensitive: true
+    }
+  },
   auth: {
     azureAdB2c: {
       clientId: {

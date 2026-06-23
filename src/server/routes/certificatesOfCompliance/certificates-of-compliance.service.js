@@ -1,4 +1,5 @@
 import { config } from '#/config/config.js'
+import { createAccountApiService } from '#/services/account-api.service.js'
 import { createWasteObligationsApiService } from '#/services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#/services/waste-organisations-api.service.js'
 import {
@@ -67,6 +68,8 @@ function mapDeclarationToItem(declaration) {
   }
 }
 
+// Reference number is resolved from the Account API (default 'No data'); the
+// organisation name keeps its compliance-scheme-aware derivation.
 function mapOrganisationToItem(organisation, organisationType) {
   const organisationName =
     organisation.registrationType === 'compliance-schemes'
@@ -77,7 +80,35 @@ function mapOrganisationToItem(organisation, organisationType) {
   return {
     id: null,
     organisationId: organisation.id,
+    organisationReferenceNumber: 'No data',
     organisationName
+  }
+}
+
+// Fills the 6-digit reference number for "Not submitted" rows from the Account API bulk lookup.
+async function resolveNotSubmittedOrganisationDetails(
+  accountApi,
+  items,
+  traceId
+) {
+  const externalIds = items.map((item) => item.organisationId).filter(Boolean)
+
+  if (externalIds.length === 0) {
+    return
+  }
+
+  const { organisations = [] } = await accountApi.getOrganisationsByExternalIds(
+    externalIds,
+    traceId
+  )
+
+  const detailsByExternalId = new Map(
+    organisations.map((org) => [org.externalId, org])
+  )
+
+  for (const item of items) {
+    const details = detailsByExternalId.get(item.organisationId)
+    item.organisationReferenceNumber = details?.referenceNumber ?? 'No data'
   }
 }
 
@@ -153,6 +184,7 @@ async function getComplianceSummary(
 async function getComplianceList(
   obligationsApi,
   organisationsApi,
+  accountApi,
   organisationType,
   tab,
   page,
@@ -199,8 +231,12 @@ async function getComplianceList(
 
     const totalPages = Math.ceil(allItems.length / PAGE_SIZE) || 1
     const start = (page - 1) * PAGE_SIZE
+    const items = allItems.slice(start, start + PAGE_SIZE)
+
+    await resolveNotSubmittedOrganisationDetails(accountApi, items, traceId)
+
     return {
-      items: allItems.slice(start, start + PAGE_SIZE),
+      items,
       totalPages,
       currentPage: page
     }
@@ -234,6 +270,7 @@ export async function getCertificatesOfComplianceViewModel(
 ) {
   const apiWasteObligation = createWasteObligationsApiService()
   const apiWasteOrganisation = createWasteOrganisationsApiService()
+  const apiAccount = createAccountApiService()
   const baseUrl = `/certificates-of-compliance?type=${organisationType}&tab=${tab}`
 
   const [summary, list] = await Promise.all([
@@ -246,6 +283,7 @@ export async function getCertificatesOfComplianceViewModel(
     getComplianceList(
       apiWasteObligation,
       apiWasteOrganisation,
+      apiAccount,
       organisationType,
       tab,
       currentPage,

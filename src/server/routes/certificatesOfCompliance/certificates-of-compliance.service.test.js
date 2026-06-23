@@ -12,9 +12,14 @@ vi.mock('#/services/waste-organisations-api.service.js', () => ({
   createWasteOrganisationsApiService: vi.fn()
 }))
 
+vi.mock('#/services/account-api.service.js', () => ({
+  createAccountApiService: vi.fn()
+}))
+
 import { config } from '#/config/config.js'
 import { createWasteObligationsApiService } from '#/services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#/services/waste-organisations-api.service.js'
+import { createAccountApiService } from '#/services/account-api.service.js'
 import {
   getCertificatesOfComplianceViewModel,
   getCertificateOfComplianceDetailViewModel,
@@ -277,13 +282,20 @@ describe('getCertificatesOfComplianceViewModel', () => {
   describe('with real API (useMockApi=false)', () => {
     let mockObligationsApi
     let mockOrganisationsApi
+    let mockAccountApi
 
     beforeEach(() => {
       config.get.mockReturnValue(false)
       mockObligationsApi = { listComplianceDeclarations: vi.fn() }
       mockOrganisationsApi = { listComplianceOrganisations: vi.fn() }
+      mockAccountApi = {
+        getOrganisationsByExternalIds: vi
+          .fn()
+          .mockResolvedValue({ organisations: [], notFoundExternalIds: [] })
+      }
       createWasteObligationsApiService.mockReturnValue(mockObligationsApi)
       createWasteOrganisationsApiService.mockReturnValue(mockOrganisationsApi)
+      createAccountApiService.mockReturnValue(mockAccountApi)
     })
 
     describe('getComplianceSummary', () => {
@@ -554,9 +566,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
           1
         )
         expect(vm.items).toHaveLength(2)
-        expect(vm.items.map((i) => i.organisationName)).toEqual([
-          'Not Submitted A',
-          'Not Submitted B'
+        expect(vm.items.map((i) => i.organisationId)).toEqual([
+          'org-2',
+          'org-3'
         ])
       })
 
@@ -599,7 +611,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           1
         )
         expect(vm.items).toHaveLength(1)
-        expect(vm.items[0].organisationName).toBe('Not Submitted')
+        expect(vm.items[0].organisationId).toBe('org-2')
       })
 
       test('paginates not-submitted results correctly', async () => {
@@ -727,7 +739,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
         // sub-0 is in page 1 of submitted declarations, so only not-submitted-1 should appear
         expect(vm.items).toHaveLength(1)
-        expect(vm.items[0].organisationName).toBe('Not Submitted')
+        expect(vm.items[0].organisationId).toBe('not-submitted-1')
       })
     })
 
@@ -1358,107 +1370,197 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
     })
 
-    describe('mapOrganisationToItem', () => {
+    describe('not-submitted — Account API organisation resolution', () => {
       const setupNotSubmittedTab = (orgs) => {
-        mockObligationsApi.listComplianceDeclarations.mockImplementation(
-          ({ pageSize }) => {
-            if (pageSize === 1) {
-              return Promise.resolve({ total: 0, complianceDeclarations: [] })
-            }
-            return Promise.resolve({ total: 0, complianceDeclarations: [] })
-          }
-        )
+        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
+          total: 0,
+          complianceDeclarations: []
+        })
         mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
           organisations: orgs
         })
       }
 
-      test('uses tradingName for compliance-schemes organisations', async () => {
+      test('defaults reference number to "No data" and keeps the organisation name', async () => {
         setupNotSubmittedTab([
           {
-            id: 'org-1',
-            name: 'Org Name',
-            tradingName: 'Trading Name',
-            companiesHouseNumber: 'CH001',
-            registrationType: 'compliance-schemes'
-          }
-        ])
-        const vm = await getCertificatesOfComplianceViewModel(
-          'compliance-schemes',
-          'not-submitted',
-          1
-        )
-        expect(vm.items[0].organisationName).toBe('Trading Name')
-      })
-
-      test('falls back to name when tradingName is null for compliance-schemes', async () => {
-        setupNotSubmittedTab([
-          {
-            id: 'org-1',
-            name: 'Org Name',
-            tradingName: null,
-            companiesHouseNumber: 'CH001',
-            registrationType: 'compliance-schemes'
-          }
-        ])
-        const vm = await getCertificatesOfComplianceViewModel(
-          'compliance-schemes',
-          'not-submitted',
-          1
-        )
-        expect(vm.items[0].organisationName).toBe('Org Name')
-      })
-
-      test('falls back to "Unknown organisation" for compliance-schemes when all names null', async () => {
-        setupNotSubmittedTab([
-          {
-            id: 'org-1',
-            name: null,
-            tradingName: null,
-            companiesHouseNumber: 'CH001',
-            registrationType: 'compliance-schemes'
-          }
-        ])
-        const vm = await getCertificatesOfComplianceViewModel(
-          'compliance-schemes',
-          'not-submitted',
-          1
-        )
-        expect(vm.items[0].organisationName).toBe('Unknown organisation')
-      })
-
-      test('uses name directly for non-compliance-scheme organisations', async () => {
-        setupNotSubmittedTab([
-          {
-            id: 'org-1',
-            name: 'Producer Name',
-            companiesHouseNumber: 'CH001',
+            id: 'org-guid-1',
+            name: 'Redwood Retail Group',
             registrationType: 'DirectProducer'
           }
         ])
+        mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
+          organisations: [],
+          notFoundExternalIds: ['org-guid-1']
+        })
+
         const vm = await getCertificatesOfComplianceViewModel(
           'direct-producers',
           'not-submitted',
           1
         )
-        expect(vm.items[0].organisationName).toBe('Producer Name')
+
+        expect(vm.items[0]).toMatchObject({
+          organisationId: 'org-guid-1',
+          organisationReferenceNumber: 'No data',
+          organisationName: 'Redwood Retail Group'
+        })
       })
 
-      test('falls back to "Unknown organisation" when name is null for non-compliance-scheme', async () => {
+      test('resolves the reference number from the Account API; name comes from the organisation record', async () => {
         setupNotSubmittedTab([
           {
-            id: 'org-1',
-            name: null,
-            companiesHouseNumber: 'CH001',
+            id: 'org-guid-1',
+            name: 'Redwood Retail Group',
+            registrationType: 'DirectProducer'
+          },
+          {
+            id: 'org-guid-2',
+            name: 'Maple Manufacturing',
             registrationType: 'DirectProducer'
           }
         ])
+        mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
+          organisations: [
+            {
+              externalId: 'org-guid-1',
+              name: 'Ignored Account Name',
+              referenceNumber: '518293'
+            },
+            {
+              externalId: 'org-guid-2',
+              name: 'Ignored Account Name',
+              referenceNumber: '600124'
+            }
+          ],
+          notFoundExternalIds: []
+        })
+
         const vm = await getCertificatesOfComplianceViewModel(
           'direct-producers',
           'not-submitted',
           1
         )
-        expect(vm.items[0].organisationName).toBe('Unknown organisation')
+
+        expect(vm.items).toEqual([
+          expect.objectContaining({
+            organisationId: 'org-guid-1',
+            organisationReferenceNumber: '518293',
+            organisationName: 'Redwood Retail Group'
+          }),
+          expect.objectContaining({
+            organisationId: 'org-guid-2',
+            organisationReferenceNumber: '600124',
+            organisationName: 'Maple Manufacturing'
+          })
+        ])
+      })
+
+      test('shows "No data" reference number for unresolved ids while other rows render', async () => {
+        setupNotSubmittedTab([
+          {
+            id: 'org-guid-1',
+            name: 'Redwood Retail Group',
+            registrationType: 'DirectProducer'
+          },
+          {
+            id: 'org-guid-2',
+            name: 'Maple Manufacturing',
+            registrationType: 'DirectProducer'
+          }
+        ])
+        mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
+          organisations: [
+            {
+              externalId: 'org-guid-1',
+              name: 'Ignored Account Name',
+              referenceNumber: '518293'
+            }
+          ],
+          notFoundExternalIds: ['org-guid-2']
+        })
+
+        const vm = await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'not-submitted',
+          1
+        )
+
+        expect(vm.items[0]).toMatchObject({
+          organisationReferenceNumber: '518293',
+          organisationName: 'Redwood Retail Group'
+        })
+        expect(vm.items[1]).toMatchObject({
+          organisationId: 'org-guid-2',
+          organisationReferenceNumber: 'No data',
+          organisationName: 'Maple Manufacturing'
+        })
+      })
+
+      test('calls the Account API with the page slice external ids and the traceId', async () => {
+        setupNotSubmittedTab([{ id: 'org-guid-1' }, { id: 'org-guid-2' }])
+
+        await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'not-submitted',
+          1,
+          'trace-acct'
+        )
+
+        expect(
+          mockAccountApi.getOrganisationsByExternalIds
+        ).toHaveBeenCalledWith(['org-guid-1', 'org-guid-2'], 'trace-acct')
+      })
+
+      test('does not call the Account API when there are no not-submitted organisations', async () => {
+        setupNotSubmittedTab([])
+
+        await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'not-submitted',
+          1
+        )
+
+        expect(
+          mockAccountApi.getOrganisationsByExternalIds
+        ).not.toHaveBeenCalled()
+      })
+
+      test('propagates Account API failures so the error page is shown', async () => {
+        setupNotSubmittedTab([{ id: 'org-guid-1' }])
+        const apiError = Object.assign(new Error('account API failed'), {
+          name: 'ApiError',
+          status: 500
+        })
+        mockAccountApi.getOrganisationsByExternalIds.mockRejectedValue(apiError)
+
+        await expect(
+          getCertificatesOfComplianceViewModel(
+            'direct-producers',
+            'not-submitted',
+            1
+          )
+        ).rejects.toMatchObject({ name: 'ApiError', status: 500 })
+      })
+
+      test('does not call the Account API for the pending tab', async () => {
+        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
+          total: 0,
+          complianceDeclarations: []
+        })
+        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
+          organisations: []
+        })
+
+        await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'pending',
+          1
+        )
+
+        expect(
+          mockAccountApi.getOrganisationsByExternalIds
+        ).not.toHaveBeenCalled()
       })
 
       test('sets id to null and organisationId to org id for not-submitted items', async () => {
@@ -1470,11 +1572,13 @@ describe('getCertificatesOfComplianceViewModel', () => {
             registrationType: 'DirectProducer'
           }
         ])
+
         const vm = await getCertificatesOfComplianceViewModel(
           'direct-producers',
           'not-submitted',
           1
         )
+
         expect(vm.items[0].id).toBeNull()
         expect(vm.items[0].organisationId).toBe('org-1')
       })
