@@ -219,21 +219,22 @@
       <hr class="govuk-section-break govuk-section-break--l">
 
       {% if actions.showAccept or actions.showCancel %}
-        <div class="govuk-button-group">
-          {% if actions.showAccept %}
-            <a href="{{ actions.urls.accept }}" role="button" draggable="false" class="govuk-button" data-module="govuk-button">
-              {{ actions.labels.accept }}
-            </a>
-          {% endif %}
-          {% if actions.showCancel %}
-            <form method="post" action="{{ actions.urls.cancel }}" class="govuk-!-display-inline">
-              {{ govukButton({
-                text: actions.labels.cancel,
-                preventDoubleClick: true,
-                classes: "govuk-button--secondary"
-              }) }}
-            </form>
-          {% endif %}
+        <div class="govuk-button-group govuk-!-display-inline">
+          <form method="post" action="{{ actions.urls.cancel }}">
+            {% if actions.showAccept %}
+              <a href="{{ actions.urls.accept }}" role="button" draggable="false" class="govuk-button" data-module="govuk-button">
+                {{ actions.labels.accept }}
+              </a>
+            {% endif %}
+            {% if actions.showCancel %}
+                {{ govukButton({
+                  text: actions.labels.cancel,
+                  preventDoubleClick: true,
+                  classes: "govuk-button--secondary"
+                }) }}
+            {% endif %}
+          </form>
+          </div>
         </div>
       {% endif %}
     </div>
