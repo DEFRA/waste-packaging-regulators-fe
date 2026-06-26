@@ -331,7 +331,7 @@ export const config = convict({
       clientId: {
         doc: 'Azure AD B2C Client ID',
         format: String,
-        default: '',
+        default: '0ecf89ee-03a1-4658-a640-f0d13d402ab5',
         env: 'AZURE_AD_B2C_CLIENT_ID'
       },
       clientSecret: {
@@ -344,31 +344,31 @@ export const config = convict({
       tenantName: {
         doc: 'Azure AD B2C Tenant Name',
         format: String,
-        default: '',
+        default: 'azdcuspoc2',
         env: 'AZURE_AD_B2C_TENANT_NAME'
       },
       instance: {
         doc: 'Azure AD B2C Instance (e.g., https://tenant.b2clogin.com)',
         format: String,
-        default: '',
+        default: 'https://azdcuspoc2.b2clogin.com',
         env: 'AZURE_AD_B2C_INSTANCE'
       },
       domain: {
         doc: 'Azure AD B2C Domain (e.g., tenant.onmicrosoft.com)',
         format: String,
-        default: '',
+        default: 'azdcuspoc2.onmicrosoft.com',
         env: 'AZURE_AD_B2C_DOMAIN'
       },
       userFlow: {
         doc: 'Azure AD B2C User Flow (e.g., B2C_1_signupsignin)',
         format: String,
-        default: '',
+        default: 'b2c_1a_epr_signupsignin',
         env: 'AZURE_AD_B2C_USER_FLOW'
       },
       redirectUri: {
         doc: 'OAuth redirect path or full URL (e.g. /login/b2c/callback or https://localhost:3000/signin-oidc). Optional.',
         format: String,
-        default: '',
+        default: 'https://localhost:3000/signin-oidc',
         env: 'AZURE_AD_B2C_REDIRECT_URI'
       },
       postLogoutRedirectPath: {
