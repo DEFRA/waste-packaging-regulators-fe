@@ -18,7 +18,7 @@ export function redirectToSignIn(request, h) {
 
 function handleApiError(request, error) {
   if (error instanceof ApiError) {
-    request.log.error(error)
+    request.logger.error(error)
     throw Boom.boomify(error, { statusCode: error.status })
   }
 
