@@ -12,6 +12,8 @@
     "build:frontend": "vite build",
     "dev": "cross-env AWS_EMF_ENVIRONMENT=Local npm run server:watch",
     "dev:debug": "cross-env AWS_EMF_ENVIRONMENT=Local npm run server:debug",
+    "dev:docker-backends": "cross-env MOCK_API=false WASTE_ORGANISATIONS_API_BASE_URL=http://localhost:8006 WASTE_OBLIGATIONS_API_BASE_URL=http://localhost:8007 ACCOUNT_API_BASE_URL=http://localhost:8085 npm run dev",
+    "dev:dev-backends": "cross-env MOCK_API=false WASTE_ORGANISATIONS_API_BASE_URL=https://ephemeral-protected.api.dev.cdp-int.defra.cloud/waste-organisations/ WASTE_OBLIGATIONS_API_BASE_URL=https://ephemeral-protected.api.dev.cdp-int.defra.cloud/waste-obligations/ ACCOUNT_API_BASE_URL=https://devrwdwebwa9407.azurewebsites.net/ npm run dev",
     "docker:dev": "npm run dev",
     "format": "prettier --write \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
     "format:check": "prettier --check \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
