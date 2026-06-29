@@ -293,7 +293,7 @@ export const config = convict({
   },
   accountApi: {
     baseUrl: {
-      doc: 'Account API base URL — the Regulator Gateway that proxies Account API endpoints',
+      doc: 'Account API base URL — The URL for azure service WAx407 - https://github.com/DEFRA/epr-backend-account-microservice',
       format: String,
       default: 'http://localhost:3001',
       env: 'ACCOUNT_API_BASE_URL'
