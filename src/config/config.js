@@ -293,37 +293,41 @@ export const config = convict({
   },
   accountApi: {
     baseUrl: {
-      doc: 'Account API base URL — the Regulator Gateway that proxies Account API endpoints',
+      doc: 'Account API base URL',
       format: String,
       default: 'http://localhost:3001',
       env: 'ACCOUNT_API_BASE_URL'
     },
     authMode: {
-      doc: 'Authentication mode for the Account API',
+      doc: 'Authentication mode for the Account API. Deployed environments use "bearer" (OAuth client credentials).',
       format: ['basic', 'bearer', 'none'],
       default: 'basic',
       env: 'ACCOUNT_API_AUTH_MODE'
     },
     clientId: {
-      doc: 'Client ID for the Account API',
+      doc: 'Client ID for the Account API. In bearer mode this is the OAuth client (application) ID.',
       format: String,
       default: 'Developer',
       env: 'ACCOUNT_API_CLIENT_ID'
     },
     clientSecret: {
-      doc: 'Client secret for the Account API',
+      doc: 'Client secret for the Account API. In bearer mode this is the OAuth client secret.',
       format: String,
       default: 'developer-pwd',
       env: 'ACCOUNT_API_CLIENT_SECRET',
       sensitive: true
     },
-    xApiKey: {
-      doc: 'Ephemeral API key for local',
+    tokenEndpoint: {
+      doc: 'OAuth token endpoint for the Account API client credentials (used when authMode is "bearer").',
       format: String,
-      nullable: true,
-      default: null,
-      env: 'ACCOUNT_API_X_API_KEY',
-      sensitive: true
+      default: '',
+      env: 'ACCOUNT_API_OAUTH_TOKEN_ENDPOINT'
+    },
+    scope: {
+      doc: 'OAuth scope for the Account API (typically {app-id}/.default). Used when authMode is "bearer".',
+      format: String,
+      default: '',
+      env: 'ACCOUNT_API_OAUTH_SCOPE'
     }
   },
   auth: {
