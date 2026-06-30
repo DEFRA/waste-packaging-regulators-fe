@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 
+import { config } from '#/config/config.js'
 import {
   createAccountApiService,
   AccountApiService
@@ -100,5 +101,29 @@ describe('AccountApiService', () => {
     })
 
     expect(service).toBeInstanceOf(AccountApiService)
+  })
+
+  test('createAccountApiService forwards bearer OAuth config to the service', () => {
+    const values = {
+      'accountApi.baseUrl': 'http://account.test',
+      'accountApi.authMode': 'bearer',
+      'accountApi.clientId': 'client-1',
+      'accountApi.clientSecret': 'secret-1',
+      'accountApi.scope': 'api://account/.default',
+      'accountApi.tokenEndpoint': 'https://login.test/token',
+      'tracing.header': 'x-cdp-request-id'
+    }
+    const getSpy = vi
+      .spyOn(config, 'get')
+      .mockImplementation((key) => values[key])
+
+    const service = createAccountApiService()
+
+    expect(service).toBeInstanceOf(AccountApiService)
+    expect(service.authMode).toBe('bearer')
+    expect(service.scope).toBe('api://account/.default')
+    expect(service.tokenEndpoint).toBe('https://login.test/token')
+
+    getSpy.mockRestore()
   })
 })
