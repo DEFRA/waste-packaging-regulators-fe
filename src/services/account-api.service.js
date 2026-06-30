@@ -19,8 +19,6 @@ export class AccountApiService extends BaseApiService {
 }
 
 export function createAccountApiService(options = {}) {
-  const xApiKey = config.get('accountApi.xApiKey')
-
   return new AccountApiService({
     baseUrl: config.get('accountApi.baseUrl'),
     authMode: config.get('accountApi.authMode'),
@@ -29,7 +27,6 @@ export function createAccountApiService(options = {}) {
     scope: config.get('accountApi.scope'),
     tokenEndpoint: config.get('accountApi.tokenEndpoint'),
     tracingHeader: config.get('tracing.header'),
-    headers: xApiKey ? { 'x-api-key': xApiKey } : undefined,
     ...options
   })
 }

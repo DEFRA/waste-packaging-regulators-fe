@@ -293,7 +293,7 @@ export const config = convict({
   },
   accountApi: {
     baseUrl: {
-      doc: 'Account API base URL — the Regulator Gateway that proxies Account API endpoints',
+      doc: 'Account API base URL',
       format: String,
       default: 'http://localhost:3001',
       env: 'ACCOUNT_API_BASE_URL'
@@ -328,14 +328,6 @@ export const config = convict({
       format: String,
       default: '',
       env: 'ACCOUNT_API_OAUTH_SCOPE'
-    },
-    xApiKey: {
-      doc: 'Ephemeral API key for local',
-      format: String,
-      nullable: true,
-      default: null,
-      env: 'ACCOUNT_API_X_API_KEY',
-      sensitive: true
     }
   },
   auth: {
