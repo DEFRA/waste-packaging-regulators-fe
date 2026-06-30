@@ -327,13 +327,13 @@ export const config = convict({
       doc: 'OAuth token endpoint for the Account API client credentials (used when authMode is "bearer").',
       format: String,
       default: '',
-      env: 'ACCOUNT_API_OAUTH_TOKEN_ENDPOINT'
+      env: 'ACCOUNT_API_TOKEN_ENDPOINT'
     },
     scope: {
       doc: 'OAuth scope for the Account API (typically {app-id}/.default). Used when authMode is "bearer".',
       format: String,
       default: '',
-      env: 'ACCOUNT_API_OAUTH_SCOPE'
+      env: 'ACCOUNT_API_SCOPE'
     }
   },
   auth: {
