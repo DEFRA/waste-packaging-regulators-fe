@@ -860,13 +860,13 @@ describe('getCertificatesOfComplianceViewModel', () => {
     })
 
     describe('getCertificateOfComplianceDetailViewModel — real API', () => {
-      // Extends the outer mockObligationsApi with the endpoints the detail
-      // viewmodel uses. Defaults are the happy path; tests override via
-      // mockResolvedValue on the specific stub when they need a different shape.
       beforeEach(() => {
         mockObligationsApi.getComplianceDeclarationOrNull = vi
           .fn()
           .mockResolvedValue(mockDetailData)
+        mockObligationsApi.listOrganisationComplianceDeclarations = vi
+          .fn()
+          .mockResolvedValue({ complianceDeclarations: [] })
         mockObligationsApi.getComplianceObligation = vi
           .fn()
           .mockResolvedValue(mockObligationData)
@@ -1169,6 +1169,46 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.declarationStatus).toBe('Submitted')
       })
 
+      describe('currentYearActions — mapper edge cases', () => {
+        const runDetailVm = async (declaration, declarationsForYear) => {
+          mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue(
+            declaration
+          )
+          mockObligationsApi.listOrganisationComplianceDeclarations.mockResolvedValue(
+            { complianceDeclarations: declarationsForYear }
+          )
+          return getCertificateOfComplianceDetailViewModel(
+            'org-abc',
+            declaration.id
+          )
+        }
+
+        test('filters out Submitted-status declarations', async () => {
+          const vm = await runDetailVm(mockDetailData, [mockDetailData])
+          expect(vm.currentYearActions).toEqual([])
+        })
+
+        test('falls back to null reason when a Cancelled audit entry has no reason', async () => {
+          const cancelled = {
+            ...mockDetailData,
+            id: 'decl-cancelled-no-reason',
+            status: 'Cancelled',
+            updated: '2026-06-17T16:00:00Z',
+            submitterName: 'Test Submitter A',
+            audit: [
+              {
+                action: 'Cancelled',
+                timestamp: '2026-06-17T16:00:00Z',
+                user: { id: 'u1', email: 'test-regulator@example.test' }
+              }
+            ]
+          }
+          const vm = await runDetailVm(mockDetailData, [cancelled])
+
+          expect(vm.currentYearActions[0].reason).toBeNull()
+        })
+      })
+
       describe('fallback path — no declaration found', () => {
         beforeEach(() => {
           mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue(
@@ -1243,6 +1283,15 @@ describe('getCertificatesOfComplianceViewModel', () => {
           )
 
           expect(vm.organisationRef).toBe('org-abc')
+        })
+
+        test('currentYearActions is an empty array on fallback path', async () => {
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'org-abc',
+            'decl-1'
+          )
+
+          expect(vm.currentYearActions).toEqual([])
         })
       })
     })

@@ -214,7 +214,36 @@
       <hr class="govuk-section-break govuk-section-break--l">
 
       <h2 class="govuk-heading-m">Current year</h2>
-      <p class="govuk-body">No data</p>
+      {% if currentYearActions.length === 0 %}
+        <p class="govuk-body">No previous submissions</p>
+      {% else %}
+        <table class="govuk-table">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th scope="col" class="govuk-table__header">Date</th>
+              <th scope="col" class="govuk-table__header">Action</th>
+              <th scope="col" class="govuk-table__header">By</th>
+              <th scope="col" class="govuk-table__header">Reason</th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            {% for row in currentYearActions %}
+              <tr class="govuk-table__row">
+                <td class="govuk-table__cell">{{ row.date }}</td>
+                <td class="govuk-table__cell">
+                  {% if row.action === 'Accepted' %}
+                    <strong class="govuk-tag govuk-tag--blue govuk-!-font-size-16">Accepted</strong>
+                  {% elif row.action === 'Cancelled' %}
+                    <strong class="govuk-tag govuk-tag--grey govuk-!-font-size-16">Cancelled</strong>
+                  {% endif %}
+                </td>
+                <td class="govuk-table__cell">{{ row.by }}</td>
+                <td class="govuk-table__cell">{{ row.reason if row.reason else '' }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
 
       <hr class="govuk-section-break govuk-section-break--l">
 

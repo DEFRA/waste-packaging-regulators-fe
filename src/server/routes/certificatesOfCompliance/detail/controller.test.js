@@ -157,4 +157,55 @@ describe('#certificatesOfComplianceDetailController', () => {
       'action="/a1b2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-309145/cancel"'
     )
   })
+
+  describe('Current year history', () => {
+    const acceptedOnlyUrl =
+      '/b0b1b2b3-b4b5-b6b7-b8b9-babbbcbdbebf/certificates-of-compliance/decl-accepted-only'
+    const cancelledOnlyUrl =
+      '/c0c1c2c3-c4c5-c6c7-c8c9-cacbcccdcecf/certificates-of-compliance/decl-cancelled-only'
+    const bothUrl = '/org-123/certificates-of-compliance/101411'
+    const emptyUrl =
+      '/a1b2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-309145'
+
+    it('renders the Current year heading', async () => {
+      const response = await inject(bothUrl)
+      expect(response.payload).toContain('Current year')
+    })
+
+    it('renders the empty-state message when there are no prior submissions', async () => {
+      const response = await inject(emptyUrl)
+      expect(response.payload).toContain('No previous submissions')
+    })
+
+    it('renders an Accepted-only page with the blue tag, submitter, and "Not applicable" reason', async () => {
+      const response = await inject(acceptedOnlyUrl)
+      expect(response.payload).toContain('15 April 2026 at 11:20')
+      expect(response.payload).toContain('govuk-tag govuk-tag--blue')
+      expect(response.payload).toContain('Test Submitter D')
+      expect(response.payload).toContain('Not applicable')
+    })
+
+    it('renders a Cancelled-only page with the grey tag, submitter, and the audit reason', async () => {
+      const response = await inject(cancelledOnlyUrl)
+      expect(response.payload).toContain('8 April 2026 at 10:00')
+      expect(response.payload).toContain('govuk-tag govuk-tag--grey')
+      expect(response.payload).toContain('Test Submitter C')
+      expect(response.payload).toContain('Information could not be verified')
+    })
+
+    it('renders both Accepted and Cancelled rows when the org has both', async () => {
+      const response = await inject(bothUrl)
+      expect(response.payload).toContain('13 February 2026 at 09:42')
+      expect(response.payload).toContain('22 May 2026 at 14:18')
+    })
+
+    it('renders rows in the order returned by the API (newest first)', async () => {
+      const response = await inject(bothUrl)
+      const cancelledIdx = response.payload.indexOf('22 May 2026 at 14:18')
+      const acceptedIdx = response.payload.indexOf('13 February 2026 at 09:42')
+      expect(cancelledIdx).toBeGreaterThan(-1)
+      expect(acceptedIdx).toBeGreaterThan(-1)
+      expect(cancelledIdx).toBeLessThan(acceptedIdx)
+    })
+  })
 })
