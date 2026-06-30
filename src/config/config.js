@@ -68,6 +68,12 @@ export const config = convict({
     default: !isProduction,
     env: 'MOCK_API'
   },
+  useMockAuth: {
+    doc: 'Bypass Azure AD B2C with a stub auth strategy that grants a fixed mock user. Defaults to false in production mode (i.e. all deployed environments).',
+    format: Boolean,
+    default: !isProduction,
+    env: 'MOCK_AUTH'
+  },
   isDevelopment: {
     doc: 'If this application running in the development environment',
     format: Boolean,

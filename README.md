@@ -14,6 +14,7 @@ Core delivery platform Node.js Frontend Template.
   - [Setup](#setup)
     - [Nix dev shell (optional)](#nix-dev-shell-optional)
   - [Development](#development)
+  - [Backend API profiles](#backend-api-profiles)
   - [HTTPS for local development](#https-for-local-development)
   - [Production](#production)
   - [Npm scripts](#npm-scripts)
@@ -118,6 +119,52 @@ To run the application in `development` mode run:
 ```bash
 npm run dev
 ```
+
+This uses mock API responses and a stub auth strategy (no backends required, no B2C round-trip). Routes that check for a signed-in user see a fixed `mock-user` automatically.
+
+### Alternate backend API profiles
+
+#### Run against dev environment
+
+Real backends, real B2C:
+
+```bash
+npm run dev:dev-backends
+```
+
+Secrets (`AZURE_AD_B2C_CLIENT_SECRET`, API auth/keys) are not set by the script; inject them separately (e.g. via [gopass](https://github.com/gopasspw/gopass) or `.env`).
+
+#### Run against [docker-compose local environment](https://github.com/DEFRA/epr-local-environment)
+
+Docker backends, mock B2C.
+
+Bring up the docker environment:
+
+```bash
+cd epr-local-environment
+docker compose --profile regulator up -d
+```
+
+The `regulator` profile also brings up the containerised version of this frontend and its nginx proxy, which publishes host `:3000` and will clash with `npm run dev`.
+
+Before running the frontend locally, stop the containers occupying that port:
+
+```bash
+docker compose stop waste-packaging-regulators-fe-proxy waste-packaging-regulators-fe
+```
+
+Run this frontend against the docker services:
+
+```bash
+cd waste-packaging-regulators-fe
+npm run dev:docker-backends
+```
+
+API auth secrets are not set by the script; inject them separately if the docker backends require them.
+
+#### Mock AzureB2C auth
+
+Config setting `MOCK_AUTH` allows the dependency on AzureB2C for logging in to be toggled on/off.
 
 ### HTTPS for local development
 
