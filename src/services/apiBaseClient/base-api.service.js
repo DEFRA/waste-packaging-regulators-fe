@@ -1,9 +1,11 @@
 import { createLogger } from '#/server/common/helpers/logging/logger.js'
 import { ApiError } from './api-error.js'
+import { getServiceOAuthAccessToken } from './oauth-token.js'
 
 const DEFAULT_CACHE_TTL_MS = 300000
 const DEFAULT_ACCEPT_HEADER = 'application/json'
 const AUTH_MODE_BASIC = 'basic'
+const AUTH_MODE_BEARER = 'bearer'
 
 function trimTrailingSlash(value) {
   const text = String(value)
@@ -32,6 +34,8 @@ export class BaseApiService {
     this.tracingHeader = coalesce(options.tracingHeader, 'x-cdp-request-id')
     this.clientId = coalesce(options.clientId, '')
     this.clientSecret = coalesce(options.clientSecret, '')
+    this.scope = coalesce(options.scope, '')
+    this.tokenEndpoint = coalesce(options.tokenEndpoint, '')
     this.authMode = coalesce(options.authMode, AUTH_MODE_BASIC)
     this.xApiKey = coalesce(options.xApiKey, null)
   }
@@ -44,10 +48,10 @@ export class BaseApiService {
     return `${this.baseUrl}${path}`
   }
 
-  getHeaders(extraHeaders = {}) {
+  async getHeaders(extraHeaders = {}) {
     return {
       ...this.headers,
-      ...this.#getAuthHeader(),
+      ...(await this.#getAuthHeader()),
       ...extraHeaders
     }
   }
@@ -78,7 +82,7 @@ export class BaseApiService {
     }
 
     const response = await this.#fetchResponse('GET', path, {
-      headers: this.getHeaders(headers)
+      headers: await this.getHeaders(headers)
     })
 
     const data = await response.json()
@@ -93,7 +97,7 @@ export class BaseApiService {
   async postJson(path, body, headers) {
     const response = await this.#fetchResponse('POST', path, {
       headers: {
-        ...this.getHeaders(headers),
+        ...(await this.getHeaders(headers)),
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(body ?? {})
@@ -105,7 +109,7 @@ export class BaseApiService {
   async putJson(path, body, headers) {
     const response = await this.#fetchResponse('PUT', path, {
       headers: {
-        ...this.getHeaders(headers),
+        ...(await this.getHeaders(headers)),
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(body ?? {})
@@ -117,7 +121,7 @@ export class BaseApiService {
   async patchJson(path, body, headers) {
     const response = await this.#fetchResponse('PATCH', path, {
       headers: {
-        ...this.getHeaders(headers),
+        ...(await this.getHeaders(headers)),
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(body ?? {})
@@ -128,7 +132,7 @@ export class BaseApiService {
 
   async deleteJson(path, headers) {
     const response = await this.#fetchResponse('DELETE', path, {
-      headers: this.getHeaders(headers)
+      headers: await this.getHeaders(headers)
     })
 
     return this.#readJsonBodyIfPresent(response)
@@ -288,9 +292,22 @@ export class BaseApiService {
       : { Accept: DEFAULT_ACCEPT_HEADER }
   }
 
-  #getAuthHeader() {
+  async #getAuthHeader() {
     if (this.authMode === AUTH_MODE_BASIC) {
       return this.getBasicAuthHeader()
+    }
+
+    if (this.authMode === AUTH_MODE_BEARER) {
+      const accessToken = await getServiceOAuthAccessToken({
+        clientId: this.clientId,
+        clientSecret: this.clientSecret,
+        scope: this.scope,
+        tokenEndpoint: this.tokenEndpoint,
+        fetchImpl: this.fetchImpl,
+        logger: this.logger
+      })
+
+      return { Authorization: `Bearer ${accessToken}` }
     }
 
     return {}
