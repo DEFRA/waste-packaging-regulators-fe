@@ -299,23 +299,35 @@ export const config = convict({
       env: 'ACCOUNT_API_BASE_URL'
     },
     authMode: {
-      doc: 'Authentication mode for the Account API',
+      doc: 'Authentication mode for the Account API. Deployed environments use "bearer" (OAuth client credentials).',
       format: ['basic', 'bearer', 'none'],
       default: 'basic',
       env: 'ACCOUNT_API_AUTH_MODE'
     },
     clientId: {
-      doc: 'Client ID for the Account API',
+      doc: 'Client ID for the Account API. In bearer mode this is the OAuth client (application) ID.',
       format: String,
       default: 'Developer',
       env: 'ACCOUNT_API_CLIENT_ID'
     },
     clientSecret: {
-      doc: 'Client secret for the Account API',
+      doc: 'Client secret for the Account API. In bearer mode this is the OAuth client secret.',
       format: String,
       default: 'developer-pwd',
       env: 'ACCOUNT_API_CLIENT_SECRET',
       sensitive: true
+    },
+    tokenEndpoint: {
+      doc: 'OAuth token endpoint for the Account API client credentials (used when authMode is "bearer").',
+      format: String,
+      default: '',
+      env: 'ACCOUNT_API_OAUTH_TOKEN_ENDPOINT'
+    },
+    scope: {
+      doc: 'OAuth scope for the Account API (typically {app-id}/.default). Used when authMode is "bearer".',
+      format: String,
+      default: '',
+      env: 'ACCOUNT_API_OAUTH_SCOPE'
     },
     xApiKey: {
       doc: 'Ephemeral API key for local',

@@ -1,6 +1,11 @@
-import { describe, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import { BaseApiService } from './base-api.service.js'
+import { resetServiceOAuthTokenCacheForTests } from './oauth-token.js'
+
+afterEach(() => {
+  resetServiceOAuthTokenCacheForTests()
+})
 
 describe('BaseApiService', () => {
   test('getJson returns cached payload without calling fetch', async () => {
@@ -442,6 +447,55 @@ describe('BaseApiService', () => {
     await service.getJson('/resource', {}, null)
 
     expect(fetchImpl.mock.calls[0][1].headers.Authorization).toBeUndefined()
+  })
+
+  test('attaches a bearer token from the OAuth token endpoint when auth mode is bearer', async () => {
+    const fetchImpl = vi
+      .fn()
+      // First call: OAuth token endpoint
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: vi
+          .fn()
+          .mockResolvedValue({ access_token: 'tok-xyz', expires_in: 3600 })
+      })
+      // Second call: the actual API request
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockResolvedValue({ live: true })
+      })
+
+    const service = new BaseApiService({
+      baseUrl: 'http://localhost',
+      fetchImpl,
+      authMode: 'bearer',
+      clientId: 'client-1',
+      clientSecret: 'secret-1',
+      scope: 'api://account/.default',
+      tokenEndpoint: 'https://login.example/token',
+      serviceName: 'account'
+    })
+
+    const data = await service.getJson('/resource', {}, null)
+
+    expect(data).toEqual({ live: true })
+    expect(fetchImpl).toHaveBeenNthCalledWith(
+      1,
+      'https://login.example/token',
+      expect.objectContaining({ method: 'POST' })
+    )
+    expect(fetchImpl).toHaveBeenNthCalledWith(
+      2,
+      'http://localhost/resource',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer tok-xyz'
+        })
+      })
+    )
   })
 
   test('postJson returns null when problem+json body cannot be parsed', async () => {
