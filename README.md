@@ -120,23 +120,23 @@ To run the application in `development` mode run:
 npm run dev
 ```
 
-This uses mock API responses by default, so no backend services need to be running.
+This uses mock API responses and a stub auth strategy (no backends required, no B2C round-trip). Routes that check for a signed-in user see a fixed `mock-user` automatically.
 
 ### Alternate backend API profiles
 
 #### Run against dev environment
 
-To run against real backends on dev:
+Real backends, real B2C:
 
 ```bash
 npm run dev:dev-backends
 ```
 
-Note, secrets (client secrets, API auth/keys, AzureB2C config) are not set by these scripts; inject them separately (e.g. via [gopass](https://github.com/gopasspw/gopass) or `.env`).
+Secrets (`AZURE_AD_B2C_CLIENT_SECRET`, API auth/keys) are not set by the script; inject them separately (e.g. via [gopass](https://github.com/gopasspw/gopass) or `.env`).
 
-#### Run against docker-compose local environment
+#### Run against [docker-compose local environment](https://github.com/DEFRA/epr-local-environment)
 
-To run against backends running in [docker-compose](https://github.com/DEFRA/epr-local-environment/blob/main/compose.yml):
+Docker backends, mock B2C.
 
 Bring up the docker environment:
 
@@ -160,7 +160,11 @@ cd waste-packaging-regulators-fe
 npm run dev:docker-backends
 ```
 
-Note, secrets (client secrets, API auth/keys, AzureB2C config) are not set by these scripts; inject them separately (e.g. via [gopass](https://github.com/gopasspw/gopass) or `.env`).
+API auth secrets are not set by the script; inject them separately if the docker backends require them.
+
+#### Mock AzureB2C auth
+
+Config setting `MOCK_AUTH` allows the dependency on AzureB2C for logging in to be toggled on/off.
 
 ### HTTPS for local development
 

@@ -104,7 +104,7 @@ export async function createServer() {
 
   const azureAdB2cConfig = config.get('auth.azureAdB2c')
 
-  if (config.get('isTest')) {
+  if (config.get('useMockAuth')) {
     server.auth.scheme('mock', () => ({
       authenticate: (_request, h) =>
         h.authenticated({ credentials: { user: 'mock-user' } })
