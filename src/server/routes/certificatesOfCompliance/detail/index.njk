@@ -269,11 +269,9 @@
               </a>
             {% endif %}
             {% if actions.showCancel %}
-                {{ govukButton({
-                  text: actions.labels.cancel,
-                  preventDoubleClick: true,
-                  classes: "govuk-button--secondary"
-                }) }}
+              <button type="submit" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-prevent-double-click="true">
+                {{ actions.labels.cancel }}
+              </button>
             {% endif %}
           </form>
           </div>
