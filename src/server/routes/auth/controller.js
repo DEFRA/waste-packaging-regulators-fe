@@ -1,10 +1,10 @@
-import { config } from '#/config/config.js'
+import { config } from '#config/config.js'
 import {
   BELL_AZURE_AD_B2C_COOKIE,
   buildB2cLogoutUrl,
   getB2cAuthorityPrefix,
   resolvePostLogoutAbsoluteUri
-} from '#/server/auth/azure-ad-b2c.js'
+} from '#server/auth/azure-ad-b2c.js'
 
 export const signinOidcController = {
   handler(request, h) {

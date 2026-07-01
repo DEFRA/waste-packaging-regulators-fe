@@ -1,5 +1,5 @@
-import { config } from '#/config/config.js'
-import { handleApiError } from '#/server/common/helpers/handle-api-error.js'
+import { config } from '#config/config.js'
+import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import {
   getCertificateOfComplianceDetailViewModel,
   getDeclarationSessionKey,

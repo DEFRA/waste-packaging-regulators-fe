@@ -1,6 +1,6 @@
 import Boom from '@hapi/boom'
-import { config } from '#/config/config.js'
-import { ApiError } from '#/services/apiBaseClient/api-error.js'
+import { config } from '#config/config.js'
+import { ApiError } from '#services/apiBaseClient/api-error.js'
 import {
   approveComplianceDeclaration,
   canApproveComplianceDeclaration,

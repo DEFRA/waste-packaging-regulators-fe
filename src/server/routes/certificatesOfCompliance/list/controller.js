@@ -1,4 +1,4 @@
-import { config } from '#/config/config.js'
+import { config } from '#config/config.js'
 import { getCertificatesOfComplianceViewModel } from '../certificates-of-compliance.service.js'
 
 export const certificatesOfComplianceController = {

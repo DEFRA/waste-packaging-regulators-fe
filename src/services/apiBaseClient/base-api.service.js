@@ -1,4 +1,4 @@
-import { createLogger } from '#/server/common/helpers/logging/logger.js'
+import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { ApiError } from './api-error.js'
 import { getServiceOAuthAccessToken } from './oauth-token.js'
 

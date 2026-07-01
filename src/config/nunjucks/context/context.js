@@ -1,9 +1,9 @@
 import path from 'node:path'
 import { readFileSync } from 'node:fs'
 
-import { config } from '#/config/config.js'
+import { config } from '#config/config.js'
 import { buildNavigation } from './build-navigation.js'
-import { createLogger } from '#/server/common/helpers/logging/logger.js'
+import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
 const assetPath = config.get('assetPath')

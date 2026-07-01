@@ -1,7 +1,7 @@
 import { vi } from 'vitest'
-import { createServer } from '#/server/server.js'
-import { statusCodes } from '#/server/common/constants/status-codes.js'
-import { ApiError } from '#/services/apiBaseClient/api-error.js'
+import { createServer } from '#server/server.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { ApiError } from '#services/apiBaseClient/api-error.js'
 import * as certificatesService from '../certificates-of-compliance.service.js'
 import {
   mockComplianceSchemeDetailData,
@@ -24,6 +24,8 @@ const expectedMaterialTotalAccepted = expectedMaterials.reduce(
   (sum, o) => sum + o.tonnages.accepted,
   0
 )
+const expectedRecyclingObligationsStatus =
+  mockDetailData.obligationStatus === 'Met' ? 'Met' : 'Not met'
 
 describe('#certificatesOfComplianceDetailController', () => {
   let server
@@ -83,8 +85,7 @@ describe('#certificatesOfComplianceDetailController', () => {
 
   it('should render the recycling obligations status', async () => {
     const response = await inject('/org-123/certificates-of-compliance/101411')
-    // mockDetailData.obligationStatus === 'Met' → renders 'Met'
-    expect(response.payload).toContain('Met')
+    expect(response.payload).toContain(expectedRecyclingObligationsStatus)
   })
 
   it('should not render Regulation 43 for a direct producer', async () => {

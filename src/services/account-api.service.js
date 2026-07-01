@@ -1,4 +1,4 @@
-import { config } from '#/config/config.js'
+import { config } from '#config/config.js'
 import { BaseApiService } from './apiBaseClient/base-api.service.js'
 
 export class AccountApiService extends BaseApiService {

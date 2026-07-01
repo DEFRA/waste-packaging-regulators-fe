@@ -1,25 +1,25 @@
 import { describe, expect, test, vi, beforeEach } from 'vitest'
 
-vi.mock('#/config/config.js', () => ({
+vi.mock('#config/config.js', () => ({
   config: { get: vi.fn() }
 }))
 
-vi.mock('#/services/waste-obligations-api.service.js', () => ({
+vi.mock('#services/waste-obligations-api.service.js', () => ({
   createWasteObligationsApiService: vi.fn()
 }))
 
-vi.mock('#/services/waste-organisations-api.service.js', () => ({
+vi.mock('#services/waste-organisations-api.service.js', () => ({
   createWasteOrganisationsApiService: vi.fn()
 }))
 
-vi.mock('#/services/account-api.service.js', () => ({
+vi.mock('#services/account-api.service.js', () => ({
   createAccountApiService: vi.fn()
 }))
 
-import { config } from '#/config/config.js'
-import { createWasteObligationsApiService } from '#/services/waste-obligations-api.service.js'
-import { createWasteOrganisationsApiService } from '#/services/waste-organisations-api.service.js'
-import { createAccountApiService } from '#/services/account-api.service.js'
+import { config } from '#config/config.js'
+import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
+import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
+import { createAccountApiService } from '#services/account-api.service.js'
 import {
   getCertificatesOfComplianceViewModel,
   getCertificateOfComplianceDetailViewModel,
