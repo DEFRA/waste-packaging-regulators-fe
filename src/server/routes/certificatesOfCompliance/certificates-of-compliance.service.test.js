@@ -1445,12 +1445,6 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
 
       test('maps complianceTypeLabel for direct producer declarations', async () => {
-        createWasteObligationsApiService.mockReturnValue({
-          getComplianceDeclarationOrNull: vi
-            .fn()
-            .mockResolvedValue(mockDetailData)
-        })
-
         const vm = await getCertificateOfComplianceDetailViewModel(
           'org-abc',
           'decl-1'
@@ -1460,11 +1454,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
 
       test('maps complianceTypeLabel for compliance scheme declarations', async () => {
-        createWasteObligationsApiService.mockReturnValue({
-          getComplianceDeclarationOrNull: vi
-            .fn()
-            .mockResolvedValue(mockComplianceSchemeDetailData)
-        })
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue(
+          mockComplianceSchemeDetailData
+        )
 
         const vm = await getCertificateOfComplianceDetailViewModel(
           'org-abc',
@@ -1475,11 +1467,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
 
       test('maps regulation43Met from isRegulation43Compliant', async () => {
-        createWasteObligationsApiService.mockReturnValue({
-          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue({
-            ...mockComplianceSchemeDetailData,
-            isRegulation43Compliant: false
-          })
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockComplianceSchemeDetailData,
+          isRegulation43Compliant: false
         })
 
         const vm = await getCertificateOfComplianceDetailViewModel(
@@ -1491,11 +1481,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
 
       test('maps recyclingObligationsMet to null when obligationStatus is null', async () => {
-        createWasteObligationsApiService.mockReturnValue({
-          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue({
-            ...mockDetailData,
-            obligationStatus: null
-          })
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          obligationStatus: null
         })
 
         const vm = await getCertificateOfComplianceDetailViewModel(
@@ -1507,18 +1495,16 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
 
       test('maps null string fields to No data', async () => {
-        createWasteObligationsApiService.mockReturnValue({
-          getComplianceDeclarationOrNull: vi.fn().mockResolvedValue({
-            ...mockDetailData,
-            submitterName: null,
-            organisation: {
-              ...mockDetailData.organisation,
-              companiesHouseNumber: null,
-              nameOnAccount: null,
-              contactEmailAddress: null,
-              contactPhoneNumber: null
-            }
-          })
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          submitterName: null,
+          organisation: {
+            ...mockDetailData.organisation,
+            companiesHouseNumber: null,
+            nameOnAccount: null,
+            contactEmailAddress: null,
+            contactPhoneNumber: null
+          }
         })
 
         const vm = await getCertificateOfComplianceDetailViewModel(
