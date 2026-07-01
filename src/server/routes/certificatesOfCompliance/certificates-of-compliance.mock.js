@@ -402,6 +402,142 @@ export const mockComplianceSchemeCancelledDetailData = {
   }
 }
 
+const mockRegulator = {
+  id: 'mock-regulator-1',
+  email: 'mock-regulator-1@example.test'
+}
+
+const mockCurrentYearAcceptedDeclaration = {
+  ...mockDetailData,
+  id: 'decl-101411-prev-accepted',
+  created: '2026-02-13T09:42:00Z',
+  updated: '2026-02-13T09:42:00Z',
+  status: 'Accepted',
+  submitterName: 'Test Submitter A',
+  audit: [
+    {
+      action: 'Accepted',
+      timestamp: '2026-02-13T09:42:00Z',
+      user: mockRegulator
+    }
+  ]
+}
+
+const mockCurrentYearCancelledDeclaration = {
+  ...mockDetailData,
+  id: 'decl-101411-prev-cancelled',
+  created: '2026-05-22T14:18:00Z',
+  updated: '2026-05-22T14:18:00Z',
+  status: 'Cancelled',
+  submitterName: 'Test Submitter A',
+  audit: [
+    {
+      action: 'Cancelled',
+      timestamp: '2026-05-22T14:18:00Z',
+      user: mockRegulator,
+      reason: 'Test cancellation reason'
+    }
+  ]
+}
+
+const mockComplianceSchemeCurrentYearAcceptedDeclaration = {
+  ...mockComplianceSchemeDetailData,
+  id: 'decl-cs-001-prev-accepted',
+  created: '2026-03-04T11:05:00Z',
+  updated: '2026-03-04T11:05:00Z',
+  status: 'Accepted',
+  submitterName: 'Test Submitter B',
+  audit: [
+    {
+      action: 'Accepted',
+      timestamp: '2026-03-04T11:05:00Z',
+      user: { id: 'mock-regulator-2', email: 'mock-regulator-2@example.test' }
+    }
+  ]
+}
+
+const mockComplianceSchemeCurrentYearCancelledDeclaration = {
+  ...mockComplianceSchemeDetailData,
+  id: 'decl-cs-001-prev-cancelled',
+  created: '2026-05-12T13:30:00Z',
+  updated: '2026-05-12T13:30:00Z',
+  status: 'Cancelled',
+  submitterName: 'Test Submitter B',
+  audit: [
+    {
+      action: 'Cancelled',
+      timestamp: '2026-05-12T13:30:00Z',
+      user: { id: 'mock-regulator-2', email: 'mock-regulator-2@example.test' },
+      reason: 'Tonnage discrepancy identified'
+    }
+  ]
+}
+
+const mockAcceptedOnlyDeclaration = {
+  ...mockDetailData,
+  id: 'decl-accepted-only',
+  created: '2026-04-15T11:20:00Z',
+  updated: '2026-04-15T11:20:00Z',
+  status: 'Accepted',
+  submitterName: 'Test Submitter D',
+  organisation: {
+    ...mockDetailData.organisation,
+    id: 'b0b1b2b3-b4b5-b6b7-b8b9-babbbcbdbebf',
+    name: 'Hill Industries Ltd',
+    referenceNumber: '702402'
+  },
+  audit: [
+    {
+      action: 'Accepted',
+      timestamp: '2026-04-15T11:20:00Z',
+      user: mockRegulator
+    }
+  ]
+}
+
+const mockCancelledOnlyDeclaration = {
+  ...mockDetailData,
+  id: 'decl-cancelled-only',
+  created: '2026-04-08T10:00:00Z',
+  updated: '2026-04-08T10:00:00Z',
+  status: 'Cancelled',
+  submitterName: 'Test Submitter C',
+  organisation: {
+    ...mockDetailData.organisation,
+    id: 'c0c1c2c3-c4c5-c6c7-c8c9-cacbcccdcecf',
+    name: 'Riverdale Packaging Ltd',
+    referenceNumber: '801501'
+  },
+  audit: [
+    {
+      action: 'Cancelled',
+      timestamp: '2026-04-08T10:00:00Z',
+      user: mockRegulator,
+      reason: 'Information could not be verified'
+    }
+  ]
+}
+
+const mockDeclarationsByOrgYear = {
+  '497f6eca-6276-4993-bfeb-53cbbbba6f08:2026': [
+    mockCurrentYearCancelledDeclaration,
+    mockCurrentYearAcceptedDeclaration,
+    mockDetailData
+  ],
+  '923fa611-571c-4948-ab7d-fbb75e75ed65:2026': [
+    mockComplianceSchemeCurrentYearCancelledDeclaration,
+    mockComplianceSchemeCurrentYearAcceptedDeclaration,
+    mockComplianceSchemeDetailData
+  ],
+  'b0b1b2b3-b4b5-b6b7-b8b9-babbbcbdbebf:2026': [mockAcceptedOnlyDeclaration],
+  'c0c1c2c3-c4c5-c6c7-c8c9-cacbcccdcecf:2026': [mockCancelledOnlyDeclaration]
+}
+
+export function getMockDeclarationsByOrgYear(organisationId, obligationYear) {
+  if (organisationId == null || obligationYear == null) return []
+  return mockDeclarationsByOrgYear[`${organisationId}:${obligationYear}`] ?? []
+}
+
 const mockDetailById = {
   'decl-101411': mockDetailData,
   'decl-309145': mockDirectProducerAcceptedDetailData,
@@ -412,7 +548,9 @@ const mockDetailById = {
   'decl-cs-001': mockComplianceSchemeDetailData,
   'decl-cs-101': mockComplianceSchemeAcceptedDetailData,
   'decl-cs-queried': mockComplianceSchemeQueriedDetailData,
-  'decl-cs-cancelled': mockComplianceSchemeCancelledDetailData
+  'decl-cs-cancelled': mockComplianceSchemeCancelledDetailData,
+  'decl-accepted-only': mockAcceptedOnlyDeclaration,
+  'decl-cancelled-only': mockCancelledOnlyDeclaration
 }
 
 export function getMockDetailDataById(id) {

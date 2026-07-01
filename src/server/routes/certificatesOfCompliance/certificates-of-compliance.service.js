@@ -7,7 +7,8 @@ import {
   mockSummaryByOrganisationType,
   mockListByOrganisationType,
   mockObligationData,
-  getMockDetailDataById
+  getMockDetailDataById,
+  getMockDeclarationsByOrgYear
 } from './certificates-of-compliance.mock.js'
 
 export {
@@ -516,9 +517,14 @@ async function getDeclarationDetail(
       getDeclarationSessionKey(organisationId, id),
       session
     )
+    const declarationsForYear = getMockDeclarationsByOrgYear(
+      mockData?.organisation?.id ?? organisationId,
+      mockData?.obligationYear
+    )
     return mapDeclarationToDetail(mockData, {
       organisationId,
-      id
+      id,
+      declarationsForYear
     })
   }
 
@@ -536,7 +542,16 @@ async function getDeclarationDetail(
   )
 
   if (declaration != null) {
-    return mapDeclarationToDetail(declaration, { organisationId, id })
+    const listResponse =
+      await obligationsApi.listOrganisationComplianceDeclarations(
+        { organisationId, obligationYear: declaration.obligationYear },
+        traceId
+      )
+    return mapDeclarationToDetail(declaration, {
+      organisationId,
+      id,
+      declarationsForYear: listResponse?.complianceDeclarations ?? []
+    })
   }
 
   const obligationData = await obligationsApi.getComplianceObligation(
@@ -659,7 +674,53 @@ function mapCancellationDetails(cancellationDetails) {
   }
 }
 
-function mapDeclarationToDetail(data, { organisationId, id } = {}) {
+function formatHistoryDate(isoString) {
+  if (!isoString) return null
+  const d = new Date(isoString)
+  const datePart = d.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC'
+  })
+  const timePart = d.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'UTC'
+  })
+  return `${datePart} at ${timePart}`
+}
+
+function mapHistoryReason(status, transitionAudit) {
+  switch (status) {
+    case 'Accepted':
+      return 'Not applicable'
+    case 'Cancelled':
+      return transitionAudit?.reason ?? null
+    default:
+      return null
+  }
+}
+
+function mapCurrentYearHistory(declarations = []) {
+  return declarations
+    .filter((d) => d.status === 'Accepted' || d.status === 'Cancelled')
+    .map((d) => {
+      const transitionAudit = (d.audit ?? []).find((e) => e.action === d.status)
+      return {
+        date: formatHistoryDate(d.updated),
+        action: d.status,
+        by: d.submitterName ?? '',
+        reason: mapHistoryReason(d.status, transitionAudit)
+      }
+    })
+}
+
+function mapDeclarationToDetail(
+  data,
+  { organisationId, id, declarationsForYear } = {}
+) {
   const {
     organisation,
     obligationYear,
@@ -733,7 +794,8 @@ function mapDeclarationToDetail(data, { organisationId, id } = {}) {
     cancellationDetails:
       reviewStatus === 'Cancelled'
         ? mapCancellationDetails(data.cancellationDetails)
-        : null
+        : null,
+    currentYearActions: mapCurrentYearHistory(declarationsForYear)
   }
 }
 
@@ -764,7 +826,8 @@ function mapObligationToDetail(data, organisationId) {
     materials,
     materialTotals: computeTotals(materials),
     glassBreakdown,
-    glassBreakdownTotals: computeTotals(glassBreakdown)
+    glassBreakdownTotals: computeTotals(glassBreakdown),
+    currentYearActions: []
   }
 }
 

@@ -95,6 +95,31 @@ describe('WasteObligationsApiService', () => {
     )
   })
 
+  test('listOrganisationComplianceDeclarations targets the org-scoped endpoint with obligationYear', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(mockOkResponse({ complianceDeclarations: [] }))
+    const service = new WasteObligationsApiService({
+      baseUrl: 'http://localhost:8080',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    await service.listOrganisationComplianceDeclarations(
+      { organisationId: 'org-1', obligationYear: 2026 },
+      'trace-y'
+    )
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:8080/organisations/org-1/compliance-declarations?obligationYear=2026',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({ 'x-cdp-request-id': 'trace-y' })
+      })
+    )
+  })
+
   test('includes x-api-key header when configured', async () => {
     const fetchImpl = vi
       .fn()
