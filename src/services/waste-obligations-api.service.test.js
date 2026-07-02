@@ -296,6 +296,31 @@ describe('WasteObligationsApiService', () => {
     expect(service).toBeInstanceOf(WasteObligationsApiService)
   })
 
+  test('getComplianceObligation calls the correct endpoint with obligationYear', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(mockOkResponse({ obligations: [] }))
+    const service = new WasteObligationsApiService({
+      baseUrl: 'http://localhost:8080',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    await service.getComplianceObligation(
+      { organisationId: 'org-abc', complianceYear: 2026 },
+      'trace-2'
+    )
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:8080/organisations/org-abc/obligations?obligationYear=2026',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({ 'x-cdp-request-id': 'trace-2' })
+      })
+    )
+  })
+
   test('updateComplianceDeclaration calls the correct PATCH endpoint', async () => {
     const fetchImpl = vi
       .fn()

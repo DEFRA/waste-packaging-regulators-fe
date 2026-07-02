@@ -374,6 +374,29 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
       })
 
+      test('passes complianceYear as registrationYears to listComplianceOrganisations', async () => {
+        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
+          total: 0,
+          complianceDeclarations: []
+        })
+        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
+          organisations: []
+        })
+
+        await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'pending',
+          1
+        )
+
+        expect(
+          mockOrganisationsApi.listComplianceOrganisations
+        ).toHaveBeenCalledWith(
+          expect.objectContaining({ registrationYears: 2026 }),
+          undefined
+        )
+      })
+
       test('forwards traceId to API calls', async () => {
         mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
           total: 0,
@@ -871,6 +894,16 @@ describe('getCertificatesOfComplianceViewModel', () => {
           .fn()
           .mockResolvedValue(mockObligationData)
       })
+      test('calls getComplianceObligation with complianceYear when id is null', async () => {
+        await getCertificateOfComplianceDetailViewModel('org-abc', null, {
+          traceId: 'trace-z'
+        })
+
+        expect(mockObligationsApi.getComplianceObligation).toHaveBeenCalledWith(
+          { organisationId: 'org-abc', complianceYear: 2026 },
+          'trace-z'
+        )
+      })
 
       test('calls getComplianceDeclarationOrNull with organisationId and id', async () => {
         await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1', {
@@ -1221,9 +1254,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
             traceId: 'trace-z'
           })
 
-          expect(
-            mockObligationsApi.getComplianceObligation
-          ).toHaveBeenCalledWith({ organisationId: 'org-abc' }, 'trace-z')
+          expect(mockObligationsApi.getComplianceObligation).toHaveBeenCalledWith(
+            { organisationId: 'org-abc', complianceYear: 2026 },
+            'trace-z'
+          )
         })
 
         test('sets declarationStatus to Unsubmitted on fallback path', async () => {
