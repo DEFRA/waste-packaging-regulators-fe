@@ -23,7 +23,7 @@ const externalIds = [
 ]
 
 describe('AccountApiService', () => {
-  test('getOrganisationsByExternalIds POSTs the ids and returns the parsed body', async () => {
+  test('getOrganisationsByExternalIds POSTs the ids and normalises the camelCase response', async () => {
     const responseBody = {
       organisations: [
         {
@@ -61,6 +61,33 @@ describe('AccountApiService', () => {
         })
       })
     )
+  })
+
+  test('getOrganisationsByExternalIds normalises PascalCase response keys', async () => {
+    const org = {
+      externalId: externalIds[0],
+      name: 'Redwood Retail Group',
+      referenceNumber: '518293'
+    }
+    const fetchImpl = vi.fn().mockResolvedValue(
+      mockOkResponse({
+        Organisations: [org],
+        NotFoundExternalIds: [externalIds[1]]
+      })
+    )
+    const service = new AccountApiService({
+      baseUrl: 'http://localhost:3001',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    const result = await service.getOrganisationsByExternalIds(externalIds)
+
+    expect(result).toEqual({
+      organisations: [org],
+      notFoundExternalIds: [externalIds[1]]
+    })
   })
 
   test('throws when the Account API responds with a non-success status', async () => {
