@@ -1254,7 +1254,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
             traceId: 'trace-z'
           })
 
-          expect(mockObligationsApi.getComplianceObligation).toHaveBeenCalledWith(
+          expect(
+            mockObligationsApi.getComplianceObligation
+          ).toHaveBeenCalledWith(
             { organisationId: 'org-abc', complianceYear: 2026 },
             'trace-z'
           )

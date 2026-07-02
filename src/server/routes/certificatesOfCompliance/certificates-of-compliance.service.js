@@ -571,10 +571,16 @@ export async function getComplianceDeclarationReviewStatus(
   session
 ) {
   const api = createWasteObligationsApiService()
-  const detail = await getDeclarationDetail(api, organisationId, id, complianceYear, {
-    traceId,
-    session
-  })
+  const detail = await getDeclarationDetail(
+    api,
+    organisationId,
+    id,
+    complianceYear,
+    {
+      traceId,
+      session
+    }
+  )
 
   return detail.reviewStatus
 }

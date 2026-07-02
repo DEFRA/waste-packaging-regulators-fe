@@ -83,7 +83,10 @@ export class WasteObligationsApiService extends BaseApiService {
     }
   }
 
-  async getComplianceObligation({ organisationId, complianceYear } = {}, traceId) {
+  async getComplianceObligation(
+    { organisationId, complianceYear } = {},
+    traceId
+  ) {
     return this.getJson(
       `/organisations/${organisationId}/obligations?obligationYear=${complianceYear}`,
       this.getTracingHeader(traceId)
