@@ -141,6 +141,8 @@ async function fetchAllDeclarations(api, params, traceId) {
 
 // --- API calls ---
 
+const complianceYear = 2026
+
 async function getComplianceSummary(
   obligationsApi,
   organisationsApi,
@@ -164,7 +166,7 @@ async function getComplianceSummary(
         traceId
       ),
       organisationsApi.listComplianceOrganisations(
-        { registrationType, registrationYears: 2026 },
+        { registrationType, registrationYears: complianceYear },
         traceId
       )
     ]
@@ -206,7 +208,7 @@ async function getComplianceList(
     const [orgsResult, pendingDeclarations, acceptedDeclarations] =
       await Promise.all([
         organisationsApi.listComplianceOrganisations(
-          { registrationType, registrationYears: 2026 },
+          { registrationType, registrationYears: complianceYear },
           traceId
         ),
         fetchAllDeclarations(
@@ -506,6 +508,7 @@ async function getDeclarationDetail(
   obligationsApi,
   organisationId,
   id,
+  complianceYear,
   { traceId, session } = {}
 ) {
   if (config.get('useMockApi')) {
@@ -530,7 +533,7 @@ async function getDeclarationDetail(
 
   if (!id) {
     const obligationData = await obligationsApi.getComplianceObligation(
-      { organisationId },
+      { organisationId, complianceYear },
       traceId
     )
     return mapObligationToDetail(obligationData, organisationId)
@@ -555,7 +558,7 @@ async function getDeclarationDetail(
   }
 
   const obligationData = await obligationsApi.getComplianceObligation(
-    { organisationId },
+    { organisationId, complianceYear },
     traceId
   )
   return mapObligationToDetail(obligationData, organisationId)
@@ -568,10 +571,16 @@ export async function getComplianceDeclarationReviewStatus(
   session
 ) {
   const api = createWasteObligationsApiService()
-  const detail = await getDeclarationDetail(api, organisationId, id, {
-    traceId,
-    session
-  })
+  const detail = await getDeclarationDetail(
+    api,
+    organisationId,
+    id,
+    complianceYear,
+    {
+      traceId,
+      session
+    }
+  )
 
   return detail.reviewStatus
 }
@@ -844,6 +853,7 @@ export async function getCertificateOfComplianceDetailViewModel(
     apiWasteObligation,
     organisationId,
     id,
+    complianceYear,
     { traceId, session }
   )
 

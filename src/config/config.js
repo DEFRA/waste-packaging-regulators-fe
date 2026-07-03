@@ -307,7 +307,7 @@ export const config = convict({
     authMode: {
       doc: 'Authentication mode for the Account API. Deployed environments use "bearer" (OAuth client credentials).',
       format: ['basic', 'bearer', 'none'],
-      default: 'basic',
+      default: 'bearer',
       env: 'ACCOUNT_API_AUTH_MODE'
     },
     clientId: {

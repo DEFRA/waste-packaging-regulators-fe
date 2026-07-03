@@ -10,11 +10,16 @@ export class AccountApiService extends BaseApiService {
   }
 
   async getOrganisationsByExternalIds(externalIds, traceId) {
-    return this.postJson(
+    const response = await this.postJson(
       '/api/organisations/organisations-by-externalIds',
       { externalIds },
       this.getTracingHeader(traceId)
     )
+    return {
+      organisations: response.organisations ?? response.Organisations ?? [],
+      notFoundExternalIds:
+        response.notFoundExternalIds ?? response.NotFoundExternalIds ?? []
+    }
   }
 }
 
