@@ -134,7 +134,7 @@ function mapDeclarationToItem(declaration) {
 // organisation name keeps its compliance-scheme-aware derivation.
 function mapOrganisationToItem(organisation, organisationType) {
   const organisationName =
-    organisation.registrationType === 'compliance-schemes'
+    organisationType === 'compliance-schemes'
       ? (organisation.tradingName ??
         organisation.name ??
         'Unknown organisation')

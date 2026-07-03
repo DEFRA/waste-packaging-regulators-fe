@@ -24,8 +24,6 @@ const expectedMaterialTotalAccepted = expectedMaterials.reduce(
   (sum, o) => sum + o.tonnages.accepted,
   0
 )
-const expectedRecyclingObligationsStatus =
-  mockDetailData.obligationStatus === 'Met' ? 'Met' : 'Not met'
 
 describe('#certificatesOfComplianceDetailController', () => {
   let server
@@ -85,7 +83,7 @@ describe('#certificatesOfComplianceDetailController', () => {
 
   it('should render the recycling obligations status', async () => {
     const response = await inject('/org-123/certificates-of-compliance/101411')
-    expect(response.payload).toContain(expectedRecyclingObligationsStatus)
+    expect(response.payload).toContain('Not met')
   })
 
   it('should not render Regulation 43 for a direct producer', async () => {
