@@ -910,14 +910,27 @@ describe('getCertificatesOfComplianceViewModel', () => {
         mockObligationsApi.getComplianceObligation = vi
           .fn()
           .mockResolvedValue(mockObligationData)
+        mockOrganisationsApi.getOrganisation = vi.fn().mockResolvedValue({
+          id: 'org-abc',
+          name: 'Live Producer Ltd',
+          registrationType: 'DirectProducer',
+          referenceNumber: '518293'
+        })
       })
-      test('calls getComplianceObligation with complianceYear when id is null', async () => {
+      test('calls getComplianceObligation with obligationYear when id is null', async () => {
         await getCertificateOfComplianceDetailViewModel('org-abc', null, {
           traceId: 'trace-z'
         })
 
         expect(mockObligationsApi.getComplianceObligation).toHaveBeenCalledWith(
-          { organisationId: 'org-abc', complianceYear: 2026 },
+          {
+            organisationId: 'org-abc',
+            obligationYear: mockSummary.complianceYear
+          },
+          'trace-z'
+        )
+        expect(mockOrganisationsApi.getOrganisation).toHaveBeenCalledWith(
+          { organisationId: 'org-abc' },
           'trace-z'
         )
       })
