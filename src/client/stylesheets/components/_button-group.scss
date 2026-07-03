@@ -1,0 +1,5 @@
+// GOV.UK button groups expect buttons as flex children. POST forms wrapping a
+// cancel button need display:contents so the button aligns with link buttons.
+.govuk-button-group > form {
+  display: contents;
+}

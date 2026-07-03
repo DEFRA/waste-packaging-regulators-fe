@@ -14,7 +14,7 @@ vi.mock('node:fs', async () => {
 vi.mock('../../../server/common/helpers/logging/logger.js', () => ({
   createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
 }))
-vi.mock(import('#/config/config.js'), async (importOriginal) => {
+vi.mock(import('#config/config.js'), async (importOriginal) => {
   const originalModule = await importOriginal()
   return {
     config: {

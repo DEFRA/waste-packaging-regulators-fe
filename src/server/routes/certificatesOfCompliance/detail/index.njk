@@ -1,7 +1,6 @@
 {% extends 'layouts/page.njk' %}
 {% from "status-tag/macro.njk" import appStatusTag %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
-{% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
 {% block content %}
@@ -17,7 +16,7 @@
         }) }}
       {% endif %}
 
-      <span class="govuk-caption-l govuk-!-margin-bottom-2">{{ complianceYear }} certificate of compliance</span>
+      <span class="govuk-caption-l govuk-!-margin-bottom-2">{{ complianceTypeLabel }}</span>
       <h1 class="govuk-heading-xl govuk-!-margin-bottom-4">{{ companyName }}</h1>
 
       <div class="govuk-inset-text govuk-!-margin-top-0 govuk-!-margin-bottom-6">
@@ -27,11 +26,25 @@
       <div class="govuk-grid-row">
         <div class="govuk-grid-column-two-thirds">
           <dl class="govuk-summary-list">
+            {% if registrationType == 'ComplianceScheme' %}
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">Regulation 43</dt>
+                <dd class="govuk-summary-list__value">
+                  {% if regulation43Met == null %}
+                    No data
+                  {% else %}
+                    {{ appStatusTag({ value: regulation43Met, trueText: 'Compliant', falseText: 'Not compliant' }) }}
+                  {% endif %}
+                </dd>
+              </div>
+            {% endif %}
             <div class="govuk-summary-list__row">
               <dt class="govuk-summary-list__key">Recycling obligations</dt>
               <dd class="govuk-summary-list__value">
                 {% if declarationStatus == 'Unsubmitted' %}
                   <strong class="govuk-tag govuk-tag--grey govuk-!-font-size-16">Unsubmitted</strong>
+                {% elif recyclingObligationsMet == null %}
+                  No data
                 {% else %}
                   {{ appStatusTag({ value: recyclingObligationsMet, trueText: 'Met', falseText: 'Not met' }) }}
                 {% endif %}
@@ -256,11 +269,9 @@
               </a>
             {% endif %}
             {% if actions.showCancel %}
-                {{ govukButton({
-                  text: actions.labels.cancel,
-                  preventDoubleClick: true,
-                  classes: "govuk-button--secondary"
-                }) }}
+              <button type="submit" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-prevent-double-click="true">
+                {{ actions.labels.cancel }}
+              </button>
             {% endif %}
           </form>
           </div>

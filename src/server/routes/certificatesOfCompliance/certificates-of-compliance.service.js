@@ -1,12 +1,15 @@
-import { config } from '#/config/config.js'
-import { createAccountApiService } from '#/services/account-api.service.js'
-import { createWasteObligationsApiService } from '#/services/waste-obligations-api.service.js'
-import { createWasteOrganisationsApiService } from '#/services/waste-organisations-api.service.js'
+import { config } from '#config/config.js'
+import { createAccountApiService } from '#services/account-api.service.js'
+import { format, isDate, parseISO } from 'date-fns'
+import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
+import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
 import {
   mockSummary,
   mockSummaryByOrganisationType,
   mockListByOrganisationType,
   mockObligationData,
+  mockNotSubmittedItems,
+  mockComplianceSchemeNotSubmittedItems,
   getMockDetailDataById,
   getMockDeclarationsByOrgYear
 } from './certificates-of-compliance.mock.js'
@@ -43,6 +46,64 @@ const statusByTab = {
 
 const PAGE_SIZE = 20
 const DECLARATIONS_BATCH_SIZE = 100
+const NO_DATA = 'No data'
+
+export function displayOrNoData(value) {
+  return value == null || value === '' ? NO_DATA : value
+}
+
+function isComplianceSchemeRegistrationType(registrationType) {
+  return (
+    registrationType === 'ComplianceScheme' ||
+    registrationType === 'compliance-schemes'
+  )
+}
+
+export function buildComplianceTypeLabel(obligationYear, registrationType) {
+  if (obligationYear == null) {
+    return NO_DATA
+  }
+  const year = String(obligationYear)
+  const docType = isComplianceSchemeRegistrationType(registrationType)
+    ? 'statement of compliance'
+    : 'certificate of compliance'
+  return `${year} ${docType}`
+}
+
+function mapOrganisationName(organisation) {
+  if (isComplianceSchemeRegistrationType(organisation.registrationType)) {
+    return (
+      organisation.tradingName ??
+      organisation.name ??
+      organisation.complianceSchemeName ??
+      'Unknown organisation'
+    )
+  }
+  return organisation.name ?? 'Unknown organisation'
+}
+
+function findMockNotSubmittedOrganisation(organisationId) {
+  const complianceSchemeItem = mockComplianceSchemeNotSubmittedItems.find(
+    (item) => item.organisationId === organisationId
+  )
+  if (complianceSchemeItem) {
+    return { ...complianceSchemeItem, registrationType: 'ComplianceScheme' }
+  }
+  const directProducerItem = mockNotSubmittedItems.find(
+    (item) => item.organisationId === organisationId
+  )
+  if (directProducerItem) {
+    return { ...directProducerItem, registrationType: 'DirectProducer' }
+  }
+  return null
+}
+
+function mapRecyclingObligationsMet(obligationStatus) {
+  if (obligationStatus == null) {
+    return null
+  }
+  return obligationStatus.toLowerCase() === 'met'
+}
 
 function mapDeclarationToItem(declaration) {
   const {
@@ -73,7 +134,7 @@ function mapDeclarationToItem(declaration) {
 // organisation name keeps its compliance-scheme-aware derivation.
 function mapOrganisationToItem(organisation, organisationType) {
   const organisationName =
-    organisation.registrationType === 'compliance-schemes'
+    organisationType === 'compliance-schemes'
       ? (organisation.tradingName ??
         organisation.name ??
         'Unknown organisation')
@@ -173,8 +234,8 @@ async function getComplianceSummary(
   )
 
   return {
-    // Real API does not yet expose compliance year; use mock default until available
-    complianceYear: mockSummary.complianceYear,
+    // Real API does not yet expose compliance year; use configured registration year
+    complianceYear: String(complianceYear),
     totalPending: pendingResult.total,
     totalAccepted: acceptedResult.total,
     totalNotSubmitted:
@@ -506,14 +567,28 @@ export function readAndClearCertificateActionBannerFlags(
 
 async function getDeclarationDetail(
   obligationsApi,
+  organisationsApi,
   organisationId,
   id,
-  complianceYear,
-  { traceId, session } = {}
+  { traceId, session, obligationYear } = {}
 ) {
   if (config.get('useMockApi')) {
+    const resolvedObligationYear =
+      obligationYear ?? Number(mockSummary.complianceYear)
+
     if (!id) {
-      return mapObligationToDetail(mockObligationData, organisationId)
+      const mockOrg = findMockNotSubmittedOrganisation(organisationId)
+      return mapObligationToDetail(mockObligationData, {
+        organisationId,
+        obligationYear: resolvedObligationYear,
+        organisation: mockOrg
+          ? {
+              name: mockOrg.organisationName,
+              registrationType: mockOrg.registrationType,
+              referenceNumber: mockOrg.organisationReferenceNumber
+            }
+          : null
+      })
     }
     const mockData = applyMockDeclarationStatusOverride(
       getMockDetailDataById(id),
@@ -532,11 +607,18 @@ async function getDeclarationDetail(
   }
 
   if (!id) {
-    const obligationData = await obligationsApi.getComplianceObligation(
-      { organisationId, complianceYear },
-      traceId
-    )
-    return mapObligationToDetail(obligationData, organisationId)
+    const [obligationData, organisation] = await Promise.all([
+      obligationsApi.getComplianceObligation(
+        { organisationId, obligationYear },
+        traceId
+      ),
+      organisationsApi.getOrganisation({ organisationId }, traceId)
+    ])
+    return mapObligationToDetail(obligationData, {
+      organisationId,
+      obligationYear,
+      organisation
+    })
   }
 
   const declaration = await obligationsApi.getComplianceDeclarationOrNull(
@@ -558,10 +640,13 @@ async function getDeclarationDetail(
   }
 
   const obligationData = await obligationsApi.getComplianceObligation(
-    { organisationId, complianceYear },
+    { organisationId, obligationYear },
     traceId
   )
-  return mapObligationToDetail(obligationData, organisationId)
+  return mapObligationToDetail(obligationData, {
+    organisationId,
+    obligationYear
+  })
 }
 
 export async function getComplianceDeclarationReviewStatus(
@@ -570,12 +655,13 @@ export async function getComplianceDeclarationReviewStatus(
   traceId,
   session
 ) {
-  const api = createWasteObligationsApiService()
+  const obligationsApi = createWasteObligationsApiService()
+  const organisationsApi = createWasteOrganisationsApiService()
   const detail = await getDeclarationDetail(
-    api,
+    obligationsApi,
+    organisationsApi,
     organisationId,
     id,
-    complianceYear,
     {
       traceId,
       session
@@ -621,6 +707,12 @@ export async function approveComplianceDeclaration(
 }
 
 const GLASS_BREAKDOWN_MATERIALS = new Set(['GlassRemelt', 'RemainingGlass'])
+
+function formatSubmissionDate(isoString) {
+  if (!isoString) return null
+  const date = isDate(isoString) ? isoString : parseISO(isoString)
+  return format(date, "d MMMM yyyy 'at' HH:mm")
+}
 
 function formatDate(isoString) {
   if (!isoString) return null
@@ -735,6 +827,7 @@ function mapDeclarationToDetail(
     obligationYear,
     obligations,
     obligationStatus,
+    isRegulation43Compliant,
     submitterName,
     created,
     status
@@ -773,26 +866,32 @@ function mapDeclarationToDetail(
           urls: { accept: '#', cancel: '#' }
         }
 
+  const organisationTypeDisplay =
+    organisationTypeDisplayNames[organisation.registrationType] ??
+    organisation.registrationType
+
   return {
     organisationId: resolvedOrganisationId,
     declarationId: resolvedId,
-    complianceYear: String(obligationYear),
+    complianceYear: obligationYear != null ? String(obligationYear) : null,
+    complianceTypeLabel: buildComplianceTypeLabel(
+      obligationYear,
+      organisation.registrationType
+    ),
     companyName,
     declarationStatus: data.status,
     reviewStatus,
-    recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
-    dateDeclarationSubmitted: formatDate(created),
-    organisationType:
-      organisationTypeDisplayNames[organisation.registrationType] ??
-      organisation.registrationType,
+    recyclingObligationsMet: mapRecyclingObligationsMet(obligationStatus),
+    regulation43Met: isRegulation43Compliant ?? null,
+    dateDeclarationSubmitted: displayOrNoData(formatSubmissionDate(created)),
+    organisationType: displayOrNoData(organisationTypeDisplay),
     registrationType: organisation.registrationType,
-    organisationRef: organisation.referenceNumber,
-    // Contact fields are on the organisation object from the obligations API response
-    companiesHouseNumber: organisation.companiesHouseNumber ?? null,
-    nameOnAccount: organisation.nameOnAccount ?? null,
-    declarationEmailAddress: organisation.contactEmailAddress ?? null,
-    companyPhoneNumber: organisation.contactPhoneNumber ?? null,
-    declarationSignedBy: submitterName,
+    organisationRef: displayOrNoData(organisation.referenceNumber),
+    companiesHouseNumber: displayOrNoData(organisation.companiesHouseNumber),
+    nameOnAccount: displayOrNoData(organisation.nameOnAccount),
+    declarationEmailAddress: displayOrNoData(organisation.contactEmailAddress),
+    companyPhoneNumber: displayOrNoData(organisation.contactPhoneNumber),
+    declarationSignedBy: displayOrNoData(submitterName),
     materials,
     materialTotals: computeTotals(materials),
     glassBreakdown,
@@ -808,7 +907,10 @@ function mapDeclarationToDetail(
   }
 }
 
-function mapObligationToDetail(data, organisationId) {
+function mapObligationToDetail(
+  data,
+  { organisationId, obligationYear, organisation } = {}
+) {
   const { obligations } = data
 
   const allMapped = obligations.map(mapObligation)
@@ -819,23 +921,45 @@ function mapObligationToDetail(data, organisationId) {
     GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
   )
 
+  const registrationType = organisation?.registrationType ?? null
+  const companyName = organisation ? mapOrganisationName(organisation) : null
+
   return {
-    complianceYear: null,
-    companyName: null,
+    complianceYear: obligationYear != null ? String(obligationYear) : null,
+    complianceTypeLabel: buildComplianceTypeLabel(
+      obligationYear,
+      registrationType
+    ),
+    companyName,
     declarationStatus: 'Unsubmitted',
-    recyclingObligationsMet: false,
-    dateDeclarationSubmitted: null,
-    organisationType: null,
-    organisationRef: organisationId,
-    companiesHouseNumber: null,
-    nameOnAccount: null,
-    declarationEmailAddress: null,
-    companyPhoneNumber: null,
-    declarationSignedBy: null,
+    reviewStatus: null,
+    recyclingObligationsMet: null,
+    regulation43Met: null,
+    dateDeclarationSubmitted: NO_DATA,
+    organisationType: displayOrNoData(
+      registrationType
+        ? (organisationTypeDisplayNames[registrationType] ?? registrationType)
+        : null
+    ),
+    registrationType,
+    organisationRef: displayOrNoData(
+      organisation?.referenceNumber ?? organisationId
+    ),
+    companiesHouseNumber: NO_DATA,
+    nameOnAccount: NO_DATA,
+    declarationEmailAddress: NO_DATA,
+    companyPhoneNumber: NO_DATA,
+    declarationSignedBy: NO_DATA,
     materials,
     materialTotals: computeTotals(materials),
     glassBreakdown,
     glassBreakdownTotals: computeTotals(glassBreakdown),
+    actions: {
+      showAccept: false,
+      showCancel: false,
+      labels: certificateActionLabelsByRegistrationType.DirectProducer,
+      urls: { accept: '#', cancel: '#' }
+    },
     currentYearActions: []
   }
 }
@@ -845,16 +969,17 @@ function mapObligationToDetail(data, organisationId) {
 export async function getCertificateOfComplianceDetailViewModel(
   organisationId,
   id,
-  { traceId, bannerFlags = {}, session } = {}
+  { traceId, bannerFlags = {}, session, obligationYear } = {}
 ) {
-  const apiWasteObligation = createWasteObligationsApiService()
+  const obligationsApi = createWasteObligationsApiService()
+  const organisationsApi = createWasteOrganisationsApiService()
 
   const detail = await getDeclarationDetail(
-    apiWasteObligation,
+    obligationsApi,
+    organisationsApi,
     organisationId,
     id,
-    complianceYear,
-    { traceId, session }
+    { traceId, session, obligationYear }
   )
 
   return {

@@ -1,5 +1,5 @@
-import { createServer } from '#/server/server.js'
-import { statusCodes } from '#/server/common/constants/status-codes.js'
+import { createServer } from '#server/server.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 
 describe('#aboutController', () => {
   let server

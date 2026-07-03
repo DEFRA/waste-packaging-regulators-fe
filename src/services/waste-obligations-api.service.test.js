@@ -285,6 +285,31 @@ describe('WasteObligationsApiService', () => {
     })
   })
 
+  test('getComplianceObligation builds URL with obligationYear query param', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(mockOkResponse({ obligations: [] }))
+    const service = new WasteObligationsApiService({
+      baseUrl: 'http://localhost:8080',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    await service.getComplianceObligation(
+      { organisationId: 'org-abc', obligationYear: 2026 },
+      'trace-1'
+    )
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:8080/organisations/org-abc/obligations?obligationYear=2026',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({ 'x-cdp-request-id': 'trace-1' })
+      })
+    )
+  })
+
   test('createWasteObligationsApiService creates service instance', () => {
     const service = createWasteObligationsApiService({
       baseUrl: 'http://localhost:8080',
@@ -308,7 +333,7 @@ describe('WasteObligationsApiService', () => {
     })
 
     await service.getComplianceObligation(
-      { organisationId: 'org-abc', complianceYear: 2026 },
+      { organisationId: 'org-abc', obligationYear: 2026 },
       'trace-2'
     )
 

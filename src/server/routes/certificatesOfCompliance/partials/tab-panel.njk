@@ -31,7 +31,7 @@
         <tr class="govuk-table__row">
           {% if item.id == null %}
             <td class="govuk-table__cell">
-              <a href="./{{ item.organisationId }}/certificates-of-compliance" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
+              <a href="./{{ item.organisationId }}/certificates-of-compliance?obligationYear={{ complianceYear }}" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
             </td>
           {% else %}
             <td class="govuk-table__cell">

@@ -1,4 +1,4 @@
-import { config } from '#/config/config.js'
+import { config } from '#config/config.js'
 import { BaseApiService } from './apiBaseClient/base-api.service.js'
 
 export class WasteOrganisationsApiService extends BaseApiService {
@@ -36,6 +36,13 @@ export class WasteOrganisationsApiService extends BaseApiService {
       `/organisations${qs ? `?${qs}` : ''}`,
       this.getTracingHeader(traceId),
       `organisations-${registrationType}`
+    )
+  }
+
+  async getOrganisation({ organisationId } = {}, traceId) {
+    return this.getJson(
+      `/organisations/${organisationId}`,
+      this.getTracingHeader(traceId)
     )
   }
 }

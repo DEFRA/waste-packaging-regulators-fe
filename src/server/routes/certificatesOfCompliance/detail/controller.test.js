@@ -1,6 +1,12 @@
-import { createServer } from '#/server/server.js'
-import { statusCodes } from '#/server/common/constants/status-codes.js'
-import { mockDetailData } from '../certificates-of-compliance.service.js'
+import { vi } from 'vitest'
+import { createServer } from '#server/server.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { ApiError } from '#services/apiBaseClient/api-error.js'
+import * as certificatesService from '../certificates-of-compliance.service.js'
+import {
+  mockComplianceSchemeDetailData,
+  mockDetailData
+} from '../certificates-of-compliance.service.js'
 
 // Derive expected view model values from the raw API mock shape
 const GLASS_BREAKDOWN_MATERIALS = new Set(['GlassRemelt', 'RemainingGlass'])
@@ -54,10 +60,19 @@ describe('#certificatesOfComplianceDetailController', () => {
     expect(response.headers.location).toBe('/signin-oidc')
   })
 
-  it('should render the compliance year in the caption', async () => {
+  it('should render the compliance type label in the caption for a direct producer', async () => {
     const response = await inject('/org-123/certificates-of-compliance/101411')
     expect(response.payload).toContain(
       `${mockDetailData.obligationYear} certificate of compliance`
+    )
+  })
+
+  it('should render the compliance type label in the caption for a compliance scheme', async () => {
+    const response = await inject(
+      '/923fa611-571c-4948-ab7d-fbb75e75ed65/certificates-of-compliance/decl-cs-001'
+    )
+    expect(response.payload).toContain(
+      `${mockComplianceSchemeDetailData.obligationYear} statement of compliance`
     )
   })
 
@@ -68,14 +83,35 @@ describe('#certificatesOfComplianceDetailController', () => {
 
   it('should render the recycling obligations status', async () => {
     const response = await inject('/org-123/certificates-of-compliance/101411')
-    // mockDetailData.obligationStatus === 'Met' → renders 'Met'
-    expect(response.payload).toContain('Met')
+    expect(response.payload).toContain('Not met')
+  })
+
+  it('should not render Regulation 43 for a direct producer', async () => {
+    const response = await inject('/org-123/certificates-of-compliance/101411')
+    expect(response.payload).not.toContain('Regulation 43')
+  })
+
+  it('should render a red Not compliant Regulation 43 tag for a pending compliance scheme', async () => {
+    const response = await inject(
+      '/923fa611-571c-4948-ab7d-fbb75e75ed65/certificates-of-compliance/decl-cs-001'
+    )
+    expect(response.payload).toContain('Regulation 43')
+    expect(response.payload).toContain('Not compliant')
+    expect(response.payload).toContain('govuk-tag--red')
+  })
+
+  it('should render a green Compliant Regulation 43 tag for an accepted compliance scheme', async () => {
+    const response = await inject(
+      '/e1d2c3b4-a596-4878-9abc-def012345678/certificates-of-compliance/decl-cs-101'
+    )
+    expect(response.payload).toContain('Regulation 43')
+    expect(response.payload).toContain('Compliant')
+    expect(response.payload).toContain('govuk-tag--green')
   })
 
   it('should render the formatted date declaration was submitted', async () => {
     const response = await inject('/org-123/certificates-of-compliance/101411')
-    // '2027-01-31T00:00:00Z' formats to '31 January 2027'
-    expect(response.payload).toContain('31 January 2027')
+    expect(response.payload).toContain('31 January 2027 at 00:00')
   })
 
   it('should render the organisation type', async () => {
@@ -207,5 +243,24 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(acceptedIdx).toBeGreaterThan(-1)
       expect(cancelledIdx).toBeLessThan(acceptedIdx)
     })
+  })
+
+  it('should render an error page when the obligations API returns 500', async () => {
+    vi.spyOn(
+      certificatesService,
+      'getCertificateOfComplianceDetailViewModel'
+    ).mockRejectedValueOnce(
+      ApiError.from({
+        message: 'waste-obligations API request failed with status 500',
+        status: 500,
+        serviceName: 'waste-obligations'
+      })
+    )
+
+    const response = await inject('/org-123/certificates-of-compliance/101411')
+
+    expect(response.statusCode).toBe(statusCodes.internalServerError)
+    expect(response.payload).toContain('Something went wrong')
+    vi.restoreAllMocks()
   })
 })

@@ -261,7 +261,7 @@ export const mockDetailData = {
   },
   obligationYear: 2026,
   obligations: mockObligations,
-  obligationStatus: 'Met',
+  obligationStatus: 'NotMet',
   declarationText: { text: 'I declare...', language: 'en' },
   submitterName: 'Catherine Morris',
   isRegulation43Compliant: true,
@@ -290,7 +290,7 @@ export const mockComplianceSchemeDetailData = {
   },
   obligationYear: 2026,
   obligations: mockObligations,
-  obligationStatus: 'Met',
+  obligationStatus: 'NotMet',
   declarationText: {
     text: 'I declare on behalf of the scheme...',
     language: 'en'
@@ -302,6 +302,7 @@ export const mockComplianceSchemeDetailData = {
 
 export const mockComplianceSchemeAcceptedDetailData = {
   ...mockComplianceSchemeDetailData,
+  obligationStatus: 'Met',
   id: 'decl-cs-101',
   created: '2027-01-12T00:00:00Z',
   updated: '2027-01-12T00:00:00Z',
@@ -318,6 +319,7 @@ export const mockComplianceSchemeAcceptedDetailData = {
 
 export const mockDirectProducerAcceptedDetailData = {
   ...mockDetailData,
+  obligationStatus: 'Met',
   id: 'decl-309145',
   created: '2027-01-15T00:00:00Z',
   updated: '2027-01-15T00:00:00Z',
