@@ -919,13 +919,14 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
       test('calls getComplianceObligation with obligationYear when id is null', async () => {
         await getCertificateOfComplianceDetailViewModel('org-abc', null, {
-          traceId: 'trace-z'
+          traceId: 'trace-z',
+          obligationYear: 2026
         })
 
         expect(mockObligationsApi.getComplianceObligation).toHaveBeenCalledWith(
           {
             organisationId: 'org-abc',
-            obligationYear: mockSummary.complianceYear
+            obligationYear: 2026
           },
           'trace-z'
         )
@@ -1286,13 +1287,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
           expect(
             mockObligationsApi.getComplianceObligation
-          ).toHaveBeenCalledWith(
-            {
-              organisationId: 'org-abc',
-              obligationYear: mockSummary.complianceYear
-            },
-            'trace-z'
-          )
+          ).toHaveBeenCalledWith({ organisationId: 'org-abc' }, 'trace-z')
         })
 
         test('sets declarationStatus to Unsubmitted on fallback path', async () => {
@@ -1339,7 +1334,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           )
 
           expect(vm.companyName).toBeNull()
-          expect(vm.complianceYear).toBe(mockSummary.complianceYear)
+          expect(vm.complianceYear).toBeNull()
           expect(vm.dateDeclarationSubmitted).toBe('No data')
           expect(vm.organisationType).toBe('No data')
           expect(vm.declarationSignedBy).toBe('No data')

@@ -234,8 +234,8 @@ async function getComplianceSummary(
   )
 
   return {
-    // Real API does not yet expose compliance year; use mock default until available
-    complianceYear: mockSummary.complianceYear,
+    // Real API does not yet expose compliance year; use configured registration year
+    complianceYear: String(complianceYear),
     totalPending: pendingResult.total,
     totalAccepted: acceptedResult.total,
     totalNotSubmitted:
@@ -572,9 +572,10 @@ async function getDeclarationDetail(
   id,
   { traceId, session, obligationYear } = {}
 ) {
-  const resolvedObligationYear = obligationYear ?? mockSummary.complianceYear
-
   if (config.get('useMockApi')) {
+    const resolvedObligationYear =
+      obligationYear ?? Number(mockSummary.complianceYear)
+
     if (!id) {
       const mockOrg = findMockNotSubmittedOrganisation(organisationId)
       return mapObligationToDetail(mockObligationData, {
@@ -608,14 +609,14 @@ async function getDeclarationDetail(
   if (!id) {
     const [obligationData, organisation] = await Promise.all([
       obligationsApi.getComplianceObligation(
-        { organisationId, obligationYear: resolvedObligationYear },
+        { organisationId, obligationYear },
         traceId
       ),
       organisationsApi.getOrganisation({ organisationId }, traceId)
     ])
     return mapObligationToDetail(obligationData, {
       organisationId,
-      obligationYear: resolvedObligationYear,
+      obligationYear,
       organisation
     })
   }
@@ -639,12 +640,12 @@ async function getDeclarationDetail(
   }
 
   const obligationData = await obligationsApi.getComplianceObligation(
-    { organisationId, obligationYear: resolvedObligationYear },
+    { organisationId, obligationYear },
     traceId
   )
   return mapObligationToDetail(obligationData, {
     organisationId,
-    obligationYear: resolvedObligationYear
+    obligationYear
   })
 }
 
@@ -972,14 +973,13 @@ export async function getCertificateOfComplianceDetailViewModel(
 ) {
   const obligationsApi = createWasteObligationsApiService()
   const organisationsApi = createWasteOrganisationsApiService()
-  const resolvedObligationYear = obligationYear ?? mockSummary.complianceYear
 
   const detail = await getDeclarationDetail(
     obligationsApi,
     organisationsApi,
     organisationId,
     id,
-    { traceId, session, obligationYear: resolvedObligationYear }
+    { traceId, session, obligationYear }
   )
 
   return {
