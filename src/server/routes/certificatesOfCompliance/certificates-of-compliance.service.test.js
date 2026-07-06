@@ -1161,6 +1161,79 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
       })
 
+      test('null tonnage fields map to 0 on the row', async () => {
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          obligations: [
+            {
+              material: 'Wood',
+              tonnages: {
+                material: null,
+                awaitingAcceptance: null,
+                accepted: null,
+                outstanding: null,
+                obligated: null
+              },
+              status: 'NoDataYet'
+            }
+          ]
+        })
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.materials[0]).toMatchObject({
+          obligationToMeet: 0,
+          awaitingAcceptance: 0,
+          accepted: 0,
+          outstanding: 0
+        })
+      })
+
+      test('null tonnage values contribute 0 to materialTotals', async () => {
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          obligations: [
+            {
+              material: 'Aluminium',
+              tonnages: {
+                material: 100,
+                awaitingAcceptance: 10,
+                accepted: 80,
+                outstanding: 10,
+                obligated: 100
+              },
+              status: 'Met'
+            },
+            {
+              material: 'Wood',
+              tonnages: {
+                material: null,
+                awaitingAcceptance: null,
+                accepted: null,
+                outstanding: null,
+                obligated: null
+              },
+              status: 'NoDataYet'
+            }
+          ]
+        })
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.materialTotals).toMatchObject({
+          obligationToMeet: 100,
+          awaitingAcceptance: 10,
+          accepted: 80,
+          outstanding: 10
+        })
+      })
+
       test('maps Accepted status to Approved review status with cancel only', async () => {
         mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
           ...mockDetailData,

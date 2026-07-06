@@ -727,10 +727,10 @@ function formatDate(isoString) {
 function mapObligation(obligation) {
   return {
     name: obligation.material,
-    obligationToMeet: obligation.tonnages.obligated,
-    awaitingAcceptance: obligation.tonnages.awaitingAcceptance,
-    accepted: obligation.tonnages.accepted,
-    outstanding: obligation.tonnages.outstanding,
+    obligationToMeet: obligation.tonnages.obligated ?? 0,
+    awaitingAcceptance: obligation.tonnages.awaitingAcceptance ?? 0,
+    accepted: obligation.tonnages.accepted ?? 0,
+    outstanding: obligation.tonnages.outstanding ?? 0,
     met: obligation.status?.toLowerCase() === 'met'
   }
 }
