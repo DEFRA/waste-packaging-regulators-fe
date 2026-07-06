@@ -724,6 +724,21 @@ function formatDate(isoString) {
   })
 }
 
+function mapObligationStatus(status) {
+  switch (status) {
+    case 'Met':
+      return 'met'
+    case 'NotMet':
+      return 'not-met'
+    case 'NoDataYet':
+    case null:
+    case undefined:
+      return 'no-data'
+    default:
+      throw new Error(`Unexpected obligation status: ${status}`)
+  }
+}
+
 function mapObligation(obligation) {
   return {
     name: obligation.material,
@@ -731,8 +746,14 @@ function mapObligation(obligation) {
     awaitingAcceptance: obligation.tonnages.awaitingAcceptance ?? 0,
     accepted: obligation.tonnages.accepted ?? 0,
     outstanding: obligation.tonnages.outstanding ?? 0,
-    met: obligation.status?.toLowerCase() === 'met'
+    status: mapObligationStatus(obligation.status)
   }
+}
+
+function deriveTotalsStatus(rows) {
+  if (rows.some((r) => r.status === 'not-met')) return 'not-met'
+  if (rows.every((r) => r.status === 'no-data')) return 'no-data'
+  return 'met'
 }
 
 function computeTotals(rows) {
@@ -741,7 +762,7 @@ function computeTotals(rows) {
     awaitingAcceptance: rows.reduce((sum, r) => sum + r.awaitingAcceptance, 0),
     accepted: rows.reduce((sum, r) => sum + r.accepted, 0),
     outstanding: rows.reduce((sum, r) => sum + r.outstanding, 0),
-    met: rows.every((r) => r.met)
+    status: deriveTotalsStatus(rows)
   }
 }
 
