@@ -35,6 +35,9 @@ import {
   canCancelComplianceDeclaration,
   setMockDeclarationStatusOverride,
   certificateActionSessionKeys,
+  deriveRegistrationType,
+  mapWasteOrganisationToDetailFields,
+  findSubmittedAuditUser,
   mockSummary,
   mockPendingItems,
   mockAcceptedItems,
@@ -51,7 +54,8 @@ import {
 import {
   mockSummaryByOrganisationType,
   mockQueriedDetailData,
-  mockCancelledDetailData
+  mockCancelledDetailData,
+  mockSubmittedAuditEntry
 } from './certificates-of-compliance.mock.js'
 
 const makeDeclaration = ({
@@ -178,6 +182,11 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.complianceYear).toBe(String(mockDetailData.obligationYear))
       expect(vm.complianceTypeLabel).toBe('2026 certificate of compliance')
       expect(vm.companyName).toBe(mockDetailData.organisation.name)
+      expect(vm.nameOnAccount).toBe(mockSubmittedAuditEntry.user.name)
+      expect(vm.declarationEmailAddress).toBe(
+        mockSubmittedAuditEntry.user.email
+      )
+      expect(vm.companyPhoneNumber).toBe('No data')
       expect(vm.declarationSignedBy).toBe(mockDetailData.submitterName)
       expect(vm.heading).toBe('Certificate of compliance')
       expect(vm.backlink).toBe('/certificates-of-compliance')
@@ -223,6 +232,11 @@ describe('getCertificatesOfComplianceViewModel', () => {
       )
 
       expect(vm.companyName).toBe(item.organisationName)
+      expect(vm.companiesHouseNumber).toBe('17121895')
+      expect(vm.organisationType).toBe('Direct producer')
+      expect(vm.nameOnAccount).toBe('No data')
+      expect(vm.declarationEmailAddress).toBe('No data')
+      expect(vm.companyPhoneNumber).toBe('No data')
       expect(vm.declarationStatus).toBe('Unsubmitted')
       expect(vm.complianceTypeLabel).toBe('2026 certificate of compliance')
     })
@@ -1609,6 +1623,42 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.companyName).toBe('Trading Scheme Co')
           expect(vm.complianceTypeLabel).toBe('2026 statement of compliance')
         })
+
+        test('derives registration type and companies house from waste-organisations GET shape', async () => {
+          createWasteObligationsApiService.mockReturnValue({
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          })
+          createWasteOrganisationsApiService.mockReturnValue({
+            getOrganisation: vi.fn().mockResolvedValue({
+              id: 'org-abc',
+              name: 'POP QUEST LTD',
+              companiesHouseNumber: '17121895',
+              registrations: [
+                {
+                  type: 'LARGE_PRODUCER',
+                  status: 'REGISTERED',
+                  registrationYear: 2026,
+                  updated: '2026-03-31T23:20:34.294+00:00'
+                }
+              ]
+            })
+          })
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'org-abc',
+            undefined,
+            { obligationYear: 2026 }
+          )
+
+          expect(vm.companyName).toBe('POP QUEST LTD')
+          expect(vm.companiesHouseNumber).toBe('17121895')
+          expect(vm.organisationType).toBe('Direct producer')
+          expect(vm.complianceTypeLabel).toBe('2026 certificate of compliance')
+          expect(vm.nameOnAccount).toBe('No data')
+          expect(vm.declarationEmailAddress).toBe('No data')
+        })
       })
 
       test('maps complianceTypeLabel for direct producer declarations', async () => {
@@ -2045,6 +2095,105 @@ describe('getCertificatesOfComplianceViewModel', () => {
           ).rejects.toMatchObject({ name: 'ApiError', status: 500 })
         })
       })
+    })
+  })
+})
+
+describe('organisation and audit detail mapping', () => {
+  test('deriveRegistrationType maps LARGE_PRODUCER to DirectProducer for obligation year', () => {
+    expect(
+      deriveRegistrationType(
+        [
+          {
+            type: 'LARGE_PRODUCER',
+            status: 'REGISTERED',
+            registrationYear: 2026
+          }
+        ],
+        2026
+      )
+    ).toBe('DirectProducer')
+  })
+
+  test('deriveRegistrationType maps COMPLIANCE_SCHEME to ComplianceScheme', () => {
+    expect(
+      deriveRegistrationType(
+        [
+          {
+            type: 'COMPLIANCE_SCHEME',
+            status: 'REGISTERED',
+            registrationYear: 2026
+          }
+        ],
+        2026
+      )
+    ).toBe('ComplianceScheme')
+  })
+
+  test('deriveRegistrationType returns null for empty registrations', () => {
+    expect(deriveRegistrationType([], 2026)).toBeNull()
+    expect(deriveRegistrationType(undefined, 2026)).toBeNull()
+  })
+
+  test('findSubmittedAuditUser returns user from Submitted audit entry', () => {
+    expect(findSubmittedAuditUser([mockSubmittedAuditEntry])).toEqual(
+      mockSubmittedAuditEntry.user
+    )
+  })
+
+  test('findSubmittedAuditUser returns null when no Submitted entry exists', () => {
+    expect(findSubmittedAuditUser([])).toBeNull()
+    expect(
+      findSubmittedAuditUser([{ action: 'Accepted', user: { name: 'Other' } }])
+    ).toBeNull()
+  })
+
+  test('mapWasteOrganisationToDetailFields maps companies house and derived type', () => {
+    expect(
+      mapWasteOrganisationToDetailFields(
+        {
+          name: 'POP QUEST LTD',
+          companiesHouseNumber: '17121895',
+          registrations: [
+            {
+              type: 'LARGE_PRODUCER',
+              status: 'REGISTERED',
+              registrationYear: 2026
+            }
+          ]
+        },
+        { obligationYear: 2026 }
+      )
+    ).toEqual({
+      companyName: 'POP QUEST LTD',
+      registrationType: 'DirectProducer',
+      organisationType: 'Direct producer',
+      companiesHouseNumber: '17121895'
+    })
+  })
+
+  test('mapWasteOrganisationToDetailFields uses tradingName for compliance schemes', () => {
+    expect(
+      mapWasteOrganisationToDetailFields(
+        {
+          name: 'Legal Name',
+          tradingName: 'Trading Scheme Co',
+          companiesHouseNumber: '87654321',
+          registrations: [
+            {
+              type: 'COMPLIANCE_SCHEME',
+              status: 'REGISTERED',
+              registrationYear: 2026
+            }
+          ]
+        },
+        { obligationYear: 2026 }
+      )
+    ).toEqual({
+      companyName: 'Trading Scheme Co',
+      registrationType: 'ComplianceScheme',
+      organisationType: 'Compliance scheme',
+      companiesHouseNumber: '87654321'
     })
   })
 })
