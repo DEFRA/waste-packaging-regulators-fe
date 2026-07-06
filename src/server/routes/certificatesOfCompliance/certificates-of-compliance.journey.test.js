@@ -11,6 +11,18 @@ import {
   mockDirectProducerCancelledDetailData,
   mockComplianceSchemeCancelledDetailData
 } from './certificates-of-compliance.mock.js'
+import { loadDetailPage } from './detail/detail.page-object.js'
+
+const HOWCO_DETAIL_URL =
+  '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
+const GREENFIELD_DETAIL_URL =
+  '/b1e2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-204872'
+const ECOPACK_DETAIL_URL =
+  '/923fa611-571c-4948-ab7d-fbb75e75ed65/certificates-of-compliance/decl-cs-001'
+const GREENCIRCLE_DETAIL_URL =
+  '/f3a2b1c0-d9e8-47f6-a5b4-c3d2e1f0a9b8/certificates-of-compliance/decl-cs-002'
+const REDWOOD_UNSUBMITTED_URL =
+  '/d1e2f3a4-b5c6-7890-abcd-ef1234567890/certificates-of-compliance?obligationYear=2026'
 
 function detailPathFor(item) {
   return `/${item.organisationId}/certificates-of-compliance/${item.id}`
@@ -544,6 +556,153 @@ describe('certificates of compliance — journey', () => {
       })
       expect(detailResponse.payload).toContain('Statement accepted')
       expect(detailResponse.payload).toContain('Statement has been accepted.')
+    })
+  })
+
+  describe('obligation tables render', () => {
+    const met = { text: 'Met', colour: 'green' }
+    const notMet = { text: 'Not met', colour: 'red' }
+    const noData = { text: 'No data', colour: 'grey' }
+
+    describe('fully-Met direct producer detail', () => {
+      it('renders green Met tags on every material row and the totals row', async () => {
+        const { materials } = loadDetailPage(
+          (await inject(HOWCO_DETAIL_URL)).payload
+        )
+
+        for (const row of materials.rows) {
+          expect(row.statusTag).toEqual(met)
+        }
+        expect(materials.totals.statusTag).toEqual(met)
+      })
+
+      it('renders green Met tags on every glass row and the totals row', async () => {
+        const { glass } = loadDetailPage(
+          (await inject(HOWCO_DETAIL_URL)).payload
+        )
+
+        for (const row of glass.rows) {
+          expect(row.statusTag).toEqual(met)
+        }
+        expect(glass.totals.statusTag).toEqual(met)
+      })
+    })
+
+    describe('mixed direct producer detail', () => {
+      it('renders the correct 3-state tag per material row', async () => {
+        const { materials } = loadDetailPage(
+          (await inject(GREENFIELD_DETAIL_URL)).payload
+        )
+        const byName = Object.fromEntries(
+          materials.rows.map((r) => [r.material, r.statusTag])
+        )
+
+        expect(byName.Aluminium).toEqual(met)
+        expect(byName.Glass).toEqual(notMet)
+        expect(byName.Plastic).toEqual(notMet)
+        expect(byName.Wood).toEqual(noData)
+      })
+
+      it('renders 0 in the tonnage cells of the null-tonnage Wood row', async () => {
+        const { materials } = loadDetailPage(
+          (await inject(GREENFIELD_DETAIL_URL)).payload
+        )
+        const wood = materials.rows.find((r) => r.material === 'Wood')
+
+        expect(wood.tonnages).toEqual({
+          obligationToMeet: '80',
+          awaitingAcceptance: '0',
+          accepted: '0',
+          outstanding: '0'
+        })
+      })
+
+      it('renders a red Not met tag on the materials totals row', async () => {
+        const { materials } = loadDetailPage(
+          (await inject(GREENFIELD_DETAIL_URL)).payload
+        )
+
+        expect(materials.totals.statusTag).toEqual(notMet)
+      })
+
+      it('renders the correct 3-state tag per glass row', async () => {
+        const { glass } = loadDetailPage(
+          (await inject(GREENFIELD_DETAIL_URL)).payload
+        )
+        const byName = Object.fromEntries(
+          glass.rows.map((r) => [r.material, r.statusTag])
+        )
+
+        expect(byName.GlassRemelt).toEqual(notMet)
+        expect(byName.RemainingGlass).toEqual(noData)
+      })
+
+      it('renders 0 in the tonnage cells of the null-tonnage RemainingGlass row', async () => {
+        const { glass } = loadDetailPage(
+          (await inject(GREENFIELD_DETAIL_URL)).payload
+        )
+        const remainingGlass = glass.rows.find(
+          (r) => r.material === 'RemainingGlass'
+        )
+
+        expect(remainingGlass.tonnages).toEqual({
+          obligationToMeet: '220',
+          awaitingAcceptance: '0',
+          accepted: '0',
+          outstanding: '0'
+        })
+      })
+    })
+
+    describe('fully-Met compliance scheme detail', () => {
+      it('renders green Met tags on every material and glass row and both totals rows', async () => {
+        const { materials, glass } = loadDetailPage(
+          (await inject(ECOPACK_DETAIL_URL)).payload
+        )
+
+        for (const row of [...materials.rows, ...glass.rows]) {
+          expect(row.statusTag).toEqual(met)
+        }
+        expect(materials.totals.statusTag).toEqual(met)
+        expect(glass.totals.statusTag).toEqual(met)
+      })
+    })
+
+    describe('mixed compliance scheme detail', () => {
+      it('renders the correct 3-state tag per material row', async () => {
+        const { materials } = loadDetailPage(
+          (await inject(GREENCIRCLE_DETAIL_URL)).payload
+        )
+        const byName = Object.fromEntries(
+          materials.rows.map((r) => [r.material, r.statusTag])
+        )
+
+        expect(byName.Aluminium).toEqual(met)
+        expect(byName.Glass).toEqual(notMet)
+        expect(byName.Wood).toEqual(noData)
+      })
+
+      it('renders a red Not met tag on the materials totals row', async () => {
+        const { materials } = loadDetailPage(
+          (await inject(GREENCIRCLE_DETAIL_URL)).payload
+        )
+
+        expect(materials.totals.statusTag).toEqual(notMet)
+      })
+    })
+
+    describe('not-submitted direct producer detail', () => {
+      it('renders a grey No data tag on every material and glass row and both totals rows', async () => {
+        const { materials, glass } = loadDetailPage(
+          (await inject(REDWOOD_UNSUBMITTED_URL)).payload
+        )
+
+        for (const row of [...materials.rows, ...glass.rows]) {
+          expect(row.statusTag).toEqual(noData)
+        }
+        expect(materials.totals.statusTag).toEqual(noData)
+        expect(glass.totals.statusTag).toEqual(noData)
+      })
     })
   })
 })
