@@ -24,8 +24,8 @@ export const mockPendingItems = [
     organisationId: '497f6eca-6276-4993-bfeb-53cbbbba6f08',
     organisationReferenceNumber: '101411',
     organisationName: 'Howco Group plc',
-    recyclingObligationsMet: true,
-    percentageMet: 100,
+    recyclingObligationsMet: false,
+    percentageMet: 97,
     dateSubmitted: '2027-01-31'
   },
   {
@@ -89,9 +89,9 @@ export const mockComplianceSchemePendingItems = [
     organisationId: '923fa611-571c-4948-ab7d-fbb75e75ed65',
     organisationReferenceNumber: 'CS-1001',
     organisationName: 'EcoPack Compliance Ltd',
-    recyclingObligationsMet: true,
+    recyclingObligationsMet: false,
     regulation43Met: false,
-    percentageMet: 100,
+    percentageMet: 91,
     dateSubmitted: '2027-01-20'
   },
   {
@@ -375,6 +375,75 @@ const mockObligationsMixed = [
   }
 ]
 
+export const mockSubmittedAuditEntry = {
+  user: {
+    id: 'fa6d3a77-be37-4530-bf7f-7d552ef94170',
+    email: 'user@example.com',
+    name: 'Test User'
+  },
+  timestamp: '2026-07-02T16:12:48.816+00:00',
+  action: 'Submitted'
+}
+
+export const mockComplianceSchemeSubmittedAuditEntry = {
+  user: {
+    id: 'b1c2d3e4-f5a6-7890-abcd-ef1234567890',
+    email: 'jane.doe@ecopack.co.uk',
+    name: 'Jane Doe'
+  },
+  timestamp: '2027-01-20T00:00:00Z',
+  action: 'Submitted'
+}
+
+const mockOrganisationsById = {
+  'd1e2f3a4-b5c6-7890-abcd-ef1234567890': {
+    id: 'd1e2f3a4-b5c6-7890-abcd-ef1234567890',
+    name: 'Redwood Retail Group',
+    tradingName: null,
+    businessCountry: 'GB-ENG',
+    companiesHouseNumber: '17121895',
+    address: {
+      addressLine1: 'Registered Add Line 1',
+      postcode: 'CB113DG',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: '2026-03-31T23:20:34.294+00:00',
+        updated: '2026-03-31T23:20:34.294+00:00',
+        status: 'REGISTERED',
+        type: 'LARGE_PRODUCER',
+        registrationYear: 2026
+      }
+    ]
+  },
+  'a9b8c7d6-e5f4-3210-abcd-ef9876543210': {
+    id: 'a9b8c7d6-e5f4-3210-abcd-ef9876543210',
+    name: 'FuturePack Operators Ltd',
+    tradingName: 'FuturePack Operators',
+    businessCountry: 'GB-ENG',
+    companiesHouseNumber: '87654321',
+    address: {
+      addressLine1: 'Scheme House',
+      postcode: 'SW1A 1AA',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: '2026-03-31T23:20:34.294+00:00',
+        updated: '2026-03-31T23:20:34.294+00:00',
+        status: 'REGISTERED',
+        type: 'COMPLIANCE_SCHEME',
+        registrationYear: 2026
+      }
+    ]
+  }
+}
+
+export function getMockOrganisationById(organisationId) {
+  return mockOrganisationsById[organisationId] ?? null
+}
+
 // Matches the raw API response shape from GET /organisations/{organisationId}/compliance-declarations/{id}
 export const mockDetailData = {
   id: 'decl-101411',
@@ -403,7 +472,7 @@ export const mockDetailData = {
   declarationText: { text: 'I declare...', language: 'en' },
   submitterName: 'Catherine Morris',
   isRegulation43Compliant: true,
-  audit: []
+  audit: [mockSubmittedAuditEntry]
 }
 
 export const mockComplianceSchemeDetailData = {
@@ -435,7 +504,7 @@ export const mockComplianceSchemeDetailData = {
   },
   submitterName: 'Jane Doe',
   isRegulation43Compliant: false,
-  audit: []
+  audit: [mockComplianceSchemeSubmittedAuditEntry]
 }
 
 export const mockComplianceSchemeAcceptedDetailData = {

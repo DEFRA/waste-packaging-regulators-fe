@@ -8,10 +8,9 @@ import {
   mockSummaryByOrganisationType,
   mockListByOrganisationType,
   mockObligationData,
-  mockNotSubmittedItems,
-  mockComplianceSchemeNotSubmittedItems,
   getMockDetailDataById,
-  getMockDeclarationsByOrgYear
+  getMockDeclarationsByOrgYear,
+  getMockOrganisationById
 } from './certificates-of-compliance.mock.js'
 
 export {
@@ -80,22 +79,6 @@ function mapOrganisationName(organisation) {
     )
   }
   return organisation.name ?? 'Unknown organisation'
-}
-
-function findMockNotSubmittedOrganisation(organisationId) {
-  const complianceSchemeItem = mockComplianceSchemeNotSubmittedItems.find(
-    (item) => item.organisationId === organisationId
-  )
-  if (complianceSchemeItem) {
-    return { ...complianceSchemeItem, registrationType: 'ComplianceScheme' }
-  }
-  const directProducerItem = mockNotSubmittedItems.find(
-    (item) => item.organisationId === organisationId
-  )
-  if (directProducerItem) {
-    return { ...directProducerItem, registrationType: 'DirectProducer' }
-  }
-  return null
 }
 
 function mapRecyclingObligationsMet(obligationStatus) {
@@ -390,6 +373,98 @@ const organisationTypeDisplayNames = {
   ComplianceScheme: 'Compliance scheme'
 }
 
+const registrationTypeFromApi = {
+  COMPLIANCE_SCHEME: 'ComplianceScheme',
+  SMALL_PRODUCER: 'DirectProducer',
+  LARGE_PRODUCER: 'DirectProducer'
+}
+
+export function deriveRegistrationType(registrations, obligationYear) {
+  const resolvedRegistrations = registrations ?? []
+  if (!resolvedRegistrations.length) {
+    return null
+  }
+
+  const resolveType = (registration) =>
+    registrationTypeFromApi[registration?.type] ?? null
+
+  const selectFromPool = (pool) => {
+    if (!pool.length) {
+      return null
+    }
+    const registered = pool.filter(
+      (registration) => registration.status === 'REGISTERED'
+    )
+    const candidates = registered.length > 0 ? registered : pool
+    const selected = candidates.reduce((best, current) => {
+      if (!best) {
+        return current
+      }
+      const bestTime = best.updated ? Date.parse(best.updated) : 0
+      const currentTime = current.updated ? Date.parse(current.updated) : 0
+      return currentTime >= bestTime ? current : best
+    }, null)
+
+    return resolveType(selected ?? candidates[0])
+  }
+
+  if (obligationYear != null) {
+    const forYear = resolvedRegistrations.filter(
+      (registration) =>
+        Number(registration.registrationYear) === Number(obligationYear)
+    )
+    const typeForYear = selectFromPool(forYear)
+    if (typeForYear) {
+      return typeForYear
+    }
+  }
+
+  const latestYear = Math.max(
+    ...resolvedRegistrations.map(
+      (registration) => Number(registration.registrationYear) || 0
+    )
+  )
+  const latestRegistrations = resolvedRegistrations.filter(
+    (registration) => Number(registration.registrationYear) === latestYear
+  )
+
+  return selectFromPool(latestRegistrations)
+}
+
+export function mapWasteOrganisationToDetailFields(
+  organisation,
+  { obligationYear } = {}
+) {
+  if (!organisation) {
+    return {
+      companyName: null,
+      registrationType: null,
+      organisationType: NO_DATA,
+      companiesHouseNumber: NO_DATA
+    }
+  }
+
+  const registrationType =
+    organisation.registrationType ??
+    deriveRegistrationType(organisation.registrations, obligationYear)
+
+  return {
+    companyName: mapOrganisationName({ ...organisation, registrationType }),
+    registrationType,
+    organisationType: displayOrNoData(
+      registrationType
+        ? (organisationTypeDisplayNames[registrationType] ?? registrationType)
+        : null
+    ),
+    companiesHouseNumber: displayOrNoData(organisation.companiesHouseNumber)
+  }
+}
+
+export function findSubmittedAuditUser(audit = []) {
+  const entry = audit.find((auditEntry) => auditEntry.action === 'Submitted')
+  return entry?.user ?? null
+}
+
 const certificateActionLabelsByRegistrationType = {
   DirectProducer: {
     accept: 'Accept certificate',
@@ -587,17 +662,10 @@ async function getDeclarationDetail(
       obligationYear ?? Number(mockSummary.complianceYear)
 
     if (!id) {
-      const mockOrg = findMockNotSubmittedOrganisation(organisationId)
       return mapObligationToDetail(mockObligationData, {
         organisationId,
         obligationYear: resolvedObligationYear,
-        organisation: mockOrg
-          ? {
-              name: mockOrg.organisationName,
-              registrationType: mockOrg.registrationType,
-              referenceNumber: mockOrg.organisationReferenceNumber
-            }
-          : null
+        organisation: getMockOrganisationById(organisationId)
       })
     }
     const mockData = applyMockDeclarationStatusOverride(
@@ -900,10 +968,12 @@ function mapDeclarationToDetail(
     organisationTypeDisplayNames[organisation.registrationType] ??
     organisation.registrationType
 
+  const submittedUser = findSubmittedAuditUser(data.audit)
+
   return {
     organisationId: resolvedOrganisationId,
     declarationId: resolvedId,
-    complianceYear: obligationYear != null ? String(obligationYear) : null,
+    complianceYear: obligationYear == null ? null : String(obligationYear),
     complianceTypeLabel: buildComplianceTypeLabel(
       obligationYear,
       organisation.registrationType
@@ -918,9 +988,9 @@ function mapDeclarationToDetail(
     registrationType: organisation.registrationType,
     organisationRef: displayOrNoData(organisation.referenceNumber),
     companiesHouseNumber: displayOrNoData(organisation.companiesHouseNumber),
-    nameOnAccount: displayOrNoData(organisation.nameOnAccount),
-    declarationEmailAddress: displayOrNoData(organisation.contactEmailAddress),
-    companyPhoneNumber: displayOrNoData(organisation.contactPhoneNumber),
+    nameOnAccount: displayOrNoData(submittedUser?.name),
+    declarationEmailAddress: displayOrNoData(submittedUser?.email),
+    companyPhoneNumber: NO_DATA,
     declarationSignedBy: displayOrNoData(submitterName),
     materials,
     materialTotals: computeTotals(materials),
@@ -951,31 +1021,25 @@ function mapObligationToDetail(
     GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
   )
 
-  const registrationType = organisation?.registrationType ?? null
-  const companyName = organisation ? mapOrganisationName(organisation) : null
+  const orgFields = mapWasteOrganisationToDetailFields(organisation, {
+    obligationYear
+  })
 
   return {
-    complianceYear: obligationYear != null ? String(obligationYear) : null,
+    complianceYear: obligationYear == null ? null : String(obligationYear),
     complianceTypeLabel: buildComplianceTypeLabel(
       obligationYear,
-      registrationType
+      orgFields.registrationType
     ),
-    companyName,
+    ...orgFields,
     declarationStatus: 'Unsubmitted',
     reviewStatus: null,
     recyclingObligationsMet: null,
     regulation43Met: null,
     dateDeclarationSubmitted: NO_DATA,
-    organisationType: displayOrNoData(
-      registrationType
-        ? (organisationTypeDisplayNames[registrationType] ?? registrationType)
-        : null
-    ),
-    registrationType,
     organisationRef: displayOrNoData(
       organisation?.referenceNumber ?? organisationId
     ),
-    companiesHouseNumber: NO_DATA,
     nameOnAccount: NO_DATA,
     declarationEmailAddress: NO_DATA,
     companyPhoneNumber: NO_DATA,

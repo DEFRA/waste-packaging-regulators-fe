@@ -1665,12 +1665,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
         mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
           ...mockDetailData,
           submitterName: null,
+          audit: [],
           organisation: {
             ...mockDetailData.organisation,
-            companiesHouseNumber: null,
-            nameOnAccount: null,
-            contactEmailAddress: null,
-            contactPhoneNumber: null
+            companiesHouseNumber: null
           }
         })
 
