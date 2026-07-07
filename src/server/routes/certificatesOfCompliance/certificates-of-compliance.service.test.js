@@ -1742,7 +1742,6 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
 
       describe('compliance-schemes — organisation name from Account API', () => {
-        // Scenario 1: Account API is called for Not submitted compliance-scheme rows
         test('calls the Account API with the compliance-scheme org ids and traceId', async () => {
           setupNotSubmittedTab([
             {
@@ -1773,7 +1772,6 @@ describe('getCertificatesOfComplianceViewModel', () => {
           ).toHaveBeenCalledWith(['cs-guid-1', 'cs-guid-2'], 'trace-cs')
         })
 
-        // Scenario 2: Organisation name is retrieved and displayed from the Account API
         test('displays the Account API name for each compliance-scheme row', async () => {
           setupNotSubmittedTab([
             {
@@ -1823,7 +1821,6 @@ describe('getCertificatesOfComplianceViewModel', () => {
           ])
         })
 
-        // Scenario 4: Account API returns 404 for an Organisation ID
         test('shows "No data" name for a 404 id while other rows render', async () => {
           setupNotSubmittedTab([
             {
@@ -1865,68 +1862,14 @@ describe('getCertificatesOfComplianceViewModel', () => {
           })
         })
 
-        // Scenario 5: Account API returns a 500 for one or more (but not all) batches
-        test('shows "No data" name for rows in a failed batch while other rows render', async () => {
-          const orgs = Array.from({ length: 15 }, (_, i) => ({
-            id: `cs-${i}`,
-            name: `Org record ${i}`,
-            registrationType: 'ComplianceScheme'
-          }))
-          setupNotSubmittedTab(orgs)
-
-          const apiError = Object.assign(new Error('account API failed'), {
-            name: 'ApiError',
-            status: 500
-          })
-          // First batch (cs-0..cs-9) resolves; second batch (cs-10..cs-14) rejects.
-          mockAccountApi.getOrganisationsByExternalIds.mockImplementation(
-            (externalIds) => {
-              if (externalIds.includes('cs-10')) {
-                return Promise.reject(apiError)
-              }
-              return Promise.resolve({
-                organisations: externalIds.map((externalId) => ({
-                  externalId,
-                  name: `Account name ${externalId}`,
-                  referenceNumber: `ref-${externalId}`
-                })),
-                notFoundExternalIds: []
-              })
+        test('propagates a 5xx so the error page is shown', async () => {
+          setupNotSubmittedTab([
+            {
+              id: 'cs-guid-1',
+              name: 'Org record name',
+              registrationType: 'ComplianceScheme'
             }
-          )
-
-          const vm = await getCertificatesOfComplianceViewModel(
-            'compliance-schemes',
-            'not-submitted',
-            1
-          )
-
-          expect(vm.items[0]).toMatchObject({
-            organisationId: 'cs-0',
-            organisationName: 'Account name cs-0'
-          })
-          expect(vm.items[10]).toMatchObject({
-            organisationId: 'cs-10',
-            organisationReferenceNumber: 'No data',
-            organisationName: 'No data'
-          })
-          expect(vm.items[14]).toMatchObject({
-            organisationId: 'cs-14',
-            organisationName: 'No data'
-          })
-          expect(
-            mockAccountApi.getOrganisationsByExternalIds.mock.calls.length
-          ).toBeGreaterThan(1)
-        })
-
-        // Scenario 6: Account API returns a 500 for all batches → GDS error page
-        test('propagates the error when every batch fails so the error page is shown', async () => {
-          const orgs = Array.from({ length: 15 }, (_, i) => ({
-            id: `cs-${i}`,
-            name: `Org record ${i}`,
-            registrationType: 'ComplianceScheme'
-          }))
-          setupNotSubmittedTab(orgs)
+          ])
 
           const apiError = Object.assign(new Error('account API failed'), {
             name: 'ApiError',
