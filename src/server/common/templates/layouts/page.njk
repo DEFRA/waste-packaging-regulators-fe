@@ -22,7 +22,7 @@
   <link href="{{ getAssetPath('src/client/stylesheets/application.scss') }}" rel="stylesheet">
 {% endblock %}
 
-{% block header %}
+{% block govukHeader %}
   {# serviceName being used in govukHeader will be @deprecated in v6. It has moved to govukServiceNavigation - https://github.com/alphagov/govuk-frontend/blob/main/CHANGELOG.md#move-service-name-and-navigation-links-from-the-govuk-header-to-service-navigation-component #}
   {{ govukHeader({
     homepageUrl: "https://www.gov.uk/",
@@ -32,7 +32,9 @@
     serviceUrl: serviceUrl,
     useTudorCrown: true
   }) }}
+{% endblock %}
 
+{% block govukServiceNavigation %}
   {{ govukServiceNavigation({
     navigation: navigation
   }) }}
@@ -48,16 +50,18 @@
       items: breadcrumbs
     }) }}
   {% elseif backlink.length >1 %}
-    {{ govukBackLink({
-      text: "Back",
-      href: backlink
-    }) }}
+    <nav aria-label="Back">
+      {{ govukBackLink({
+        text: "Back",
+        href: backlink
+      }) }}
+    </nav>
   {% endif %}
 {% endblock %}
 
 {% block content %}{% endblock %}
 
-{% block footer %}
+{% block govukFooter %}
   {{ govukFooter({
     meta: {
       items: [
