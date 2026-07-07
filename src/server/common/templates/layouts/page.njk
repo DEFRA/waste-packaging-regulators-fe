@@ -50,10 +50,12 @@
       items: breadcrumbs
     }) }}
   {% elseif backlink.length >1 %}
-    {{ govukBackLink({
-      text: "Back",
-      href: backlink
-    }) }}
+    <nav aria-label="Back">
+      {{ govukBackLink({
+        text: "Back",
+        href: backlink
+      }) }}
+    </nav>
   {% endif %}
 {% endblock %}
 
