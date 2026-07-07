@@ -2045,7 +2045,13 @@ describe('certificate detail action helpers', () => {
       await approveComplianceDeclaration(
         'org-1',
         'decl-1',
-        { profile: { sub: 'user-1', email: 'user@example.com', name:'John Doe' } },
+        {
+          profile: {
+            sub: 'user-1',
+            email: 'user@example.com',
+            name: 'John Doe'
+          }
+        },
         'trace-1'
       )
 

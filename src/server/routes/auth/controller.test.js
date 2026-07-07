@@ -58,7 +58,10 @@ describe('signinOidcController', () => {
 
     it('stores the user in yar with id from credentials sub', async () => {
       const yar = makeYar()
-      await signinOidcController.handler({ auth: { credentials }, yar }, makeH())
+      await signinOidcController.handler(
+        { auth: { credentials }, yar },
+        makeH()
+      )
 
       const stored = yar.set.mock.calls.find(([key]) => key === 'user')?.[1]
       expect(stored?.id).toBe('user-sub-123')
@@ -66,7 +69,10 @@ describe('signinOidcController', () => {
 
     it('stores the user in yar with email from credentials', async () => {
       const yar = makeYar()
-      await signinOidcController.handler({ auth: { credentials }, yar }, makeH())
+      await signinOidcController.handler(
+        { auth: { credentials }, yar },
+        makeH()
+      )
 
       const stored = yar.set.mock.calls.find(([key]) => key === 'user')?.[1]
       expect(stored?.email).toBe('jane@example.com')
@@ -74,7 +80,10 @@ describe('signinOidcController', () => {
 
     it('stores the user in yar with name derived from firstName and lastName', async () => {
       const yar = makeYar()
-      await signinOidcController.handler({ auth: { credentials }, yar }, makeH())
+      await signinOidcController.handler(
+        { auth: { credentials }, yar },
+        makeH()
+      )
 
       const stored = yar.set.mock.calls.find(([key]) => key === 'user')?.[1]
       expect(stored?.name).toBe('Jane Smith')
@@ -82,7 +91,10 @@ describe('signinOidcController', () => {
 
     it('stores the full account details alongside id, email, and name', async () => {
       const yar = makeYar()
-      await signinOidcController.handler({ auth: { credentials }, yar }, makeH())
+      await signinOidcController.handler(
+        { auth: { credentials }, yar },
+        makeH()
+      )
 
       const stored = yar.set.mock.calls.find(([key]) => key === 'user')?.[1]
       expect(stored).toMatchObject(mockAccountDetails)
@@ -115,7 +127,10 @@ describe('signinOidcController', () => {
 
     it('clears returnTo from the session after redirecting', async () => {
       const yar = makeYar({ returnTo: '/some-path' })
-      await signinOidcController.handler({ auth: { credentials }, yar }, makeH())
+      await signinOidcController.handler(
+        { auth: { credentials }, yar },
+        makeH()
+      )
 
       expect(yar.clear).toHaveBeenCalledWith('returnTo')
     })

@@ -183,9 +183,7 @@ describe('AccountApiService', () => {
           organisations: [{ name: 'Environment Agency', nationId: 2 }]
         }
       }
-      const fetchImpl = vi
-        .fn()
-        .mockResolvedValue(mockOkResponse(apiResponse))
+      const fetchImpl = vi.fn().mockResolvedValue(mockOkResponse(apiResponse))
       const service = new AccountApiService({
         baseUrl: 'http://localhost:3001',
         clientId: 'Developer',
@@ -234,9 +232,7 @@ describe('AccountApiService', () => {
         .mockImplementation((key) => (key === 'useMockApi' ? false : undefined))
 
       const apiResponse = { user: null }
-      const fetchImpl = vi
-        .fn()
-        .mockResolvedValue(mockOkResponse(apiResponse))
+      const fetchImpl = vi.fn().mockResolvedValue(mockOkResponse(apiResponse))
       const service = new AccountApiService({
         baseUrl: 'http://localhost:3001',
         clientId: 'Developer',

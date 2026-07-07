@@ -359,6 +359,103 @@ describe('certificates of compliance — journey', () => {
     })
   })
 
+  describe('sign-in populates user in session for certificate actions', () => {
+    it('approve action redirects to /signin-oidc when no user is in session', async () => {
+      const item = mockPendingItems[0]
+      const response = await server.inject({
+        method: 'POST',
+        url: `${detailPathFor(item)}/approve`
+      })
+
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe('/signin-oidc')
+    })
+
+    it('cancel action redirects to /signin-oidc when no user is in session', async () => {
+      const item = mockPendingItems[0]
+      const response = await server.inject({
+        method: 'POST',
+        url: `${detailPathFor(item)}/cancel`
+      })
+
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe('/signin-oidc')
+    })
+
+    it('approve action succeeds after sign-in populates user from account API', async () => {
+      const signinResponse = await server.inject({
+        method: 'GET',
+        url: '/signin-oidc'
+      })
+      const cookie = signinResponse.headers['set-cookie']?.[0]?.split(';')[0]
+
+      const item = mockPendingItems[0]
+      const approveResponse = await server.inject({
+        method: 'POST',
+        url: `${detailPathFor(item)}/approve`,
+        headers: { cookie }
+      })
+
+      expect(approveResponse.statusCode).toBe(302)
+      expect(approveResponse.headers.location).toBe(detailPathFor(item))
+    })
+
+    it('cancel action succeeds after sign-in populates user from account API', async () => {
+      const signinResponse = await server.inject({
+        method: 'GET',
+        url: '/signin-oidc'
+      })
+      const cookie = signinResponse.headers['set-cookie']?.[0]?.split(';')[0]
+
+      const item = mockPendingItems[0]
+      const cancelResponse = await server.inject({
+        method: 'POST',
+        url: `${detailPathFor(item)}/cancel`,
+        headers: { cookie }
+      })
+
+      expect(cancelResponse.statusCode).toBe(302)
+      expect(cancelResponse.headers.location).toBe(detailPathFor(item))
+    })
+
+    it('full flow: unauthenticated action → sign-in with user from account API → action succeeds', async () => {
+      const item = mockPendingItems[0]
+      const approveUrl = `${detailPathFor(item)}/approve`
+
+      // Attempt action unauthenticated — stored as returnTo and redirected to sign-in
+      const unauthResponse = await server.inject({
+        method: 'POST',
+        url: approveUrl
+      })
+      expect(unauthResponse.statusCode).toBe(302)
+      expect(unauthResponse.headers.location).toBe('/signin-oidc')
+      const unauthCookie =
+        unauthResponse.headers['set-cookie']?.[0]?.split(';')[0]
+
+      // Sign in — account API populates user in session, redirects back to approveUrl
+      const signinResponse = await server.inject({
+        method: 'GET',
+        url: '/signin-oidc',
+        headers: { cookie: unauthCookie }
+      })
+      expect(signinResponse.statusCode).toBe(302)
+      expect(signinResponse.headers.location).toBe(approveUrl)
+      const signedInCookie = mergeCookiesFromResponse(
+        unauthCookie,
+        signinResponse
+      )
+
+      // Retry the action with the signed-in session — should succeed
+      const approveResponse = await server.inject({
+        method: 'POST',
+        url: approveUrl,
+        headers: { cookie: signedInCookie }
+      })
+      expect(approveResponse.statusCode).toBe(302)
+      expect(approveResponse.headers.location).toBe(detailPathFor(item))
+    })
+  })
+
   describe('accept confirmation journey', () => {
     const acceptPathFor = (item) => `${detailPathFor(item)}/accept`
 
