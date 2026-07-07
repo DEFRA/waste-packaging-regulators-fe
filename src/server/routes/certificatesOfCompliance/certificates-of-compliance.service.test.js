@@ -1984,39 +1984,35 @@ describe('certificate detail action helpers', () => {
     expect(vm.actions.showCancel).toBe(true)
   })
 
-  test('mapSessionUserToApiUser maps profile credentials', () => {
+  test('mapSessionUserToApiUser maps session user to API user', () => {
     expect(
       mapSessionUserToApiUser({
-        profile: {
-          sub: 'user-123',
-          email: 'regulator@example.com',
-          name: 'Bob'
-        }
+        id: 'user-oid-123',
+        email: 'regulator@example.com',
+        name: 'Bob Smith'
       })
     ).toEqual({
-      id: 'user-123',
+      id: 'user-oid-123',
       email: 'regulator@example.com',
-      name: 'Bob'
-    })
-  })
-  test('mapSessionUserToApiUser maps profile credentials with no name', () => {
-    expect(
-      mapSessionUserToApiUser({
-        profile: {
-          sub: 'user-123',
-          email: 'regulator@example.com',
-          displayName: 'Bill'
-        }
-      })
-    ).toEqual({
-      id: 'user-123',
-      email: 'regulator@example.com',
-      name: 'Bill'
+      name: 'Bob Smith'
     })
   })
 
-  test('mapSessionUserToApiUser falls back for mock auth', () => {
-    expect(mapSessionUserToApiUser({ user: 'mock-user' })).toEqual({
+  test('mapSessionUserToApiUser defaults name to "Unknown" when absent', () => {
+    expect(
+      mapSessionUserToApiUser({
+        id: 'user-oid-123',
+        email: 'regulator@example.com'
+      })
+    ).toEqual({
+      id: 'user-oid-123',
+      email: 'regulator@example.com',
+      name: 'Unknown'
+    })
+  })
+
+  test('mapSessionUserToApiUser falls back to mock user when id or email is missing', () => {
+    expect(mapSessionUserToApiUser({})).toEqual({
       id: 'mock-user',
       email: 'mock-user@test.local',
       name: 'Mock User'
@@ -2045,13 +2041,7 @@ describe('certificate detail action helpers', () => {
       await approveComplianceDeclaration(
         'org-1',
         'decl-1',
-        {
-          profile: {
-            sub: 'user-1',
-            email: 'user@example.com',
-            name: 'John Doe'
-          }
-        },
+        { id: 'user-oid-1', email: 'user@example.com', name: 'John Doe' },
         'trace-1'
       )
 
@@ -2060,7 +2050,11 @@ describe('certificate detail action helpers', () => {
           organisationId: 'org-1',
           id: 'decl-1',
           status: 'Accepted',
-          user: { id: 'user-1', email: 'user@example.com', name: 'John Doe' }
+          user: {
+            id: 'user-oid-1',
+            email: 'user@example.com',
+            name: 'John Doe'
+          }
         },
         'trace-1'
       )

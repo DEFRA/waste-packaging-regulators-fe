@@ -672,13 +672,11 @@ export async function getComplianceDeclarationReviewStatus(
 }
 
 export function mapSessionUserToApiUser(sessionUser) {
-  const profile = sessionUser?.profile
-  if (profile) {
-    const id = profile.sub ?? profile.oid ?? profile.id
-    const email = profile.email ?? profile.emails?.[0]
-    const name = profile.name ?? profile.displayName ?? 'Unknown'
-    if (id && email) {
-      return { id, email, name }
+  if (sessionUser?.id && sessionUser?.email) {
+    return {
+      id: sessionUser.id,
+      email: sessionUser.email,
+      name: sessionUser.name ?? 'Unknown'
     }
   }
 
