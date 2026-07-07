@@ -147,11 +147,12 @@ function mapOrganisationToItem(organisation, organisationType) {
   }
 }
 
-// Fills the 6-digit reference number for "Not submitted" rows from the Account API bulk lookup.
+// Fills the reference number (and, for compliance schemes, the name) for "Not submitted" rows from the Account API bulk lookup.
 async function resolveNotSubmittedOrganisationDetails(
   accountApi,
   items,
-  traceId
+  traceId,
+  organisationType
 ) {
   const externalIds = items.map((item) => item.organisationId).filter(Boolean)
 
@@ -168,9 +169,13 @@ async function resolveNotSubmittedOrganisationDetails(
     organisations.map((org) => [org.externalId, org])
   )
 
+  const resolvesName = organisationType === 'compliance-schemes'
   for (const item of items) {
     const details = detailsByExternalId.get(item.organisationId)
-    item.organisationReferenceNumber = details?.referenceNumber ?? 'No data'
+    item.organisationReferenceNumber = details?.referenceNumber ?? NO_DATA
+    if (resolvesName) {
+      item.organisationName = details?.name ?? NO_DATA
+    }
   }
 }
 
@@ -297,7 +302,12 @@ async function getComplianceList(
     const start = (page - 1) * PAGE_SIZE
     const items = allItems.slice(start, start + PAGE_SIZE)
 
-    await resolveNotSubmittedOrganisationDetails(accountApi, items, traceId)
+    await resolveNotSubmittedOrganisationDetails(
+      accountApi,
+      items,
+      traceId,
+      organisationType
+    )
 
     return {
       items,
