@@ -107,7 +107,11 @@ export async function createServer() {
   if (config.get('useMockAuth')) {
     server.auth.scheme('mock', () => ({
       authenticate: (_request, h) =>
-        h.authenticated({ credentials: { user: 'mock-user' } })
+        h.authenticated({
+          credentials: {
+            profile: { oid: 'mock-user-oid', email: 'mock-user@test.local' }
+          }
+        })
     }))
     server.auth.strategy('azure-ad-b2c', 'mock')
   } else {

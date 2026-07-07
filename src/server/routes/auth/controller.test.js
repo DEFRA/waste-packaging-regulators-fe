@@ -19,6 +19,14 @@ const mockAccountDetails = {
   nationId: 1
 }
 
+// Credentials shape after Bell parses the Azure AD B2C id_token into a profile
+const credentials = {
+  profile: {
+    oid: 'user-oid-123',
+    email: 'jane@example.com'
+  }
+}
+
 function makeYar({ returnTo = null } = {}) {
   const store = { ...(returnTo ? { returnTo } : {}) }
   return {
@@ -41,22 +49,20 @@ function makeH() {
 
 describe('signinOidcController', () => {
   describe('with valid credentials', () => {
-    const credentials = { sub: 'user-sub-123', email: 'jane@example.com' }
-
     beforeEach(() => {
       mockGetAccountDetailsById.mockResolvedValue({ ...mockAccountDetails })
     })
 
-    it('calls getAccountDetailsById with the sub from credentials', async () => {
+    it('calls getAccountDetailsById with the oid from credentials profile', async () => {
       await signinOidcController.handler(
         { auth: { credentials }, yar: makeYar() },
         makeH()
       )
 
-      expect(mockGetAccountDetailsById).toHaveBeenCalledWith('user-sub-123')
+      expect(mockGetAccountDetailsById).toHaveBeenCalledWith('user-oid-123')
     })
 
-    it('stores the user in yar with id from credentials sub', async () => {
+    it('stores the user in yar with id from credentials profile oid', async () => {
       const yar = makeYar()
       await signinOidcController.handler(
         { auth: { credentials }, yar },
@@ -64,10 +70,10 @@ describe('signinOidcController', () => {
       )
 
       const stored = yar.set.mock.calls.find(([key]) => key === 'user')?.[1]
-      expect(stored?.id).toBe('user-sub-123')
+      expect(stored?.id).toBe('user-oid-123')
     })
 
-    it('stores the user in yar with email from credentials', async () => {
+    it('stores the user in yar with email from credentials profile', async () => {
       const yar = makeYar()
       await signinOidcController.handler(
         { auth: { credentials }, yar },

@@ -13,10 +13,10 @@ export const signinOidcController = {
       const apiAccount = createAccountApiService()
       //Call to account api to get user details
       const user = await apiAccount.getAccountDetailsById(
-        request.auth.credentials.sub
+        request.auth.credentials.profile.oid
       )
-      user.id = request.auth.credentials.sub
-      user.email = request.auth.credentials.email
+      user.id = request.auth.credentials.profile.oid
+      user.email = request.auth.credentials.profile.email
       user.name = user.firstName + ' ' + user.lastName
       request.yar.set('user', user)
     }
