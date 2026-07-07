@@ -1117,7 +1117,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.materialTotals.obligationToMeet).toBe(expectedTotal)
       })
 
-      test('materialTotals.met is false when any material is not met', async () => {
+      test('materialTotals.status is not-met when any material is not met', async () => {
         mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
           ...mockDetailData,
           obligations: mockDetailData.obligations.map((o, i) =>
@@ -1130,7 +1130,41 @@ describe('getCertificatesOfComplianceViewModel', () => {
           'decl-1'
         )
 
-        expect(vm.materialTotals.met).toBe(false)
+        expect(vm.materialTotals.status).toBe('not-met')
+      })
+
+      test('materialTotals.status is no-data when every material has no data', async () => {
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          obligations: mockDetailData.obligations.map((o) => ({
+            ...o,
+            status: 'NoDataYet'
+          }))
+        })
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.materialTotals.status).toBe('no-data')
+      })
+
+      test('materialTotals.status is met when all materials are met', async () => {
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          obligations: mockDetailData.obligations.map((o) => ({
+            ...o,
+            status: 'Met'
+          }))
+        })
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.materialTotals.status).toBe('met')
       })
 
       test('maps obligation tonnages correctly', async () => {
@@ -1146,8 +1180,60 @@ describe('getCertificatesOfComplianceViewModel', () => {
           awaitingAcceptance: aluminiumObligation.tonnages.awaitingAcceptance,
           accepted: aluminiumObligation.tonnages.accepted,
           outstanding: aluminiumObligation.tonnages.outstanding,
-          met: aluminiumObligation.status === 'Met'
+          status: 'met'
         })
+      })
+
+      test('maps NotMet obligation status to not-met on the row', async () => {
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          obligations: [
+            {
+              material: 'Plastic',
+              tonnages: {
+                material: 100,
+                awaitingAcceptance: 10,
+                accepted: 80,
+                outstanding: 10,
+                obligated: 100
+              },
+              status: 'NotMet'
+            }
+          ]
+        })
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.materials[0].status).toBe('not-met')
+      })
+
+      test('maps NoDataYet obligation status to no-data on the row', async () => {
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          obligations: [
+            {
+              material: 'Wood',
+              tonnages: {
+                material: 0,
+                awaitingAcceptance: 0,
+                accepted: 0,
+                outstanding: 0,
+                obligated: 0
+              },
+              status: 'NoDataYet'
+            }
+          ]
+        })
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.materials[0].status).toBe('no-data')
       })
 
       test('passes through material name directly from API', async () => {
@@ -1159,6 +1245,79 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.materials[0].name).toBe(
           mockDetailData.obligations[0].material
         )
+      })
+
+      test('null tonnage fields map to 0 on the row', async () => {
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          obligations: [
+            {
+              material: 'Wood',
+              tonnages: {
+                material: null,
+                awaitingAcceptance: null,
+                accepted: null,
+                outstanding: null,
+                obligated: null
+              },
+              status: 'NoDataYet'
+            }
+          ]
+        })
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.materials[0]).toMatchObject({
+          obligationToMeet: 0,
+          awaitingAcceptance: 0,
+          accepted: 0,
+          outstanding: 0
+        })
+      })
+
+      test('null tonnage values contribute 0 to materialTotals', async () => {
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          obligations: [
+            {
+              material: 'Aluminium',
+              tonnages: {
+                material: 100,
+                awaitingAcceptance: 10,
+                accepted: 80,
+                outstanding: 10,
+                obligated: 100
+              },
+              status: 'Met'
+            },
+            {
+              material: 'Wood',
+              tonnages: {
+                material: null,
+                awaitingAcceptance: null,
+                accepted: null,
+                outstanding: null,
+                obligated: null
+              },
+              status: 'NoDataYet'
+            }
+          ]
+        })
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.materialTotals).toMatchObject({
+          obligationToMeet: 100,
+          awaitingAcceptance: 10,
+          accepted: 80,
+          outstanding: 10
+        })
       })
 
       test('maps Accepted status to Approved review status with cancel only', async () => {
@@ -2132,21 +2291,38 @@ describe('certificate detail action helpers', () => {
     expect(vm.actions.showCancel).toBe(true)
   })
 
-  test('mapSessionUserToApiUser maps profile credentials', () => {
+  test('mapSessionUserToApiUser maps session user to API user', () => {
     expect(
       mapSessionUserToApiUser({
-        profile: { sub: 'user-123', email: 'regulator@example.com' }
+        id: 'user-oid-123',
+        email: 'regulator@example.com',
+        name: 'Bob Smith'
       })
     ).toEqual({
-      id: 'user-123',
-      email: 'regulator@example.com'
+      id: 'user-oid-123',
+      email: 'regulator@example.com',
+      name: 'Bob Smith'
     })
   })
 
-  test('mapSessionUserToApiUser falls back for mock auth', () => {
-    expect(mapSessionUserToApiUser({ user: 'mock-user' })).toEqual({
+  test('mapSessionUserToApiUser defaults name to "Unknown" when absent', () => {
+    expect(
+      mapSessionUserToApiUser({
+        id: 'user-oid-123',
+        email: 'regulator@example.com'
+      })
+    ).toEqual({
+      id: 'user-oid-123',
+      email: 'regulator@example.com',
+      name: 'Unknown'
+    })
+  })
+
+  test('mapSessionUserToApiUser falls back to mock user when id or email is missing', () => {
+    expect(mapSessionUserToApiUser({})).toEqual({
       id: 'mock-user',
-      email: 'mock-user@test.local'
+      email: 'mock-user@test.local',
+      name: 'Mock User'
     })
   })
 
@@ -2172,7 +2348,7 @@ describe('certificate detail action helpers', () => {
       await approveComplianceDeclaration(
         'org-1',
         'decl-1',
-        { profile: { sub: 'user-1', email: 'user@example.com' } },
+        { id: 'user-oid-1', email: 'user@example.com', name: 'John Doe' },
         'trace-1'
       )
 
@@ -2181,7 +2357,11 @@ describe('certificate detail action helpers', () => {
           organisationId: 'org-1',
           id: 'decl-1',
           status: 'Accepted',
-          user: { id: 'user-1', email: 'user@example.com' }
+          user: {
+            id: 'user-oid-1',
+            email: 'user@example.com',
+            name: 'John Doe'
+          }
         },
         'trace-1'
       )

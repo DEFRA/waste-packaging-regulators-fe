@@ -24,8 +24,8 @@ export const mockPendingItems = [
     organisationId: '497f6eca-6276-4993-bfeb-53cbbbba6f08',
     organisationReferenceNumber: '101411',
     organisationName: 'Howco Group plc',
-    recyclingObligationsMet: false,
-    percentageMet: 97,
+    recyclingObligationsMet: true,
+    percentageMet: 100,
     dateSubmitted: '2027-01-31'
   },
   {
@@ -55,9 +55,9 @@ export const mockAcceptedItems = [
     organisationId: 'c1d2e3f4-a5b6-7890-abcd-ef1234567890',
     organisationReferenceNumber: '412067',
     organisationName: 'BlueSky Materials plc',
-    recyclingObligationsMet: true,
+    recyclingObligationsMet: false,
     regulation43Met: false,
-    percentageMet: 103,
+    percentageMet: 89,
     dateSubmitted: '2027-01-10'
   }
 ]
@@ -71,6 +71,15 @@ export const mockNotSubmittedItems = [
     recyclingObligationsMet: false,
     percentageMet: 0,
     dateSubmitted: null
+  },
+  {
+    id: null,
+    organisationId: 'e2f3a4b5-c6d7-8901-bcde-f23456789012',
+    organisationReferenceNumber: '627148',
+    organisationName: 'Coastal Bottling Co',
+    recyclingObligationsMet: false,
+    percentageMet: 0,
+    dateSubmitted: null
   }
 ]
 
@@ -80,9 +89,9 @@ export const mockComplianceSchemePendingItems = [
     organisationId: '923fa611-571c-4948-ab7d-fbb75e75ed65',
     organisationReferenceNumber: 'CS-1001',
     organisationName: 'EcoPack Compliance Ltd',
-    recyclingObligationsMet: false,
+    recyclingObligationsMet: true,
     regulation43Met: false,
-    percentageMet: 91,
+    percentageMet: 100,
     dateSubmitted: '2027-01-20'
   },
   {
@@ -107,6 +116,16 @@ export const mockComplianceSchemeAcceptedItems = [
     regulation43Met: true,
     percentageMet: 105,
     dateSubmitted: '2027-01-12'
+  },
+  {
+    id: 'decl-cs-102',
+    organisationId: '6d9a1e77-1b3f-4c22-8a41-8f5c1e9d2b34',
+    organisationReferenceNumber: 'CS-2002',
+    organisationName: 'Riverside Compliance Partners',
+    recyclingObligationsMet: false,
+    regulation43Met: false,
+    percentageMet: 92,
+    dateSubmitted: '2027-01-08'
   }
 ]
 
@@ -123,16 +142,15 @@ export const mockComplianceSchemeNotSubmittedItems = [
   },
   {
     id: null,
-    organisationId: 'b8a7c6d5-f4e3-2109-abcd-fe8765432109',
+    organisationId: 'b8c7d6e5-f4a3-2109-abcd-ef8765432109',
     organisationReferenceNumber: 'CS-3002',
-    organisationName: 'Coastal Compliance Alliance',
+    organisationName: 'Metroline Waste Services',
     recyclingObligationsMet: false,
     regulation43Met: false,
     percentageMet: 0,
     dateSubmitted: null
   },
   {
-    // Name unresolved by the Account API (404 / failed lookup) → 'No data'
     id: null,
     organisationId: 'c7b6a5d4-e3f2-1098-abcd-ed7654321098',
     organisationReferenceNumber: 'No data',
@@ -159,7 +177,7 @@ export const mockListByOrganisationType = {
   }
 }
 
-const mockObligations = [
+const mockObligationsAllMet = [
   {
     material: 'Aluminium',
     recyclingTarget: 1,
@@ -176,11 +194,11 @@ const mockObligations = [
     material: 'Glass',
     recyclingTarget: 1,
     tonnages: {
-      material: 0,
+      material: 640,
       awaitingAcceptance: 0,
-      accepted: 0,
+      accepted: 640,
       outstanding: 0,
-      obligated: 0
+      obligated: 640
     },
     status: 'Met'
   },
@@ -236,11 +254,11 @@ const mockObligations = [
     material: 'GlassRemelt',
     recyclingTarget: 1,
     tonnages: {
-      material: 0,
+      material: 420,
       awaitingAcceptance: 0,
-      accepted: 0,
+      accepted: 420,
       outstanding: 0,
-      obligated: 0
+      obligated: 420
     },
     status: 'Met'
   },
@@ -248,13 +266,112 @@ const mockObligations = [
     material: 'RemainingGlass',
     recyclingTarget: 1,
     tonnages: {
-      material: 0,
+      material: 220,
       awaitingAcceptance: 0,
-      accepted: 0,
+      accepted: 220,
       outstanding: 0,
-      obligated: 0
+      obligated: 220
     },
     status: 'Met'
+  }
+]
+
+const mockObligationsMixed = [
+  {
+    material: 'Aluminium',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 215,
+      awaitingAcceptance: 0,
+      accepted: 215,
+      outstanding: 0,
+      obligated: 215
+    },
+    status: 'Met'
+  },
+  {
+    material: 'Glass',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 640,
+      awaitingAcceptance: 40,
+      accepted: 500,
+      outstanding: 100,
+      obligated: 640
+    },
+    status: 'NotMet'
+  },
+  {
+    material: 'PaperBoardFibre',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 870,
+      awaitingAcceptance: 0,
+      accepted: 870,
+      outstanding: 0,
+      obligated: 870
+    },
+    status: 'Met'
+  },
+  {
+    material: 'Plastic',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 1740,
+      awaitingAcceptance: 120,
+      accepted: 1500,
+      outstanding: 120,
+      obligated: 1740
+    },
+    status: 'NotMet'
+  },
+  {
+    material: 'Steel',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 365,
+      awaitingAcceptance: 0,
+      accepted: 365,
+      outstanding: 0,
+      obligated: 365
+    },
+    status: 'Met'
+  },
+  {
+    material: 'Wood',
+    recyclingTarget: 1,
+    tonnages: {
+      material: null,
+      awaitingAcceptance: null,
+      accepted: null,
+      outstanding: null,
+      obligated: 80
+    },
+    status: 'NoDataYet'
+  },
+  {
+    material: 'GlassRemelt',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 420,
+      awaitingAcceptance: 20,
+      accepted: 380,
+      outstanding: 20,
+      obligated: 420
+    },
+    status: 'NotMet'
+  },
+  {
+    material: 'RemainingGlass',
+    recyclingTarget: 1,
+    tonnages: {
+      material: null,
+      awaitingAcceptance: null,
+      accepted: null,
+      outstanding: null,
+      obligated: 220
+    },
+    status: 'NoDataYet'
   }
 ]
 
@@ -281,8 +398,8 @@ export const mockDetailData = {
     contactPhoneNumber: '01234 567890'
   },
   obligationYear: 2026,
-  obligations: mockObligations,
-  obligationStatus: 'NotMet',
+  obligations: mockObligationsAllMet,
+  obligationStatus: 'Met',
   declarationText: { text: 'I declare...', language: 'en' },
   submitterName: 'Catherine Morris',
   isRegulation43Compliant: true,
@@ -310,8 +427,8 @@ export const mockComplianceSchemeDetailData = {
     contactPhoneNumber: '01987 654321'
   },
   obligationYear: 2026,
-  obligations: mockObligations,
-  obligationStatus: 'NotMet',
+  obligations: mockObligationsAllMet,
+  obligationStatus: 'Met',
   declarationText: {
     text: 'I declare on behalf of the scheme...',
     language: 'en'
@@ -363,7 +480,78 @@ export const mockDirectProducerAcceptedDetailDataSecondary = {
     id: 'c1d2e3f4-a5b6-7890-abcd-ef1234567890',
     name: 'BlueSky Materials plc',
     referenceNumber: '412067'
-  }
+  },
+  obligations: mockObligationsMixed,
+  obligationStatus: 'NotMet',
+  isRegulation43Compliant: false
+}
+
+export const mockDirectProducerPendingNotMetDetailData = {
+  ...mockDetailData,
+  id: 'decl-204872',
+  created: '2027-01-28T00:00:00Z',
+  updated: '2027-01-28T00:00:00Z',
+  status: 'Submitted',
+  organisation: {
+    ...mockDetailData.organisation,
+    id: 'b1e2c3d4-e5f6-7890-abcd-ef1234567890',
+    name: 'Greenfield Packaging Ltd',
+    referenceNumber: '204872',
+    companiesHouseNumber: '23456789',
+    nameOnAccount: 'Priya Rao',
+    contactEmailAddress: 'priya.rao@greenfield.co.uk',
+    contactPhoneNumber: '01234 111222'
+  },
+  obligations: mockObligationsMixed,
+  obligationStatus: 'NotMet',
+  submitterName: 'Priya Rao',
+  isRegulation43Compliant: false
+}
+
+export const mockComplianceSchemePendingNotMetDetailData = {
+  ...mockComplianceSchemeDetailData,
+  id: 'decl-cs-002',
+  created: '2027-01-18T00:00:00Z',
+  updated: '2027-01-18T00:00:00Z',
+  status: 'Submitted',
+  organisation: {
+    ...mockComplianceSchemeDetailData.organisation,
+    id: 'f3a2b1c0-d9e8-47f6-a5b4-c3d2e1f0a9b8',
+    complianceSchemeName: 'GreenCircle Schemes',
+    schemeOperatorName: 'GreenCircle Group',
+    referenceNumber: 'CS-1002',
+    companiesHouseNumber: '77889900',
+    nameOnAccount: 'Aled Bevan',
+    contactEmailAddress: 'aled.bevan@greencircle.co.uk',
+    contactPhoneNumber: '01987 333444'
+  },
+  obligations: mockObligationsMixed,
+  obligationStatus: 'NotMet',
+  submitterName: 'Aled Bevan',
+  isRegulation43Compliant: true
+}
+
+export const mockComplianceSchemeAcceptedNotMetDetailData = {
+  ...mockComplianceSchemeDetailData,
+  id: 'decl-cs-102',
+  created: '2027-01-08T00:00:00Z',
+  updated: '2027-01-08T00:00:00Z',
+  status: 'Accepted',
+  organisation: {
+    ...mockComplianceSchemeDetailData.organisation,
+    id: '6d9a1e77-1b3f-4c22-8a41-8f5c1e9d2b34',
+    complianceSchemeName: 'Riverside Compliance Partners',
+    schemeOperatorName: 'Riverside Group',
+    referenceNumber: 'CS-2002',
+    companiesHouseNumber: '55221199',
+    nameOnAccount: 'Hana Okonkwo',
+    contactEmailAddress: 'hana.okonkwo@riverside.co.uk',
+    contactPhoneNumber: '02011 445566'
+  },
+  obligations: mockObligationsMixed,
+  obligationStatus: 'NotMet',
+  submitterName: 'Hana Okonkwo',
+  isRegulation43Compliant: false
 }
 
 export const mockQueriedDetailData = {
@@ -563,13 +751,16 @@ export function getMockDeclarationsByOrgYear(organisationId, obligationYear) {
 
 const mockDetailById = {
   'decl-101411': mockDetailData,
+  'decl-204872': mockDirectProducerPendingNotMetDetailData,
   'decl-309145': mockDirectProducerAcceptedDetailData,
   'decl-412067': mockDirectProducerAcceptedDetailDataSecondary,
   'decl-dp-cancelled': mockDirectProducerCancelledDetailData,
   'decl-queried': mockQueriedDetailData,
   'decl-cancelled': mockDirectProducerCancelledDetailData,
   'decl-cs-001': mockComplianceSchemeDetailData,
+  'decl-cs-002': mockComplianceSchemePendingNotMetDetailData,
   'decl-cs-101': mockComplianceSchemeAcceptedDetailData,
+  'decl-cs-102': mockComplianceSchemeAcceptedNotMetDetailData,
   'decl-cs-queried': mockComplianceSchemeQueriedDetailData,
   'decl-cs-cancelled': mockComplianceSchemeCancelledDetailData,
   'decl-accepted-only': mockAcceptedOnlyDeclaration,

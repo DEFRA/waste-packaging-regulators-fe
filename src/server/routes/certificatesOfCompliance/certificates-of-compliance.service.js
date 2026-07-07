@@ -682,16 +682,15 @@ export async function getComplianceDeclarationReviewStatus(
 }
 
 export function mapSessionUserToApiUser(sessionUser) {
-  const profile = sessionUser?.profile
-  if (profile) {
-    const id = profile.sub ?? profile.oid ?? profile.id
-    const email = profile.email ?? profile.emails?.[0]
-    if (id && email) {
-      return { id, email }
+  if (sessionUser?.id && sessionUser?.email) {
+    return {
+      id: sessionUser.id,
+      email: sessionUser.email,
+      name: sessionUser.name ?? 'Unknown'
     }
   }
 
-  return { id: 'mock-user', email: 'mock-user@test.local' }
+  return { id: 'mock-user', email: 'mock-user@test.local', name: 'Mock User' }
 }
 
 export async function approveComplianceDeclaration(
@@ -733,15 +732,36 @@ function formatDate(isoString) {
   })
 }
 
+function mapObligationStatus(status) {
+  switch (status) {
+    case 'Met':
+      return 'met'
+    case 'NotMet':
+      return 'not-met'
+    case 'NoDataYet':
+    case null:
+    case undefined:
+      return 'no-data'
+    default:
+      throw new Error(`Unexpected obligation status: ${status}`)
+  }
+}
+
 function mapObligation(obligation) {
   return {
     name: obligation.material,
-    obligationToMeet: obligation.tonnages.obligated,
-    awaitingAcceptance: obligation.tonnages.awaitingAcceptance,
-    accepted: obligation.tonnages.accepted,
-    outstanding: obligation.tonnages.outstanding,
-    met: obligation.status?.toLowerCase() === 'met'
+    obligationToMeet: obligation.tonnages.obligated ?? 0,
+    awaitingAcceptance: obligation.tonnages.awaitingAcceptance ?? 0,
+    accepted: obligation.tonnages.accepted ?? 0,
+    outstanding: obligation.tonnages.outstanding ?? 0,
+    status: mapObligationStatus(obligation.status)
   }
+}
+
+function deriveTotalsStatus(rows) {
+  if (rows.some((r) => r.status === 'not-met')) return 'not-met'
+  if (rows.every((r) => r.status === 'no-data')) return 'no-data'
+  return 'met'
 }
 
 function computeTotals(rows) {
@@ -750,7 +770,7 @@ function computeTotals(rows) {
     awaitingAcceptance: rows.reduce((sum, r) => sum + r.awaitingAcceptance, 0),
     accepted: rows.reduce((sum, r) => sum + r.accepted, 0),
     outstanding: rows.reduce((sum, r) => sum + r.outstanding, 0),
-    met: rows.every((r) => r.met)
+    status: deriveTotalsStatus(rows)
   }
 }
 
