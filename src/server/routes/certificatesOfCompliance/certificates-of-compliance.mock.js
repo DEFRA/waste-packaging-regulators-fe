@@ -120,6 +120,27 @@ export const mockComplianceSchemeNotSubmittedItems = [
     regulation43Met: false,
     percentageMet: 0,
     dateSubmitted: null
+  },
+  {
+    id: null,
+    organisationId: 'b8a7c6d5-f4e3-2109-abcd-fe8765432109',
+    organisationReferenceNumber: 'CS-3002',
+    organisationName: 'Coastal Compliance Alliance',
+    recyclingObligationsMet: false,
+    regulation43Met: false,
+    percentageMet: 0,
+    dateSubmitted: null
+  },
+  {
+    // Name unresolved by the Account API (404 / failed lookup) → 'No data'
+    id: null,
+    organisationId: 'c7b6a5d4-e3f2-1098-abcd-ed7654321098',
+    organisationReferenceNumber: 'No data',
+    organisationName: 'No data',
+    recyclingObligationsMet: false,
+    regulation43Met: false,
+    percentageMet: 0,
+    dateSubmitted: null
   }
 ]
 

@@ -47,6 +47,18 @@ const statusByTab = {
 const PAGE_SIZE = 20
 const DECLARATIONS_BATCH_SIZE = 100
 const NO_DATA = 'No data'
+// Account API bulk lookups are split into batches so that a 5xx affecting some
+// ids degrades only those rows to 'No data', while a total failure surfaces the
+// error page. Must stay below PAGE_SIZE for partial failures to be possible.
+const ACCOUNT_LOOKUP_BATCH_SIZE = 10
+
+function chunk(items, size) {
+  const batches = []
+  for (let i = 0; i < items.length; i += size) {
+    batches.push(items.slice(i, i + size))
+  }
+  return batches
+}
 
 export function displayOrNoData(value) {
   return value == null || value === '' ? NO_DATA : value
@@ -147,11 +159,16 @@ function mapOrganisationToItem(organisation, organisationType) {
   }
 }
 
-// Fills the 6-digit reference number for "Not submitted" rows from the Account API bulk lookup.
+// Resolves "Not submitted" rows against the Account API bulk lookup. The 6-digit
+// reference number is filled for every organisation type; for compliance schemes
+// the organisation name is also taken from the Account API. Lookups are batched:
+// a 404 or a failed batch degrades the affected rows to 'No data', but if every
+// batch fails the error is rethrown so the GDS error page is shown.
 async function resolveNotSubmittedOrganisationDetails(
   accountApi,
   items,
-  traceId
+  traceId,
+  organisationType
 ) {
   const externalIds = items.map((item) => item.organisationId).filter(Boolean)
 
@@ -159,18 +176,35 @@ async function resolveNotSubmittedOrganisationDetails(
     return
   }
 
-  const { organisations = [] } = await accountApi.getOrganisationsByExternalIds(
-    externalIds,
-    traceId
+  const batches = chunk(externalIds, ACCOUNT_LOOKUP_BATCH_SIZE)
+  const results = await Promise.allSettled(
+    batches.map((batch) =>
+      accountApi.getOrganisationsByExternalIds(batch, traceId)
+    )
   )
 
-  const detailsByExternalId = new Map(
-    organisations.map((org) => [org.externalId, org])
-  )
+  const firstRejection = results.find((r) => r.status === 'rejected')
+  const allFailed = results.every((r) => r.status === 'rejected')
+  if (allFailed && firstRejection) {
+    throw firstRejection.reason
+  }
 
+  const detailsByExternalId = new Map()
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      for (const org of result.value.organisations ?? []) {
+        detailsByExternalId.set(org.externalId, org)
+      }
+    }
+  }
+
+  const resolvesName = organisationType === 'compliance-schemes'
   for (const item of items) {
     const details = detailsByExternalId.get(item.organisationId)
-    item.organisationReferenceNumber = details?.referenceNumber ?? 'No data'
+    item.organisationReferenceNumber = details?.referenceNumber ?? NO_DATA
+    if (resolvesName) {
+      item.organisationName = details?.name ?? NO_DATA
+    }
   }
 }
 
@@ -297,7 +331,12 @@ async function getComplianceList(
     const start = (page - 1) * PAGE_SIZE
     const items = allItems.slice(start, start + PAGE_SIZE)
 
-    await resolveNotSubmittedOrganisationDetails(accountApi, items, traceId)
+    await resolveNotSubmittedOrganisationDetails(
+      accountApi,
+      items,
+      traceId,
+      organisationType
+    )
 
     return {
       items,

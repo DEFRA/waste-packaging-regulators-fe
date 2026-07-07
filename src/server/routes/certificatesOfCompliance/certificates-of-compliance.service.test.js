@@ -1740,6 +1740,173 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.items[0].id).toBeNull()
         expect(vm.items[0].organisationId).toBe('org-1')
       })
+
+      describe('compliance-schemes — organisation name from Account API', () => {
+        // Scenario 1: Account API is called for Not submitted compliance-scheme rows
+        test('calls the Account API with the compliance-scheme org ids and traceId', async () => {
+          setupNotSubmittedTab([
+            { id: 'cs-guid-1', name: 'Org record name', registrationType: 'ComplianceScheme' },
+            { id: 'cs-guid-2', name: 'Org record name', registrationType: 'ComplianceScheme' }
+          ])
+          mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
+            organisations: [],
+            notFoundExternalIds: []
+          })
+
+          await getCertificatesOfComplianceViewModel(
+            'compliance-schemes',
+            'not-submitted',
+            1,
+            'trace-cs'
+          )
+
+          expect(
+            mockAccountApi.getOrganisationsByExternalIds
+          ).toHaveBeenCalledWith(['cs-guid-1', 'cs-guid-2'], 'trace-cs')
+        })
+
+        // Scenario 2: Organisation name is retrieved and displayed from the Account API
+        test('displays the Account API name for each compliance-scheme row', async () => {
+          setupNotSubmittedTab([
+            { id: 'cs-guid-1', name: 'Org record name 1', registrationType: 'ComplianceScheme' },
+            { id: 'cs-guid-2', name: 'Org record name 2', registrationType: 'ComplianceScheme' }
+          ])
+          mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
+            organisations: [
+              { externalId: 'cs-guid-1', name: 'EcoPack Compliance Ltd', referenceNumber: '518293' },
+              { externalId: 'cs-guid-2', name: 'GreenCircle Schemes', referenceNumber: '600124' }
+            ],
+            notFoundExternalIds: []
+          })
+
+          const vm = await getCertificatesOfComplianceViewModel(
+            'compliance-schemes',
+            'not-submitted',
+            1
+          )
+
+          expect(vm.items).toEqual([
+            expect.objectContaining({
+              organisationId: 'cs-guid-1',
+              organisationReferenceNumber: '518293',
+              organisationName: 'EcoPack Compliance Ltd'
+            }),
+            expect.objectContaining({
+              organisationId: 'cs-guid-2',
+              organisationReferenceNumber: '600124',
+              organisationName: 'GreenCircle Schemes'
+            })
+          ])
+        })
+
+        // Scenario 4: Account API returns 404 for an Organisation ID
+        test('shows "No data" name for a 404 id while other rows render', async () => {
+          setupNotSubmittedTab([
+            { id: 'cs-guid-1', name: 'Org record name 1', registrationType: 'ComplianceScheme' },
+            { id: 'cs-guid-2', name: 'Org record name 2', registrationType: 'ComplianceScheme' }
+          ])
+          mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
+            organisations: [
+              { externalId: 'cs-guid-1', name: 'EcoPack Compliance Ltd', referenceNumber: '518293' }
+            ],
+            notFoundExternalIds: ['cs-guid-2']
+          })
+
+          const vm = await getCertificatesOfComplianceViewModel(
+            'compliance-schemes',
+            'not-submitted',
+            1
+          )
+
+          expect(vm.items[0]).toMatchObject({
+            organisationId: 'cs-guid-1',
+            organisationName: 'EcoPack Compliance Ltd'
+          })
+          expect(vm.items[1]).toMatchObject({
+            organisationId: 'cs-guid-2',
+            organisationReferenceNumber: 'No data',
+            organisationName: 'No data'
+          })
+        })
+
+        // Scenario 5: Account API returns a 500 for one or more (but not all) batches
+        test('shows "No data" name for rows in a failed batch while other rows render', async () => {
+          const orgs = Array.from({ length: 15 }, (_, i) => ({
+            id: `cs-${i}`,
+            name: `Org record ${i}`,
+            registrationType: 'ComplianceScheme'
+          }))
+          setupNotSubmittedTab(orgs)
+
+          const apiError = Object.assign(new Error('account API failed'), {
+            name: 'ApiError',
+            status: 500
+          })
+          // First batch (cs-0..cs-9) resolves; second batch (cs-10..cs-14) rejects.
+          mockAccountApi.getOrganisationsByExternalIds.mockImplementation(
+            (externalIds) => {
+              if (externalIds.includes('cs-10')) {
+                return Promise.reject(apiError)
+              }
+              return Promise.resolve({
+                organisations: externalIds.map((externalId) => ({
+                  externalId,
+                  name: `Account name ${externalId}`,
+                  referenceNumber: `ref-${externalId}`
+                })),
+                notFoundExternalIds: []
+              })
+            }
+          )
+
+          const vm = await getCertificatesOfComplianceViewModel(
+            'compliance-schemes',
+            'not-submitted',
+            1
+          )
+
+          expect(vm.items[0]).toMatchObject({
+            organisationId: 'cs-0',
+            organisationName: 'Account name cs-0'
+          })
+          expect(vm.items[10]).toMatchObject({
+            organisationId: 'cs-10',
+            organisationReferenceNumber: 'No data',
+            organisationName: 'No data'
+          })
+          expect(vm.items[14]).toMatchObject({
+            organisationId: 'cs-14',
+            organisationName: 'No data'
+          })
+          expect(
+            mockAccountApi.getOrganisationsByExternalIds.mock.calls.length
+          ).toBeGreaterThan(1)
+        })
+
+        // Scenario 6: Account API returns a 500 for all batches → GDS error page
+        test('propagates the error when every batch fails so the error page is shown', async () => {
+          const orgs = Array.from({ length: 15 }, (_, i) => ({
+            id: `cs-${i}`,
+            name: `Org record ${i}`,
+            registrationType: 'ComplianceScheme'
+          }))
+          setupNotSubmittedTab(orgs)
+
+          const apiError = Object.assign(new Error('account API failed'), {
+            name: 'ApiError',
+            status: 500
+          })
+          mockAccountApi.getOrganisationsByExternalIds.mockRejectedValue(apiError)
+
+          await expect(
+            getCertificatesOfComplianceViewModel(
+              'compliance-schemes',
+              'not-submitted',
+              1
+            )
+          ).rejects.toMatchObject({ name: 'ApiError', status: 500 })
+        })
+      })
     })
   })
 })
