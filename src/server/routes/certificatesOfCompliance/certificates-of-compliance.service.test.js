@@ -1987,18 +1987,39 @@ describe('certificate detail action helpers', () => {
   test('mapSessionUserToApiUser maps profile credentials', () => {
     expect(
       mapSessionUserToApiUser({
-        profile: { sub: 'user-123', email: 'regulator@example.com' }
+        profile: {
+          sub: 'user-123',
+          email: 'regulator@example.com',
+          name: 'Bob'
+        }
       })
     ).toEqual({
       id: 'user-123',
-      email: 'regulator@example.com'
+      email: 'regulator@example.com',
+      name: 'Bob'
+    })
+  })
+  test('mapSessionUserToApiUser maps profile credentials with no name', () => {
+    expect(
+      mapSessionUserToApiUser({
+        profile: {
+          sub: 'user-123',
+          email: 'regulator@example.com',
+          displayName: 'Bill'
+        }
+      })
+    ).toEqual({
+      id: 'user-123',
+      email: 'regulator@example.com',
+      name: 'Bill'
     })
   })
 
   test('mapSessionUserToApiUser falls back for mock auth', () => {
     expect(mapSessionUserToApiUser({ user: 'mock-user' })).toEqual({
       id: 'mock-user',
-      email: 'mock-user@test.local'
+      email: 'mock-user@test.local',
+      name: 'Mock User'
     })
   })
 
@@ -2024,7 +2045,7 @@ describe('certificate detail action helpers', () => {
       await approveComplianceDeclaration(
         'org-1',
         'decl-1',
-        { profile: { sub: 'user-1', email: 'user@example.com' } },
+        { profile: { sub: 'user-1', email: 'user@example.com', name:'John Doe' } },
         'trace-1'
       )
 
@@ -2033,7 +2054,7 @@ describe('certificate detail action helpers', () => {
           organisationId: 'org-1',
           id: 'decl-1',
           status: 'Accepted',
-          user: { id: 'user-1', email: 'user@example.com' }
+          user: { id: 'user-1', email: 'user@example.com', name: 'John Doe' }
         },
         'trace-1'
       )
