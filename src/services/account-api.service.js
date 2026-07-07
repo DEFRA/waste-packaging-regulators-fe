@@ -63,12 +63,12 @@ export class AccountApiService extends BaseApiService {
 
 export function mapAccountDetailsDtoToViewModel(dto) {
   return {
-    firstName: trimmed(dto.firstName),
-    lastName: trimmed(dto.lastName),
-    serviceRole: trimmed(dto.serviceRole ?? ''),
+    firstName: dto.firstName,
+    lastName: dto.lastName,
+    serviceRole: dto.serviceRole ?? '',
     serviceRoleId: dto.serviceRoleId,
-    email: trimmed(dto.contactEmail ?? ''),
-    organisationName: trimmed(dto.organisationName ?? ''),
+    email: dto.contactEmail ?? '',
+    organisationName: dto.organisationName ?? '',
     nationId: dto.nationId
   }
 }
