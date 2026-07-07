@@ -676,12 +676,13 @@ export function mapSessionUserToApiUser(sessionUser) {
   if (profile) {
     const id = profile.sub ?? profile.oid ?? profile.id
     const email = profile.email ?? profile.emails?.[0]
+    const name = profile.name ?? profile.displayName ?? 'Unknown'
     if (id && email) {
-      return { id, email }
+      return { id, email, name }
     }
   }
 
-  return { id: 'mock-user', email: 'mock-user@test.local' }
+  return { id: 'mock-user', email: 'mock-user@test.local', name: 'Mock User' }
 }
 
 export async function approveComplianceDeclaration(

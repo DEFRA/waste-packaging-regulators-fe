@@ -5,18 +5,26 @@ import {
   getB2cAuthorityPrefix,
   resolvePostLogoutAbsoluteUri
 } from '#server/auth/azure-ad-b2c.js'
+import { createAccountApiService } from '#services/account-api.service.js'
 
 export const signinOidcController = {
-  handler(request, h) {
+  async handler(request, h) {
     if (request.auth?.credentials) {
-      request.yar.set('user', request.auth.credentials)
+      const apiAccount = createAccountApiService()
+      //Call to account api to get user details
+      const user = await apiAccount.getAccountDetailsById(
+        request.auth.credentials.sub
+      )
+      user.id = request.auth.credentials.sub
+      user.email = request.auth.credentials.email
+      user.name = user.firstName + ' ' + user.lastName
+      request.yar.set('user', user)
     }
     const returnTo = request.yar.get('returnTo') || '/'
     request.yar.clear('returnTo')
     return h.redirect(returnTo)
   }
 }
-
 export const signOutController = {
   async handler(request, h) {
     if (request.yar) {
