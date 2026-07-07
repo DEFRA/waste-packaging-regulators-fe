@@ -3,6 +3,17 @@
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
+{% macro materialStatusTag(status) %}
+  {% switch status %}
+    {% case 'met' %}
+      <strong class="govuk-tag govuk-tag--green govuk-!-font-size-16">Met</strong>
+    {% case 'not-met' %}
+      <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">Not met</strong>
+    {% case 'no-data' %}
+      <strong class="govuk-tag govuk-tag--grey govuk-!-font-size-16">No data</strong>
+  {% endswitch %}
+{% endmacro %}
+
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
@@ -148,7 +159,7 @@
       <h2 class="govuk-heading-m">Recycling obligations</h2>
       <p class="govuk-body-m govuk-!-margin-bottom-3">All values are in tonnes.</p>
 
-      <table class="govuk-table">
+      <table class="govuk-table" data-testid="obligations-table">
         <thead class="govuk-table__head">
           <tr class="govuk-table__row">
             <th scope="col" class="govuk-table__header">Material</th>
@@ -168,7 +179,7 @@
               <td class="govuk-table__cell govuk-table__cell--numeric">{{ material.accepted }}</td>
               <td class="govuk-table__cell govuk-table__cell--numeric">{{ material.outstanding }}</td>
               <td class="govuk-table__cell">
-                {{ appStatusTag({ value: material.met, trueText: 'Met', falseText: 'Not met' }) }}
+                {{ materialStatusTag(material.status) }}
               </td>
             </tr>
           {% endfor %}
@@ -179,7 +190,7 @@
             <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.accepted }}</td>
             <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.outstanding }}</td>
             <td class="govuk-table__cell">
-              {{ appStatusTag({ value: materialTotals.met, trueText: 'Met', falseText: 'Not met' }) }}
+              {{ materialStatusTag(materialTotals.status) }}
             </td>
           </tr>
         </tbody>
@@ -187,7 +198,7 @@
 
       <h3 class="govuk-heading-s govuk-!-margin-top-8">Glass recycling obligation breakdown</h3>
 
-      <table class="govuk-table">
+      <table class="govuk-table" data-testid="glass-breakdown-table">
         <thead class="govuk-table__head">
           <tr class="govuk-table__row">
             <th scope="col" class="govuk-table__header">Material</th>
@@ -207,7 +218,7 @@
               <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.accepted }}</td>
               <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.outstanding }}</td>
               <td class="govuk-table__cell">
-                {{ appStatusTag({ value: row.met, trueText: 'Met', falseText: 'Not met' }) }}
+                {{ materialStatusTag(row.status) }}
               </td>
             </tr>
           {% endfor %}
@@ -218,7 +229,7 @@
             <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.accepted }}</td>
             <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.outstanding }}</td>
             <td class="govuk-table__cell">
-              {{ appStatusTag({ value: glassBreakdownTotals.met, trueText: 'Met', falseText: 'Not met' }) }}
+              {{ materialStatusTag(glassBreakdownTotals.status) }}
             </td>
           </tr>
         </tbody>

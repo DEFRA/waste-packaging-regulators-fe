@@ -82,7 +82,9 @@ describe('#certificatesOfComplianceDetailController', () => {
   })
 
   it('should render the recycling obligations status', async () => {
-    const response = await inject('/org-123/certificates-of-compliance/101411')
+    const response = await inject(
+      '/b1e2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-204872'
+    )
     expect(response.payload).toContain('Not met')
   })
 
