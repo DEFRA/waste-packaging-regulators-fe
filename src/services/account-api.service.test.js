@@ -3,7 +3,8 @@ import { describe, expect, test, vi } from 'vitest'
 import { config } from '#/config/config.js'
 import {
   createAccountApiService,
-  AccountApiService
+  AccountApiService,
+  mockAccountDetails
 } from './account-api.service.js'
 
 function mockOkResponse(data) {
@@ -128,6 +129,129 @@ describe('AccountApiService', () => {
     })
 
     expect(service).toBeInstanceOf(AccountApiService)
+  })
+
+  describe('getAccountDetailsById', () => {
+    test('returns mockAccountDetails when useMockApi is true', async () => {
+      const getSpy = vi
+        .spyOn(config, 'get')
+        .mockImplementation((key) => (key === 'useMockApi' ? true : undefined))
+
+      const service = new AccountApiService({
+        baseUrl: 'http://localhost:3001',
+        clientId: 'Developer',
+        clientSecret: 'developer-pwd',
+        fetchImpl: vi.fn()
+      })
+
+      const result = await service.getAccountDetailsById('some-user-id')
+
+      expect(result).toEqual(mockAccountDetails)
+      getSpy.mockRestore()
+    })
+
+    test('does not call the API when useMockApi is true', async () => {
+      const getSpy = vi
+        .spyOn(config, 'get')
+        .mockImplementation((key) => (key === 'useMockApi' ? true : undefined))
+      const fetchImpl = vi.fn()
+      const service = new AccountApiService({
+        baseUrl: 'http://localhost:3001',
+        clientId: 'Developer',
+        clientSecret: 'developer-pwd',
+        fetchImpl
+      })
+
+      await service.getAccountDetailsById('some-user-id')
+
+      expect(fetchImpl).not.toHaveBeenCalled()
+      getSpy.mockRestore()
+    })
+
+    test('calls the account API and maps the response when useMockApi is false', async () => {
+      const getSpy = vi
+        .spyOn(config, 'get')
+        .mockImplementation((key) => (key === 'useMockApi' ? false : undefined))
+
+      const apiResponse = {
+        user: {
+          firstName: 'Alice',
+          lastName: 'Jones',
+          email: 'alice@example.com',
+          serviceRole: 'Regulator',
+          serviceRoleId: 3,
+          organisations: [{ name: 'Environment Agency', nationId: 2 }]
+        }
+      }
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValue(mockOkResponse(apiResponse))
+      const service = new AccountApiService({
+        baseUrl: 'http://localhost:3001',
+        clientId: 'Developer',
+        clientSecret: 'developer-pwd',
+        fetchImpl
+      })
+
+      const result = await service.getAccountDetailsById('alice-user-id')
+
+      expect(result).toEqual({
+        firstName: 'Alice',
+        lastName: 'Jones',
+        contactEmail: 'alice@example.com',
+        serviceRole: 'Regulator',
+        serviceRoleId: 3,
+        organisationName: 'Environment Agency',
+        nationId: 2
+      })
+      getSpy.mockRestore()
+    })
+
+    test('returns an empty object when the API response has no user', async () => {
+      const getSpy = vi
+        .spyOn(config, 'get')
+        .mockImplementation((key) => (key === 'useMockApi' ? false : undefined))
+
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValue(mockOkResponse({ user: null }))
+      const service = new AccountApiService({
+        baseUrl: 'http://localhost:3001',
+        clientId: 'Developer',
+        clientSecret: 'developer-pwd',
+        fetchImpl
+      })
+
+      const result = await service.getAccountDetailsById('unknown-id')
+
+      expect(result).toEqual({})
+      getSpy.mockRestore()
+    })
+
+    test('encodes the userId in the request URL', async () => {
+      const getSpy = vi
+        .spyOn(config, 'get')
+        .mockImplementation((key) => (key === 'useMockApi' ? false : undefined))
+
+      const apiResponse = { user: null }
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValue(mockOkResponse(apiResponse))
+      const service = new AccountApiService({
+        baseUrl: 'http://localhost:3001',
+        clientId: 'Developer',
+        clientSecret: 'developer-pwd',
+        fetchImpl
+      })
+
+      await service.getAccountDetailsById('user id with spaces')
+
+      expect(fetchImpl).toHaveBeenCalledWith(
+        expect.stringContaining('user%20id%20with%20spaces'),
+        expect.anything()
+      )
+      getSpy.mockRestore()
+    })
   })
 
   test('createAccountApiService forwards bearer OAuth config to the service', () => {
