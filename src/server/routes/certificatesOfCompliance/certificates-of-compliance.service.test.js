@@ -1745,8 +1745,16 @@ describe('getCertificatesOfComplianceViewModel', () => {
         // Scenario 1: Account API is called for Not submitted compliance-scheme rows
         test('calls the Account API with the compliance-scheme org ids and traceId', async () => {
           setupNotSubmittedTab([
-            { id: 'cs-guid-1', name: 'Org record name', registrationType: 'ComplianceScheme' },
-            { id: 'cs-guid-2', name: 'Org record name', registrationType: 'ComplianceScheme' }
+            {
+              id: 'cs-guid-1',
+              name: 'Org record name',
+              registrationType: 'ComplianceScheme'
+            },
+            {
+              id: 'cs-guid-2',
+              name: 'Org record name',
+              registrationType: 'ComplianceScheme'
+            }
           ])
           mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
             organisations: [],
@@ -1768,13 +1776,29 @@ describe('getCertificatesOfComplianceViewModel', () => {
         // Scenario 2: Organisation name is retrieved and displayed from the Account API
         test('displays the Account API name for each compliance-scheme row', async () => {
           setupNotSubmittedTab([
-            { id: 'cs-guid-1', name: 'Org record name 1', registrationType: 'ComplianceScheme' },
-            { id: 'cs-guid-2', name: 'Org record name 2', registrationType: 'ComplianceScheme' }
+            {
+              id: 'cs-guid-1',
+              name: 'Org record name 1',
+              registrationType: 'ComplianceScheme'
+            },
+            {
+              id: 'cs-guid-2',
+              name: 'Org record name 2',
+              registrationType: 'ComplianceScheme'
+            }
           ])
           mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
             organisations: [
-              { externalId: 'cs-guid-1', name: 'EcoPack Compliance Ltd', referenceNumber: '518293' },
-              { externalId: 'cs-guid-2', name: 'GreenCircle Schemes', referenceNumber: '600124' }
+              {
+                externalId: 'cs-guid-1',
+                name: 'EcoPack Compliance Ltd',
+                referenceNumber: '518293'
+              },
+              {
+                externalId: 'cs-guid-2',
+                name: 'GreenCircle Schemes',
+                referenceNumber: '600124'
+              }
             ],
             notFoundExternalIds: []
           })
@@ -1802,12 +1826,24 @@ describe('getCertificatesOfComplianceViewModel', () => {
         // Scenario 4: Account API returns 404 for an Organisation ID
         test('shows "No data" name for a 404 id while other rows render', async () => {
           setupNotSubmittedTab([
-            { id: 'cs-guid-1', name: 'Org record name 1', registrationType: 'ComplianceScheme' },
-            { id: 'cs-guid-2', name: 'Org record name 2', registrationType: 'ComplianceScheme' }
+            {
+              id: 'cs-guid-1',
+              name: 'Org record name 1',
+              registrationType: 'ComplianceScheme'
+            },
+            {
+              id: 'cs-guid-2',
+              name: 'Org record name 2',
+              registrationType: 'ComplianceScheme'
+            }
           ])
           mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
             organisations: [
-              { externalId: 'cs-guid-1', name: 'EcoPack Compliance Ltd', referenceNumber: '518293' }
+              {
+                externalId: 'cs-guid-1',
+                name: 'EcoPack Compliance Ltd',
+                referenceNumber: '518293'
+              }
             ],
             notFoundExternalIds: ['cs-guid-2']
           })
@@ -1896,7 +1932,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
             name: 'ApiError',
             status: 500
           })
-          mockAccountApi.getOrganisationsByExternalIds.mockRejectedValue(apiError)
+          mockAccountApi.getOrganisationsByExternalIds.mockRejectedValue(
+            apiError
+          )
 
           await expect(
             getCertificatesOfComplianceViewModel(
