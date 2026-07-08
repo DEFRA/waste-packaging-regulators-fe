@@ -149,6 +149,16 @@ export const mockComplianceSchemeNotSubmittedItems = [
     regulation43Met: false,
     percentageMet: 0,
     dateSubmitted: null
+  },
+  {
+    id: null,
+    organisationId: 'c7b6a5d4-e3f2-1098-abcd-ed7654321098',
+    organisationReferenceNumber: 'No data',
+    organisationName: 'No data',
+    recyclingObligationsMet: false,
+    regulation43Met: false,
+    percentageMet: 0,
+    dateSubmitted: null
   }
 ]
 
