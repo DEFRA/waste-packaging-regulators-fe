@@ -17,6 +17,7 @@ vi.mock('#services/account-api.service.js', () => ({
 }))
 
 import { config } from '#config/config.js'
+import { ApiError } from '#services/apiBaseClient/api-error.js'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
 import { createAccountApiService } from '#services/account-api.service.js'
@@ -1027,6 +1028,23 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('maps companyPhoneNumber to No data when Account API returns no telephone', async () => {
         mockAccountApi.getAccountDetailsById.mockResolvedValue({})
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.companyPhoneNumber).toBe('No data')
+      })
+
+      test('maps companyPhoneNumber to No data when submitter user is not found in Account API', async () => {
+        mockAccountApi.getAccountDetailsById.mockRejectedValue(
+          new ApiError({
+            status: 404,
+            message: 'account API request failed with status 404',
+            serviceName: 'account'
+          })
+        )
 
         const vm = await getCertificateOfComplianceDetailViewModel(
           'org-abc',

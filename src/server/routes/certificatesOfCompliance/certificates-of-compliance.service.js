@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { ApiError } from '#services/apiBaseClient/api-error.js'
 import { createAccountApiService } from '#services/account-api.service.js'
 import { format, isDate, parseISO } from 'date-fns'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
@@ -472,8 +473,15 @@ async function fetchSubmitterPhoneNumber(accountApi, audit, traceId) {
     return null
   }
 
-  const details = await accountApi.getAccountDetailsById(userId, traceId)
-  return details.telephone ?? null
+  try {
+    const details = await accountApi.getAccountDetailsById(userId, traceId)
+    return details.telephone ?? null
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) {
+      return null
+    }
+    throw err
+  }
 }
 
 async function fetchAccountOrganisationDetails(
