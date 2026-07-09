@@ -32,10 +32,19 @@ function readTable($, testid) {
   }
 }
 
+function readDeclaration($) {
+  const section = $('[data-testid="declaration"]')
+  return {
+    present: section.length > 0,
+    documentNoun: section.find('[data-testid="declaration-noun"]').text().trim()
+  }
+}
+
 export function loadDetailPage(payload) {
   const $ = load(payload)
   return {
     materials: readTable($, 'obligations-table'),
-    glass: readTable($, 'glass-breakdown-table')
+    glass: readTable($, 'glass-breakdown-table'),
+    declaration: readDeclaration($)
   }
 }

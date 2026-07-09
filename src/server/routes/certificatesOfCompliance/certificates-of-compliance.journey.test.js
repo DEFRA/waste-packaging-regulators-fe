@@ -559,6 +559,68 @@ describe('certificates of compliance — journey', () => {
     })
   })
 
+  describe('declaration section', () => {
+    it('shows the declaration for a submitted (pending) direct producer', async () => {
+      const { declaration } = loadDetailPage(
+        (await inject(HOWCO_DETAIL_URL)).payload
+      )
+
+      expect(declaration.present).toBe(true)
+      expect(declaration.documentNoun).toBe('certificate of compliance')
+    })
+
+    it('shows the declaration for a submitted (pending) compliance scheme with statement wording', async () => {
+      const { declaration } = loadDetailPage(
+        (await inject(ECOPACK_DETAIL_URL)).payload
+      )
+
+      expect(declaration.present).toBe(true)
+      expect(declaration.documentNoun).toBe('statement of compliance')
+    })
+
+    it('shows the declaration for an accepted direct producer', async () => {
+      const { declaration } = loadDetailPage(
+        (await inject(detailPathFor(mockAcceptedItems[0]))).payload
+      )
+
+      expect(declaration.present).toBe(true)
+    })
+
+    it('hides the declaration for an unsubmitted organisation', async () => {
+      const { declaration } = loadDetailPage(
+        (await inject(REDWOOD_UNSUBMITTED_URL)).payload
+      )
+
+      expect(declaration.present).toBe(false)
+    })
+
+    it('shows the declaration for a cancelled direct producer', async () => {
+      const { declaration } = loadDetailPage(
+        (
+          await inject(
+            detailPathForDetailData(mockDirectProducerCancelledDetailData)
+          )
+        ).payload
+      )
+
+      expect(declaration.present).toBe(true)
+      expect(declaration.documentNoun).toBe('certificate of compliance')
+    })
+
+    it('shows the declaration for a cancelled compliance scheme', async () => {
+      const { declaration } = loadDetailPage(
+        (
+          await inject(
+            detailPathForDetailData(mockComplianceSchemeCancelledDetailData)
+          )
+        ).payload
+      )
+
+      expect(declaration.present).toBe(true)
+      expect(declaration.documentNoun).toBe('statement of compliance')
+    })
+  })
+
   describe('obligation tables render', () => {
     const met = { text: 'Met', colour: 'green' }
     const notMet = { text: 'Not met', colour: 'red' }

@@ -197,6 +197,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.heading).toBe('Certificate of compliance')
       expect(vm.backlink).toBe('/certificates-of-compliance')
       expect(vm.reviewStatus).toBe('Pending')
+      expect(vm.showDeclaration).toBe(true)
+      expect(vm.complianceDocumentNoun).toBe('certificate of compliance')
       expect(vm.actions).toMatchObject({
         showAccept: true,
         showCancel: true,
@@ -227,6 +229,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
         cancel: 'Cancel statement'
       })
       expect(vm.complianceTypeLabel).toBe('2026 statement of compliance')
+      expect(vm.showDeclaration).toBe(true)
+      expect(vm.complianceDocumentNoun).toBe('statement of compliance')
     })
 
     test('getCertificateOfComplianceDetailViewModel returns not-submitted mock detail with organisation name', async () => {
@@ -245,6 +249,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.declarationEmailAddress).toBe('No data')
       expect(vm.companyPhoneNumber).toBe('No data')
       expect(vm.declarationStatus).toBe('Unsubmitted')
+      expect(vm.showDeclaration).toBe(false)
       expect(vm.complianceTypeLabel).toBe('2026 certificate of compliance')
     })
 
@@ -302,6 +307,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
       )
       expect(vm.companyName).toBe('Greenfield Packaging Ltd')
       expect(vm.reviewStatus).toBe('Cancelled')
+      expect(vm.showDeclaration).toBe(true)
       expect(vm.actions.showAccept).toBe(false)
       expect(vm.actions.showCancel).toBe(false)
       expect(vm.cancellationDetails.reason).toBe(

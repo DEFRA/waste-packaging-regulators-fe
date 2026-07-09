@@ -60,15 +60,18 @@ function isComplianceSchemeRegistrationType(registrationType) {
   )
 }
 
+export function complianceDocumentNoun(registrationType) {
+  return isComplianceSchemeRegistrationType(registrationType)
+    ? 'statement of compliance'
+    : 'certificate of compliance'
+}
+
 export function buildComplianceTypeLabel(obligationYear, registrationType) {
   if (obligationYear == null) {
     return NO_DATA
   }
   const year = String(obligationYear)
-  const docType = isComplianceSchemeRegistrationType(registrationType)
-    ? 'statement of compliance'
-    : 'certificate of compliance'
-  return `${year} ${docType}`
+  return `${year} ${complianceDocumentNoun(registrationType)}`
 }
 
 function mapOrganisationName(organisation) {
@@ -1048,6 +1051,10 @@ function mapDeclarationToDetail(
     companyName,
     declarationStatus: data.status,
     reviewStatus,
+    showDeclaration: true,
+    complianceDocumentNoun: complianceDocumentNoun(
+      organisation.registrationType
+    ),
     recyclingObligationsMet: mapRecyclingObligationsMet(obligationStatus),
     regulation43Met: isRegulation43Compliant ?? null,
     dateDeclarationSubmitted: displayOrNoData(formatSubmissionDate(created)),
@@ -1110,6 +1117,8 @@ function mapObligationToDetail(
     ),
     declarationStatus: 'Unsubmitted',
     reviewStatus: null,
+    showDeclaration: false,
+    complianceDocumentNoun: complianceDocumentNoun(orgFields.registrationType),
     recyclingObligationsMet: null,
     regulation43Met: null,
     dateDeclarationSubmitted: NO_DATA,
