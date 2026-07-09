@@ -440,6 +440,33 @@ const mockOrganisationsById = {
   }
 }
 
+export const mockAccountOrganisationsByExternalId = {
+  'd1e2f3a4-b5c6-7890-abcd-ef1234567890': {
+    externalId: 'd1e2f3a4-b5c6-7890-abcd-ef1234567890',
+    name: 'Redwood Retail Group',
+    referenceNumber: '518293'
+  },
+  'e2f3a4b5-c6d7-8901-bcde-f23456789012': {
+    externalId: 'e2f3a4b5-c6d7-8901-bcde-f23456789012',
+    name: 'Coastal Bottling Co',
+    referenceNumber: '627148'
+  },
+  'a9b8c7d6-e5f4-3210-abcd-ef9876543210': {
+    externalId: 'a9b8c7d6-e5f4-3210-abcd-ef9876543210',
+    name: 'FuturePack Operators',
+    referenceNumber: 'CS-3001'
+  },
+  'b8c7d6e5-f4a3-2109-abcd-ef8765432109': {
+    externalId: 'b8c7d6e5-f4a3-2109-abcd-ef8765432109',
+    name: 'Metroline Waste Services',
+    referenceNumber: 'CS-3002'
+  }
+}
+
+export function getMockAccountOrganisationByExternalId(organisationId) {
+  return mockAccountOrganisationsByExternalId[organisationId] ?? null
+}
+
 export function getMockOrganisationById(organisationId) {
   return mockOrganisationsById[organisationId] ?? null
 }
@@ -460,11 +487,7 @@ export const mockDetailData = {
     address: {},
     regulator: 'EA',
     regulatorEmail: 'ea@environment-agency.gov.uk',
-    // Mock fixture contact fields for local UI testing
-    companiesHouseNumber: '12345678',
-    nameOnAccount: 'John Smith',
-    contactEmailAddress: 'john.smith@howco.co.uk',
-    contactPhoneNumber: '01234 567890'
+    companiesHouseNumber: '12345678'
   },
   obligationYear: 2026,
   obligations: mockObligationsAllMet,
@@ -490,10 +513,7 @@ export const mockComplianceSchemeDetailData = {
     address: {},
     regulator: 'EA',
     regulatorEmail: 'ea@environment-agency.gov.uk',
-    companiesHouseNumber: '87654321',
-    nameOnAccount: 'Jane Doe',
-    contactEmailAddress: 'jane.doe@ecopack.co.uk',
-    contactPhoneNumber: '01987 654321'
+    companiesHouseNumber: '87654321'
   },
   obligationYear: 2026,
   obligations: mockObligationsAllMet,
@@ -566,10 +586,7 @@ export const mockDirectProducerPendingNotMetDetailData = {
     id: 'b1e2c3d4-e5f6-7890-abcd-ef1234567890',
     name: 'Greenfield Packaging Ltd',
     referenceNumber: '204872',
-    companiesHouseNumber: '23456789',
-    nameOnAccount: 'Priya Rao',
-    contactEmailAddress: 'priya.rao@greenfield.co.uk',
-    contactPhoneNumber: '01234 111222'
+    companiesHouseNumber: '23456789'
   },
   obligations: mockObligationsMixed,
   obligationStatus: 'NotMet',
@@ -589,10 +606,7 @@ export const mockComplianceSchemePendingNotMetDetailData = {
     complianceSchemeName: 'GreenCircle Schemes',
     schemeOperatorName: 'GreenCircle Group',
     referenceNumber: 'CS-1002',
-    companiesHouseNumber: '77889900',
-    nameOnAccount: 'Aled Bevan',
-    contactEmailAddress: 'aled.bevan@greencircle.co.uk',
-    contactPhoneNumber: '01987 333444'
+    companiesHouseNumber: '77889900'
   },
   obligations: mockObligationsMixed,
   obligationStatus: 'NotMet',
@@ -612,10 +626,7 @@ export const mockComplianceSchemeAcceptedNotMetDetailData = {
     complianceSchemeName: 'Riverside Compliance Partners',
     schemeOperatorName: 'Riverside Group',
     referenceNumber: 'CS-2002',
-    companiesHouseNumber: '55221199',
-    nameOnAccount: 'Hana Okonkwo',
-    contactEmailAddress: 'hana.okonkwo@riverside.co.uk',
-    contactPhoneNumber: '02011 445566'
+    companiesHouseNumber: '55221199'
   },
   obligations: mockObligationsMixed,
   obligationStatus: 'NotMet',

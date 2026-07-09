@@ -10,7 +10,8 @@ import {
   mockObligationData,
   getMockDetailDataById,
   getMockDeclarationsByOrgYear,
-  getMockOrganisationById
+  getMockOrganisationById,
+  getMockAccountOrganisationByExternalId
 } from './certificates-of-compliance.mock.js'
 
 export {
@@ -465,6 +466,44 @@ export function findSubmittedAuditUser(audit = []) {
   return entry?.user ?? null
 }
 
+async function fetchSubmitterPhoneNumber(accountApi, audit, traceId) {
+  const userId = findSubmittedAuditUser(audit)?.id
+  if (!userId) {
+    return null
+  }
+
+  const details = await accountApi.getAccountDetailsById(userId, traceId)
+  return details.telephone ?? null
+}
+
+async function fetchAccountOrganisationDetails(
+  accountApi,
+  organisationId,
+  traceId
+) {
+  if (!organisationId) {
+    return { name: null, referenceNumber: null }
+  }
+
+  const { organisations = [] } = await accountApi.getOrganisationsByExternalIds(
+    [organisationId],
+    traceId
+  )
+  const organisation = organisations[0]
+  return {
+    name: organisation?.name ?? null,
+    referenceNumber: organisation?.referenceNumber ?? null
+  }
+}
+
+function resolveMockAccountOrganisationDetails(organisationId) {
+  const organisation = getMockAccountOrganisationByExternalId(organisationId)
+  return {
+    name: organisation?.name ?? null,
+    referenceNumber: organisation?.referenceNumber ?? null
+  }
+}
+
 const certificateActionLabelsByRegistrationType = {
   DirectProducer: {
     accept: 'Accept certificate',
@@ -653,6 +692,7 @@ export function readAndClearCertificateActionBannerFlags(
 async function getDeclarationDetail(
   obligationsApi,
   organisationsApi,
+  accountApi,
   organisationId,
   id,
   { traceId, session, obligationYear } = {}
@@ -662,10 +702,14 @@ async function getDeclarationDetail(
       obligationYear ?? Number(mockSummary.complianceYear)
 
     if (!id) {
+      const accountOrganisation =
+        resolveMockAccountOrganisationDetails(organisationId)
       return mapObligationToDetail(mockObligationData, {
         organisationId,
         obligationYear: resolvedObligationYear,
-        organisation: getMockOrganisationById(organisationId)
+        organisation: getMockOrganisationById(organisationId),
+        accountOrganisationName: accountOrganisation.name,
+        accountOrganisationReferenceNumber: accountOrganisation.referenceNumber
       })
     }
     const mockData = applyMockDeclarationStatusOverride(
@@ -677,25 +721,35 @@ async function getDeclarationDetail(
       mockData?.organisation?.id ?? organisationId,
       mockData?.obligationYear
     )
+    const submitterPhoneNumber = await fetchSubmitterPhoneNumber(
+      accountApi,
+      mockData.audit,
+      traceId
+    )
     return mapDeclarationToDetail(mockData, {
       organisationId,
       id,
-      declarationsForYear
+      declarationsForYear,
+      submitterPhoneNumber
     })
   }
 
   if (!id) {
-    const [obligationData, organisation] = await Promise.all([
-      obligationsApi.getComplianceObligation(
-        { organisationId, obligationYear },
-        traceId
-      ),
-      organisationsApi.getOrganisation({ organisationId }, traceId)
-    ])
+    const [obligationData, organisation, accountOrganisation] =
+      await Promise.all([
+        obligationsApi.getComplianceObligation(
+          { organisationId, obligationYear },
+          traceId
+        ),
+        organisationsApi.getOrganisation({ organisationId }, traceId),
+        fetchAccountOrganisationDetails(accountApi, organisationId, traceId)
+      ])
     return mapObligationToDetail(obligationData, {
       organisationId,
       obligationYear,
-      organisation
+      organisation,
+      accountOrganisationName: accountOrganisation.name,
+      accountOrganisationReferenceNumber: accountOrganisation.referenceNumber
     })
   }
 
@@ -705,15 +759,18 @@ async function getDeclarationDetail(
   )
 
   if (declaration != null) {
-    const listResponse =
-      await obligationsApi.listOrganisationComplianceDeclarations(
+    const [listResponse, submitterPhoneNumber] = await Promise.all([
+      obligationsApi.listOrganisationComplianceDeclarations(
         { organisationId, obligationYear: declaration.obligationYear },
         traceId
-      )
+      ),
+      fetchSubmitterPhoneNumber(accountApi, declaration.audit, traceId)
+    ])
     return mapDeclarationToDetail(declaration, {
       organisationId,
       id,
-      declarationsForYear: listResponse?.complianceDeclarations ?? []
+      declarationsForYear: listResponse?.complianceDeclarations ?? [],
+      submitterPhoneNumber
     })
   }
 
@@ -735,9 +792,11 @@ export async function getComplianceDeclarationReviewStatus(
 ) {
   const obligationsApi = createWasteObligationsApiService()
   const organisationsApi = createWasteOrganisationsApiService()
+  const accountApi = createAccountApiService()
   const detail = await getDeclarationDetail(
     obligationsApi,
     organisationsApi,
+    accountApi,
     organisationId,
     id,
     {
@@ -918,7 +977,7 @@ function mapCurrentYearHistory(declarations = []) {
 
 function mapDeclarationToDetail(
   data,
-  { organisationId, id, declarationsForYear } = {}
+  { organisationId, id, declarationsForYear, submitterPhoneNumber } = {}
 ) {
   const {
     organisation,
@@ -990,7 +1049,7 @@ function mapDeclarationToDetail(
     companiesHouseNumber: displayOrNoData(organisation.companiesHouseNumber),
     nameOnAccount: displayOrNoData(submittedUser?.name),
     declarationEmailAddress: displayOrNoData(submittedUser?.email),
-    companyPhoneNumber: NO_DATA,
+    companyPhoneNumber: displayOrNoData(submitterPhoneNumber),
     declarationSignedBy: displayOrNoData(submitterName),
     materials,
     materialTotals: computeTotals(materials),
@@ -1009,7 +1068,13 @@ function mapDeclarationToDetail(
 
 function mapObligationToDetail(
   data,
-  { organisationId, obligationYear, organisation } = {}
+  {
+    organisationId,
+    obligationYear,
+    organisation,
+    accountOrganisationName,
+    accountOrganisationReferenceNumber
+  } = {}
 ) {
   const { obligations } = data
 
@@ -1032,13 +1097,18 @@ function mapObligationToDetail(
       orgFields.registrationType
     ),
     ...orgFields,
+    companyName: displayOrNoData(
+      accountOrganisationName ?? orgFields.companyName
+    ),
     declarationStatus: 'Unsubmitted',
     reviewStatus: null,
     recyclingObligationsMet: null,
     regulation43Met: null,
     dateDeclarationSubmitted: NO_DATA,
     organisationRef: displayOrNoData(
-      organisation?.referenceNumber ?? organisationId
+      accountOrganisationReferenceNumber ??
+        organisation?.referenceNumber ??
+        organisationId
     ),
     nameOnAccount: NO_DATA,
     declarationEmailAddress: NO_DATA,
@@ -1067,10 +1137,12 @@ export async function getCertificateOfComplianceDetailViewModel(
 ) {
   const obligationsApi = createWasteObligationsApiService()
   const organisationsApi = createWasteOrganisationsApiService()
+  const accountApi = createAccountApiService()
 
   const detail = await getDeclarationDetail(
     obligationsApi,
     organisationsApi,
+    accountApi,
     organisationId,
     id,
     { traceId, session, obligationYear }

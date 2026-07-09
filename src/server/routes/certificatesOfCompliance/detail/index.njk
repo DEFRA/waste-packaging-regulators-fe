@@ -83,8 +83,8 @@
             <div class="govuk-summary-list__row">
               <dt class="govuk-summary-list__key">Company number</dt>
               <dd class="govuk-summary-list__value">
-                {{ companiesHouseNumber }}<br>
-                <a href="https://find-and-update.company-information.service.gov.uk/company/{{ companiesHouseNumber }}" class="govuk-link govuk-link--no-visited-state" target="_blank" rel="noopener noreferrer">View on Companies House<span class="govuk-visually-hidden"> (opens in new tab)</span></a>
+                {{ companiesHouseNumber }}{% if companiesHouseNumber != 'No data' %}<br>
+                <a href="https://find-and-update.company-information.service.gov.uk/company/{{ companiesHouseNumber }}" class="govuk-link govuk-link--no-visited-state" target="_blank" rel="noopener noreferrer">View on Companies House<span class="govuk-visually-hidden"> (opens in new tab)</span></a>{% endif %}
               </dd>
             </div>
             <div class="govuk-summary-list__row">
