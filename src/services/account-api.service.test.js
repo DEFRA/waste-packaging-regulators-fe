@@ -178,6 +178,7 @@ describe('AccountApiService', () => {
           firstName: 'Alice',
           lastName: 'Jones',
           email: 'alice@example.com',
+          telephone: '01234 567890',
           serviceRole: 'Regulator',
           serviceRoleId: 3,
           organisations: [{ name: 'Environment Agency', nationId: 2 }]
@@ -197,11 +198,42 @@ describe('AccountApiService', () => {
         firstName: 'Alice',
         lastName: 'Jones',
         contactEmail: 'alice@example.com',
+        telephone: '01234 567890',
         serviceRole: 'Regulator',
         serviceRoleId: 3,
         organisationName: 'Environment Agency',
         nationId: 2
       })
+      getSpy.mockRestore()
+    })
+
+    test('maps Telephone from PascalCase API response', async () => {
+      const getSpy = vi
+        .spyOn(config, 'get')
+        .mockImplementation((key) => (key === 'useMockApi' ? false : undefined))
+
+      const apiResponse = {
+        user: {
+          firstName: 'Bob',
+          lastName: 'Smith',
+          email: 'bob@example.com',
+          Telephone: '01987 654321',
+          serviceRole: 'Admin',
+          serviceRoleId: 1,
+          organisations: []
+        }
+      }
+      const fetchImpl = vi.fn().mockResolvedValue(mockOkResponse(apiResponse))
+      const service = new AccountApiService({
+        baseUrl: 'http://localhost:3001',
+        clientId: 'Developer',
+        clientSecret: 'developer-pwd',
+        fetchImpl
+      })
+
+      const result = await service.getAccountDetailsById('bob-user-id')
+
+      expect(result.telephone).toBe('01987 654321')
       getSpy.mockRestore()
     })
 
