@@ -106,15 +106,19 @@
       <hr class="govuk-section-break govuk-section-break--l">
       <hr class="govuk-section-break govuk-section-break--l">
 
-      <h2 class="govuk-heading-m govuk-!-margin-bottom-2">Declaration</h2>
-      <p class="govuk-body">{{ declarationSignedBy }} signed the declaration to verify that:</p>
-      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-        <li>they are an approved or delegated person who is eligible to submit this certificate of compliance on behalf of {{ companyName }}</li>
-        <li>the information they submitted is accurate</li>
-        <li>they understand that they may face enforcement action if they submit false or misleading information</li>
-      </ul>
+      {% if showDeclaration %}
+        <div data-testid="declaration">
+          <h2 class="govuk-heading-m govuk-!-margin-bottom-2">Declaration</h2>
+          <p class="govuk-body">{{ declarationSignedBy }} signed the declaration to verify that:</p>
+          <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+            <li>they are an approved or delegated person who is eligible to submit this <span data-testid="declaration-noun">{{ complianceDocumentNoun }}</span> on behalf of {{ companyName }}</li>
+            <li>the information they submitted is accurate</li>
+            <li>they understand that they may face enforcement action if they submit false or misleading information</li>
+          </ul>
+        </div>
 
-      <hr class="govuk-section-break govuk-section-break--l">
+        <hr class="govuk-section-break govuk-section-break--l">
+      {% endif %}
 
       {% if queryDetails %}
         <h2 class="govuk-heading-m">Query details</h2>
