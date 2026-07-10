@@ -40,11 +40,20 @@ function readDeclaration($) {
   }
 }
 
+function readRegulation43($) {
+  const section = $('[data-testid="regulation-43"]')
+  return {
+    present: section.length > 0,
+    text: section.find('p').text().trim()
+  }
+}
+
 export function loadDetailPage(payload) {
   const $ = load(payload)
   return {
     materials: readTable($, 'obligations-table'),
     glass: readTable($, 'glass-breakdown-table'),
-    declaration: readDeclaration($)
+    declaration: readDeclaration($),
+    regulation43: readRegulation43($)
   }
 }

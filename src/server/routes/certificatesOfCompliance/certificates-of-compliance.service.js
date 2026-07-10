@@ -74,6 +74,15 @@ export function buildComplianceTypeLabel(obligationYear, registrationType) {
   return `${year} ${complianceDocumentNoun(registrationType)}`
 }
 
+// Regulation 43 declaration text, shown only for compliance schemes.
+export function buildRegulation43Statement(regulation43Met, organisationName) {
+  if (regulation43Met == null) {
+    return NO_DATA
+  }
+  const compliance = regulation43Met ? 'complied' : 'not complied'
+  return `${organisationName} declared they have ${compliance} with regulation 43 requirements.`
+}
+
 function mapOrganisationName(organisation) {
   if (isComplianceSchemeRegistrationType(organisation.registrationType)) {
     return (
@@ -1057,6 +1066,10 @@ function mapDeclarationToDetail(
     ),
     recyclingObligationsMet: mapRecyclingObligationsMet(obligationStatus),
     regulation43Met: isRegulation43Compliant ?? null,
+    regulation43Statement: buildRegulation43Statement(
+      isRegulation43Compliant ?? null,
+      companyName
+    ),
     dateDeclarationSubmitted: displayOrNoData(formatSubmissionDate(created)),
     organisationType: displayOrNoData(organisationTypeDisplay),
     registrationType: organisation.registrationType,
@@ -1121,6 +1134,7 @@ function mapObligationToDetail(
     complianceDocumentNoun: complianceDocumentNoun(orgFields.registrationType),
     recyclingObligationsMet: null,
     regulation43Met: null,
+    regulation43Statement: NO_DATA,
     dateDeclarationSubmitted: NO_DATA,
     organisationRef: displayOrNoData(
       accountOrganisationReferenceNumber ??

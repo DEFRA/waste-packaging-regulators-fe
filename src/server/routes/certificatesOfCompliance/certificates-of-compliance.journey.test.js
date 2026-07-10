@@ -621,6 +621,41 @@ describe('certificates of compliance — journey', () => {
     })
   })
 
+  describe('Regulation 43 section', () => {
+    const ECOPACK_COMPLIANT_URL =
+      '/e1d2c3b4-a596-4878-9abc-def012345678/certificates-of-compliance/decl-cs-101'
+
+    it('shows the not complied statement for a not compliant compliance scheme', async () => {
+      const { regulation43 } = loadDetailPage(
+        (await inject(ECOPACK_DETAIL_URL)).payload
+      )
+
+      expect(regulation43.present).toBe(true)
+      expect(regulation43.text).toBe(
+        'EcoPack Compliance Ltd declared they have not complied with regulation 43 requirements.'
+      )
+    })
+
+    it('shows the complied statement for a compliant compliance scheme', async () => {
+      const { regulation43 } = loadDetailPage(
+        (await inject(ECOPACK_COMPLIANT_URL)).payload
+      )
+
+      expect(regulation43.present).toBe(true)
+      expect(regulation43.text).toBe(
+        'Nationwide Packaging Scheme declared they have complied with regulation 43 requirements.'
+      )
+    })
+
+    it('does not show the section for a direct producer', async () => {
+      const { regulation43 } = loadDetailPage(
+        (await inject(HOWCO_DETAIL_URL)).payload
+      )
+
+      expect(regulation43.present).toBe(false)
+    })
+  })
+
   describe('obligation tables render', () => {
     const met = { text: 'Met', colour: 'green' }
     const notMet = { text: 'Not met', colour: 'red' }
