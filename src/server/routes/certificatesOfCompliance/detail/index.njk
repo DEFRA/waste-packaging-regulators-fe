@@ -123,7 +123,11 @@
       {% if registrationType == 'ComplianceScheme' %}
         <div data-testid="regulation-43">
           <h2 class="govuk-heading-m govuk-!-margin-bottom-2">Regulation 43</h2>
-          <p class="govuk-body">{{ regulation43Statement }}</p>
+          {% if regulation43Met == null %}
+            <p class="govuk-hint">No data</p>
+          {% else %}
+            <p class="govuk-body">{{ regulation43Statement }}</p>
+          {% endif %}
         </div>
 
         <hr class="govuk-section-break govuk-section-break--l">

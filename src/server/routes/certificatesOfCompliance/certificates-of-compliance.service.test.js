@@ -1952,7 +1952,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
       })
 
-      test('maps the Regulation 43 statement to No data when status is null', async () => {
+      test('maps regulation43Statement to null when isRegulation43Compliant is null', async () => {
         mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
           ...mockComplianceSchemeDetailData,
           isRegulation43Compliant: null
@@ -1963,7 +1963,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           'decl-cs-001'
         )
 
-        expect(vm.regulation43Statement).toBe('No data')
+        expect(vm.regulation43Statement).toBeNull()
       })
 
       test('maps recyclingObligationsMet to null when obligationStatus is null', async () => {
@@ -2487,10 +2487,10 @@ describe('certificate detail action helpers', () => {
     )
   })
 
-  test('buildRegulation43Statement returns No data when status is null', () => {
-    expect(buildRegulation43Statement(null, 'EcoPack Compliance Ltd')).toBe(
-      'No data'
-    )
+  test('buildRegulation43Statement returns null when status is null', () => {
+    expect(
+      buildRegulation43Statement(null, 'EcoPack Compliance Ltd')
+    ).toBeNull()
   })
 
   test('displayOrNoData returns No data for null and empty values', () => {

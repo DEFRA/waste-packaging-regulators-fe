@@ -647,6 +647,17 @@ describe('certificates of compliance — journey', () => {
       )
     })
 
+    it('shows a grey No data empty state for a compliance scheme with no submission', async () => {
+      const FUTUREPACK_UNSUBMITTED_URL =
+        '/a9b8c7d6-e5f4-3210-abcd-ef9876543210/certificates-of-compliance?obligationYear=2026'
+      const { regulation43 } = loadDetailPage(
+        (await inject(FUTUREPACK_UNSUBMITTED_URL)).payload
+      )
+
+      expect(regulation43.present).toBe(true)
+      expect(regulation43.text).toBe('No data')
+    })
+
     it('does not show the section for a direct producer', async () => {
       const { regulation43 } = loadDetailPage(
         (await inject(HOWCO_DETAIL_URL)).payload

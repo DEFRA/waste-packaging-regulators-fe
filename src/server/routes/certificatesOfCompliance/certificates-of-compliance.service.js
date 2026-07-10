@@ -74,10 +74,12 @@ export function buildComplianceTypeLabel(obligationYear, registrationType) {
   return `${year} ${complianceDocumentNoun(registrationType)}`
 }
 
-// Regulation 43 declaration text, shown only for compliance schemes.
+// Regulation 43 declaration sentence, shown only for compliance schemes.
+// Returns null when there is no status — the template renders the "No data"
+// empty state itself.
 export function buildRegulation43Statement(regulation43Met, organisationName) {
   if (regulation43Met == null) {
-    return NO_DATA
+    return null
   }
   const compliance = regulation43Met ? 'complied' : 'not complied'
   return `${organisationName} declared they have ${compliance} with regulation 43 requirements.`
@@ -1134,7 +1136,6 @@ function mapObligationToDetail(
     complianceDocumentNoun: complianceDocumentNoun(orgFields.registrationType),
     recyclingObligationsMet: null,
     regulation43Met: null,
-    regulation43Statement: NO_DATA,
     dateDeclarationSubmitted: NO_DATA,
     organisationRef: displayOrNoData(
       accountOrganisationReferenceNumber ??
