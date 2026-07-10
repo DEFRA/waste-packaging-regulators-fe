@@ -17,6 +17,7 @@ vi.mock('#services/account-api.service.js', () => ({
 }))
 
 import { config } from '#config/config.js'
+import { ApiError } from '#services/apiBaseClient/api-error.js'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
 import { createAccountApiService } from '#services/account-api.service.js'
@@ -35,6 +36,9 @@ import {
   canCancelComplianceDeclaration,
   setMockDeclarationStatusOverride,
   certificateActionSessionKeys,
+  deriveRegistrationType,
+  mapWasteOrganisationToDetailFields,
+  findSubmittedAuditUser,
   mockSummary,
   mockPendingItems,
   mockAcceptedItems,
@@ -51,7 +55,8 @@ import {
 import {
   mockSummaryByOrganisationType,
   mockQueriedDetailData,
-  mockCancelledDetailData
+  mockCancelledDetailData,
+  mockSubmittedAuditEntry
 } from './certificates-of-compliance.mock.js'
 
 const makeDeclaration = ({
@@ -77,6 +82,11 @@ describe('getCertificatesOfComplianceViewModel', () => {
   describe('with mock API (useMockApi=true)', () => {
     beforeEach(() => {
       config.get.mockReturnValue(true)
+      createAccountApiService.mockReturnValue({
+        getAccountDetailsById: vi
+          .fn()
+          .mockResolvedValue({ telephone: '01234 567890' })
+      })
     })
 
     test('returns correct view model shape', async () => {
@@ -178,6 +188,11 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.complianceYear).toBe(String(mockDetailData.obligationYear))
       expect(vm.complianceTypeLabel).toBe('2026 certificate of compliance')
       expect(vm.companyName).toBe(mockDetailData.organisation.name)
+      expect(vm.nameOnAccount).toBe(mockSubmittedAuditEntry.user.name)
+      expect(vm.declarationEmailAddress).toBe(
+        mockSubmittedAuditEntry.user.email
+      )
+      expect(vm.companyPhoneNumber).toBe('01234 567890')
       expect(vm.declarationSignedBy).toBe(mockDetailData.submitterName)
       expect(vm.heading).toBe('Certificate of compliance')
       expect(vm.backlink).toBe('/certificates-of-compliance')
@@ -223,8 +238,38 @@ describe('getCertificatesOfComplianceViewModel', () => {
       )
 
       expect(vm.companyName).toBe(item.organisationName)
+      expect(vm.organisationRef).toBe(item.organisationReferenceNumber)
+      expect(vm.companiesHouseNumber).toBe('17121895')
+      expect(vm.organisationType).toBe('Direct producer')
+      expect(vm.nameOnAccount).toBe('No data')
+      expect(vm.declarationEmailAddress).toBe('No data')
+      expect(vm.companyPhoneNumber).toBe('No data')
       expect(vm.declarationStatus).toBe('Unsubmitted')
       expect(vm.complianceTypeLabel).toBe('2026 certificate of compliance')
+    })
+
+    test('getCertificateOfComplianceDetailViewModel returns not-submitted mock detail for org without waste-organisations mock', async () => {
+      const item = mockNotSubmittedItems[1]
+      const vm = await getCertificateOfComplianceDetailViewModel(
+        item.organisationId,
+        undefined,
+        { obligationYear: 2026 }
+      )
+
+      expect(vm.companyName).toBe('Coastal Bottling Co')
+      expect(vm.organisationRef).toBe('627148')
+      expect(vm.companiesHouseNumber).toBe('No data')
+      expect(vm.organisationType).toBe('No data')
+    })
+
+    test('getCertificateOfComplianceDetailViewModel returns No data companyName for unknown not-submitted org', async () => {
+      const vm = await getCertificateOfComplianceDetailViewModel(
+        'unknown-org-id',
+        undefined,
+        { obligationYear: 2026 }
+      )
+
+      expect(vm.companyName).toBe('No data')
     })
 
     test('getCertificateOfComplianceDetailViewModel returns accepted direct producer detail', async () => {
@@ -308,7 +353,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
       mockAccountApi = {
         getOrganisationsByExternalIds: vi
           .fn()
-          .mockResolvedValue({ organisations: [], notFoundExternalIds: [] })
+          .mockResolvedValue({ organisations: [], notFoundExternalIds: [] }),
+        getAccountDetailsById: vi
+          .fn()
+          .mockResolvedValue({ telephone: '01234 567890' })
       }
       createWasteObligationsApiService.mockReturnValue(mockObligationsApi)
       createWasteOrganisationsApiService.mockReturnValue(mockOrganisationsApi)
@@ -949,6 +997,63 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
       })
 
+      test('calls getAccountDetailsById with submitter user id from audit', async () => {
+        await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1', {
+          traceId: 'trace-z'
+        })
+
+        expect(mockAccountApi.getAccountDetailsById).toHaveBeenCalledWith(
+          mockSubmittedAuditEntry.user.id,
+          'trace-z'
+        )
+      })
+
+      test('does not call getAccountDetailsById for not-submitted detail', async () => {
+        await getCertificateOfComplianceDetailViewModel('org-abc', null, {
+          traceId: 'trace-z',
+          obligationYear: 2026
+        })
+
+        expect(mockAccountApi.getAccountDetailsById).not.toHaveBeenCalled()
+      })
+
+      test('maps submitter telephone from Account API to companyPhoneNumber', async () => {
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.companyPhoneNumber).toBe('01234 567890')
+      })
+
+      test('maps companyPhoneNumber to No data when Account API returns no telephone', async () => {
+        mockAccountApi.getAccountDetailsById.mockResolvedValue({})
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.companyPhoneNumber).toBe('No data')
+      })
+
+      test('maps companyPhoneNumber to No data when submitter user is not found in Account API', async () => {
+        mockAccountApi.getAccountDetailsById.mockRejectedValue(
+          new ApiError({
+            status: 404,
+            message: 'account API request failed with status 404',
+            serviceName: 'account'
+          })
+        )
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.companyPhoneNumber).toBe('No data')
+      })
+
       test('maps obligationYear to complianceYear string', async () => {
         const vm = await getCertificateOfComplianceDetailViewModel(
           'org-abc',
@@ -1492,7 +1597,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
             'decl-1'
           )
 
-          expect(vm.companyName).toBeNull()
+          expect(vm.companyName).toBe('No data')
           expect(vm.complianceYear).toBeNull()
           expect(vm.dateDeclarationSubmitted).toBe('No data')
           expect(vm.organisationType).toBe('No data')
@@ -1519,7 +1624,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
 
       describe('not-submitted path — no declaration id', () => {
-        test('calls getComplianceObligation and getOrganisation in parallel', async () => {
+        test('calls getComplianceObligation, getOrganisation, and getOrganisationsByExternalIds in parallel', async () => {
           const mockObligationsApi = {
             getComplianceObligation: vi
               .fn()
@@ -1557,9 +1662,128 @@ describe('getCertificatesOfComplianceViewModel', () => {
             { organisationId: 'org-abc' },
             'trace-z'
           )
+          expect(
+            mockAccountApi.getOrganisationsByExternalIds
+          ).toHaveBeenCalledWith(['org-abc'], 'trace-z')
         })
 
-        test('populates companyName from organisations API', async () => {
+        test('populates companyName from Account API', async () => {
+          createWasteObligationsApiService.mockReturnValue({
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          })
+          createWasteOrganisationsApiService.mockReturnValue({
+            getOrganisation: vi.fn().mockResolvedValue({
+              id: 'org-abc',
+              name: 'Live Producer Ltd',
+              registrationType: 'DirectProducer',
+              referenceNumber: '518293'
+            })
+          })
+          mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
+            organisations: [
+              {
+                externalId: 'org-abc',
+                name: 'Account Producer Ltd',
+                referenceNumber: '518293'
+              }
+            ],
+            notFoundExternalIds: []
+          })
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'org-abc',
+            undefined,
+            { obligationYear: 2026 }
+          )
+
+          expect(vm.companyName).toBe('Account Producer Ltd')
+          expect(vm.organisationRef).toBe('518293')
+          expect(vm.complianceTypeLabel).toBe('2026 certificate of compliance')
+        })
+
+        test('populates organisationRef from Account API referenceNumber', async () => {
+          createWasteObligationsApiService.mockReturnValue({
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          })
+          createWasteOrganisationsApiService.mockReturnValue({
+            getOrganisation: vi.fn().mockResolvedValue({
+              id: 'org-abc',
+              name: 'Live Producer Ltd',
+              registrationType: 'DirectProducer'
+            })
+          })
+          mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
+            organisations: [
+              {
+                externalId: 'org-abc',
+                name: 'Account Producer Ltd',
+                referenceNumber: '600124'
+              }
+            ],
+            notFoundExternalIds: []
+          })
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'org-abc',
+            undefined,
+            { obligationYear: 2026 }
+          )
+
+          expect(vm.organisationRef).toBe('600124')
+        })
+
+        test('falls back to waste-organisations referenceNumber when Account API has no match', async () => {
+          createWasteObligationsApiService.mockReturnValue({
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          })
+          createWasteOrganisationsApiService.mockReturnValue({
+            getOrganisation: vi.fn().mockResolvedValue({
+              id: 'org-abc',
+              name: 'Live Producer Ltd',
+              registrationType: 'DirectProducer',
+              referenceNumber: '518293'
+            })
+          })
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'org-abc',
+            undefined,
+            { obligationYear: 2026 }
+          )
+
+          expect(vm.organisationRef).toBe('518293')
+        })
+
+        test('falls back to organisationId when Account API and waste-organisations have no referenceNumber', async () => {
+          createWasteObligationsApiService.mockReturnValue({
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          })
+          createWasteOrganisationsApiService.mockReturnValue({
+            getOrganisation: vi.fn().mockResolvedValue({
+              id: 'org-abc',
+              name: 'Live Producer Ltd',
+              registrationType: 'DirectProducer'
+            })
+          })
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'org-abc',
+            undefined,
+            { obligationYear: 2026 }
+          )
+
+          expect(vm.organisationRef).toBe('org-abc')
+        })
+
+        test('falls back to waste-organisations name when Account API returns no match', async () => {
           createWasteObligationsApiService.mockReturnValue({
             getComplianceObligation: vi
               .fn()
@@ -1581,10 +1805,32 @@ describe('getCertificatesOfComplianceViewModel', () => {
           )
 
           expect(vm.companyName).toBe('Live Producer Ltd')
-          expect(vm.complianceTypeLabel).toBe('2026 certificate of compliance')
         })
 
-        test('maps compliance scheme organisation name from tradingName', async () => {
+        test('falls back to Unknown organisation when Account API has no match and waste-organisations has no name', async () => {
+          createWasteObligationsApiService.mockReturnValue({
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          })
+          createWasteOrganisationsApiService.mockReturnValue({
+            getOrganisation: vi.fn().mockResolvedValue({
+              id: 'org-abc',
+              registrationType: 'DirectProducer',
+              referenceNumber: '518293'
+            })
+          })
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'org-abc',
+            undefined,
+            { obligationYear: 2026 }
+          )
+
+          expect(vm.companyName).toBe('Unknown organisation')
+        })
+
+        test('maps compliance scheme organisation name from tradingName when Account API has no match', async () => {
           createWasteObligationsApiService.mockReturnValue({
             getComplianceObligation: vi
               .fn()
@@ -1608,6 +1854,42 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
           expect(vm.companyName).toBe('Trading Scheme Co')
           expect(vm.complianceTypeLabel).toBe('2026 statement of compliance')
+        })
+
+        test('derives registration type and companies house from waste-organisations GET shape', async () => {
+          createWasteObligationsApiService.mockReturnValue({
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          })
+          createWasteOrganisationsApiService.mockReturnValue({
+            getOrganisation: vi.fn().mockResolvedValue({
+              id: 'org-abc',
+              name: 'POP QUEST LTD',
+              companiesHouseNumber: '17121895',
+              registrations: [
+                {
+                  type: 'LARGE_PRODUCER',
+                  status: 'REGISTERED',
+                  registrationYear: 2026,
+                  updated: '2026-03-31T23:20:34.294+00:00'
+                }
+              ]
+            })
+          })
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'org-abc',
+            undefined,
+            { obligationYear: 2026 }
+          )
+
+          expect(vm.companyName).toBe('POP QUEST LTD')
+          expect(vm.companiesHouseNumber).toBe('17121895')
+          expect(vm.organisationType).toBe('Direct producer')
+          expect(vm.complianceTypeLabel).toBe('2026 certificate of compliance')
+          expect(vm.nameOnAccount).toBe('No data')
+          expect(vm.declarationEmailAddress).toBe('No data')
         })
       })
 
@@ -1665,12 +1947,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
         mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
           ...mockDetailData,
           submitterName: null,
+          audit: [],
           organisation: {
             ...mockDetailData.organisation,
-            companiesHouseNumber: null,
-            nameOnAccount: null,
-            contactEmailAddress: null,
-            contactPhoneNumber: null
+            companiesHouseNumber: null
           }
         })
 
@@ -2047,6 +2327,105 @@ describe('getCertificatesOfComplianceViewModel', () => {
           ).rejects.toMatchObject({ name: 'ApiError', status: 500 })
         })
       })
+    })
+  })
+})
+
+describe('organisation and audit detail mapping', () => {
+  test('deriveRegistrationType maps LARGE_PRODUCER to DirectProducer for obligation year', () => {
+    expect(
+      deriveRegistrationType(
+        [
+          {
+            type: 'LARGE_PRODUCER',
+            status: 'REGISTERED',
+            registrationYear: 2026
+          }
+        ],
+        2026
+      )
+    ).toBe('DirectProducer')
+  })
+
+  test('deriveRegistrationType maps COMPLIANCE_SCHEME to ComplianceScheme', () => {
+    expect(
+      deriveRegistrationType(
+        [
+          {
+            type: 'COMPLIANCE_SCHEME',
+            status: 'REGISTERED',
+            registrationYear: 2026
+          }
+        ],
+        2026
+      )
+    ).toBe('ComplianceScheme')
+  })
+
+  test('deriveRegistrationType returns null for empty registrations', () => {
+    expect(deriveRegistrationType([], 2026)).toBeNull()
+    expect(deriveRegistrationType(undefined, 2026)).toBeNull()
+  })
+
+  test('findSubmittedAuditUser returns user from Submitted audit entry', () => {
+    expect(findSubmittedAuditUser([mockSubmittedAuditEntry])).toEqual(
+      mockSubmittedAuditEntry.user
+    )
+  })
+
+  test('findSubmittedAuditUser returns null when no Submitted entry exists', () => {
+    expect(findSubmittedAuditUser([])).toBeNull()
+    expect(
+      findSubmittedAuditUser([{ action: 'Accepted', user: { name: 'Other' } }])
+    ).toBeNull()
+  })
+
+  test('mapWasteOrganisationToDetailFields maps companies house and derived type', () => {
+    expect(
+      mapWasteOrganisationToDetailFields(
+        {
+          name: 'POP QUEST LTD',
+          companiesHouseNumber: '17121895',
+          registrations: [
+            {
+              type: 'LARGE_PRODUCER',
+              status: 'REGISTERED',
+              registrationYear: 2026
+            }
+          ]
+        },
+        { obligationYear: 2026 }
+      )
+    ).toEqual({
+      companyName: 'POP QUEST LTD',
+      registrationType: 'DirectProducer',
+      organisationType: 'Direct producer',
+      companiesHouseNumber: '17121895'
+    })
+  })
+
+  test('mapWasteOrganisationToDetailFields uses tradingName for compliance schemes', () => {
+    expect(
+      mapWasteOrganisationToDetailFields(
+        {
+          name: 'Legal Name',
+          tradingName: 'Trading Scheme Co',
+          companiesHouseNumber: '87654321',
+          registrations: [
+            {
+              type: 'COMPLIANCE_SCHEME',
+              status: 'REGISTERED',
+              registrationYear: 2026
+            }
+          ]
+        },
+        { obligationYear: 2026 }
+      )
+    ).toEqual({
+      companyName: 'Trading Scheme Co',
+      registrationType: 'ComplianceScheme',
+      organisationType: 'Compliance scheme',
+      companiesHouseNumber: '87654321'
     })
   })
 })

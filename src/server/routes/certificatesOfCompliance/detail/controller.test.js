@@ -129,6 +129,22 @@ describe('#certificatesOfComplianceDetailController', () => {
     )
   })
 
+  it('should render the Companies House link when a company number is present', async () => {
+    const response = await inject('/org-123/certificates-of-compliance/101411')
+    expect(response.payload).toContain('View on Companies House')
+    expect(response.payload).toContain(
+      `company/${mockDetailData.organisation.companiesHouseNumber}`
+    )
+  })
+
+  it('should not render the Companies House link when company number is No data', async () => {
+    const response = await inject(
+      '/e2f3a4b5-c6d7-8901-bcde-f23456789012/certificates-of-compliance?obligationYear=2026'
+    )
+    expect(response.payload).toContain('No data')
+    expect(response.payload).not.toContain('View on Companies House')
+  })
+
   it('should render the declaration signer name', async () => {
     const response = await inject('/org-123/certificates-of-compliance/101411')
     expect(response.payload).toContain(mockDetailData.submitterName)

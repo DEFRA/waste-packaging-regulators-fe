@@ -5,6 +5,7 @@ export const mockAccountDetails = {
   firstName: 'John',
   lastName: 'Doe',
   contactEmail: 'john.doe@example.org',
+  telephone: '01234 567890',
   serviceRoleId: 4,
   serviceRole: 'Regulator Admin',
   organisationName: 'Example Environment Agency',
@@ -55,6 +56,7 @@ export class AccountApiService extends BaseApiService {
       serviceRole: user.serviceRole,
       serviceRoleId: user.serviceRoleId,
       contactEmail: user.email,
+      telephone: user.telephone ?? user.Telephone,
       organisationName: org?.name,
       nationId: org?.nationId
     }
@@ -68,6 +70,7 @@ export function mapAccountDetailsDtoToViewModel(dto) {
     serviceRole: dto.serviceRole ?? '',
     serviceRoleId: dto.serviceRoleId,
     email: dto.contactEmail ?? '',
+    telephone: dto.telephone ?? '',
     organisationName: dto.organisationName ?? '',
     nationId: dto.nationId
   }
