@@ -27,6 +27,7 @@ import {
   buildCertificateDetailActions,
   buildCertificateSuccessBanner,
   buildComplianceTypeLabel,
+  buildRegulation43Statement,
   displayOrNoData,
   mapDeclarationStatusToReviewStatus,
   mapSessionUserToApiUser,
@@ -1935,6 +1936,36 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.regulation43Met).toBe(false)
       })
 
+      test('maps the not complied Regulation 43 statement for a not compliant compliance scheme', async () => {
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockComplianceSchemeDetailData,
+          isRegulation43Compliant: false
+        })
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-cs-001'
+        )
+
+        expect(vm.regulation43Statement).toBe(
+          'EcoPack Compliance Ltd declared they have not complied with all other requirements in regulation 43.'
+        )
+      })
+
+      test('maps regulation43Statement to null when isRegulation43Compliant is null', async () => {
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockComplianceSchemeDetailData,
+          isRegulation43Compliant: null
+        })
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-cs-001'
+        )
+
+        expect(vm.regulation43Statement).toBeNull()
+      })
+
       test('maps recyclingObligationsMet to null when obligationStatus is null', async () => {
         mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
           ...mockDetailData,
@@ -2445,6 +2476,21 @@ describe('certificate detail action helpers', () => {
       '2026 statement of compliance'
     )
     expect(buildComplianceTypeLabel(null, 'DirectProducer')).toBe('No data')
+  })
+
+  test('buildRegulation43Statement builds compliant and not compliant text', () => {
+    expect(buildRegulation43Statement(true, 'EcoPack Compliance Ltd')).toBe(
+      'EcoPack Compliance Ltd declared they have complied with all other requirements in regulation 43.'
+    )
+    expect(buildRegulation43Statement(false, 'EcoPack Compliance Ltd')).toBe(
+      'EcoPack Compliance Ltd declared they have not complied with all other requirements in regulation 43.'
+    )
+  })
+
+  test('buildRegulation43Statement returns null when status is null', () => {
+    expect(
+      buildRegulation43Statement(null, 'EcoPack Compliance Ltd')
+    ).toBeNull()
   })
 
   test('displayOrNoData returns No data for null and empty values', () => {

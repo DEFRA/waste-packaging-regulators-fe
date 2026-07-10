@@ -111,6 +111,24 @@ describe('#certificatesOfComplianceDetailController', () => {
     expect(response.payload).toContain('govuk-tag--green')
   })
 
+  it('should render the not complied Regulation 43 statement for a not compliant compliance scheme', async () => {
+    const response = await inject(
+      '/923fa611-571c-4948-ab7d-fbb75e75ed65/certificates-of-compliance/decl-cs-001'
+    )
+    expect(response.payload).toContain(
+      'EcoPack Compliance Ltd declared they have not complied with all other requirements in regulation 43.'
+    )
+  })
+
+  it('should render the complied Regulation 43 statement for a compliant compliance scheme', async () => {
+    const response = await inject(
+      '/e1d2c3b4-a596-4878-9abc-def012345678/certificates-of-compliance/decl-cs-101'
+    )
+    expect(response.payload).toContain(
+      'Nationwide Packaging Scheme declared they have complied with all other requirements in regulation 43.'
+    )
+  })
+
   it('should render the formatted date declaration was submitted', async () => {
     const response = await inject('/org-123/certificates-of-compliance/101411')
     expect(response.payload).toContain('31 January 2027 at 00:00')
