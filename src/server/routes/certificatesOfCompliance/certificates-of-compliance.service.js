@@ -82,7 +82,7 @@ export function buildRegulation43Statement(regulation43Met, organisationName) {
     return null
   }
   const compliance = regulation43Met ? 'complied' : 'not complied'
-  return `${organisationName} declared they have ${compliance} with regulation 43 requirements.`
+  return `${organisationName} declared they have ${compliance} with all other requirements in regulation 43.`
 }
 
 function mapOrganisationName(organisation) {

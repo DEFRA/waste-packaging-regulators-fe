@@ -632,7 +632,7 @@ describe('certificates of compliance — journey', () => {
 
       expect(regulation43.present).toBe(true)
       expect(regulation43.text).toBe(
-        'EcoPack Compliance Ltd declared they have not complied with regulation 43 requirements.'
+        'EcoPack Compliance Ltd declared they have not complied with all other requirements in regulation 43.'
       )
     })
 
@@ -643,7 +643,7 @@ describe('certificates of compliance — journey', () => {
 
       expect(regulation43.present).toBe(true)
       expect(regulation43.text).toBe(
-        'Nationwide Packaging Scheme declared they have complied with regulation 43 requirements.'
+        'Nationwide Packaging Scheme declared they have complied with all other requirements in regulation 43.'
       )
     })
 

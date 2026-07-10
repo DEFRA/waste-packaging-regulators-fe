@@ -1948,7 +1948,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
 
         expect(vm.regulation43Statement).toBe(
-          'EcoPack Compliance Ltd declared they have not complied with regulation 43 requirements.'
+          'EcoPack Compliance Ltd declared they have not complied with all other requirements in regulation 43.'
         )
       })
 
@@ -2480,10 +2480,10 @@ describe('certificate detail action helpers', () => {
 
   test('buildRegulation43Statement builds compliant and not compliant text', () => {
     expect(buildRegulation43Statement(true, 'EcoPack Compliance Ltd')).toBe(
-      'EcoPack Compliance Ltd declared they have complied with regulation 43 requirements.'
+      'EcoPack Compliance Ltd declared they have complied with all other requirements in regulation 43.'
     )
     expect(buildRegulation43Statement(false, 'EcoPack Compliance Ltd')).toBe(
-      'EcoPack Compliance Ltd declared they have not complied with regulation 43 requirements.'
+      'EcoPack Compliance Ltd declared they have not complied with all other requirements in regulation 43.'
     )
   })
 
