@@ -578,16 +578,21 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('accept then cancel shows Accepted and Cancelled rows in current year', async () => {
+      const signInResponse = await server.inject({
+        method: 'GET',
+        url: '/signin-oidc'
+      })
+      const freshCookie = authCookiesFromResponse(signInResponse)
+
       const item = mockPendingItems[1]
-      const acceptResponse = await postAccept(item, 'yes', sessionCookie)
+      const acceptResponse = await postAccept(item, 'yes', freshCookie)
       expect(acceptResponse.statusCode).toBe(302)
 
-      let cookie = mergeCookiesFromResponse(sessionCookie, acceptResponse)
-      const cancelResponse = await server.inject({
-        method: 'POST',
-        url: `${detailPathFor(item)}/cancel`,
-        headers: { cookie }
-      })
+      let cookie = mergeCookiesFromResponse(freshCookie, acceptResponse)
+      const cancelResponse = await postForm(
+        `${detailPathFor(item)}/cancel`,
+        cookie
+      )
       expect(cancelResponse.statusCode).toBe(302)
 
       cookie = mergeCookiesFromResponse(cookie, cancelResponse)
