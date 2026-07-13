@@ -57,7 +57,8 @@ import {
   mockSummaryByOrganisationType,
   mockQueriedDetailData,
   mockCancelledDetailData,
-  mockSubmittedAuditEntry
+  mockSubmittedAuditEntry,
+  mockDirectProducerPendingNotMetDetailData
 } from './certificates-of-compliance.mock.js'
 
 const makeDeclaration = ({
@@ -287,6 +288,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.reviewStatus).toBe('Approved')
       expect(vm.actions.showAccept).toBe(false)
       expect(vm.actions.showCancel).toBe(true)
+      expect(vm.showAcceptedOutcome).toBe(true)
+      expect(vm.complianceStatusLabel).toBe('Certificate status')
+      expect(vm.acceptedBy).toBe('James Walker')
+      expect(vm.acceptedDate).toBe('15 January 2027 at 14:30')
     })
 
     test('getCertificateOfComplianceDetailViewModel returns accepted compliance scheme detail', async () => {
@@ -299,6 +304,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.actions.showAccept).toBe(false)
       expect(vm.actions.showCancel).toBe(true)
       expect(vm.actions.labels.accept).toBe('Accept statement')
+      expect(vm.showAcceptedOutcome).toBe(true)
+      expect(vm.complianceStatusLabel).toBe('Statement status')
+      expect(vm.acceptedBy).toBe('James Walker')
+      expect(vm.acceptedDate).toBe('12 January 2027 at 12:05')
     })
 
     test('getCertificateOfComplianceDetailViewModel returns cancelled direct producer detail', async () => {
@@ -1542,6 +1551,58 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
           expect(vm.currentYearActions[0].reason).toBeNull()
         })
+
+        test('maps by from the audit user who performed the accept action', async () => {
+          const accepted = {
+            ...mockDetailData,
+            id: 'decl-accepted-history',
+            status: 'Accepted',
+            updated: '2026-06-10T14:30:00Z',
+            submitterName: 'Test Submitter A',
+            audit: [
+              {
+                action: 'Accepted',
+                timestamp: '2026-06-10T14:30:00Z',
+                user: {
+                  id: 'regulator-1',
+                  email: 'regulator@example.test',
+                  name: 'Jane Regulator'
+                }
+              }
+            ]
+          }
+          const vm = await runDetailVm(mockDetailData, [accepted])
+
+          expect(vm.currentYearActions[0].by).toBe('Jane Regulator')
+          expect(vm.currentYearActions[0].action).toBe('Accepted')
+          expect(vm.currentYearActions[0].reason).toBe('')
+        })
+
+        test('includes the current Accepted declaration when the year list still has it as Submitted', async () => {
+          const acceptedCurrent = {
+            ...mockDetailData,
+            status: 'Accepted',
+            updated: '2027-02-01T10:00:00Z',
+            audit: [
+              mockDetailData.audit[0],
+              {
+                action: 'Accepted',
+                timestamp: '2027-02-01T10:00:00Z',
+                user: {
+                  id: 'regulator-1',
+                  email: 'regulator@example.test',
+                  name: 'Jane Regulator'
+                }
+              }
+            ]
+          }
+
+          const vm = await runDetailVm(acceptedCurrent, [mockDetailData])
+
+          expect(vm.currentYearActions).toHaveLength(1)
+          expect(vm.currentYearActions[0].action).toBe('Accepted')
+          expect(vm.currentYearActions[0].by).toBe('Jane Regulator')
+        })
       })
 
       describe('fallback path — no declaration found', () => {
@@ -2689,6 +2750,9 @@ describe('certificate detail action helpers', () => {
     config.get.mockReturnValue(true)
     const session = {
       data: {},
+      get(key) {
+        return this.data[key]
+      },
       set(key, value) {
         this.data[key] = value
       }
@@ -2697,6 +2761,51 @@ describe('certificate detail action helpers', () => {
     setMockDeclarationStatusOverride(session, 'org-1/decl-1', 'Approved')
 
     expect(session.data['coc-mock-status:org-1/decl-1']).toBe('Accepted')
+    expect(session.data['coc-mock-audit:org-1/decl-1']).toHaveLength(1)
+    expect(session.data['coc-mock-audit:org-1/decl-1'][0].action).toBe(
+      'Accepted'
+    )
+  })
+
+  test('getCertificateOfComplianceDetailViewModel shows Accepted and Cancelled rows after mock accept then cancel', async () => {
+    config.get.mockReturnValue(true)
+    createAccountApiService.mockReturnValue({
+      getAccountDetailsById: vi.fn().mockResolvedValue({ telephone: null })
+    })
+
+    const session = {
+      data: {},
+      get(key) {
+        return this.data[key]
+      },
+      set(key, value) {
+        this.data[key] = value
+      }
+    }
+
+    session.set('user', {
+      id: 'user-oid-1',
+      email: 'regulator@example.com',
+      name: 'Jane Regulator'
+    })
+
+    const declarationKey = `${mockDirectProducerPendingNotMetDetailData.organisation.id}/${mockDirectProducerPendingNotMetDetailData.id}`
+    setMockDeclarationStatusOverride(session, declarationKey, 'Approved')
+    setMockDeclarationStatusOverride(session, declarationKey, 'Cancelled')
+
+    const vm = await getCertificateOfComplianceDetailViewModel(
+      mockDirectProducerPendingNotMetDetailData.organisation.id,
+      mockDirectProducerPendingNotMetDetailData.id,
+      { session }
+    )
+
+    expect(vm.reviewStatus).toBe('Cancelled')
+    expect(vm.currentYearActions.map((row) => row.action)).toEqual([
+      'Cancelled',
+      'Accepted'
+    ])
+    expect(vm.currentYearActions[0].by).toBe('Jane Regulator')
+    expect(vm.currentYearActions[1].by).toBe('Jane Regulator')
   })
 
   test('getCertificateOfComplianceDetailViewModel applies mock status override from session', async () => {

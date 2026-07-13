@@ -526,6 +526,10 @@ describe('certificates of compliance — journey', () => {
       })
       expect(detailResponse.payload).toContain('Certificate accepted')
       expect(detailResponse.payload).toContain('Certificate has been accepted.')
+      expect(detailResponse.payload).toContain('Certificate status')
+      expect(detailResponse.payload).toContain('Accepted by')
+      expect(detailResponse.payload).toContain('Accepted date')
+      expect(detailResponse.payload).toContain('John Doe')
     })
 
     it('"no" returns to detail without invoking the approve action', async () => {
@@ -568,6 +572,41 @@ describe('certificates of compliance — journey', () => {
       })
       expect(detailResponse.payload).toContain('Statement accepted')
       expect(detailResponse.payload).toContain('Statement has been accepted.')
+      expect(detailResponse.payload).toContain('Statement status')
+      expect(detailResponse.payload).toContain('Accepted by')
+      expect(detailResponse.payload).toContain('John Doe')
+    })
+
+    it('accept then cancel shows Accepted and Cancelled rows in current year', async () => {
+      const item = mockPendingItems[1]
+      const acceptResponse = await postAccept(item, 'yes', sessionCookie)
+      expect(acceptResponse.statusCode).toBe(302)
+
+      let cookie = mergeCookiesFromResponse(sessionCookie, acceptResponse)
+      const cancelResponse = await server.inject({
+        method: 'POST',
+        url: `${detailPathFor(item)}/cancel`,
+        headers: { cookie }
+      })
+      expect(cancelResponse.statusCode).toBe(302)
+
+      cookie = mergeCookiesFromResponse(cookie, cancelResponse)
+      const detailResponse = await server.inject({
+        method: 'GET',
+        url: detailPathFor(item),
+        headers: { cookie }
+      })
+
+      const cancelledTags = (
+        detailResponse.payload.match(/govuk-tag govuk-tag--grey/g) ?? []
+      ).length
+      const acceptedTags = (
+        detailResponse.payload.match(/govuk-tag govuk-tag--blue/g) ?? []
+      ).length
+
+      expect(cancelledTags).toBeGreaterThanOrEqual(1)
+      expect(acceptedTags).toBeGreaterThanOrEqual(1)
+      expect(detailResponse.payload).toContain('John Doe')
     })
   })
 
