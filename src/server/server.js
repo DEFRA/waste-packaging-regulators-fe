@@ -1,5 +1,5 @@
 import fs from 'node:fs'
-import path from 'path'
+import path from 'node:path'
 import hapi from '@hapi/hapi'
 import Scooter from '@hapi/scooter'
 import bell from '@hapi/bell'
