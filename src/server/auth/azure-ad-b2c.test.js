@@ -73,7 +73,8 @@ describe('getB2cAuthorityPrefix', () => {
 })
 
 describe('buildB2cLogoutUrl', () => {
-  const prefix = 'https://mytenant.b2clogin.com/mytenant.onmicrosoft.com/B2C_1_signupsignin'
+  const prefix =
+    'https://mytenant.b2clogin.com/mytenant.onmicrosoft.com/B2C_1_signupsignin'
 
   it('returns base logout URL when no redirect is provided', () => {
     expect(buildB2cLogoutUrl(prefix)).toBe(`${prefix}/oauth2/v2.0/logout`)
