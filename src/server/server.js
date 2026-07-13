@@ -24,7 +24,9 @@ import { metrics } from '@defra/cdp-metrics'
  * `AZURE_AD_B2C_REDIRECT_URI` may be a full URL or a path.
  */
 function bellRedirectOrigin(redirectUri, tls) {
-  if (!redirectUri) return undefined
+  if (!redirectUri) {
+    return undefined
+  }
   if (/^https?:\/\//i.test(redirectUri)) {
     const u = new URL(redirectUri)
     if (tls && u.protocol === 'http:') {
@@ -38,6 +40,8 @@ function bellRedirectOrigin(redirectUri, tls) {
   const base = `${scheme}://${hostForUrl}:${config.get('port')}`
   return new URL(redirectUri, base).origin
 }
+
+const authStrategyName = 'azure-ad-b2c'
 
 export async function createServer() {
   setupProxy()
@@ -113,11 +117,11 @@ export async function createServer() {
           }
         })
     }))
-    server.auth.strategy('azure-ad-b2c', 'mock')
+    server.auth.strategy(authStrategyName, 'mock')
   } else {
-    server.auth.strategy('azure-ad-b2c', 'bell', {
+    server.auth.strategy(authStrategyName, 'bell', {
       provider: {
-        name: 'azure-ad-b2c',
+        name: authStrategyName,
         protocol: 'oauth2',
         useParamsAuth: true,
         auth:
@@ -131,7 +135,9 @@ export async function createServer() {
         scope: ['openid', 'profile', 'offline_access'],
         profile(_credentials, params) {
           const idToken = params.id_token
-          if (!idToken) return
+          if (!idToken) {
+            return
+          }
           const payload = idToken.split('.')[1]
           const claims = JSON.parse(
             Buffer.from(payload, 'base64url').toString('utf8')
