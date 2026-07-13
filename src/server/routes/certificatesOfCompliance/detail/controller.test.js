@@ -7,6 +7,7 @@ import {
   mockComplianceSchemeDetailData,
   mockDetailData
 } from '../certificates-of-compliance.service.js'
+import { sessionCookieFromResponse } from '#test-helpers/cookies.js'
 
 // Derive expected view model values from the raw API mock shape
 const GLASS_BREAKDOWN_MATERIALS = new Set(['GlassRemelt', 'RemainingGlass'])
@@ -32,11 +33,11 @@ describe('#certificatesOfComplianceDetailController', () => {
   beforeAll(async () => {
     server = await createServer()
     await server.initialize()
-    const { headers } = await server.inject({
+    const response = await server.inject({
       method: 'GET',
       url: '/signin-oidc'
     })
-    sessionCookie = headers['set-cookie']?.[0]?.split(';')[0]
+    sessionCookie = sessionCookieFromResponse(response)
   })
 
   afterAll(async () => {
