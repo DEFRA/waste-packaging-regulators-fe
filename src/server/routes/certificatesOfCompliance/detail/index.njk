@@ -2,6 +2,7 @@
 {% from "status-tag/macro.njk" import appStatusTag %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "csrf-field/macro.njk" import appCsrfField %}
 
 {% macro materialStatusTag(status) %}
   {% switch status %}
@@ -291,6 +292,7 @@
       {% if actions.showAccept or actions.showCancel %}
         <div class="govuk-button-group govuk-!-display-inline">
           <form method="post" action="{{ actions.urls.cancel }}">
+            {{ appCsrfField(CSRFToken) }}
             {% if actions.showAccept %}
               <a href="{{ actions.urls.accept }}" role="button" draggable="false" class="govuk-button" data-module="govuk-button">
                 {{ actions.labels.accept }}

@@ -1,0 +1,3 @@
+{% macro appCsrfField(token) %}
+  <input id="csrf-crumb" type="hidden" name="CSRFToken" value="{{ token }}">
+{% endmacro %}
