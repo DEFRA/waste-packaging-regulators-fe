@@ -99,7 +99,9 @@ describe('router plugin', () => {
 
     it('does not register serveStaticFiles in development', async () => {
       configSpy = spyConfig()
-      mockViteCreateServer.mockResolvedValue({ middlewares: 'vite-middlewares' })
+      mockViteCreateServer.mockResolvedValue({
+        middlewares: 'vite-middlewares'
+      })
       const server = makeServer()
       await router.plugin.register(server)
       expect(server.register).not.toHaveBeenCalledWith(serveStaticFiles)
@@ -107,7 +109,9 @@ describe('router plugin', () => {
 
     it('registers @defra/hapi-connect at /public in development', async () => {
       configSpy = spyConfig()
-      mockViteCreateServer.mockResolvedValue({ middlewares: 'vite-middlewares' })
+      mockViteCreateServer.mockResolvedValue({
+        middlewares: 'vite-middlewares'
+      })
       const server = makeServer()
       await router.plugin.register(server)
 
@@ -120,7 +124,9 @@ describe('router plugin', () => {
 
     it('passes vite middlewares to @defra/hapi-connect in development', async () => {
       configSpy = spyConfig()
-      mockViteCreateServer.mockResolvedValue({ middlewares: 'vite-middlewares' })
+      mockViteCreateServer.mockResolvedValue({
+        middlewares: 'vite-middlewares'
+      })
       const server = makeServer()
       await router.plugin.register(server)
 
