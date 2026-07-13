@@ -1,5 +1,57 @@
+import { describe, it, expect, vi } from 'vitest'
 import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { redirectToSignIn } from './actions-controller.js'
+
+describe('redirectToSignIn', () => {
+  it('stores the pathname as returnTo in the session', () => {
+    const yar = { set: vi.fn() }
+    const request = {
+      yar,
+      url: {
+        pathname: '/org-123/certificates-of-compliance/decl-1/approve',
+        search: ''
+      }
+    }
+    const h = { redirect: vi.fn() }
+
+    redirectToSignIn(request, h)
+
+    expect(yar.set).toHaveBeenCalledWith(
+      'returnTo',
+      '/org-123/certificates-of-compliance/decl-1/approve'
+    )
+  })
+
+  it('appends the query string to the returnTo value', () => {
+    const yar = { set: vi.fn() }
+    const request = {
+      yar,
+      url: { pathname: '/some/path', search: '?tab=pending&page=2' }
+    }
+    const h = { redirect: vi.fn() }
+
+    redirectToSignIn(request, h)
+
+    expect(yar.set).toHaveBeenCalledWith(
+      'returnTo',
+      '/some/path?tab=pending&page=2'
+    )
+  })
+
+  it('redirects to /signin-oidc', () => {
+    const request = {
+      yar: { set: vi.fn() },
+      url: { pathname: '/some/path', search: '' }
+    }
+    const h = { redirect: vi.fn((url) => `redirect:${url}`) }
+
+    const result = redirectToSignIn(request, h)
+
+    expect(h.redirect).toHaveBeenCalledWith('/signin-oidc')
+    expect(result).toBe('redirect:/signin-oidc')
+  })
+})
 
 describe('certificates of compliance action controllers', () => {
   let server
@@ -59,6 +111,40 @@ describe('certificates of compliance action controllers', () => {
       expect(response.headers.location).toBe('/signin-oidc')
     })
 
+    it('redirects to detail without the approval banner when the declaration is already cancelled', async () => {
+      const cancelResponse = await inject({
+        method: 'POST',
+        url: '/org-123/certificates-of-compliance/decl-1/cancel'
+      })
+      const cookieAfterCancel = mergeCookies(sessionCookie, cancelResponse)
+
+      const approveResponse = await inject(
+        {
+          method: 'POST',
+          url: '/org-123/certificates-of-compliance/decl-1/approve'
+        },
+        cookieAfterCancel
+      )
+
+      expect(approveResponse.statusCode).toBe(302)
+      expect(approveResponse.headers.location).toBe(
+        '/org-123/certificates-of-compliance/decl-1'
+      )
+
+      const detailResponse = await inject(
+        {
+          method: 'GET',
+          url: '/org-123/certificates-of-compliance/decl-1'
+        },
+        mergeCookies(cookieAfterCancel, approveResponse)
+      )
+
+      expect(detailResponse.payload).not.toContain('Certificate accepted')
+      expect(detailResponse.payload).not.toContain(
+        'Certificate has been accepted'
+      )
+    })
+
     it('redirects to the detail page, shows the accepted banner, and hides accept based on API status', async () => {
       const approveResponse = await inject({
         method: 'POST',
@@ -104,6 +190,51 @@ describe('certificates of compliance action controllers', () => {
 
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe('/signin-oidc')
+    })
+
+    it('shows the cancelled banner when cancelling a declaration that is already cancelled', async () => {
+      const firstCancelResponse = await inject({
+        method: 'POST',
+        url: '/org-123/certificates-of-compliance/decl-1/cancel'
+      })
+      const cookieAfterFirstCancel = mergeCookies(
+        sessionCookie,
+        firstCancelResponse
+      )
+
+      // Clear the first banner by visiting the detail page
+      const firstDetailResponse = await inject(
+        {
+          method: 'GET',
+          url: '/org-123/certificates-of-compliance/decl-1'
+        },
+        cookieAfterFirstCancel
+      )
+      const cookieAfterFirstView = mergeCookies(
+        cookieAfterFirstCancel,
+        firstDetailResponse
+      )
+
+      // Cancel again — declaration is already Cancelled, hits the reviewStatus === 'Cancelled' branch
+      const secondCancelResponse = await inject(
+        {
+          method: 'POST',
+          url: '/org-123/certificates-of-compliance/decl-1/cancel'
+        },
+        cookieAfterFirstView
+      )
+
+      expect(secondCancelResponse.statusCode).toBe(302)
+
+      const detailResponse = await inject(
+        {
+          method: 'GET',
+          url: '/org-123/certificates-of-compliance/decl-1'
+        },
+        mergeCookies(cookieAfterFirstView, secondCancelResponse)
+      )
+
+      expect(detailResponse.payload).toContain('Certificate cancelled')
     })
 
     it('redirects to the detail page, shows the cancelled banner, and hides action buttons based on API status', async () => {
