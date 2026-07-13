@@ -252,7 +252,7 @@ describe('certificates of compliance action controllers', () => {
       expect(detailResponse.payload).toContain('Certificate cancelled')
     })
 
-    it('redirects to the detail page, shows the cancelled banner, and hides action buttons based on API status', async () => {
+    it('rejects when user not authenticated', async () => {
       const response = await inject({
         method: 'POST',
         url: '/org-123/certificates-of-compliance/decl-1/cancel'
