@@ -481,6 +481,38 @@ export function findSubmittedAuditUser(audit = []) {
   return entry?.user ?? null
 }
 
+function findAcceptedAuditEntry(audit = []) {
+  return audit.find((auditEntry) => auditEntry.action === 'Accepted')
+}
+
+function buildComplianceStatusLabel(registrationType) {
+  return registrationType === 'ComplianceScheme'
+    ? 'Statement status'
+    : 'Certificate status'
+}
+
+function mapAcceptedOutcomeFields(data, registrationType) {
+  if (data.status !== 'Accepted') {
+    return {
+      showAcceptedOutcome: false,
+      complianceStatusLabel: null,
+      acceptedBy: null,
+      acceptedDate: null
+    }
+  }
+
+  const acceptedAudit = findAcceptedAuditEntry(data.audit)
+
+  return {
+    showAcceptedOutcome: true,
+    complianceStatusLabel: buildComplianceStatusLabel(registrationType),
+    acceptedBy: displayOrNoData(acceptedAudit?.user?.name),
+    acceptedDate: displayOrNoData(
+      formatSubmissionDate(acceptedAudit?.timestamp ?? data.updated)
+    )
+  }
+}
+
 async function fetchSubmitterPhoneNumber(accountApi, audit, traceId) {
   const userId = findSubmittedAuditUser(audit)?.id
   if (!userId) {
@@ -646,6 +678,25 @@ function mockStatusSessionKey(declarationKey) {
   return `coc-mock-status:${declarationKey}`
 }
 
+function mockAuditSessionKey(declarationKey) {
+  return `coc-mock-audit:${declarationKey}`
+}
+
+function appendMockTransitionAudit(session, declarationKey, auditEntry) {
+  const existing = session.get(mockAuditSessionKey(declarationKey)) ?? []
+  const alreadyRecorded = existing.some(
+    (entry) =>
+      entry.action === auditEntry.action &&
+      entry.timestamp === auditEntry.timestamp
+  )
+
+  if (alreadyRecorded) {
+    return
+  }
+
+  session.set(mockAuditSessionKey(declarationKey), [...existing, auditEntry])
+}
+
 export function canApproveComplianceDeclaration(reviewStatus) {
   return reviewStatus === 'Pending' || reviewStatus === 'Queried'
 }
@@ -671,6 +722,57 @@ export function setMockDeclarationStatusOverride(
   if (status) {
     session.set(mockStatusSessionKey(declarationKey), status)
   }
+
+  if (reviewStatus === 'Approved') {
+    const { auditEntry } = buildMockAcceptedAuditEntry(session, declarationKey)
+    appendMockTransitionAudit(session, declarationKey, auditEntry)
+  }
+
+  if (reviewStatus === 'Cancelled') {
+    const { auditEntry } = buildMockCancelledAuditEntry(session, declarationKey)
+    appendMockTransitionAudit(session, declarationKey, auditEntry)
+  }
+}
+
+function nextMockAuditTimestamp(session, declarationKey) {
+  const existing = session?.get?.(mockAuditSessionKey(declarationKey)) ?? []
+  const lastTimestamp = existing.at(-1)?.timestamp
+  const now = Date.now()
+  const nextMs = lastTimestamp
+    ? Math.max(now, new Date(lastTimestamp).getTime() + 1)
+    : now
+
+  return new Date(nextMs).toISOString()
+}
+
+function buildMockAcceptedAuditEntry(session, declarationKey) {
+  const sessionUser = session?.get?.('user')
+  const user = mapSessionUserToApiUser(sessionUser)
+  const timestamp = nextMockAuditTimestamp(session, declarationKey)
+
+  return {
+    auditEntry: {
+      action: 'Accepted',
+      timestamp,
+      user
+    },
+    updated: timestamp
+  }
+}
+
+function buildMockCancelledAuditEntry(session, declarationKey) {
+  const sessionUser = session?.get?.('user')
+  const user = mapSessionUserToApiUser(sessionUser)
+  const timestamp = nextMockAuditTimestamp(session, declarationKey)
+
+  return {
+    auditEntry: {
+      action: 'Cancelled',
+      timestamp,
+      user
+    },
+    updated: timestamp
+  }
 }
 
 function applyMockDeclarationStatusOverride(data, declarationKey, session) {
@@ -684,7 +786,32 @@ function applyMockDeclarationStatusOverride(data, declarationKey, session) {
     return data
   }
 
-  return { ...data, status: overrideStatus }
+  let sessionAudits = session.get(mockAuditSessionKey(declarationKey)) ?? []
+
+  if (sessionAudits.length === 0) {
+    if (overrideStatus === 'Accepted') {
+      const { auditEntry } = buildMockAcceptedAuditEntry(
+        session,
+        declarationKey
+      )
+      sessionAudits = [auditEntry]
+    } else if (overrideStatus === 'Cancelled') {
+      const { auditEntry } = buildMockCancelledAuditEntry(
+        session,
+        declarationKey
+      )
+      sessionAudits = [auditEntry]
+    }
+  }
+
+  const updated = sessionAudits.at(-1)?.timestamp ?? data.updated
+
+  return {
+    ...data,
+    status: overrideStatus,
+    updated,
+    audit: [...(data.audit ?? []), ...sessionAudits]
+  }
 }
 
 export function readAndClearCertificateActionBannerFlags(
@@ -975,7 +1102,7 @@ function formatHistoryDate(isoString) {
 function mapHistoryReason(status, transitionAudit) {
   switch (status) {
     case 'Accepted':
-      return 'Not applicable'
+      return ''
     case 'Cancelled':
       return transitionAudit?.reason ?? null
     default:
@@ -984,17 +1111,68 @@ function mapHistoryReason(status, transitionAudit) {
 }
 
 function mapCurrentYearHistory(declarations = []) {
-  return declarations
-    .filter((d) => d.status === 'Accepted' || d.status === 'Cancelled')
-    .map((d) => {
-      const transitionAudit = (d.audit ?? []).find((e) => e.action === d.status)
-      return {
-        date: formatHistoryDate(d.updated),
-        action: d.status,
-        by: d.submitterName ?? '',
-        reason: mapHistoryReason(d.status, transitionAudit)
+  const rows = []
+
+  for (const declaration of declarations) {
+    const transitionAudits = (declaration.audit ?? []).filter(
+      (entry) => entry.action === 'Accepted' || entry.action === 'Cancelled'
+    )
+
+    if (transitionAudits.length > 0) {
+      for (const entry of transitionAudits) {
+        rows.push({
+          sortTimestamp: entry.timestamp ?? declaration.updated,
+          date: formatHistoryDate(entry.timestamp ?? declaration.updated),
+          action: entry.action,
+          by: entry.user?.name ?? '',
+          reason: mapHistoryReason(entry.action, entry)
+        })
       }
-    })
+      continue
+    }
+
+    if (
+      declaration.status === 'Accepted' ||
+      declaration.status === 'Cancelled'
+    ) {
+      rows.push({
+        sortTimestamp: declaration.updated,
+        date: formatHistoryDate(declaration.updated),
+        action: declaration.status,
+        by: '',
+        reason: mapHistoryReason(declaration.status, null)
+      })
+    }
+  }
+
+  return rows
+    .sort(
+      (a, b) =>
+        new Date(b.sortTimestamp).getTime() -
+        new Date(a.sortTimestamp).getTime()
+    )
+    .map(({ sortTimestamp, ...row }) => row)
+}
+
+function buildCurrentYearDeclarations(
+  declarationsForYear,
+  data,
+  status,
+  declarationId
+) {
+  const declarations = [...(declarationsForYear ?? [])]
+
+  if ((status === 'Accepted' || status === 'Cancelled') && declarationId) {
+    const withoutCurrent = declarations.filter(
+      (declaration) => declaration.id !== declarationId
+    )
+
+    return [...withoutCurrent, data].sort(
+      (a, b) => new Date(b.updated).getTime() - new Date(a.updated).getTime()
+    )
+  }
+
+  return declarations
 }
 
 function mapDeclarationToDetail(
@@ -1050,6 +1228,17 @@ function mapDeclarationToDetail(
     organisation.registrationType
 
   const submittedUser = findSubmittedAuditUser(data.audit)
+  const acceptedOutcome = mapAcceptedOutcomeFields(
+    data,
+    organisation.registrationType
+  )
+
+  const historyDeclarations = buildCurrentYearDeclarations(
+    declarationsForYear,
+    data,
+    status,
+    resolvedId
+  )
 
   return {
     organisationId: resolvedOrganisationId,
@@ -1073,6 +1262,7 @@ function mapDeclarationToDetail(
       companyName
     ),
     dateDeclarationSubmitted: displayOrNoData(formatSubmissionDate(created)),
+    ...acceptedOutcome,
     organisationType: displayOrNoData(organisationTypeDisplay),
     registrationType: organisation.registrationType,
     organisationRef: displayOrNoData(organisation.referenceNumber),
@@ -1092,7 +1282,7 @@ function mapDeclarationToDetail(
       reviewStatus === 'Cancelled'
         ? mapCancellationDetails(data.cancellationDetails)
         : null,
-    currentYearActions: mapCurrentYearHistory(declarationsForYear)
+    currentYearActions: mapCurrentYearHistory(historyDeclarations)
   }
 }
 
@@ -1156,6 +1346,10 @@ function mapObligationToDetail(
       labels: certificateActionLabelsByRegistrationType.DirectProducer,
       urls: { accept: '#', cancel: '#' }
     },
+    showAcceptedOutcome: false,
+    complianceStatusLabel: null,
+    acceptedBy: null,
+    acceptedDate: null,
     currentYearActions: []
   }
 }

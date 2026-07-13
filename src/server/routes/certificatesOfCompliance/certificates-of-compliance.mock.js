@@ -395,6 +395,12 @@ export const mockComplianceSchemeSubmittedAuditEntry = {
   action: 'Submitted'
 }
 
+const mockRegulator = {
+  id: 'mock-regulator-1',
+  name: 'James Walker',
+  email: 'mock-regulator-1@example.test'
+}
+
 const mockOrganisationsById = {
   'd1e2f3a4-b5c6-7890-abcd-ef1234567890': {
     id: 'd1e2f3a4-b5c6-7890-abcd-ef1234567890',
@@ -532,7 +538,7 @@ export const mockComplianceSchemeAcceptedDetailData = {
   obligationStatus: 'Met',
   id: 'decl-cs-101',
   created: '2027-01-12T00:00:00Z',
-  updated: '2027-01-12T00:00:00Z',
+  updated: '2027-01-12T12:05:00Z',
   status: 'Accepted',
   organisation: {
     ...mockComplianceSchemeDetailData.organisation,
@@ -541,7 +547,15 @@ export const mockComplianceSchemeAcceptedDetailData = {
     schemeOperatorName: 'Nationwide Packaging Group',
     referenceNumber: 'CS-2001'
   },
-  isRegulation43Compliant: true
+  isRegulation43Compliant: true,
+  audit: [
+    mockComplianceSchemeSubmittedAuditEntry,
+    {
+      action: 'Accepted',
+      timestamp: '2027-01-12T12:05:00Z',
+      user: mockRegulator
+    }
+  ]
 }
 
 export const mockDirectProducerAcceptedDetailData = {
@@ -549,14 +563,22 @@ export const mockDirectProducerAcceptedDetailData = {
   obligationStatus: 'Met',
   id: 'decl-309145',
   created: '2027-01-15T00:00:00Z',
-  updated: '2027-01-15T00:00:00Z',
+  updated: '2027-01-15T14:30:00Z',
   status: 'Accepted',
   organisation: {
     ...mockDetailData.organisation,
     id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     name: 'Acme Compliance Co',
     referenceNumber: '309145'
-  }
+  },
+  audit: [
+    mockSubmittedAuditEntry,
+    {
+      action: 'Accepted',
+      timestamp: '2027-01-15T14:30:00Z',
+      user: mockRegulator
+    }
+  ]
 }
 
 export const mockDirectProducerAcceptedDetailDataSecondary = {
@@ -691,11 +713,6 @@ export const mockComplianceSchemeCancelledDetailData = {
     resubmissionRequested: false,
     dateCancelled: '2026-03-08T00:00:00Z'
   }
-}
-
-const mockRegulator = {
-  id: 'mock-regulator-1',
-  email: 'mock-regulator-1@example.test'
 }
 
 const mockCurrentYearAcceptedDeclaration = {

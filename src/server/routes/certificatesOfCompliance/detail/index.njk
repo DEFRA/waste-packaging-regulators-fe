@@ -62,6 +62,22 @@
                 {% endif %}
               </dd>
             </div>
+            {% if showAcceptedOutcome %}
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">{{ complianceStatusLabel }}</dt>
+                <dd class="govuk-summary-list__value">
+                  <strong class="govuk-tag govuk-tag--blue govuk-!-font-size-16">Accepted</strong>
+                </dd>
+              </div>
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">Accepted by</dt>
+                <dd class="govuk-summary-list__value">{{ acceptedBy }}</dd>
+              </div>
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">Accepted date</dt>
+                <dd class="govuk-summary-list__value">{{ acceptedDate }}</dd>
+              </div>
+            {% endif %}
             <div class="govuk-summary-list__row">
               <dt class="govuk-summary-list__key">Submitted on</dt>
               <dd class="govuk-summary-list__value">{{ dateDeclarationSubmitted }}</dd>
