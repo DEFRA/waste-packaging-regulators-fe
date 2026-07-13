@@ -43,19 +43,8 @@ function bellRedirectOrigin(redirectUri, tls) {
 
 const authStrategyName = 'azure-ad-b2c'
 
-export async function createServer() {
-  setupProxy()
-  const isDevelopment = config.get('isDevelopment')
-  const certsDir = path.resolve(config.get('root'), 'certs')
-  const tls =
-    isDevelopment && fs.existsSync(path.join(certsDir, 'localhost-key.pem'))
-      ? {
-          key: fs.readFileSync(path.join(certsDir, 'localhost-key.pem')),
-          cert: fs.readFileSync(path.join(certsDir, 'localhost-cert.pem'))
-        }
-      : undefined
-
-  const server = hapi.server({
+function createHapiServer(tls) {
+  return hapi.server({
     tls,
     host: config.get('host'),
     port: config.get('port'),
@@ -92,6 +81,21 @@ export async function createServer() {
       strictHeader: false
     }
   })
+}
+
+export async function createServer() {
+  setupProxy()
+  const isDevelopment = config.get('isDevelopment')
+  const certsDir = path.resolve(config.get('root'), 'certs')
+  const tls =
+    isDevelopment && fs.existsSync(path.join(certsDir, 'localhost-key.pem'))
+      ? {
+          key: fs.readFileSync(path.join(certsDir, 'localhost-key.pem')),
+          cert: fs.readFileSync(path.join(certsDir, 'localhost-cert.pem'))
+        }
+      : undefined
+
+  const server = createHapiServer(tls)
   await server.register([
     bell,
     requestLogger,
