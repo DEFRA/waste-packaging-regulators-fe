@@ -3,6 +3,7 @@
 {% from "govuk/components/radios/macro.njk" import govukRadios %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "csrf-field/macro.njk" import appCsrfField %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -16,6 +17,7 @@
 
       {% set docTypeLower = "statement" if registrationType == "ComplianceScheme" else "certificate" %}
       <form method="post" action="/{{ organisationId }}/certificates-of-compliance/{{ id }}/accept" novalidate>
+        {{ appCsrfField(CSRFToken) }}
         {{ govukRadios({
           name: "confirm-accept",
           fieldset: {

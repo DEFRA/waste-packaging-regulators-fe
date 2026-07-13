@@ -1,18 +1,33 @@
 import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import {
+  authCookiesFromResponse,
+  csrfTokenCookieFromResponse,
+  crumbTokenFromCookie,
+  mergeCookiesFromResponse
+} from '#test-helpers/cookies.js'
 
 describe('certificates of compliance action controllers', () => {
   let server
   let sessionCookie
+  // A crumb minted without signing in, mirroring a real browser that still
+  // holds the form's crumb after its session has lapsed.
+  let anonCrumbCookie
 
   beforeAll(async () => {
     server = await createServer()
     await server.initialize()
-    const { headers } = await server.inject({
+    const response = await server.inject({
       method: 'GET',
       url: '/signin-oidc'
     })
-    sessionCookie = headers['set-cookie']?.[0]?.split(';')[0]
+    sessionCookie = authCookiesFromResponse(response)
+
+    const anonResponse = await server.inject({
+      method: 'GET',
+      url: '/certificates-of-compliance'
+    })
+    anonCrumbCookie = csrfTokenCookieFromResponse(anonResponse)
   })
 
   afterAll(async () => {
@@ -25,45 +40,42 @@ describe('certificates of compliance action controllers', () => {
       headers: { cookie, ...(options.headers ?? {}) }
     })
 
-  const mergeCookies = (cookie, response) => {
-    const setCookie = response.headers['set-cookie']
-    if (!setCookie) {
-      return cookie
-    }
-
-    const cookies = Object.fromEntries(
-      cookie.split('; ').map((entry) => {
-        const [name, ...value] = entry.split('=')
-        return [name, value.join('=')]
-      })
+  // POST with the crumb echoed back from the given cookie's CSRFToken.
+  const postWithCrumb = (url, cookie = sessionCookie) =>
+    inject(
+      {
+        method: 'POST',
+        url,
+        payload: `CSRFToken=${crumbTokenFromCookie(cookie)}`,
+        headers: { 'content-type': 'application/x-www-form-urlencoded' }
+      },
+      cookie
     )
-
-    for (const entry of setCookie) {
-      const [name, ...value] = entry.split(';')[0].split('=')
-      cookies[name] = value.join('=')
-    }
-
-    return Object.entries(cookies)
-      .map(([name, value]) => `${name}=${value}`)
-      .join('; ')
-  }
 
   describe('approve', () => {
     it('redirects unauthenticated users to sign in', async () => {
-      const response = await server.inject({
-        method: 'POST',
-        url: '/org-123/certificates-of-compliance/decl-1/approve'
-      })
+      const response = await postWithCrumb(
+        '/org-123/certificates-of-compliance/decl-1/approve',
+        anonCrumbCookie
+      )
 
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe('/signin-oidc')
     })
 
-    it('redirects to the detail page, shows the accepted banner, and hides accept based on API status', async () => {
-      const approveResponse = await inject({
+    it('rejects a request with no CSRF token', async () => {
+      const response = await server.inject({
         method: 'POST',
         url: '/org-123/certificates-of-compliance/decl-1/approve'
       })
+
+      expect(response.statusCode).toBe(statusCodes.forbidden)
+    })
+
+    it('redirects to the detail page, shows the accepted banner, and hides accept based on API status', async () => {
+      const approveResponse = await postWithCrumb(
+        '/org-123/certificates-of-compliance/decl-1/approve'
+      )
 
       expect(approveResponse.statusCode).toBe(302)
       expect(approveResponse.headers.location).toBe(
@@ -75,7 +87,7 @@ describe('certificates of compliance action controllers', () => {
           method: 'GET',
           url: '/org-123/certificates-of-compliance/decl-1'
         },
-        mergeCookies(sessionCookie, approveResponse)
+        mergeCookiesFromResponse(sessionCookie, approveResponse)
       )
 
       expect(detailResponse.statusCode).toBe(statusCodes.ok)
@@ -97,20 +109,28 @@ describe('certificates of compliance action controllers', () => {
 
   describe('cancel', () => {
     it('redirects unauthenticated users to sign in', async () => {
-      const response = await server.inject({
-        method: 'POST',
-        url: '/org-123/certificates-of-compliance/decl-1/cancel'
-      })
+      const response = await postWithCrumb(
+        '/org-123/certificates-of-compliance/decl-1/cancel',
+        anonCrumbCookie
+      )
 
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe('/signin-oidc')
     })
 
-    it('redirects to the detail page, shows the cancelled banner, and hides action buttons based on API status', async () => {
-      const cancelResponse = await inject({
+    it('rejects a request with no CSRF token', async () => {
+      const response = await server.inject({
         method: 'POST',
         url: '/org-123/certificates-of-compliance/decl-1/cancel'
       })
+
+      expect(response.statusCode).toBe(statusCodes.forbidden)
+    })
+
+    it('redirects to the detail page, shows the cancelled banner, and hides action buttons based on API status', async () => {
+      const cancelResponse = await postWithCrumb(
+        '/org-123/certificates-of-compliance/decl-1/cancel'
+      )
 
       expect(cancelResponse.statusCode).toBe(302)
       expect(cancelResponse.headers.location).toBe(
@@ -122,7 +142,7 @@ describe('certificates of compliance action controllers', () => {
           method: 'GET',
           url: '/org-123/certificates-of-compliance/decl-1'
         },
-        mergeCookies(sessionCookie, cancelResponse)
+        mergeCookiesFromResponse(sessionCookie, cancelResponse)
       )
 
       expect(detailResponse.statusCode).toBe(statusCodes.ok)
@@ -141,11 +161,13 @@ describe('certificates of compliance action controllers', () => {
   })
 
   it('reflects API status on reload after the banner clears', async () => {
-    const approveResponse = await inject({
-      method: 'POST',
-      url: '/org-123/certificates-of-compliance/decl-1/approve'
-    })
-    const cookieAfterApprove = mergeCookies(sessionCookie, approveResponse)
+    const approveResponse = await postWithCrumb(
+      '/org-123/certificates-of-compliance/decl-1/approve'
+    )
+    const cookieAfterApprove = mergeCookiesFromResponse(
+      sessionCookie,
+      approveResponse
+    )
 
     const firstDetailResponse = await inject(
       {
@@ -162,7 +184,7 @@ describe('certificates of compliance action controllers', () => {
         method: 'GET',
         url: '/org-123/certificates-of-compliance/decl-1'
       },
-      mergeCookies(cookieAfterApprove, firstDetailResponse)
+      mergeCookiesFromResponse(cookieAfterApprove, firstDetailResponse)
     )
     expect(secondDetailResponse.payload).not.toContain('Certificate accepted')
     expect(secondDetailResponse.payload).not.toContain('Accept certificate')
@@ -173,11 +195,10 @@ describe('certificates of compliance action controllers', () => {
   })
 
   it('handles repeat approve requests idempotently without showing accept again', async () => {
-    const firstApproveResponse = await inject({
-      method: 'POST',
-      url: '/org-123/certificates-of-compliance/decl-1/approve'
-    })
-    const cookieAfterFirstApprove = mergeCookies(
+    const firstApproveResponse = await postWithCrumb(
+      '/org-123/certificates-of-compliance/decl-1/approve'
+    )
+    const cookieAfterFirstApprove = mergeCookiesFromResponse(
       sessionCookie,
       firstApproveResponse
     )
@@ -190,11 +211,8 @@ describe('certificates of compliance action controllers', () => {
       cookieAfterFirstApprove
     )
 
-    const repeatApproveResponse = await inject(
-      {
-        method: 'POST',
-        url: '/org-123/certificates-of-compliance/decl-1/approve'
-      },
+    const repeatApproveResponse = await postWithCrumb(
+      '/org-123/certificates-of-compliance/decl-1/approve',
       cookieAfterFirstApprove
     )
 
@@ -205,7 +223,7 @@ describe('certificates of compliance action controllers', () => {
         method: 'GET',
         url: '/org-123/certificates-of-compliance/decl-1'
       },
-      mergeCookies(cookieAfterFirstApprove, repeatApproveResponse)
+      mergeCookiesFromResponse(cookieAfterFirstApprove, repeatApproveResponse)
     )
 
     expect(detailResponse.payload).toContain('Certificate accepted')
@@ -213,11 +231,13 @@ describe('certificates of compliance action controllers', () => {
   })
 
   it('clears the banner flag after it has been shown once', async () => {
-    const approveResponse = await inject({
-      method: 'POST',
-      url: '/org-123/certificates-of-compliance/decl-1/approve'
-    })
-    const cookieAfterApprove = mergeCookies(sessionCookie, approveResponse)
+    const approveResponse = await postWithCrumb(
+      '/org-123/certificates-of-compliance/decl-1/approve'
+    )
+    const cookieAfterApprove = mergeCookiesFromResponse(
+      sessionCookie,
+      approveResponse
+    )
 
     const firstDetailResponse = await inject(
       {
@@ -233,7 +253,7 @@ describe('certificates of compliance action controllers', () => {
         method: 'GET',
         url: '/org-123/certificates-of-compliance/decl-1'
       },
-      mergeCookies(cookieAfterApprove, firstDetailResponse)
+      mergeCookiesFromResponse(cookieAfterApprove, firstDetailResponse)
     )
     expect(secondDetailResponse.payload).not.toContain('Certificate accepted')
   })
