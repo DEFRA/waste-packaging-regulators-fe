@@ -148,7 +148,7 @@ describe('certificates of compliance action controllers', () => {
       )
     })
 
-    it('redirects to the detail page, shows the accepted banner, and hides accept based on API status', async () => {
+    it('rejects the approve request when the user is not authenticated', async () => {
       const response = await inject({
         method: 'POST',
         url: '/org-123/certificates-of-compliance/decl-1/approve'
