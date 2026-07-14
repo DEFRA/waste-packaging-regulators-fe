@@ -448,32 +448,54 @@ export function deriveRegistrationType(registrations, obligationYear) {
   return selectFromPool(latestRegistrations)
 }
 
+const emptyWasteOrganisationDetailFields = {
+  companyName: null,
+  registrationType: null,
+  organisationType: NO_DATA,
+  companiesHouseNumber: NO_DATA
+}
+
+function resolveWasteOrganisationRegistrationType(
+  organisation,
+  obligationYear
+) {
+  return (
+    organisation.registrationType ??
+    deriveRegistrationType(organisation.registrations, obligationYear)
+  )
+}
+
+function mapRegistrationTypeToOrganisationType(registrationType) {
+  return displayOrNoData(
+    registrationType
+      ? (organisationTypeDisplayNames[registrationType] ?? registrationType)
+      : null
+  )
+}
+
+export function mapCompaniesHouseNumberFromWasteOrganisation(organisation) {
+  return displayOrNoData(organisation?.companiesHouseNumber)
+}
+
 export function mapWasteOrganisationToDetailFields(
   organisation,
   { obligationYear } = {}
 ) {
   if (!organisation) {
-    return {
-      companyName: null,
-      registrationType: null,
-      organisationType: NO_DATA,
-      companiesHouseNumber: NO_DATA
-    }
+    return emptyWasteOrganisationDetailFields
   }
 
-  const registrationType =
-    organisation.registrationType ??
-    deriveRegistrationType(organisation.registrations, obligationYear)
+  const registrationType = resolveWasteOrganisationRegistrationType(
+    organisation,
+    obligationYear
+  )
 
   return {
     companyName: mapOrganisationName({ ...organisation, registrationType }),
     registrationType,
-    organisationType: displayOrNoData(
-      registrationType
-        ? (organisationTypeDisplayNames[registrationType] ?? registrationType)
-        : null
-    ),
-    companiesHouseNumber: displayOrNoData(organisation.companiesHouseNumber)
+    organisationType: mapRegistrationTypeToOrganisationType(registrationType),
+    companiesHouseNumber:
+      mapCompaniesHouseNumberFromWasteOrganisation(organisation)
   }
 }
 
@@ -886,11 +908,13 @@ async function getMockDeclarationDetail(
     mockData.audit,
     traceId
   )
+  const resolvedOrganisationId = mockData?.organisation?.id ?? organisationId
   return mapDeclarationToDetail(mockData, {
     organisationId,
     id,
     declarationsForYear,
-    submitterPhoneNumber
+    submitterPhoneNumber,
+    wasteOrganisation: getMockOrganisationById(resolvedOrganisationId)
   })
 }
 
@@ -935,18 +959,21 @@ async function getDeclarationDetail(
   )
 
   if (declaration != null) {
-    const [listResponse, submitterPhoneNumber] = await Promise.all([
-      obligationsApi.listOrganisationComplianceDeclarations(
-        { organisationId, obligationYear: declaration.obligationYear },
-        traceId
-      ),
-      fetchSubmitterPhoneNumber(accountApi, declaration.audit, traceId)
-    ])
+    const [listResponse, submitterPhoneNumber, wasteOrganisation] =
+      await Promise.all([
+        obligationsApi.listOrganisationComplianceDeclarations(
+          { organisationId, obligationYear: declaration.obligationYear },
+          traceId
+        ),
+        fetchSubmitterPhoneNumber(accountApi, declaration.audit, traceId),
+        organisationsApi.getOrganisation({ organisationId }, traceId)
+      ])
     return mapDeclarationToDetail(declaration, {
       organisationId,
       id,
       declarationsForYear: listResponse?.complianceDeclarations ?? [],
-      submitterPhoneNumber
+      submitterPhoneNumber,
+      wasteOrganisation
     })
   }
 
@@ -1228,7 +1255,13 @@ function buildCurrentYearDeclarations(
 
 function mapDeclarationToDetail(
   data,
-  { organisationId, id, declarationsForYear, submitterPhoneNumber } = {}
+  {
+    organisationId,
+    id,
+    declarationsForYear,
+    submitterPhoneNumber,
+    wasteOrganisation
+  } = {}
 ) {
   const {
     organisation,
@@ -1274,10 +1307,6 @@ function mapDeclarationToDetail(
           urls: { accept: '#', cancel: '#' }
         }
 
-  const organisationTypeDisplay =
-    organisationTypeDisplayNames[organisation.registrationType] ??
-    organisation.registrationType
-
   const submittedUser = findSubmittedAuditUser(data.audit)
   const acceptedOutcome = mapAcceptedOutcomeFields(
     data,
@@ -1314,10 +1343,13 @@ function mapDeclarationToDetail(
     ),
     dateDeclarationSubmitted: displayOrNoData(formatSubmissionDate(created)),
     ...acceptedOutcome,
-    organisationType: displayOrNoData(organisationTypeDisplay),
+    organisationType: mapRegistrationTypeToOrganisationType(
+      organisation.registrationType
+    ),
     registrationType: organisation.registrationType,
     organisationRef: displayOrNoData(organisation.referenceNumber),
-    companiesHouseNumber: displayOrNoData(organisation.companiesHouseNumber),
+    companiesHouseNumber:
+      mapCompaniesHouseNumberFromWasteOrganisation(wasteOrganisation),
     nameOnAccount: displayOrNoData(submittedUser?.name),
     declarationEmailAddress: displayOrNoData(submittedUser?.email),
     companyPhoneNumber: displayOrNoData(submitterPhoneNumber),
