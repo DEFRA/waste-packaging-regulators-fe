@@ -297,55 +297,6 @@ describe('certificates of compliance — journey', () => {
       expect(response.payload).not.toContain('/cancel')
     })
 
-    it('approve flow redirects to detail with accepted banner styling', async () => {
-      const item = mockPendingItems[0]
-      const approveResponse = await postForm(
-        `${detailPathFor(item)}/approve`,
-        sessionCookie
-      )
-
-      expect(approveResponse.statusCode).toBe(302)
-      expect(approveResponse.headers.location).toBe(detailPathFor(item))
-
-      const detailResponse = await server.inject({
-        method: 'GET',
-        url: detailPathFor(item),
-        headers: {
-          cookie: mergeCookiesFromResponse(sessionCookie, approveResponse)
-        }
-      })
-
-      expect(detailResponse.payload).toContain('Certificate accepted')
-      expect(detailResponse.payload).toContain('Important')
-      expect(detailResponse.payload).not.toContain(
-        'govuk-notification-banner--success'
-      )
-      expect(detailResponse.payload).not.toContain(
-        'app-notification-banner--cancelled'
-      )
-    })
-
-    it('compliance scheme approve flow shows statement accepted banner', async () => {
-      const item = mockComplianceSchemePendingItems[0]
-      const approveResponse = await postForm(
-        `${detailPathFor(item)}/approve`,
-        sessionCookie
-      )
-
-      expect(approveResponse.statusCode).toBe(302)
-
-      const detailResponse = await server.inject({
-        method: 'GET',
-        url: detailPathFor(item),
-        headers: {
-          cookie: mergeCookiesFromResponse(sessionCookie, approveResponse)
-        }
-      })
-
-      expect(detailResponse.payload).toContain('Statement accepted')
-      expect(detailResponse.payload).toContain('Important')
-    })
-
     it('cancel flow redirects to detail with cancelled banner styling', async () => {
       const item = mockPendingItems[0]
       const cancelResponse = await postForm(
@@ -526,6 +477,13 @@ describe('certificates of compliance — journey', () => {
       })
       expect(detailResponse.payload).toContain('Certificate accepted')
       expect(detailResponse.payload).toContain('Certificate has been accepted.')
+      expect(detailResponse.payload).toContain('Important')
+      expect(detailResponse.payload).not.toContain(
+        'govuk-notification-banner--success'
+      )
+      expect(detailResponse.payload).not.toContain(
+        'app-notification-banner--cancelled'
+      )
       expect(detailResponse.payload).toContain('Certificate status')
       expect(detailResponse.payload).toContain('Accepted by')
       expect(detailResponse.payload).toContain('Accepted date')
@@ -572,6 +530,7 @@ describe('certificates of compliance — journey', () => {
       })
       expect(detailResponse.payload).toContain('Statement accepted')
       expect(detailResponse.payload).toContain('Statement has been accepted.')
+      expect(detailResponse.payload).toContain('Important')
       expect(detailResponse.payload).toContain('Statement status')
       expect(detailResponse.payload).toContain('Accepted by')
       expect(detailResponse.payload).toContain('John Doe')
