@@ -119,7 +119,8 @@ function mapDeclarationToItem(declaration) {
 }
 
 // Reference number is resolved from the Account API (default 'No data'); the
-// organisation name keeps its compliance-scheme-aware derivation.
+// organisation name comes from the waste-organisations record via the
+// compliance-scheme-aware derivation below.
 function mapOrganisationToItem(organisation, organisationType) {
   const organisationName =
     organisationType === 'compliance-schemes'
@@ -135,12 +136,14 @@ function mapOrganisationToItem(organisation, organisationType) {
   }
 }
 
-// Fills the reference number (and, for compliance schemes, the name) for "Not submitted" rows from the Account API bulk lookup.
-async function resolveNotSubmittedOrganisationDetails(
+// Fills the reference number for "Not submitted" rows from the Account API bulk
+// lookup. The organisation name stays as derived from the waste-organisations
+// record (see mapOrganisationToItem) for both direct producers and compliance
+// schemes.
+async function resolveNotSubmittedOrganisationReferenceNumbers(
   accountApi,
   items,
-  traceId,
-  organisationType
+  traceId
 ) {
   const externalIds = items.map((item) => item.organisationId).filter(Boolean)
 
@@ -157,13 +160,9 @@ async function resolveNotSubmittedOrganisationDetails(
     organisations.map((org) => [org.externalId, org])
   )
 
-  const resolvesName = organisationType === 'compliance-schemes'
   for (const item of items) {
     const details = detailsByExternalId.get(item.organisationId)
     item.organisationReferenceNumber = details?.referenceNumber ?? NO_DATA
-    if (resolvesName) {
-      item.organisationName = details?.name ?? NO_DATA
-    }
   }
 }
 
@@ -290,11 +289,10 @@ async function getComplianceList(
     const start = (page - 1) * PAGE_SIZE
     const items = allItems.slice(start, start + PAGE_SIZE)
 
-    await resolveNotSubmittedOrganisationDetails(
+    await resolveNotSubmittedOrganisationReferenceNumbers(
       accountApi,
       items,
-      traceId,
-      organisationType
+      traceId
     )
 
     return {

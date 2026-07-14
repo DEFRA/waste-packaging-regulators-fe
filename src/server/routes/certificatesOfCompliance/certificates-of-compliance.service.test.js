@@ -2186,7 +2186,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.items[0].organisationId).toBe('org-1')
       })
 
-      describe('compliance-schemes — organisation name from Account API', () => {
+      describe('compliance-schemes — name from the waste-organisations record', () => {
         test('calls the Account API with the compliance-scheme org ids and traceId', async () => {
           setupNotSubmittedTab([
             {
@@ -2217,7 +2217,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           ).toHaveBeenCalledWith(['cs-guid-1', 'cs-guid-2'], 'trace-cs')
         })
 
-        test('displays the Account API name for each compliance-scheme row', async () => {
+        test('displays the waste-organisations record name and the Account API reference number for each row', async () => {
           setupNotSubmittedTab([
             {
               id: 'cs-guid-1',
@@ -2234,12 +2234,12 @@ describe('getCertificatesOfComplianceViewModel', () => {
             organisations: [
               {
                 externalId: 'cs-guid-1',
-                name: 'EcoPack Compliance Ltd',
+                name: 'Ignored Account Name',
                 referenceNumber: '518293'
               },
               {
                 externalId: 'cs-guid-2',
-                name: 'GreenCircle Schemes',
+                name: 'Ignored Account Name',
                 referenceNumber: '600124'
               }
             ],
@@ -2256,17 +2256,49 @@ describe('getCertificatesOfComplianceViewModel', () => {
             expect.objectContaining({
               organisationId: 'cs-guid-1',
               organisationReferenceNumber: '518293',
-              organisationName: 'EcoPack Compliance Ltd'
+              organisationName: 'Org record name 1'
             }),
             expect.objectContaining({
               organisationId: 'cs-guid-2',
               organisationReferenceNumber: '600124',
-              organisationName: 'GreenCircle Schemes'
+              organisationName: 'Org record name 2'
             })
           ])
         })
 
-        test('shows "No data" name for a 404 id while other rows render', async () => {
+        test('prefers the trading name from the waste-organisations record', async () => {
+          setupNotSubmittedTab([
+            {
+              id: 'cs-guid-1',
+              name: 'Org legal name',
+              tradingName: 'Org trading name',
+              registrationType: 'ComplianceScheme'
+            }
+          ])
+          mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
+            organisations: [
+              {
+                externalId: 'cs-guid-1',
+                name: 'Ignored Account Name',
+                referenceNumber: '518293'
+              }
+            ],
+            notFoundExternalIds: []
+          })
+
+          const vm = await getCertificatesOfComplianceViewModel(
+            'compliance-schemes',
+            'not-submitted',
+            1
+          )
+
+          expect(vm.items[0]).toMatchObject({
+            organisationReferenceNumber: '518293',
+            organisationName: 'Org trading name'
+          })
+        })
+
+        test('shows "No data" reference number for a 404 id while keeping the record name', async () => {
           setupNotSubmittedTab([
             {
               id: 'cs-guid-1',
@@ -2283,7 +2315,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
             organisations: [
               {
                 externalId: 'cs-guid-1',
-                name: 'EcoPack Compliance Ltd',
+                name: 'Ignored Account Name',
                 referenceNumber: '518293'
               }
             ],
@@ -2298,12 +2330,13 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
           expect(vm.items[0]).toMatchObject({
             organisationId: 'cs-guid-1',
-            organisationName: 'EcoPack Compliance Ltd'
+            organisationReferenceNumber: '518293',
+            organisationName: 'Org record name 1'
           })
           expect(vm.items[1]).toMatchObject({
             organisationId: 'cs-guid-2',
             organisationReferenceNumber: 'No data',
-            organisationName: 'No data'
+            organisationName: 'Org record name 2'
           })
         })
 
