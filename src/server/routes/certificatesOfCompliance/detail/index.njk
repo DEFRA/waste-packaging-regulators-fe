@@ -123,6 +123,19 @@
       <hr class="govuk-section-break govuk-section-break--l">
       <hr class="govuk-section-break govuk-section-break--l">
 
+      {% if registrationType == 'ComplianceScheme' %}
+        <div data-testid="regulation-43">
+          <h2 class="govuk-heading-m govuk-!-margin-bottom-2">Regulation 43</h2>
+          {% if regulation43Met == null %}
+            <p class="govuk-hint">No data</p>
+          {% else %}
+            <p class="govuk-body">{{ regulation43Statement }}</p>
+          {% endif %}
+        </div>
+
+        <hr class="govuk-section-break govuk-section-break--l">
+      {% endif %}
+
       {% if showDeclaration %}
         <div data-testid="declaration">
           <h2 class="govuk-heading-m govuk-!-margin-bottom-2">Declaration</h2>
@@ -132,19 +145,6 @@
             <li>the information they submitted is accurate</li>
             <li>they understand that they may face enforcement action if they submit false or misleading information</li>
           </ul>
-        </div>
-
-        <hr class="govuk-section-break govuk-section-break--l">
-      {% endif %}
-
-      {% if registrationType == 'ComplianceScheme' %}
-        <div data-testid="regulation-43">
-          <h2 class="govuk-heading-m govuk-!-margin-bottom-2">Regulation 43</h2>
-          {% if regulation43Met == null %}
-            <p class="govuk-hint">No data</p>
-          {% else %}
-            <p class="govuk-body">{{ regulation43Statement }}</p>
-          {% endif %}
         </div>
 
         <hr class="govuk-section-break govuk-section-break--l">
