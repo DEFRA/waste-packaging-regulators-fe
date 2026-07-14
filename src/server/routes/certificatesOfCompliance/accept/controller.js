@@ -122,14 +122,13 @@ export const certificatesOfComplianceAcceptPostController = {
     const choice = request.payload?.['confirm-accept']
     const { organisationId, id } = request.params
 
-    if (choice !== 'yes' && choice !== 'no') {
-      return renderForm(request, h, { errors: buildErrors() })
+    switch (choice) {
+      case 'no':
+        return h.redirect(detailPath(organisationId, id))
+      case 'yes':
+        return approveDeclaration(request, h)
+      default:
+        return renderForm(request, h, { errors: buildErrors() })
     }
-
-    if (choice === 'no') {
-      return h.redirect(detailPath(organisationId, id))
-    }
-
-    return approveDeclaration(request, h)
   }
 }
