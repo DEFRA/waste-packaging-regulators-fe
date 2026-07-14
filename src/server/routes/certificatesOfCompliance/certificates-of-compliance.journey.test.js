@@ -316,7 +316,6 @@ describe('certificates of compliance — journey', () => {
       })
 
       expect(detailResponse.payload).toContain('Certificate accepted')
-      expect(detailResponse.payload).toContain('Important')
       expect(detailResponse.payload).not.toContain(
         'govuk-notification-banner--success'
       )
@@ -343,7 +342,6 @@ describe('certificates of compliance — journey', () => {
       })
 
       expect(detailResponse.payload).toContain('Statement accepted')
-      expect(detailResponse.payload).toContain('Important')
     })
 
     it('cancel flow redirects to detail with cancelled banner styling', async () => {

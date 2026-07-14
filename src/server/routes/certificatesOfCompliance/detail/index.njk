@@ -21,8 +21,8 @@
       {% if successBanner %}
         {{ govukNotificationBanner({
           classes: 'app-notification-banner--cancelled' if successBanner.type == 'cancelled' else '',
+          titleText: successBanner.heading,
           html: '
-            <h3 class="govuk-notification-banner__heading">' ~ successBanner.heading ~ '</h3>
             <p class="govuk-body govuk-!-margin-bottom-0">' ~ successBanner.text ~ '</p>
           '
         }) }}
