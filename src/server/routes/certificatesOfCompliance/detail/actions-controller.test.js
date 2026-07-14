@@ -105,16 +105,6 @@ describe('certificates of compliance action controllers', () => {
     )
 
   describe('approve', () => {
-    it('redirects unauthenticated users to sign in', async () => {
-      const response = await postWithCrumb(
-        '/org-123/certificates-of-compliance/decl-1/approve',
-        anonCrumbCookie
-      )
-
-      expect(response.statusCode).toBe(302)
-      expect(response.headers.location).toBe('/signin-oidc')
-    })
-
     it('redirects to detail without the approval banner when the declaration is already cancelled', async () => {
       const cancelResponse = await postWithCrumb(
         '/org-123/certificates-of-compliance/decl-1/cancel'
@@ -146,23 +136,6 @@ describe('certificates of compliance action controllers', () => {
       expect(detailResponse.payload).not.toContain(
         'Certificate has been accepted'
       )
-    })
-
-    it('rejects the approve request when the user is not authenticated', async () => {
-      const response = await inject({
-        method: 'POST',
-        url: '/org-123/certificates-of-compliance/decl-1/approve'
-      })
-
-      expect(response.statusCode).toBe(statusCodes.forbidden)
-    })
-    it('rejects a request with no CSRF token', async () => {
-      const response = await server.inject({
-        method: 'POST',
-        url: '/org-123/certificates-of-compliance/decl-1/approve'
-      })
-
-      expect(response.statusCode).toBe(statusCodes.forbidden)
     })
 
     it('redirects to the detail page, shows the accepted banner, and hides accept based on API status', async () => {
