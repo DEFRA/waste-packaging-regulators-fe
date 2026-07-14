@@ -429,6 +429,27 @@ const mockRegulator = {
 }
 
 const mockOrganisationsById = {
+  '497f6eca-6276-4993-bfeb-53cbbbba6f08': {
+    id: '497f6eca-6276-4993-bfeb-53cbbbba6f08',
+    name: 'Howco Group plc',
+    tradingName: null,
+    businessCountry: 'GB-ENG',
+    companiesHouseNumber: '12345678',
+    address: {
+      addressLine1: 'Registered Add Line 1',
+      postcode: 'CB113DG',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: '2026-03-31T23:20:34.294+00:00',
+        updated: '2026-03-31T23:20:34.294+00:00',
+        status: 'REGISTERED',
+        type: 'LARGE_PRODUCER',
+        registrationYear: 2026
+      }
+    ]
+  },
   'd1e2f3a4-b5c6-7890-abcd-ef1234567890': {
     id: 'd1e2f3a4-b5c6-7890-abcd-ef1234567890',
     name: 'Redwood Retail Group',
