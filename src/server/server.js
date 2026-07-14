@@ -44,6 +44,63 @@ function bellRedirectOrigin(redirectUri, tls) {
 
 const authStrategyName = 'azure-ad-b2c'
 
+function registerAuthStrategy(server, tls) {
+  const azureAdB2cConfig = config.get('auth.azureAdB2c')
+
+  if (config.get('useMockAuth')) {
+    server.auth.scheme('mock', () => ({
+      authenticate: (_request, h) =>
+        h.authenticated({
+          credentials: {
+            profile: { oid: 'mock-user-oid', email: 'mock-user@test.local' }
+          }
+        })
+    }))
+    server.auth.strategy(authStrategyName, 'mock')
+    return
+  }
+
+  server.auth.strategy(authStrategyName, 'bell', {
+    provider: {
+      name: authStrategyName,
+      protocol: 'oauth2',
+      useParamsAuth: true,
+      auth:
+        azureAdB2cConfig.instance && azureAdB2cConfig.domain
+          ? `${azureAdB2cConfig.instance}/${azureAdB2cConfig.domain}/${azureAdB2cConfig.userFlow}/oauth2/v2.0/authorize`
+          : `https://${azureAdB2cConfig.tenantName}.b2clogin.com/${azureAdB2cConfig.tenantName}.onmicrosoft.com/${azureAdB2cConfig.userFlow}/oauth2/v2.0/authorize`,
+      token:
+        azureAdB2cConfig.instance && azureAdB2cConfig.domain
+          ? `${azureAdB2cConfig.instance}/${azureAdB2cConfig.domain}/${azureAdB2cConfig.userFlow}/oauth2/v2.0/token`
+          : `https://${azureAdB2cConfig.tenantName}.b2clogin.com/${azureAdB2cConfig.tenantName}.onmicrosoft.com/${azureAdB2cConfig.userFlow}/oauth2/v2.0/token`,
+      scope: ['openid', 'profile', 'offline_access'],
+      profile(_credentials, params) {
+        const idToken = params.id_token
+        if (!idToken) {
+          return
+        }
+        const payload = idToken.split('.')[1]
+        const claims = JSON.parse(
+          Buffer.from(payload, 'base64url').toString('utf8')
+        )
+        _credentials.profile = claims
+      }
+    },
+    password: azureAdB2cConfig.cookiePassword,
+    clientId: azureAdB2cConfig.clientId,
+    clientSecret: azureAdB2cConfig.clientSecret,
+    isSecure: azureAdB2cConfig.isSecure,
+    location: bellRedirectOrigin(azureAdB2cConfig.redirectUri, tls),
+    config: {
+      tenant: azureAdB2cConfig.domain,
+      discovery:
+        azureAdB2cConfig.instance && azureAdB2cConfig.domain
+          ? `${azureAdB2cConfig.instance}/${azureAdB2cConfig.domain}/${azureAdB2cConfig.userFlow}/v2.0/.well-known/openid-configuration`
+          : `https://${azureAdB2cConfig.tenantName}.b2clogin.com/${azureAdB2cConfig.tenantName}.onmicrosoft.com/${azureAdB2cConfig.userFlow}/v2.0/.well-known/openid-configuration`
+    }
+  })
+}
+
 function createHapiServer(tls) {
   return hapi.server({
     tls,
@@ -112,59 +169,7 @@ export async function createServer() {
     contentSecurityPolicy
   ])
 
-  const azureAdB2cConfig = config.get('auth.azureAdB2c')
-
-  if (config.get('useMockAuth')) {
-    server.auth.scheme('mock', () => ({
-      authenticate: (_request, h) =>
-        h.authenticated({
-          credentials: {
-            profile: { oid: 'mock-user-oid', email: 'mock-user@test.local' }
-          }
-        })
-    }))
-    server.auth.strategy(authStrategyName, 'mock')
-  } else {
-    server.auth.strategy(authStrategyName, 'bell', {
-      provider: {
-        name: authStrategyName,
-        protocol: 'oauth2',
-        useParamsAuth: true,
-        auth:
-          azureAdB2cConfig.instance && azureAdB2cConfig.domain
-            ? `${azureAdB2cConfig.instance}/${azureAdB2cConfig.domain}/${azureAdB2cConfig.userFlow}/oauth2/v2.0/authorize`
-            : `https://${azureAdB2cConfig.tenantName}.b2clogin.com/${azureAdB2cConfig.tenantName}.onmicrosoft.com/${azureAdB2cConfig.userFlow}/oauth2/v2.0/authorize`,
-        token:
-          azureAdB2cConfig.instance && azureAdB2cConfig.domain
-            ? `${azureAdB2cConfig.instance}/${azureAdB2cConfig.domain}/${azureAdB2cConfig.userFlow}/oauth2/v2.0/token`
-            : `https://${azureAdB2cConfig.tenantName}.b2clogin.com/${azureAdB2cConfig.tenantName}.onmicrosoft.com/${azureAdB2cConfig.userFlow}/oauth2/v2.0/token`,
-        scope: ['openid', 'profile', 'offline_access'],
-        profile(_credentials, params) {
-          const idToken = params.id_token
-          if (!idToken) {
-            return
-          }
-          const payload = idToken.split('.')[1]
-          const claims = JSON.parse(
-            Buffer.from(payload, 'base64url').toString('utf8')
-          )
-          _credentials.profile = claims
-        }
-      },
-      password: azureAdB2cConfig.cookiePassword,
-      clientId: azureAdB2cConfig.clientId,
-      clientSecret: azureAdB2cConfig.clientSecret,
-      isSecure: azureAdB2cConfig.isSecure,
-      location: bellRedirectOrigin(azureAdB2cConfig.redirectUri, tls),
-      config: {
-        tenant: azureAdB2cConfig.domain,
-        discovery:
-          azureAdB2cConfig.instance && azureAdB2cConfig.domain
-            ? `${azureAdB2cConfig.instance}/${azureAdB2cConfig.domain}/${azureAdB2cConfig.userFlow}/v2.0/.well-known/openid-configuration`
-            : `https://${azureAdB2cConfig.tenantName}.b2clogin.com/${azureAdB2cConfig.tenantName}.onmicrosoft.com/${azureAdB2cConfig.userFlow}/v2.0/.well-known/openid-configuration`
-      }
-    })
-  }
+  registerAuthStrategy(server, tls)
 
   await server.register([
     router // Register all the controllers/routes defined in src/server/plugins/router.js
