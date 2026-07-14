@@ -607,7 +607,6 @@ export function buildCertificateDetailActionUrls(organisationId, id) {
   const base = `/${organisationId}/certificates-of-compliance/${id}`
   return {
     accept: `${base}/accept`,
-    approve: `${base}/approve`,
     query: `${base}/query`,
     cancel: `${base}/cancel`
   }

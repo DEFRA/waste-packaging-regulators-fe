@@ -66,15 +66,6 @@ export async function runApproveAction(request, h) {
   return redirectToDetail(organisationId, id, h)
 }
 
-export const certificatesOfComplianceApproveController = {
-  async handler(request, h) {
-    if (!request.yar.get('user')) {
-      return redirectToSignIn(request, h)
-    }
-    return runApproveAction(request, h)
-  }
-}
-
 export const certificatesOfComplianceCancelController = {
   async handler(request, h) {
     if (!request.yar.get('user')) {

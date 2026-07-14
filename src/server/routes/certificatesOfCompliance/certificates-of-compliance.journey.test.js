@@ -349,17 +349,6 @@ describe('certificates of compliance — journey', () => {
   })
 
   describe('sign-in populates user in session for certificate actions', () => {
-    it('approve action redirects to /signin-oidc when no user is in session', async () => {
-      const item = mockPendingItems[0]
-      const response = await postForm(
-        `${detailPathFor(item)}/approve`,
-        anonCrumbCookie
-      )
-
-      expect(response.statusCode).toBe(302)
-      expect(response.headers.location).toBe('/signin-oidc')
-    })
-
     it('cancel action redirects to /signin-oidc when no user is in session', async () => {
       const item = mockPendingItems[0]
       const response = await postForm(
@@ -369,23 +358,6 @@ describe('certificates of compliance — journey', () => {
 
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe('/signin-oidc')
-    })
-
-    it('approve action succeeds after sign-in populates user from account API', async () => {
-      const signinResponse = await server.inject({
-        method: 'GET',
-        url: '/signin-oidc'
-      })
-      const cookie = authCookiesFromResponse(signinResponse)
-
-      const item = mockPendingItems[0]
-      const approveResponse = await postForm(
-        `${detailPathFor(item)}/approve`,
-        cookie
-      )
-
-      expect(approveResponse.statusCode).toBe(302)
-      expect(approveResponse.headers.location).toBe(detailPathFor(item))
     })
 
     it('cancel action succeeds after sign-in populates user from account API', async () => {
