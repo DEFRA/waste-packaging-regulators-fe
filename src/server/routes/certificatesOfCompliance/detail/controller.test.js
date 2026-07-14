@@ -231,6 +231,31 @@ describe('#certificatesOfComplianceDetailController', () => {
     )
   })
 
+  describe('Accepted outcome summary', () => {
+    it('renders certificate status, accepted by, and accepted date for an accepted direct producer', async () => {
+      const response = await inject(
+        '/a1b2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-309145'
+      )
+
+      expect(response.payload).toContain('Certificate status')
+      expect(response.payload).toContain('Accepted by')
+      expect(response.payload).toContain('Accepted date')
+      expect(response.payload).toContain('James Walker')
+      expect(response.payload).toContain('15 January 2027 at 14:30')
+    })
+
+    it('renders statement status for an accepted compliance scheme', async () => {
+      const response = await inject(
+        '/e1d2c3b4-a596-4878-9abc-def012345678/certificates-of-compliance/decl-cs-101'
+      )
+
+      expect(response.payload).toContain('Statement status')
+      expect(response.payload).toContain('Accepted by')
+      expect(response.payload).toContain('James Walker')
+      expect(response.payload).toContain('12 January 2027 at 12:05')
+    })
+  })
+
   describe('Current year history', () => {
     const acceptedOnlyUrl =
       '/b0b1b2b3-b4b5-b6b7-b8b9-babbbcbdbebf/certificates-of-compliance/decl-accepted-only'
@@ -238,7 +263,7 @@ describe('#certificatesOfComplianceDetailController', () => {
       '/c0c1c2c3-c4c5-c6c7-c8c9-cacbcccdcecf/certificates-of-compliance/decl-cancelled-only'
     const bothUrl = '/org-123/certificates-of-compliance/101411'
     const emptyUrl =
-      '/a1b2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-309145'
+      '/b1e2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-204872'
 
     it('renders the Current year heading', async () => {
       const response = await inject(bothUrl)
@@ -250,12 +275,21 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(response.payload).toContain('No previous submissions')
     })
 
-    it('renders an Accepted-only page with the blue tag, submitter, and "Not applicable" reason', async () => {
+    it('renders the accepted declaration in current year when there is no separate history', async () => {
+      const response = await inject(
+        '/a1b2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-309145'
+      )
+      expect(response.payload).toContain('15 January 2027 at 14:30')
+      expect(response.payload).toContain('James Walker')
+      expect(response.payload).not.toContain('No previous submissions')
+    })
+
+    it('renders an Accepted-only page with the blue tag, regulator name, and empty reason', async () => {
       const response = await inject(acceptedOnlyUrl)
       expect(response.payload).toContain('15 April 2026 at 11:20')
       expect(response.payload).toContain('govuk-tag govuk-tag--blue')
-      expect(response.payload).toContain('Test Submitter D')
-      expect(response.payload).toContain('Not applicable')
+      expect(response.payload).toContain('James Walker')
+      expect(response.payload).not.toContain('Not applicable')
     })
 
     it('renders a Cancelled-only page with the grey tag, submitter, and the audit reason', async () => {
