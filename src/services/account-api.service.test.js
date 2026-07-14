@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, it, vi, beforeEach, afterEach } from 'vitest'
 
 import { config } from '#/config/config.js'
 import {
@@ -168,73 +168,97 @@ describe('AccountApiService', () => {
       getSpy.mockRestore()
     })
 
-    test('calls the account API and maps the response when useMockApi is false', async () => {
-      const getSpy = vi
-        .spyOn(config, 'get')
-        .mockImplementation((key) => (key === 'useMockApi' ? false : undefined))
+    describe('response mapping when useMockApi is false', () => {
+      let getSpy
+      let result
 
-      const apiResponse = {
-        user: {
-          firstName: 'Alice',
-          lastName: 'Jones',
-          email: 'alice@example.com',
-          telephone: '01234 567890',
-          serviceRole: 'Regulator',
-          serviceRoleId: 3,
-          organisations: [{ name: 'Environment Agency', nationId: 2 }]
-        }
-      }
-      const fetchImpl = vi.fn().mockResolvedValue(mockOkResponse(apiResponse))
-      const service = new AccountApiService({
-        baseUrl: 'http://localhost:3001',
-        clientId: 'Developer',
-        clientSecret: 'developer-pwd',
-        fetchImpl
-      })
-
-      const result = await service.getAccountDetailsById('alice-user-id')
-
-      expect(result).toEqual({
+      const apiUser = {
         firstName: 'Alice',
         lastName: 'Jones',
-        contactEmail: 'alice@example.com',
+        email: 'alice@example.com',
         telephone: '01234 567890',
         serviceRole: 'Regulator',
         serviceRoleId: 3,
-        organisationName: 'Environment Agency',
-        nationId: 2
-      })
-      getSpy.mockRestore()
-    })
-
-    test('maps Telephone from PascalCase API response', async () => {
-      const getSpy = vi
-        .spyOn(config, 'get')
-        .mockImplementation((key) => (key === 'useMockApi' ? false : undefined))
-
-      const apiResponse = {
-        user: {
-          firstName: 'Bob',
-          lastName: 'Smith',
-          email: 'bob@example.com',
-          Telephone: '01987 654321',
-          serviceRole: 'Admin',
-          serviceRoleId: 1,
-          organisations: []
-        }
+        organisations: [{ name: 'Environment Agency', nationId: 2 }]
       }
-      const fetchImpl = vi.fn().mockResolvedValue(mockOkResponse(apiResponse))
-      const service = new AccountApiService({
-        baseUrl: 'http://localhost:3001',
-        clientId: 'Developer',
-        clientSecret: 'developer-pwd',
-        fetchImpl
+
+      beforeEach(async () => {
+        getSpy = vi
+          .spyOn(config, 'get')
+          .mockImplementation((key) =>
+            key === 'useMockApi' ? false : undefined
+          )
+
+        const fetchImpl = vi
+          .fn()
+          .mockResolvedValue(mockOkResponse({ user: apiUser }))
+        const service = new AccountApiService({
+          baseUrl: 'http://localhost:3001',
+          clientId: 'Developer',
+          clientSecret: 'developer-pwd',
+          fetchImpl
+        })
+
+        result = await service.getAccountDetailsById('alice-user-id')
       })
 
-      const result = await service.getAccountDetailsById('bob-user-id')
+      afterEach(() => {
+        getSpy.mockRestore()
+      })
 
-      expect(result.telephone).toBe('01987 654321')
-      getSpy.mockRestore()
+      it('maps user.firstName to firstName', () => {
+        expect(result.firstName).toBe('Alice')
+      })
+
+      it('maps user.lastName to lastName', () => {
+        expect(result.lastName).toBe('Jones')
+      })
+
+      it('maps user.email to contactEmail', () => {
+        expect(result.contactEmail).toBe('alice@example.com')
+      })
+
+      it('maps user.telephone to telephone', () => {
+        expect(result.telephone).toBe('01234 567890')
+      })
+
+      it('maps user.serviceRole to serviceRole', () => {
+        expect(result.serviceRole).toBe('Regulator')
+      })
+
+      it('maps user.serviceRoleId to serviceRoleId', () => {
+        expect(result.serviceRoleId).toBe(3)
+      })
+
+      it('maps user.organisations[0].name to organisationName', () => {
+        expect(result.organisationName).toBe('Environment Agency')
+      })
+
+      it('maps user.organisations[0].nationId to nationId', () => {
+        expect(result.nationId).toBe(2)
+      })
+
+      it('falls back to user.Telephone (PascalCase) when telephone is absent', async () => {
+        const fetchImpl = vi.fn().mockResolvedValue(
+          mockOkResponse({
+            user: {
+              ...apiUser,
+              telephone: undefined,
+              Telephone: '01987 654321'
+            }
+          })
+        )
+        const service = new AccountApiService({
+          baseUrl: 'http://localhost:3001',
+          clientId: 'Developer',
+          clientSecret: 'developer-pwd',
+          fetchImpl
+        })
+
+        const res = await service.getAccountDetailsById('bob-user-id')
+
+        expect(res.telephone).toBe('01987 654321')
+      })
     })
 
     test('returns an empty object when the API response has no user', async () => {

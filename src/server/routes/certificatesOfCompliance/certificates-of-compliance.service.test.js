@@ -2002,6 +2002,95 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.companyPhoneNumber).toBe('No data')
         expect(vm.declarationSignedBy).toBe('No data')
       })
+
+      test('maps dateDeclarationSubmitted to No data when created is null', async () => {
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          created: null
+        })
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.dateDeclarationSubmitted).toBe('No data')
+      })
+
+      test('maps queryDetails to null when declaration is Queried but has no queryDetails', async () => {
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          status: 'Queried',
+          queryDetails: null
+        })
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.queryDetails).toBeNull()
+      })
+
+      test('uses resubmissionRequestedDisplay when resubmissionRequested is neither true nor false', async () => {
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          status: 'Cancelled',
+          cancellationDetails: {
+            reason: 'Test reason',
+            resubmissionRequested: undefined,
+            resubmissionRequestedDisplay: 'Pending decision',
+            dateCancelled: '2026-03-10T00:00:00Z'
+          }
+        })
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.cancellationDetails.resubmissionRequested).toBe(
+          'Pending decision'
+        )
+      })
+
+      test('maps history entry date to null when updated is absent', async () => {
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue(
+          mockDetailData
+        )
+        mockObligationsApi.listOrganisationComplianceDeclarations.mockResolvedValue(
+          {
+            complianceDeclarations: [
+              {
+                ...mockDetailData,
+                status: 'Accepted',
+                updated: null,
+                audit: []
+              }
+            ]
+          }
+        )
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.currentYearActions[0].date).toBeNull()
+      })
+
+      test('rethrows non-404 ApiErrors from getAccountDetailsById', async () => {
+        const serverError = new ApiError({
+          status: 500,
+          message: 'account API request failed with status 500',
+          serviceName: 'account'
+        })
+        mockAccountApi.getAccountDetailsById.mockRejectedValue(serverError)
+
+        await expect(
+          getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1')
+        ).rejects.toBe(serverError)
+      })
     })
 
     describe('not-submitted — Account API organisation resolution', () => {
@@ -2404,6 +2493,67 @@ describe('organisation and audit detail mapping', () => {
     expect(deriveRegistrationType(undefined, 2026)).toBeNull()
   })
 
+  test('deriveRegistrationType falls back to latest year when no registrations match the obligation year', () => {
+    // registrations are for 2024, obligation year is 2026 → forYear pool is
+    // empty, selectFromPool([]) returns null, then falls through to latest year
+    expect(
+      deriveRegistrationType(
+        [
+          {
+            type: 'LARGE_PRODUCER',
+            status: 'REGISTERED',
+            registrationYear: 2024
+          }
+        ],
+        2026
+      )
+    ).toBe('DirectProducer')
+  })
+
+  test('deriveRegistrationType selects most recently updated when candidates lack an updated field', () => {
+    // One candidate has no updated field — its bestTime falls back to 0
+    expect(
+      deriveRegistrationType(
+        [
+          {
+            type: 'SMALL_PRODUCER',
+            status: 'REGISTERED',
+            registrationYear: 2026
+          },
+          {
+            type: 'LARGE_PRODUCER',
+            status: 'REGISTERED',
+            registrationYear: 2026,
+            updated: '2026-01-01T00:00:00Z'
+          }
+        ],
+        2026
+      )
+    ).toBe('DirectProducer')
+  })
+
+  test('mapWasteOrganisationToDetailFields returns No data organisationType when no registration type can be determined', () => {
+    expect(
+      mapWasteOrganisationToDetailFields({
+        name: 'Unknown Org',
+        companiesHouseNumber: '12345678',
+        registrations: []
+      })
+    ).toMatchObject({
+      registrationType: null,
+      organisationType: 'No data'
+    })
+  })
+
+  test('mapWasteOrganisationToDetailFields returns null fields when organisation is null', () => {
+    expect(mapWasteOrganisationToDetailFields(null)).toEqual({
+      companyName: null,
+      registrationType: null,
+      organisationType: 'No data',
+      companiesHouseNumber: 'No data'
+    })
+  })
+
   test('findSubmittedAuditUser returns user from Submitted audit entry', () => {
     expect(findSubmittedAuditUser([mockSubmittedAuditEntry])).toEqual(
       mockSubmittedAuditEntry.user
@@ -2755,6 +2905,43 @@ describe('certificate detail action helpers', () => {
       email: 'mock-user@test.local',
       name: 'Mock User'
     })
+  })
+
+  test('setMockDeclarationStatusOverride does nothing when useMockApi is false', () => {
+    config.get.mockReturnValue(false)
+    const session = { set: vi.fn() }
+
+    setMockDeclarationStatusOverride(session, 'org-1/decl-1', 'Approved')
+
+    expect(session.set).not.toHaveBeenCalled()
+  })
+
+  test('readAndClearCertificateActionBannerFlags clears the query banner when shown', () => {
+    const session = {
+      data: {
+        [certificateActionSessionKeys.justQueried]: 'org-1/decl-q'
+      },
+      get(key) {
+        return this.data[key]
+      },
+      clear(key) {
+        delete this.data[key]
+      }
+    }
+
+    const flags = readAndClearCertificateActionBannerFlags(
+      session,
+      'org-1/decl-q'
+    )
+
+    expect(flags).toEqual({
+      showApprovalBanner: false,
+      showQueryBanner: true,
+      showCancelBanner: false
+    })
+    expect(
+      session.data[certificateActionSessionKeys.justQueried]
+    ).toBeUndefined()
   })
 
   describe('approveComplianceDeclaration', () => {
