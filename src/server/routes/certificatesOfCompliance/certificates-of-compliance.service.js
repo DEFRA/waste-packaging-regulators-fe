@@ -608,7 +608,7 @@ export function buildCertificateDetailActionUrls(organisationId, id) {
   return {
     accept: `${base}/accept`,
     query: `${base}/query`,
-    cancel: `${base}/cancel`
+    cancel: `${base}/cancel/reason`
   }
 }
 
@@ -674,11 +674,15 @@ const declarationStatusByReviewStatus = {
 }
 
 function mockStatusSessionKey(declarationKey) {
-  return `coc-mock-status:${declarationKey}`
+  return `certificate-mock-status:${declarationKey}`
 }
 
 function mockAuditSessionKey(declarationKey) {
-  return `coc-mock-audit:${declarationKey}`
+  return `certificate-mock-audit:${declarationKey}`
+}
+
+function mockCancelReasonSessionKey(declarationKey) {
+  return `certificate-mock-cancel-reason:${declarationKey}`
 }
 
 function appendMockTransitionAudit(session, declarationKey, auditEntry) {
@@ -711,7 +715,8 @@ export function canCancelComplianceDeclaration(reviewStatus) {
 export function setMockDeclarationStatusOverride(
   session,
   declarationKey,
-  reviewStatus
+  reviewStatus,
+  { reason } = {}
 ) {
   if (!config.get('useMockApi')) {
     return
@@ -728,6 +733,9 @@ export function setMockDeclarationStatusOverride(
   }
 
   if (reviewStatus === 'Cancelled') {
+    if (reason != null) {
+      session.set(mockCancelReasonSessionKey(declarationKey), reason)
+    }
     const { auditEntry } = buildMockCancelledAuditEntry(session, declarationKey)
     appendMockTransitionAudit(session, declarationKey, auditEntry)
   }
@@ -763,12 +771,15 @@ function buildMockCancelledAuditEntry(session, declarationKey) {
   const sessionUser = session?.get?.('user')
   const user = mapSessionUserToApiUser(sessionUser)
   const timestamp = nextMockAuditTimestamp(session, declarationKey)
+  const reason =
+    session?.get?.(mockCancelReasonSessionKey(declarationKey)) ?? null
 
   return {
     auditEntry: {
       action: 'Cancelled',
       timestamp,
-      user
+      user,
+      reason
     },
     updated: timestamp
   }
@@ -984,6 +995,30 @@ export async function approveComplianceDeclaration(
       organisationId,
       id,
       status: 'Accepted',
+      user: mapSessionUserToApiUser(sessionUser)
+    },
+    traceId
+  )
+}
+
+export async function cancelComplianceDeclaration(
+  organisationId,
+  id,
+  sessionUser,
+  reason,
+  traceId
+) {
+  if (config.get('useMockApi')) {
+    return null
+  }
+
+  const api = createWasteObligationsApiService()
+  return api.updateComplianceDeclaration(
+    {
+      organisationId,
+      id,
+      status: 'Cancelled',
+      reason,
       user: mapSessionUserToApiUser(sessionUser)
     },
     traceId

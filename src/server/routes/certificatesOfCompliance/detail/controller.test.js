@@ -210,14 +210,14 @@ describe('#certificatesOfComplianceDetailController', () => {
     const response = await inject('/org-123/certificates-of-compliance/101411')
     expect(response.payload).toContain('Accept certificate')
     expect(response.payload).toContain('Cancel certificate')
-    // Accept is a link to the Yes/No confirmation page; Cancel posts directly.
+    // Both are links: Accept to the Yes/No confirmation page, Cancel to the
+    // reason page that starts the cancellation flow.
     expect(response.payload).toContain(
       'href="/org-123/certificates-of-compliance/101411/accept"'
     )
     expect(response.payload).toContain(
-      'action="/org-123/certificates-of-compliance/101411/cancel"'
+      'href="/org-123/certificates-of-compliance/101411/cancel/reason"'
     )
-    expect(response.payload).toContain('data-prevent-double-click="true"')
   })
 
   it('should render cancel only for an accepted certificate', async () => {
@@ -227,7 +227,7 @@ describe('#certificatesOfComplianceDetailController', () => {
     expect(response.payload).not.toContain('Accept certificate')
     expect(response.payload).toContain('Cancel certificate')
     expect(response.payload).toContain(
-      'action="/a1b2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-309145/cancel"'
+      'href="/a1b2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-309145/cancel/reason"'
     )
   })
 

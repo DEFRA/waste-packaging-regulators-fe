@@ -1,0 +1,59 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "csrf-field/macro.njk" import appCsrfField %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">Confirm and send cancellation email</h1>
+
+      {% set emailLinkHtml %}
+        <!-- TODO: AMCR-293 — placeholder dead link; point at the real cancellation email preview page. https://eaflood.atlassian.net/browse/AMCR-293 -->
+        <a class="govuk-link" href="#" target="_blank" rel="noreferrer noopener">View the cancellation email (opens in new tab)</a>
+      {% endset %}
+
+      {{ govukSummaryList({
+        rows: [
+          {
+            key: { text: "Organisation" },
+            value: { text: companyName }
+          },
+          {
+            key: { text: "Cancel reason" },
+            value: { text: reasonLabel },
+            actions: {
+              items: [
+                {
+                  href: reasonPath,
+                  text: "Change",
+                  visuallyHiddenText: "reason for cancelling"
+                }
+              ]
+            }
+          },
+          {
+            key: { text: "Email" },
+            value: { html: emailLinkHtml }
+          }
+        ]
+      }) }}
+
+      <form method="post" action="/{{ organisationId }}/certificates-of-compliance/{{ id }}/cancel" novalidate>
+        {{ appCsrfField(CSRFToken) }}
+        <input type="hidden" name="cancel-reason" value="{{ reason }}">
+
+        {{ govukInsetText({
+          text: "When you confirm and send, we'll cancel the " + docTypeLower + " and email the person who submitted it."
+        }) }}
+
+        {{ govukButton({
+          text: "Confirm and send",
+          preventDoubleClick: true
+        }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}
