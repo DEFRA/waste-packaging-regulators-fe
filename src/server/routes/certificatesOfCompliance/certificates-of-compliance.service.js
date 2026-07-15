@@ -8,7 +8,6 @@ import {
   mockSummary,
   mockSummaryByOrganisationType,
   mockListByOrganisationType,
-  mockObligationData,
   getMockObligationData,
   getMockDetailDataById,
   getMockDeclarationsByOrgYear,
