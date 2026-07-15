@@ -17,8 +17,6 @@ import {
   NATIONWIDE,
   REDWOOD,
   FUTUREPACK,
-  STERLING,
-  PINNACLE,
   GREENFIELD_CANCELLED,
   GREENCIRCLE_CANCELLED
 } from './certificates-of-compliance.test-data.js'
