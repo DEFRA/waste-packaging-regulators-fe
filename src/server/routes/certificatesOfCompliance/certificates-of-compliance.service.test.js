@@ -279,6 +279,41 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.companyName).toBe('No data')
     })
 
+    describe('showObligations', () => {
+      test('is true when the org has obligations', async () => {
+        const item = mockNotSubmittedItems[0] // Redwood Retail — uses default mockObligationData
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          item.organisationId,
+          undefined,
+          { obligationYear: 2026 }
+        )
+
+        expect(vm.showObligations).toBe(true)
+      })
+
+      test('is false when the org has an empty obligations array', async () => {
+        const item = mockNotSubmittedItems[3] // Pinnacle Containers Ltd — obligations: []
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          item.organisationId,
+          undefined,
+          { obligationYear: 2026 }
+        )
+
+        expect(vm.showObligations).toBe(false)
+      })
+
+      test('is false when the org has null obligations', async () => {
+        const item = mockNotSubmittedItems[2] // Sterling Packaging Ltd — obligations: null
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          item.organisationId,
+          undefined,
+          { obligationYear: 2026 }
+        )
+
+        expect(vm.showObligations).toBe(false)
+      })
+    })
+
     test('getCertificateOfComplianceDetailViewModel returns accepted direct producer detail', async () => {
       const vm = await getCertificateOfComplianceDetailViewModel(
         mockDirectProducerAcceptedDetailData.organisation.id,
