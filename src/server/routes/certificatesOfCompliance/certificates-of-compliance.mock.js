@@ -1220,7 +1220,9 @@ export const mockObligationData = {
 const mockObligationDataByOrgId = {
   'f3b4c5d6-e7a8-9012-cdef-123456789abc': { obligations: null },
   'a4b5c6d7-e8f9-0123-defa-234567890bcd': { obligations: [] },
-  'b5c6d7e8-f9a0-1234-efab-345678901cde': { obligations: mockObligationsAllZero }
+  'b5c6d7e8-f9a0-1234-efab-345678901cde': {
+    obligations: mockObligationsAllZero
+  }
 }
 
 export function getMockObligationData(organisationId) {
