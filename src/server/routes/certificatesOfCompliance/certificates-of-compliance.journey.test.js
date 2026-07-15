@@ -826,7 +826,9 @@ describe('certificates of compliance — journey', () => {
         expect(response.statusCode).toBe(statusCodes.ok)
         const { obligations } = loadDetailPage(response.payload)
         expect(obligations.tablePresent).toBe(false)
-        expect(response.payload).toContain('<p>No data</p>')
+        expect(response.payload).toContain(
+          '<p class="govuk-body-m">No data</p>'
+        )
       })
 
       it('hides the obligations table and shows No data when obligations is an empty array', async () => {
@@ -835,7 +837,9 @@ describe('certificates of compliance — journey', () => {
         expect(response.statusCode).toBe(statusCodes.ok)
         const { obligations } = loadDetailPage(response.payload)
         expect(obligations.tablePresent).toBe(false)
-        expect(response.payload).toContain('<p>No data</p>')
+        expect(response.payload).toContain(
+          '<p class="govuk-body-m">No data</p>'
+        )
       })
     })
   })
