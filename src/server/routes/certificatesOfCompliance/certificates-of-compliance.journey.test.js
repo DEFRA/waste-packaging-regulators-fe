@@ -7,10 +7,21 @@ import {
   mockNotSubmittedItems,
   mockComplianceSchemePendingItems,
   mockComplianceSchemeAcceptedItems,
-  mockComplianceSchemeNotSubmittedItems,
-  mockDirectProducerCancelledDetailData,
-  mockComplianceSchemeCancelledDetailData
+  mockComplianceSchemeNotSubmittedItems
 } from './certificates-of-compliance.mock.js'
+import {
+  HOWCO,
+  GREENFIELD,
+  ECOPACK,
+  GREENCIRCLE,
+  NATIONWIDE,
+  REDWOOD,
+  FUTUREPACK,
+  STERLING,
+  PINNACLE,
+  GREENFIELD_CANCELLED,
+  GREENCIRCLE_CANCELLED
+} from './certificates-of-compliance.test-data.js'
 import { loadDetailPage } from './detail/detail.page-object.js'
 import {
   authCookiesFromResponse,
@@ -20,23 +31,8 @@ import {
   sessionCookieFromResponse
 } from '#test-helpers/cookies.js'
 
-const HOWCO_DETAIL_URL =
-  '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
-const GREENFIELD_DETAIL_URL =
-  '/b1e2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-204872'
-const ECOPACK_DETAIL_URL =
-  '/923fa611-571c-4948-ab7d-fbb75e75ed65/certificates-of-compliance/decl-cs-001'
-const GREENCIRCLE_DETAIL_URL =
-  '/f3a2b1c0-d9e8-47f6-a5b4-c3d2e1f0a9b8/certificates-of-compliance/decl-cs-002'
-const REDWOOD_UNSUBMITTED_URL =
-  '/d1e2f3a4-b5c6-7890-abcd-ef1234567890/certificates-of-compliance?obligationYear=2026'
-
 function detailPathFor(item) {
   return `/${item.organisationId}/certificates-of-compliance/${item.id}`
-}
-
-function detailPathForDetailData(detailData) {
-  return `/${detailData.organisation.id}/certificates-of-compliance/${detailData.id}`
 }
 
 describe('certificates of compliance — journey', () => {
@@ -274,9 +270,7 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('shows no action buttons for a cancelled direct producer', async () => {
-      const response = await inject(
-        detailPathForDetailData(mockDirectProducerCancelledDetailData)
-      )
+      const response = await inject(GREENFIELD_CANCELLED.url)
 
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(response.payload).not.toContain('Accept certificate')
@@ -286,9 +280,7 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('shows no action buttons for a cancelled compliance scheme', async () => {
-      const response = await inject(
-        detailPathForDetailData(mockComplianceSchemeCancelledDetailData)
-      )
+      const response = await inject(GREENCIRCLE_CANCELLED.url)
 
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(response.payload).not.toContain('Accept statement')
@@ -556,9 +548,7 @@ describe('certificates of compliance — journey', () => {
 
   describe('declaration section', () => {
     it('shows the declaration for a submitted (pending) direct producer', async () => {
-      const { declaration } = loadDetailPage(
-        (await inject(HOWCO_DETAIL_URL)).payload
-      )
+      const { declaration } = loadDetailPage((await inject(HOWCO.url)).payload)
 
       expect(declaration.present).toBe(true)
       expect(declaration.documentNoun).toBe('certificate of compliance')
@@ -566,7 +556,7 @@ describe('certificates of compliance — journey', () => {
 
     it('shows the declaration for a submitted (pending) compliance scheme with statement wording', async () => {
       const { declaration } = loadDetailPage(
-        (await inject(ECOPACK_DETAIL_URL)).payload
+        (await inject(ECOPACK.url)).payload
       )
 
       expect(declaration.present).toBe(true)
@@ -583,7 +573,7 @@ describe('certificates of compliance — journey', () => {
 
     it('hides the declaration for an unsubmitted organisation', async () => {
       const { declaration } = loadDetailPage(
-        (await inject(REDWOOD_UNSUBMITTED_URL)).payload
+        (await inject(REDWOOD.url)).payload
       )
 
       expect(declaration.present).toBe(false)
@@ -591,11 +581,7 @@ describe('certificates of compliance — journey', () => {
 
     it('shows the declaration for a cancelled direct producer', async () => {
       const { declaration } = loadDetailPage(
-        (
-          await inject(
-            detailPathForDetailData(mockDirectProducerCancelledDetailData)
-          )
-        ).payload
+        (await inject(GREENFIELD_CANCELLED.url)).payload
       )
 
       expect(declaration.present).toBe(true)
@@ -604,11 +590,7 @@ describe('certificates of compliance — journey', () => {
 
     it('shows the declaration for a cancelled compliance scheme', async () => {
       const { declaration } = loadDetailPage(
-        (
-          await inject(
-            detailPathForDetailData(mockComplianceSchemeCancelledDetailData)
-          )
-        ).payload
+        (await inject(GREENCIRCLE_CANCELLED.url)).payload
       )
 
       expect(declaration.present).toBe(true)
@@ -617,36 +599,31 @@ describe('certificates of compliance — journey', () => {
   })
 
   describe('Regulation 43 section', () => {
-    const ECOPACK_COMPLIANT_URL =
-      '/e1d2c3b4-a596-4878-9abc-def012345678/certificates-of-compliance/decl-cs-101'
-
     it('shows the not complied statement for a not compliant compliance scheme', async () => {
       const { regulation43 } = loadDetailPage(
-        (await inject(ECOPACK_DETAIL_URL)).payload
+        (await inject(ECOPACK.url)).payload
       )
 
       expect(regulation43.present).toBe(true)
       expect(regulation43.text).toBe(
-        'EcoPack Compliance Ltd declared they have not complied with all other requirements in regulation 43.'
+        `${ECOPACK.name} declared they have not complied with all other requirements in regulation 43.`
       )
     })
 
     it('shows the complied statement for a compliant compliance scheme', async () => {
       const { regulation43 } = loadDetailPage(
-        (await inject(ECOPACK_COMPLIANT_URL)).payload
+        (await inject(NATIONWIDE.url)).payload
       )
 
       expect(regulation43.present).toBe(true)
       expect(regulation43.text).toBe(
-        'Nationwide Packaging Scheme declared they have complied with all other requirements in regulation 43.'
+        `${NATIONWIDE.name} declared they have complied with all other requirements in regulation 43.`
       )
     })
 
     it('shows a grey No data empty state for a compliance scheme with no submission', async () => {
-      const FUTUREPACK_UNSUBMITTED_URL =
-        '/a9b8c7d6-e5f4-3210-abcd-ef9876543210/certificates-of-compliance?obligationYear=2026'
       const { regulation43 } = loadDetailPage(
-        (await inject(FUTUREPACK_UNSUBMITTED_URL)).payload
+        (await inject(FUTUREPACK.url)).payload
       )
 
       expect(regulation43.present).toBe(true)
@@ -654,9 +631,7 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('does not show the section for a direct producer', async () => {
-      const { regulation43 } = loadDetailPage(
-        (await inject(HOWCO_DETAIL_URL)).payload
-      )
+      const { regulation43 } = loadDetailPage((await inject(HOWCO.url)).payload)
 
       expect(regulation43.present).toBe(false)
     })
@@ -669,9 +644,7 @@ describe('certificates of compliance — journey', () => {
 
     describe('fully-Met direct producer detail', () => {
       it('renders green Met tags on every material row and the totals row', async () => {
-        const { materials } = loadDetailPage(
-          (await inject(HOWCO_DETAIL_URL)).payload
-        )
+        const { materials } = loadDetailPage((await inject(HOWCO.url)).payload)
 
         for (const row of materials.rows) {
           expect(row.statusTag).toEqual(met)
@@ -680,9 +653,7 @@ describe('certificates of compliance — journey', () => {
       })
 
       it('renders green Met tags on every glass row and the totals row', async () => {
-        const { glass } = loadDetailPage(
-          (await inject(HOWCO_DETAIL_URL)).payload
-        )
+        const { glass } = loadDetailPage((await inject(HOWCO.url)).payload)
 
         for (const row of glass.rows) {
           expect(row.statusTag).toEqual(met)
@@ -694,7 +665,7 @@ describe('certificates of compliance — journey', () => {
     describe('mixed direct producer detail', () => {
       it('renders the correct 3-state tag per material row', async () => {
         const { materials } = loadDetailPage(
-          (await inject(GREENFIELD_DETAIL_URL)).payload
+          (await inject(GREENFIELD.url)).payload
         )
         const byName = Object.fromEntries(
           materials.rows.map((r) => [r.material, r.statusTag])
@@ -708,7 +679,7 @@ describe('certificates of compliance — journey', () => {
 
       it('renders 0 in the tonnage cells of the null-tonnage Wood row', async () => {
         const { materials } = loadDetailPage(
-          (await inject(GREENFIELD_DETAIL_URL)).payload
+          (await inject(GREENFIELD.url)).payload
         )
         const wood = materials.rows.find((r) => r.material === 'Wood')
 
@@ -722,16 +693,14 @@ describe('certificates of compliance — journey', () => {
 
       it('renders a red Not met tag on the materials totals row', async () => {
         const { materials } = loadDetailPage(
-          (await inject(GREENFIELD_DETAIL_URL)).payload
+          (await inject(GREENFIELD.url)).payload
         )
 
         expect(materials.totals.statusTag).toEqual(notMet)
       })
 
       it('renders the correct 3-state tag per glass row', async () => {
-        const { glass } = loadDetailPage(
-          (await inject(GREENFIELD_DETAIL_URL)).payload
-        )
+        const { glass } = loadDetailPage((await inject(GREENFIELD.url)).payload)
         const byName = Object.fromEntries(
           glass.rows.map((r) => [r.material, r.statusTag])
         )
@@ -741,9 +710,7 @@ describe('certificates of compliance — journey', () => {
       })
 
       it('renders 0 in the tonnage cells of the null-tonnage RemainingGlass row', async () => {
-        const { glass } = loadDetailPage(
-          (await inject(GREENFIELD_DETAIL_URL)).payload
-        )
+        const { glass } = loadDetailPage((await inject(GREENFIELD.url)).payload)
         const remainingGlass = glass.rows.find(
           (r) => r.material === 'RemainingGlass'
         )
@@ -760,7 +727,7 @@ describe('certificates of compliance — journey', () => {
     describe('fully-Met compliance scheme detail', () => {
       it('renders green Met tags on every material and glass row and both totals rows', async () => {
         const { materials, glass } = loadDetailPage(
-          (await inject(ECOPACK_DETAIL_URL)).payload
+          (await inject(ECOPACK.url)).payload
         )
 
         for (const row of [...materials.rows, ...glass.rows]) {
@@ -774,7 +741,7 @@ describe('certificates of compliance — journey', () => {
     describe('mixed compliance scheme detail', () => {
       it('renders the correct 3-state tag per material row', async () => {
         const { materials } = loadDetailPage(
-          (await inject(GREENCIRCLE_DETAIL_URL)).payload
+          (await inject(GREENCIRCLE.url)).payload
         )
         const byName = Object.fromEntries(
           materials.rows.map((r) => [r.material, r.statusTag])
@@ -787,7 +754,7 @@ describe('certificates of compliance — journey', () => {
 
       it('renders a red Not met tag on the materials totals row', async () => {
         const { materials } = loadDetailPage(
-          (await inject(GREENCIRCLE_DETAIL_URL)).payload
+          (await inject(GREENCIRCLE.url)).payload
         )
 
         expect(materials.totals.statusTag).toEqual(notMet)
@@ -797,7 +764,7 @@ describe('certificates of compliance — journey', () => {
     describe('not-submitted direct producer detail', () => {
       it('renders a grey No data tag on every material and glass row and both totals rows', async () => {
         const { materials, glass } = loadDetailPage(
-          (await inject(REDWOOD_UNSUBMITTED_URL)).payload
+          (await inject(REDWOOD.url)).payload
         )
 
         for (const row of [...materials.rows, ...glass.rows]) {

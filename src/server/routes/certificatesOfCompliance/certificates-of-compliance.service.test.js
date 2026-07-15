@@ -45,7 +45,6 @@ import {
   mockAcceptedItems,
   mockNotSubmittedItems,
   mockDetailData,
-  mockObligationData,
   mockComplianceSchemePendingItems,
   mockComplianceSchemeDetailData,
   mockDirectProducerAcceptedDetailData,
@@ -55,6 +54,7 @@ import {
 } from './certificates-of-compliance.service.js'
 import {
   mockSummaryByOrganisationType,
+  mockObligationData,
   mockQueriedDetailData,
   mockCancelledDetailData,
   mockSubmittedAuditEntry,

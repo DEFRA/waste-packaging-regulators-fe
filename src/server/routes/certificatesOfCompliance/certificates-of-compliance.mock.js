@@ -80,6 +80,33 @@ export const mockNotSubmittedItems = [
     recyclingObligationsMet: false,
     percentageMet: 0,
     dateSubmitted: null
+  },
+  {
+    id: null,
+    organisationId: 'f3b4c5d6-e7a8-9012-cdef-123456789abc',
+    organisationReferenceNumber: '734921',
+    organisationName: 'Sterling Packaging Ltd',
+    recyclingObligationsMet: null,
+    percentageMet: null,
+    dateSubmitted: null
+  },
+  {
+    id: null,
+    organisationId: 'a4b5c6d7-e8f9-0123-defa-234567890bcd',
+    organisationReferenceNumber: '851036',
+    organisationName: 'Pinnacle Containers Ltd',
+    recyclingObligationsMet: false,
+    percentageMet: 0,
+    dateSubmitted: null
+  },
+  {
+    id: null,
+    organisationId: 'b5c6d7e8-f9a0-1234-efab-345678901cde',
+    organisationReferenceNumber: '962147',
+    organisationName: 'Meridian Products Ltd',
+    recyclingObligationsMet: false,
+    percentageMet: 0,
+    dateSubmitted: null
   }
 ]
 
@@ -443,6 +470,69 @@ const mockOrganisationsById = {
         registrationYear: 2026
       }
     ]
+  },
+  'f3b4c5d6-e7a8-9012-cdef-123456789abc': {
+    id: 'f3b4c5d6-e7a8-9012-cdef-123456789abc',
+    name: 'Sterling Packaging Ltd',
+    tradingName: null,
+    businessCountry: 'GB-ENG',
+    companiesHouseNumber: '11223344',
+    address: {
+      addressLine1: 'Sterling House',
+      postcode: 'LS1 1AA',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: '2026-03-31T23:20:34.294+00:00',
+        updated: '2026-03-31T23:20:34.294+00:00',
+        status: 'REGISTERED',
+        type: 'LARGE_PRODUCER',
+        registrationYear: 2026
+      }
+    ]
+  },
+  'a4b5c6d7-e8f9-0123-defa-234567890bcd': {
+    id: 'a4b5c6d7-e8f9-0123-defa-234567890bcd',
+    name: 'Pinnacle Containers Ltd',
+    tradingName: null,
+    businessCountry: 'GB-ENG',
+    companiesHouseNumber: '22334455',
+    address: {
+      addressLine1: 'Pinnacle Way',
+      postcode: 'M1 1AA',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: '2026-03-31T23:20:34.294+00:00',
+        updated: '2026-03-31T23:20:34.294+00:00',
+        status: 'REGISTERED',
+        type: 'LARGE_PRODUCER',
+        registrationYear: 2026
+      }
+    ]
+  },
+  'b5c6d7e8-f9a0-1234-efab-345678901cde': {
+    id: 'b5c6d7e8-f9a0-1234-efab-345678901cde',
+    name: 'Meridian Products Ltd',
+    tradingName: null,
+    businessCountry: 'GB-ENG',
+    companiesHouseNumber: '33445566',
+    address: {
+      addressLine1: 'Meridian Park',
+      postcode: 'B1 1AA',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: '2026-03-31T23:20:34.294+00:00',
+        updated: '2026-03-31T23:20:34.294+00:00',
+        status: 'REGISTERED',
+        type: 'LARGE_PRODUCER',
+        registrationYear: 2026
+      }
+    ]
   }
 }
 
@@ -466,6 +556,21 @@ export const mockAccountOrganisationsByExternalId = {
     externalId: 'b8c7d6e5-f4a3-2109-abcd-ef8765432109',
     name: 'Metroline Waste Services',
     referenceNumber: 'CS-3002'
+  },
+  'f3b4c5d6-e7a8-9012-cdef-123456789abc': {
+    externalId: 'f3b4c5d6-e7a8-9012-cdef-123456789abc',
+    name: 'Sterling Packaging Ltd',
+    referenceNumber: '734921'
+  },
+  'a4b5c6d7-e8f9-0123-defa-234567890bcd': {
+    externalId: 'a4b5c6d7-e8f9-0123-defa-234567890bcd',
+    name: 'Pinnacle Containers Ltd',
+    referenceNumber: '851036'
+  },
+  'b5c6d7e8-f9a0-1234-efab-345678901cde': {
+    externalId: 'b5c6d7e8-f9a0-1234-efab-345678901cde',
+    name: 'Meridian Products Ltd',
+    referenceNumber: '962147'
   }
 }
 
@@ -781,7 +886,7 @@ const mockComplianceSchemeCurrentYearCancelledDeclaration = {
   ]
 }
 
-const mockAcceptedOnlyDeclaration = {
+export const mockAcceptedOnlyDeclaration = {
   ...mockDetailData,
   id: 'decl-accepted-only',
   created: '2026-04-15T11:20:00Z',
@@ -803,7 +908,7 @@ const mockAcceptedOnlyDeclaration = {
   ]
 }
 
-const mockCancelledOnlyDeclaration = {
+export const mockCancelledOnlyDeclaration = {
   ...mockDetailData,
   id: 'decl-cancelled-only',
   created: '2026-04-08T10:00:00Z',
@@ -824,6 +929,34 @@ const mockCancelledOnlyDeclaration = {
       reason: 'Information could not be verified'
     }
   ]
+}
+
+export const mockNoObligationsDetailData = {
+  ...mockDetailData,
+  id: 'decl-sterling-no-obligations',
+  status: 'Submitted',
+  organisation: {
+    ...mockDetailData.organisation,
+    id: 'f3b4c5d6-e7a8-9012-cdef-123456789abc',
+    name: 'Sterling Packaging Ltd',
+    referenceNumber: '734921',
+    companiesHouseNumber: '11223344'
+  },
+  obligations: null
+}
+
+export const mockEmptyObligationsDetailData = {
+  ...mockDetailData,
+  id: 'decl-pinnacle-empty-obligations',
+  status: 'Submitted',
+  organisation: {
+    ...mockDetailData.organisation,
+    id: 'a4b5c6d7-e8f9-0123-defa-234567890bcd',
+    name: 'Pinnacle Containers Ltd',
+    referenceNumber: '851036',
+    companiesHouseNumber: '22334455'
+  },
+  obligations: []
 }
 
 const mockDeclarationsByOrgYear = {
@@ -861,7 +994,9 @@ const mockDetailById = {
   'decl-cs-queried': mockComplianceSchemeQueriedDetailData,
   'decl-cs-cancelled': mockComplianceSchemeCancelledDetailData,
   'decl-accepted-only': mockAcceptedOnlyDeclaration,
-  'decl-cancelled-only': mockCancelledOnlyDeclaration
+  'decl-cancelled-only': mockCancelledOnlyDeclaration,
+  'decl-sterling-no-obligations': mockNoObligationsDetailData,
+  'decl-pinnacle-empty-obligations': mockEmptyObligationsDetailData
 }
 
 export function getMockDetailDataById(id) {
@@ -878,6 +1013,105 @@ export function getMockDetailDataById(id) {
     : mockDetailData
   return { ...base, id }
 }
+
+const mockObligationsAllZero = [
+  {
+    material: 'Aluminium',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 0,
+      awaitingAcceptance: 0,
+      accepted: 0,
+      outstanding: 0,
+      obligated: 0
+    },
+    status: 'NoDataYet'
+  },
+  {
+    material: 'Glass',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 0,
+      awaitingAcceptance: 0,
+      accepted: 0,
+      outstanding: 0,
+      obligated: 0
+    },
+    status: 'NoDataYet'
+  },
+  {
+    material: 'PaperBoardFibre',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 0,
+      awaitingAcceptance: 0,
+      accepted: 0,
+      outstanding: 0,
+      obligated: 0
+    },
+    status: 'NoDataYet'
+  },
+  {
+    material: 'Plastic',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 0,
+      awaitingAcceptance: 0,
+      accepted: 0,
+      outstanding: 0,
+      obligated: 0
+    },
+    status: 'NoDataYet'
+  },
+  {
+    material: 'Steel',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 0,
+      awaitingAcceptance: 0,
+      accepted: 0,
+      outstanding: 0,
+      obligated: 0
+    },
+    status: 'NoDataYet'
+  },
+  {
+    material: 'Wood',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 0,
+      awaitingAcceptance: 0,
+      accepted: 0,
+      outstanding: 0,
+      obligated: 0
+    },
+    status: 'NoDataYet'
+  },
+  {
+    material: 'GlassRemelt',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 0,
+      awaitingAcceptance: 0,
+      accepted: 0,
+      outstanding: 0,
+      obligated: 0
+    },
+    status: 'NoDataYet'
+  },
+  {
+    material: 'RemainingGlass',
+    recyclingTarget: 1,
+    tonnages: {
+      material: 0,
+      awaitingAcceptance: 0,
+      accepted: 0,
+      outstanding: 0,
+      obligated: 0
+    },
+    status: 'NoDataYet'
+  }
+]
 
 export const mockObligationData = {
   obligations: [
@@ -978,4 +1212,17 @@ export const mockObligationData = {
       status: 'NoDataYet'
     }
   ]
+}
+
+// Per-org obligation data for unsubmitted organisations.
+// Sterling has null obligations (no data), Pinnacle has an empty array,
+// Meridian has all-zero obligations.
+const mockObligationDataByOrgId = {
+  'f3b4c5d6-e7a8-9012-cdef-123456789abc': { obligations: null },
+  'a4b5c6d7-e8f9-0123-defa-234567890bcd': { obligations: [] },
+  'b5c6d7e8-f9a0-1234-efab-345678901cde': { obligations: mockObligationsAllZero }
+}
+
+export function getMockObligationData(organisationId) {
+  return mockObligationDataByOrgId[organisationId] ?? mockObligationData
 }
