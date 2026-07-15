@@ -439,6 +439,48 @@ const mockOrganisationsById = {
         registrationYear: 2026
       }
     ]
+  },
+  'b8c7d6e5-f4a3-2109-abcd-ef8765432109': {
+    id: 'b8c7d6e5-f4a3-2109-abcd-ef8765432109',
+    name: 'Metroline Waste Services Ltd',
+    tradingName: 'Metroline Waste Services',
+    businessCountry: 'GB-ENG',
+    companiesHouseNumber: '76543210',
+    address: {
+      addressLine1: 'Scheme House',
+      postcode: 'M1 1AA',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: '2026-03-31T23:20:34.294+00:00',
+        updated: '2026-03-31T23:20:34.294+00:00',
+        status: 'REGISTERED',
+        type: 'COMPLIANCE_SCHEME',
+        registrationYear: 2026
+      }
+    ]
+  },
+  'c7b6a5d4-e3f2-1098-abcd-ed7654321098': {
+    id: 'c7b6a5d4-e3f2-1098-abcd-ed7654321098',
+    name: 'Harbourside Compliance Ltd',
+    tradingName: 'Harbourside Compliance',
+    businessCountry: 'GB-ENG',
+    companiesHouseNumber: '65432109',
+    address: {
+      addressLine1: 'Harbour View',
+      postcode: 'BS1 1AA',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: '2026-03-31T23:20:34.294+00:00',
+        updated: '2026-03-31T23:20:34.294+00:00',
+        status: 'REGISTERED',
+        type: 'COMPLIANCE_SCHEME',
+        registrationYear: 2026
+      }
+    ]
   }
 }
 

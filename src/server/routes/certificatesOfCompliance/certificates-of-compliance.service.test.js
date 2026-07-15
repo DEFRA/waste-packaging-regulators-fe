@@ -1610,13 +1610,13 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.declarationSignedBy).toBe('No data')
         })
 
-        test('sets organisationRef to organisationId on fallback path', async () => {
+        test('sets organisationRef to No data on fallback path when no reference number is available', async () => {
           const vm = await getCertificateOfComplianceDetailViewModel(
             'org-abc',
             'decl-1'
           )
 
-          expect(vm.organisationRef).toBe('org-abc')
+          expect(vm.organisationRef).toBe('No data')
         })
 
         test('currentYearActions is an empty array on fallback path', async () => {
@@ -1709,6 +1709,77 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.complianceTypeLabel).toBe('2026 certificate of compliance')
         })
 
+        test('populates a compliance-scheme companyName from the waste-organisations record, not the Account API', async () => {
+          createWasteObligationsApiService.mockReturnValue({
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          })
+          createWasteOrganisationsApiService.mockReturnValue({
+            getOrganisation: vi.fn().mockResolvedValue({
+              id: 'cs-org-abc',
+              name: 'Waste Org Scheme Ltd',
+              registrationType: 'ComplianceScheme',
+              referenceNumber: 'ignored-waste-org-ref'
+            })
+          })
+          mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
+            organisations: [
+              {
+                externalId: 'cs-org-abc',
+                name: 'Account Scheme Name',
+                referenceNumber: 'CS-9001'
+              }
+            ],
+            notFoundExternalIds: []
+          })
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'cs-org-abc',
+            undefined,
+            { obligationYear: 2026 }
+          )
+
+          expect(vm.companyName).toBe('Waste Org Scheme Ltd')
+          expect(vm.organisationRef).toBe('CS-9001')
+          expect(vm.complianceTypeLabel).toBe('2026 statement of compliance')
+        })
+
+        test('prefers a compliance-scheme trading name from the waste-organisations record', async () => {
+          createWasteObligationsApiService.mockReturnValue({
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          })
+          createWasteOrganisationsApiService.mockReturnValue({
+            getOrganisation: vi.fn().mockResolvedValue({
+              id: 'cs-org-abc',
+              name: 'Scheme legal name',
+              tradingName: 'Scheme trading name',
+              registrationType: 'ComplianceScheme'
+            })
+          })
+          mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
+            organisations: [
+              {
+                externalId: 'cs-org-abc',
+                name: 'Account Scheme Name',
+                referenceNumber: 'CS-9001'
+              }
+            ],
+            notFoundExternalIds: []
+          })
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'cs-org-abc',
+            undefined,
+            { obligationYear: 2026 }
+          )
+
+          expect(vm.companyName).toBe('Scheme trading name')
+          expect(vm.organisationRef).toBe('CS-9001')
+        })
+
         test('populates organisationRef from Account API referenceNumber', async () => {
           createWasteObligationsApiService.mockReturnValue({
             getComplianceObligation: vi
@@ -1766,7 +1837,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.organisationRef).toBe('518293')
         })
 
-        test('falls back to organisationId when Account API and waste-organisations have no referenceNumber', async () => {
+        test('shows No data (not the external id) when Account API and waste-organisations have no referenceNumber', async () => {
           createWasteObligationsApiService.mockReturnValue({
             getComplianceObligation: vi
               .fn()
@@ -1786,7 +1857,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
             { obligationYear: 2026 }
           )
 
-          expect(vm.organisationRef).toBe('org-abc')
+          expect(vm.organisationRef).toBe('No data')
         })
 
         test('falls back to waste-organisations name when Account API returns no match', async () => {
