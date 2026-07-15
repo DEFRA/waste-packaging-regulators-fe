@@ -522,7 +522,8 @@ async function fetchSubmitterPhoneNumber(accountApi, audit, traceId) {
     const details = await accountApi.getAccountDetailsById(userId, traceId)
     return details.telephone ?? null
   } catch (err) {
-    if (err instanceof ApiError && err.status === 404) {
+    const pageNotFound = 404
+    if (err instanceof ApiError && err.status === pageNotFound) {
       return null
     }
     throw err
@@ -921,11 +922,11 @@ async function getDeclarationDetail(
     })
   }
 
-  const obligationData = await obligationsApi.getComplianceObligation(
+  const complianceObligationData = await obligationsApi.getComplianceObligation(
     { organisationId, obligationYear },
     traceId
   )
-  return mapObligationToDetail(obligationData, {
+  return mapObligationToDetail(complianceObligationData, {
     organisationId,
     obligationYear
   })
@@ -1143,13 +1144,12 @@ function mapCurrentYearHistory(declarations = []) {
     }
   }
 
-  return rows
-    .sort(
-      (a, b) =>
-        new Date(b.sortTimestamp).getTime() -
-        new Date(a.sortTimestamp).getTime()
-    )
-    .map(({ sortTimestamp, ...row }) => row)
+  function applySort() {
+    return (a, b) =>
+      new Date(b.sortTimestamp).getTime() - new Date(a.sortTimestamp).getTime()
+  }
+
+  return rows.sort(applySort()).map(({ _sortTimestamp, ...row }) => row)
 }
 
 function buildCurrentYearDeclarations(
