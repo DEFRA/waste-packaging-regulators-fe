@@ -117,7 +117,7 @@ describe('#certificatesOfComplianceDetailController', () => {
       '/923fa611-571c-4948-ab7d-fbb75e75ed65/certificates-of-compliance/decl-cs-001'
     )
     expect(response.payload).toContain(
-      'EcoPack Compliance Ltd declared they have not complied with all other requirements in regulation 43.'
+      'EcoPack Group declared they have not complied with all other requirements in regulation 43.'
     )
   })
 
@@ -126,7 +126,7 @@ describe('#certificatesOfComplianceDetailController', () => {
       '/e1d2c3b4-a596-4878-9abc-def012345678/certificates-of-compliance/decl-cs-101'
     )
     expect(response.payload).toContain(
-      'Nationwide Packaging Scheme declared they have complied with all other requirements in regulation 43.'
+      'Nationwide Packaging Group declared they have complied with all other requirements in regulation 43.'
     )
   })
 

@@ -113,7 +113,7 @@ describe('#certificatesOfComplianceAcceptController', () => {
       const response = await get(acceptUrlFor(CS_ITEM), cookie)
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(response.payload).toContain(
-        `Are you sure you want to accept this statement for ${mockComplianceSchemeDetailData.organisation.complianceSchemeName}?`
+        `Are you sure you want to accept this statement for ${mockComplianceSchemeDetailData.organisation.schemeOperatorName}?`
       )
     })
 
