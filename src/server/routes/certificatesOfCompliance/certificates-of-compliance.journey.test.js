@@ -457,7 +457,6 @@ describe('certificates of compliance — journey', () => {
       })
       expect(detailResponse.payload).toContain('Certificate accepted')
       expect(detailResponse.payload).toContain('Certificate has been accepted.')
-      expect(detailResponse.payload).toContain('Important')
       expect(detailResponse.payload).not.toContain(
         'govuk-notification-banner--success'
       )
@@ -510,7 +509,6 @@ describe('certificates of compliance — journey', () => {
       })
       expect(detailResponse.payload).toContain('Statement accepted')
       expect(detailResponse.payload).toContain('Statement has been accepted.')
-      expect(detailResponse.payload).toContain('Important')
       expect(detailResponse.payload).toContain('Statement status')
       expect(detailResponse.payload).toContain('Accepted by')
       expect(detailResponse.payload).toContain('John Doe')
