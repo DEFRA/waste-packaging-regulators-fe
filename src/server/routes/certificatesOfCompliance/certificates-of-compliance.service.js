@@ -8,7 +8,7 @@ import {
   mockSummary,
   mockSummaryByOrganisationType,
   mockListByOrganisationType,
-  mockObligationData,
+  getMockObligationData,
   getMockDetailDataById,
   getMockDeclarationsByOrgYear,
   getMockOrganisationById,
@@ -852,7 +852,7 @@ async function getDeclarationDetail(
     if (!id) {
       const accountOrganisation =
         resolveMockAccountOrganisationDetails(organisationId)
-      return mapObligationToDetail(mockObligationData, {
+      return mapObligationToDetail(getMockObligationData(organisationId), {
         organisationId,
         obligationYear: resolvedObligationYear,
         organisation: getMockOrganisationById(organisationId),
@@ -1281,7 +1281,8 @@ function mapDeclarationToDetail(
       reviewStatus === 'Cancelled'
         ? mapCancellationDetails(data.cancellationDetails)
         : null,
-    currentYearActions: mapCurrentYearHistory(historyDeclarations)
+    currentYearActions: mapCurrentYearHistory(historyDeclarations),
+    showObligations: obligations.length !== 0
   }
 }
 
@@ -1295,7 +1296,7 @@ function mapObligationToDetail(
     accountOrganisationReferenceNumber
   } = {}
 ) {
-  const { obligations } = data
+  const obligations = data?.obligations ?? []
 
   const allMapped = obligations.map(mapObligation)
   const materials = allMapped.filter(
@@ -1349,7 +1350,8 @@ function mapObligationToDetail(
     complianceStatusLabel: null,
     acceptedBy: null,
     acceptedDate: null,
-    currentYearActions: []
+    currentYearActions: [],
+    showObligations: obligations.length !== 0
   }
 }
 

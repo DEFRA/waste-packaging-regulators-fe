@@ -807,5 +807,40 @@ describe('certificates of compliance — journey', () => {
         expect(glass.totals.statusTag).toEqual(noData)
       })
     })
+
+    describe('showObligations', () => {
+      const sterlingUrl = `/f3b4c5d6-e7a8-9012-cdef-123456789abc/certificates-of-compliance?obligationYear=2026`
+      const pinnacleUrl = `/a4b5c6d7-e8f9-0123-defa-234567890bcd/certificates-of-compliance?obligationYear=2026`
+
+      it('shows the obligations table when the org has obligations', async () => {
+        const { obligations } = loadDetailPage(
+          (await inject(REDWOOD_UNSUBMITTED_URL)).payload
+        )
+
+        expect(obligations.tablePresent).toBe(true)
+      })
+
+      it('hides the obligations table and shows No data when obligations is null', async () => {
+        const response = await inject(sterlingUrl)
+
+        expect(response.statusCode).toBe(statusCodes.ok)
+        const { obligations } = loadDetailPage(response.payload)
+        expect(obligations.tablePresent).toBe(false)
+        expect(response.payload).toContain(
+          '<p class="govuk-body-m">No data</p>'
+        )
+      })
+
+      it('hides the obligations table and shows No data when obligations is an empty array', async () => {
+        const response = await inject(pinnacleUrl)
+
+        expect(response.statusCode).toBe(statusCodes.ok)
+        const { obligations } = loadDetailPage(response.payload)
+        expect(obligations.tablePresent).toBe(false)
+        expect(response.payload).toContain(
+          '<p class="govuk-body-m">No data</p>'
+        )
+      })
+    })
   })
 })

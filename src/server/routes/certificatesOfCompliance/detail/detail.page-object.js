@@ -48,12 +48,19 @@ function readRegulation43($) {
   }
 }
 
+function readObligationsSection($) {
+  return {
+    tablePresent: $('[data-testid="obligations-table"]').length > 0
+  }
+}
+
 export function loadDetailPage(payload) {
   const $ = load(payload)
   return {
     materials: readTable($, 'obligations-table'),
     glass: readTable($, 'glass-breakdown-table'),
     declaration: readDeclaration($),
-    regulation43: readRegulation43($)
+    regulation43: readRegulation43($),
+    obligations: readObligationsSection($)
   }
 }
