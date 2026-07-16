@@ -12,6 +12,7 @@ import {
 import { redirectToSignIn } from '../detail/actions-controller.js'
 
 const ERROR_TEXT = 'Select yes or no'
+const TRACING_HEADER = 'tracing.header'
 
 function buildErrors() {
   return {
@@ -24,9 +25,13 @@ function detailPath(organisationId, id) {
   return `/${organisationId}/certificates-of-compliance/${id}`
 }
 
+function getTraceIdFromRequest(request) {
+  return request.headers[config.get(TRACING_HEADER)]
+}
+
 async function renderForm(request, h, { errors = null } = {}) {
   const { organisationId, id } = request.params
-  const traceId = request.headers[config.get('tracing.header')]
+  const traceId = getTraceIdFromRequest(request)
   const { companyName, registrationType } =
     await getCertificateOfComplianceDetailViewModel(organisationId, id, {
       traceId,
@@ -95,7 +100,7 @@ export const certificatesOfComplianceAcceptGetController = {
     }
 
     const { organisationId, id } = request.params
-    const traceId = request.headers[config.get('tracing.header')]
+    const traceId = getTraceIdFromRequest(request)
     const reviewStatus = await getComplianceDeclarationReviewStatus(
       organisationId,
       id,
