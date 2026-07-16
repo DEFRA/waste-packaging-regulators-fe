@@ -17,6 +17,13 @@ const MOCK_ORG_METROLINE_ID = 'b8c7d6e5-f4a3-2109-abcd-ef8765432109'
 const MOCK_ORG_METROLINE_NAME = 'Metroline Waste Services'
 const MOCK_ORG_ECOPACK_ID = '923fa611-571c-4948-ab7d-fbb75e75ed65'
 const MOCK_ORG_ECOPACK_NAME = 'EcoPack Compliance Ltd'
+const MOCK_ORG_NATIONWIDE_ID = 'e1d2c3b4-a596-4878-9abc-def012345678'
+const MOCK_ORG_NATIONWIDE_NAME = 'Nationwide Packaging Scheme'
+const MOCK_ORG_NATIONWIDE_OPERATOR_NAME = 'Nationwide Packaging Group'
+const MOCK_ORG_RIVERSIDE_ID = '6d9a1e77-1b3f-4c22-8a41-8f5c1e9d2b34'
+const MOCK_ORG_RIVERSIDE_NAME = 'Riverside Compliance Partners'
+const MOCK_ORG_RIVERSIDE_OPERATOR_NAME = 'Riverside Group'
+const MOCK_ORG_GREENCIRCLE_OPERATOR_NAME = 'GreenCircle Group'
 const MOCK_STATUS_SUBMITTED = 'Submitted'
 const MOCK_STATUS_ACCEPTED = 'Accepted'
 const MOCK_STATUS_CANCELLED = 'Cancelled'
@@ -41,6 +48,8 @@ const MOCK_DECL_CS_ACCEPTED_ID = 'decl-cs-101'
 const MOCK_DECL_CS_ACCEPTED_SECONDARY_ID = 'decl-cs-102'
 const MOCK_REF_GREENFIELD = '204872'
 const MOCK_REF_CS_GREENCIRCLE = 'CS-1002'
+const MOCK_REF_CS_NATIONWIDE = 'CS-2001'
+const MOCK_REF_CS_RIVERSIDE = 'CS-2002'
 
 export const mockSummaryByOrganisationType = {
   'direct-producers': {
@@ -177,9 +186,9 @@ export const mockComplianceSchemePendingItems = [
 export const mockComplianceSchemeAcceptedItems = [
   {
     id: MOCK_DECL_CS_ACCEPTED_ID,
-    organisationId: 'e1d2c3b4-a596-4878-9abc-def012345678',
-    organisationReferenceNumber: 'CS-2001',
-    organisationName: 'Nationwide Packaging Scheme',
+    organisationId: MOCK_ORG_NATIONWIDE_ID,
+    organisationReferenceNumber: MOCK_REF_CS_NATIONWIDE,
+    organisationName: MOCK_ORG_NATIONWIDE_NAME,
     recyclingObligationsMet: true,
     regulation43Met: true,
     percentageMet: 105,
@@ -187,9 +196,9 @@ export const mockComplianceSchemeAcceptedItems = [
   },
   {
     id: MOCK_DECL_CS_ACCEPTED_SECONDARY_ID,
-    organisationId: '6d9a1e77-1b3f-4c22-8a41-8f5c1e9d2b34',
-    organisationReferenceNumber: 'CS-2002',
-    organisationName: 'Riverside Compliance Partners',
+    organisationId: MOCK_ORG_RIVERSIDE_ID,
+    organisationReferenceNumber: MOCK_REF_CS_RIVERSIDE,
+    organisationName: MOCK_ORG_RIVERSIDE_NAME,
     recyclingObligationsMet: false,
     regulation43Met: false,
     percentageMet: 92,
@@ -620,7 +629,7 @@ const mockOrganisationsById = {
   [MOCK_ORG_GREENCIRCLE_ID]: {
     id: MOCK_ORG_GREENCIRCLE_ID,
     name: MOCK_ORG_GREENCIRCLE_NAME,
-    tradingName: 'GreenCircle Group',
+    tradingName: MOCK_ORG_GREENCIRCLE_OPERATOR_NAME,
     businessCountry: MOCK_BUSINESS_COUNTRY,
     companiesHouseNumber: '77889900',
     address: {
@@ -638,10 +647,10 @@ const mockOrganisationsById = {
       }
     ]
   },
-  'e1d2c3b4-a596-4878-9abc-def012345678': {
-    id: 'e1d2c3b4-a596-4878-9abc-def012345678',
-    name: 'Nationwide Packaging Scheme',
-    tradingName: 'Nationwide Packaging Group',
+  [MOCK_ORG_NATIONWIDE_ID]: {
+    id: MOCK_ORG_NATIONWIDE_ID,
+    name: MOCK_ORG_NATIONWIDE_NAME,
+    tradingName: MOCK_ORG_NATIONWIDE_OPERATOR_NAME,
     businessCountry: MOCK_BUSINESS_COUNTRY,
     companiesHouseNumber: '87654321',
     address: {
@@ -659,10 +668,10 @@ const mockOrganisationsById = {
       }
     ]
   },
-  '6d9a1e77-1b3f-4c22-8a41-8f5c1e9d2b34': {
-    id: '6d9a1e77-1b3f-4c22-8a41-8f5c1e9d2b34',
-    name: 'Riverside Compliance Partners',
-    tradingName: 'Riverside Group',
+  [MOCK_ORG_RIVERSIDE_ID]: {
+    id: MOCK_ORG_RIVERSIDE_ID,
+    name: MOCK_ORG_RIVERSIDE_NAME,
+    tradingName: MOCK_ORG_RIVERSIDE_OPERATOR_NAME,
     businessCountry: MOCK_BUSINESS_COUNTRY,
     companiesHouseNumber: '55221199',
     address: {
@@ -793,10 +802,10 @@ export const mockComplianceSchemeAcceptedDetailData = {
   status: MOCK_STATUS_ACCEPTED,
   organisation: {
     ...mockComplianceSchemeDetailData.organisation,
-    id: 'e1d2c3b4-a596-4878-9abc-def012345678',
-    complianceSchemeName: 'Nationwide Packaging Scheme',
-    schemeOperatorName: 'Nationwide Packaging Group',
-    referenceNumber: 'CS-2001'
+    id: MOCK_ORG_NATIONWIDE_ID,
+    complianceSchemeName: MOCK_ORG_NATIONWIDE_NAME,
+    schemeOperatorName: MOCK_ORG_NATIONWIDE_OPERATOR_NAME,
+    referenceNumber: MOCK_REF_CS_NATIONWIDE
   },
   isRegulation43Compliant: true,
   audit: [
@@ -877,7 +886,7 @@ export const mockComplianceSchemePendingNotMetDetailData = {
     ...mockComplianceSchemeDetailData.organisation,
     id: MOCK_ORG_GREENCIRCLE_ID,
     complianceSchemeName: MOCK_ORG_GREENCIRCLE_NAME,
-    schemeOperatorName: 'GreenCircle Group',
+    schemeOperatorName: MOCK_ORG_GREENCIRCLE_OPERATOR_NAME,
     referenceNumber: MOCK_REF_CS_GREENCIRCLE,
     companiesHouseNumber: '77889900'
   },
@@ -895,10 +904,10 @@ export const mockComplianceSchemeAcceptedNotMetDetailData = {
   status: MOCK_STATUS_ACCEPTED,
   organisation: {
     ...mockComplianceSchemeDetailData.organisation,
-    id: '6d9a1e77-1b3f-4c22-8a41-8f5c1e9d2b34',
-    complianceSchemeName: 'Riverside Compliance Partners',
-    schemeOperatorName: 'Riverside Group',
-    referenceNumber: 'CS-2002',
+    id: MOCK_ORG_RIVERSIDE_ID,
+    complianceSchemeName: MOCK_ORG_RIVERSIDE_NAME,
+    schemeOperatorName: MOCK_ORG_RIVERSIDE_OPERATOR_NAME,
+    referenceNumber: MOCK_REF_CS_RIVERSIDE,
     companiesHouseNumber: '55221199'
   },
   obligations: mockObligationsMixed,
@@ -982,7 +991,7 @@ export const mockComplianceSchemeCancelledDetailData = {
     ...mockComplianceSchemeDetailData.organisation,
     id: MOCK_ORG_GREENCIRCLE_ID,
     complianceSchemeName: MOCK_ORG_GREENCIRCLE_NAME,
-    schemeOperatorName: 'GreenCircle Group',
+    schemeOperatorName: MOCK_ORG_GREENCIRCLE_OPERATOR_NAME,
     referenceNumber: MOCK_REF_CS_GREENCIRCLE
   },
   cancellationDetails: {
