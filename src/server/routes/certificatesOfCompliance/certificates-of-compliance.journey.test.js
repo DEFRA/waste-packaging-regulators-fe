@@ -396,17 +396,6 @@ describe('certificates of compliance — journey', () => {
   })
 
   describe('sign-in populates user in session for certificate actions', () => {
-    it('approve action redirects to /signin-oidc when no user is in session', async () => {
-      const item = mockPendingItems[0]
-      const response = await postForm(
-        `${detailPathFor(item)}/approve`,
-        anonCrumbCookie
-      )
-
-      expect(response.statusCode).toBe(302)
-      expect(response.headers.location).toBe('/signin-oidc')
-    })
-
     it('cancel action redirects to /signin-oidc when no user is in session', async () => {
       const item = mockPendingItems[0]
       const response = await postForm(
@@ -416,23 +405,6 @@ describe('certificates of compliance — journey', () => {
 
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe('/signin-oidc')
-    })
-
-    it('approve action succeeds after sign-in populates user from account API', async () => {
-      const signinResponse = await server.inject({
-        method: 'GET',
-        url: '/signin-oidc'
-      })
-      const cookie = authCookiesFromResponse(signinResponse)
-
-      const item = mockPendingItems[0]
-      const approveResponse = await postForm(
-        `${detailPathFor(item)}/approve`,
-        cookie
-      )
-
-      expect(approveResponse.statusCode).toBe(302)
-      expect(approveResponse.headers.location).toBe(detailPathFor(item))
     })
 
     it('cancel action succeeds after sign-in populates user from account API', async () => {
@@ -454,11 +426,15 @@ describe('certificates of compliance — journey', () => {
 
     it('full flow: unauthenticated action → sign-in with user from account API → action succeeds', async () => {
       const item = mockPendingItems[0]
-      const approveUrl = `${detailPathFor(item)}/approve`
+      const acceptUrl = `${detailPathFor(item)}/accept`
 
-      // Attempt action unauthenticated (carrying a crumb, as a real form would) —
-      // stored as returnTo and redirected to sign-in
-      const unauthResponse = await postForm(approveUrl, anonCrumbCookie)
+      // Submit the confirmation unauthenticated (carrying a crumb, as a real
+      // form would) — stored as returnTo and redirected to sign-in
+      const unauthResponse = await postForm(
+        acceptUrl,
+        anonCrumbCookie,
+        'confirm-accept=yes'
+      )
       expect(unauthResponse.statusCode).toBe(302)
       expect(unauthResponse.headers.location).toBe('/signin-oidc')
       const afterUnauth = mergeCookiesFromResponse(
@@ -466,23 +442,27 @@ describe('certificates of compliance — journey', () => {
         unauthResponse
       )
 
-      // Sign in — account API populates user in session, redirects back to approveUrl
+      // Sign in — account API populates user in session, redirects back to acceptUrl
       const signinResponse = await server.inject({
         method: 'GET',
         url: '/signin-oidc',
         headers: { cookie: afterUnauth }
       })
       expect(signinResponse.statusCode).toBe(302)
-      expect(signinResponse.headers.location).toBe(approveUrl)
+      expect(signinResponse.headers.location).toBe(acceptUrl)
       const signedInCookie = mergeCookiesFromResponse(
         afterUnauth,
         signinResponse
       )
 
-      // Retry the action with the signed-in session — should succeed
-      const approveResponse = await postForm(approveUrl, signedInCookie)
-      expect(approveResponse.statusCode).toBe(302)
-      expect(approveResponse.headers.location).toBe(detailPathFor(item))
+      // Retry with the signed-in session — approval succeeds
+      const acceptResponse = await postForm(
+        acceptUrl,
+        signedInCookie,
+        'confirm-accept=yes'
+      )
+      expect(acceptResponse.statusCode).toBe(302)
+      expect(acceptResponse.headers.location).toBe(detailPathFor(item))
     })
   })
 
@@ -524,6 +504,13 @@ describe('certificates of compliance — journey', () => {
       })
       expect(detailResponse.payload).toContain('Certificate accepted')
       expect(detailResponse.payload).toContain('Certificate has been accepted.')
+      expect(detailResponse.payload).toContain('Important')
+      expect(detailResponse.payload).not.toContain(
+        'govuk-notification-banner--success'
+      )
+      expect(detailResponse.payload).not.toContain(
+        'app-notification-banner--cancelled'
+      )
       expect(detailResponse.payload).toContain('Certificate status')
       expect(detailResponse.payload).toContain('Accepted by')
       expect(detailResponse.payload).toContain('Accepted date')
@@ -570,6 +557,7 @@ describe('certificates of compliance — journey', () => {
       })
       expect(detailResponse.payload).toContain('Statement accepted')
       expect(detailResponse.payload).toContain('Statement has been accepted.')
+      expect(detailResponse.payload).toContain('Important')
       expect(detailResponse.payload).toContain('Statement status')
       expect(detailResponse.payload).toContain('Accepted by')
       expect(detailResponse.payload).toContain('John Doe')
