@@ -235,6 +235,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.complianceTypeLabel).toBe('2026 statement of compliance')
       expect(vm.showDeclaration).toBe(true)
       expect(vm.complianceDocumentNoun).toBe('statement of compliance')
+      expect(vm.companiesHouseNumber).toBe('87654321')
     })
 
     test('getCertificateOfComplianceDetailViewModel returns not-submitted mock detail with organisation name', async () => {

@@ -156,6 +156,14 @@ describe('#certificatesOfComplianceDetailController', () => {
     )
   })
 
+  it('should render the Companies House link for a compliance scheme declaration', async () => {
+    const response = await inject(
+      '/923fa611-571c-4948-ab7d-fbb75e75ed65/certificates-of-compliance/decl-cs-001'
+    )
+    expect(response.payload).toContain('View on Companies House')
+    expect(response.payload).toContain('company/87654321')
+  })
+
   it('should not render the Companies House link when company number is No data', async () => {
     const response = await inject(
       '/e2f3a4b5-c6d7-8901-bcde-f23456789012/certificates-of-compliance?obligationYear=2026'

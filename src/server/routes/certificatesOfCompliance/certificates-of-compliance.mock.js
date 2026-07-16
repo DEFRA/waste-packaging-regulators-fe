@@ -595,6 +595,90 @@ const mockOrganisationsById = {
         registrationYear: 2026
       }
     ]
+  },
+  [MOCK_ORG_ECOPACK_ID]: {
+    id: MOCK_ORG_ECOPACK_ID,
+    name: MOCK_ORG_ECOPACK_NAME,
+    tradingName: 'EcoPack Group',
+    businessCountry: MOCK_BUSINESS_COUNTRY,
+    companiesHouseNumber: '87654321',
+    address: {
+      addressLine1: 'EcoPack House',
+      postcode: 'SW1A 1AA',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
+        type: 'COMPLIANCE_SCHEME',
+        registrationYear: 2026
+      }
+    ]
+  },
+  [MOCK_ORG_GREENCIRCLE_ID]: {
+    id: MOCK_ORG_GREENCIRCLE_ID,
+    name: MOCK_ORG_GREENCIRCLE_NAME,
+    tradingName: 'GreenCircle Group',
+    businessCountry: MOCK_BUSINESS_COUNTRY,
+    companiesHouseNumber: '77889900',
+    address: {
+      addressLine1: 'GreenCircle House',
+      postcode: 'SW1A 1AA',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
+        type: 'COMPLIANCE_SCHEME',
+        registrationYear: 2026
+      }
+    ]
+  },
+  'e1d2c3b4-a596-4878-9abc-def012345678': {
+    id: 'e1d2c3b4-a596-4878-9abc-def012345678',
+    name: 'Nationwide Packaging Scheme',
+    tradingName: 'Nationwide Packaging Group',
+    businessCountry: MOCK_BUSINESS_COUNTRY,
+    companiesHouseNumber: '87654321',
+    address: {
+      addressLine1: 'Nationwide House',
+      postcode: 'SW1A 1AA',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
+        type: 'COMPLIANCE_SCHEME',
+        registrationYear: 2026
+      }
+    ]
+  },
+  '6d9a1e77-1b3f-4c22-8a41-8f5c1e9d2b34': {
+    id: '6d9a1e77-1b3f-4c22-8a41-8f5c1e9d2b34',
+    name: 'Riverside Compliance Partners',
+    tradingName: 'Riverside Group',
+    businessCountry: MOCK_BUSINESS_COUNTRY,
+    companiesHouseNumber: '55221199',
+    address: {
+      addressLine1: 'Riverside House',
+      postcode: 'SW1A 1AA',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
+        type: 'COMPLIANCE_SCHEME',
+        registrationYear: 2026
+      }
+    ]
   }
 }
 
