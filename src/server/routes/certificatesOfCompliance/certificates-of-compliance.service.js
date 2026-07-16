@@ -93,7 +93,7 @@ function mapOrganisationName(organisation) {
     return (
       organisation.tradingName ??
       organisation.name ??
-      organisation.complianceSchemeName ??
+      organisation.schemeOperatorName ??
       UNKNOWN_ORGANISATION
     )
   }
@@ -120,11 +120,7 @@ function mapDeclarationToItem(declaration) {
     id,
     organisationReferenceNumber: organisation.referenceNumber,
     organisationId: organisation.id,
-    organisationName:
-      organisation.name ??
-      organisation.complianceSchemeName ??
-      organisation.schemeOperatorName ??
-      UNKNOWN_ORGANISATION,
+    organisationName: mapOrganisationName(organisation),
     recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
     regulation43Met: isRegulation43Compliant,
     percentageMet: percentageMet ?? null,
@@ -1322,12 +1318,7 @@ function mapDeclarationMaterialGroups(obligations) {
 }
 
 function resolveDeclarationCompanyName(organisation) {
-  return (
-    organisation.name ??
-    organisation.complianceSchemeName ??
-    organisation.schemeOperatorName ??
-    UNKNOWN_ORGANISATION
-  )
+  return mapOrganisationName(organisation)
 }
 
 function resolveDeclarationActions(
