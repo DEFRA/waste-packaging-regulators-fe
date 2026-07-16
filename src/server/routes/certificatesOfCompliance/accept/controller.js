@@ -12,7 +12,7 @@ import {
 import { redirectToSignIn } from '../detail/actions-controller.js'
 
 const ERROR_TEXT = 'Select yes or no'
-
+const TRACING_HEADER = 'tracing.header'
 function buildErrors() {
   return {
     summary: [{ text: ERROR_TEXT, href: '#confirm-accept' }],
@@ -26,7 +26,8 @@ function detailPath(organisationId, id) {
 
 async function renderForm(request, h, { errors = null } = {}) {
   const { organisationId, id } = request.params
-  const traceId = request.headers[config.get('tracing.header')]
+
+  const traceId = request.headers[config.get(TRACING_HEADER)]
   const { companyName, registrationType } =
     await getCertificateOfComplianceDetailViewModel(organisationId, id, {
       traceId,
@@ -53,7 +54,7 @@ async function renderForm(request, h, { errors = null } = {}) {
 // one that can no longer be approved bounces back without it.
 async function approveDeclaration(request, h) {
   const { organisationId, id } = request.params
-  const traceId = request.headers[config.get('tracing.header')]
+  const traceId = request.headers[config.get(TRACING_HEADER)]
   const declarationKey = getDeclarationSessionKey(organisationId, id)
   const reviewStatus = await getComplianceDeclarationReviewStatus(
     organisationId,
@@ -95,7 +96,7 @@ export const certificatesOfComplianceAcceptGetController = {
     }
 
     const { organisationId, id } = request.params
-    const traceId = request.headers[config.get('tracing.header')]
+    const traceId = request.headers[config.get(TRACING_HEADER)]
     const reviewStatus = await getComplianceDeclarationReviewStatus(
       organisationId,
       id,

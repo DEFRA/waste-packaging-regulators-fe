@@ -1,6 +1,8 @@
 // Mock data for certificates of compliance routes.
 // Used when useMockApi=true and exported so tests can assert against the same values.
 
+import { GREENCIRCLE } from '#server/routes/certificatesOfCompliance/certificates-of-compliance.test-data.js'
+
 export const mockSummaryByOrganisationType = {
   'direct-producers': {
     complianceYear: '2026',
@@ -723,14 +725,14 @@ export const mockDirectProducerPendingNotMetDetailData = {
 
 export const mockComplianceSchemePendingNotMetDetailData = {
   ...mockComplianceSchemeDetailData,
-  id: 'decl-cs-002',
+  id: GREENCIRCLE.id,
   created: '2027-01-18T00:00:00Z',
   updated: '2027-01-18T00:00:00Z',
   status: 'Submitted',
   organisation: {
     ...mockComplianceSchemeDetailData.organisation,
-    id: 'f3a2b1c0-d9e8-47f6-a5b4-c3d2e1f0a9b8',
-    complianceSchemeName: 'GreenCircle Schemes',
+    id: GREENCIRCLE.organisationId,
+    complianceSchemeName: GREENCIRCLE.complianceSchemeName,
     schemeOperatorName: 'GreenCircle Group',
     referenceNumber: 'CS-1002',
     companiesHouseNumber: '77889900'
