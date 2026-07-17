@@ -1378,6 +1378,7 @@ export async function getCertificateOfComplianceDetailViewModel(
   return {
     heading: 'Certificate of compliance',
     backlink: '/certificates-of-compliance',
+    backlinkText: 'Back to all submissions',
     successBanner: buildCertificateSuccessBanner(
       bannerFlags,
       detail.registrationType

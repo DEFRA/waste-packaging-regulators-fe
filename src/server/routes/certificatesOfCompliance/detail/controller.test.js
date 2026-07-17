@@ -61,6 +61,11 @@ describe('#certificatesOfComplianceDetailController', () => {
     expect(response.headers.location).toBe('/signin-oidc')
   })
 
+  it('should render "Back to all submissions" as the backlink text', async () => {
+    const response = await inject('/org-123/certificates-of-compliance/101411')
+    expect(response.payload).toContain('Back to all submissions')
+  })
+
   it('should render the compliance type label in the caption for a direct producer', async () => {
     const response = await inject('/org-123/certificates-of-compliance/101411')
     expect(response.payload).toContain(
