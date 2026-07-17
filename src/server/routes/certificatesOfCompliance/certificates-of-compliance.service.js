@@ -936,11 +936,11 @@ async function getDeclarationDetail(
     })
   }
 
-  const obligationData = await obligationsApi.getComplianceObligation(
+  const fallbackObligationData = await obligationsApi.getComplianceObligation(
     { organisationId, obligationYear },
     traceId
   )
-  return mapObligationToDetail(obligationData, {
+  return mapObligationToDetail(fallbackObligationData, {
     organisationId,
     obligationYear
   })
