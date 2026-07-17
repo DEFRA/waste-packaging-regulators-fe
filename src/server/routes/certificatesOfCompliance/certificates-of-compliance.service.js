@@ -1304,12 +1304,13 @@ function buildCurrentYearDeclarations(
 }
 
 function mapDeclarationMaterialGroups(obligations) {
-  const allMapped = obligations.map(mapObligation)
+  const resolvedObligations = obligations ?? []
+  const allMapped = resolvedObligations.map(mapObligation)
   const materials = allMapped.filter(
-    (_, i) => !GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
+    (_, i) => !GLASS_BREAKDOWN_MATERIALS.has(resolvedObligations[i].material)
   )
   const glassBreakdown = allMapped.filter((_, i) =>
-    GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
+    GLASS_BREAKDOWN_MATERIALS.has(resolvedObligations[i].material)
   )
 
   return {
@@ -1474,7 +1475,7 @@ function mapDeclarationToDetail(
     ),
     ...mapDeclarationStatusDetails(reviewStatus, data),
     currentYearActions: mapCurrentYearHistory(historyDeclarations),
-    showObligations: obligations.length !== 0
+    showObligations: (obligations ?? []).length !== 0
   }
 }
 
@@ -1489,14 +1490,6 @@ function mapObligationToDetail(
   } = {}
 ) {
   const obligations = data?.obligations ?? []
-
-  const allMapped = obligations.map(mapObligation)
-  const materials = allMapped.filter(
-    (_, i) => !GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
-  )
-  const glassBreakdown = allMapped.filter((_, i) =>
-    GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
-  )
 
   const orgFields = mapWasteOrganisationToDetailFields(organisation, {
     obligationYear
@@ -1528,7 +1521,7 @@ function mapObligationToDetail(
     declarationEmailAddress: NO_DATA,
     companyPhoneNumber: NO_DATA,
     declarationSignedBy: NO_DATA,
-    ...mapDeclarationMaterialGroups(data.obligations),
+    ...mapDeclarationMaterialGroups(obligations),
     actions: {
       showAccept: false,
       showCancel: false,
