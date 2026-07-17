@@ -16,7 +16,9 @@ function readRadios($) {
 
 function readErrorSummary($) {
   const summary = $('.govuk-error-summary')
-  if (summary.length === 0) return null
+  if (summary.length === 0) {
+    return null
+  }
   const link = summary.find('.govuk-error-summary__list a')
   return {
     title: summary.find('.govuk-error-summary__title').text().trim(),
