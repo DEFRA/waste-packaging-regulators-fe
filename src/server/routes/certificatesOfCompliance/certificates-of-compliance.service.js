@@ -812,6 +812,8 @@ function applyMockDeclarationStatusOverride(data, declarationKey, session) {
         declarationKey
       )
       sessionAudits = [auditEntry]
+    } else {
+      // No other status synthesises a mock audit entry - this else is only here to satisfy SonarQube rules.
     }
   }
 
