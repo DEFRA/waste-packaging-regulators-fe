@@ -48,6 +48,8 @@ const statusByTab = {
 const PAGE_SIZE = 20
 const DECLARATIONS_BATCH_SIZE = 100
 const NO_DATA = 'No data'
+const UNKNOWN_ORGANISATION = 'Unknown organisation'
+const COMPLIANCE_SCHEMES = 'compliance-schemes'
 
 export function displayOrNoData(value) {
   return value == null || value === '' ? NO_DATA : value
@@ -56,7 +58,7 @@ export function displayOrNoData(value) {
 function isComplianceSchemeRegistrationType(registrationType) {
   return (
     registrationType === 'ComplianceScheme' ||
-    registrationType === 'compliance-schemes'
+    registrationType === COMPLIANCE_SCHEMES
   )
 }
 
@@ -91,10 +93,10 @@ function mapOrganisationName(organisation) {
       organisation.tradingName ??
       organisation.name ??
       organisation.complianceSchemeName ??
-      'Unknown organisation'
+      UNKNOWN_ORGANISATION
     )
   }
-  return organisation.name ?? 'Unknown organisation'
+  return organisation.name ?? UNKNOWN_ORGANISATION
 }
 
 function mapRecyclingObligationsMet(obligationStatus) {
@@ -121,7 +123,7 @@ function mapDeclarationToItem(declaration) {
       organisation.name ??
       organisation.complianceSchemeName ??
       organisation.schemeOperatorName ??
-      'Unknown organisation',
+      UNKNOWN_ORGANISATION,
     recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
     regulation43Met: isRegulation43Compliant,
     percentageMet: percentageMet ?? null,
@@ -133,11 +135,9 @@ function mapDeclarationToItem(declaration) {
 // organisation name keeps its compliance-scheme-aware derivation.
 function mapOrganisationToItem(organisation, organisationType) {
   const organisationName =
-    organisationType === 'compliance-schemes'
-      ? (organisation.tradingName ??
-        organisation.name ??
-        'Unknown organisation')
-      : (organisation.name ?? 'Unknown organisation')
+    organisationType === COMPLIANCE_SCHEMES
+      ? (organisation.tradingName ?? organisation.name ?? UNKNOWN_ORGANISATION)
+      : (organisation.name ?? UNKNOWN_ORGANISATION)
   return {
     id: null,
     organisationId: organisation.id,
@@ -168,7 +168,7 @@ async function resolveNotSubmittedOrganisationDetails(
     organisations.map((org) => [org.externalId, org])
   )
 
-  const resolvesName = organisationType === 'compliance-schemes'
+  const resolvesName = organisationType === COMPLIANCE_SCHEMES
   for (const item of items) {
     const details = detailsByExternalId.get(item.organisationId)
     item.organisationReferenceNumber = details?.referenceNumber ?? NO_DATA
@@ -1232,7 +1232,7 @@ function mapDeclarationToDetail(
     organisation.name ??
     organisation.complianceSchemeName ??
     organisation.schemeOperatorName ??
-    'Unknown organisation'
+    UNKNOWN_ORGANISATION
 
   const allMapped = obligations.map(mapObligation)
   const materials = allMapped.filter(
