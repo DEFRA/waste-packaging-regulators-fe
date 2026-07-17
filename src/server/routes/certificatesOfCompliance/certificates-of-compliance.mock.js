@@ -17,6 +17,13 @@ const MOCK_ORG_METROLINE_ID = 'b8c7d6e5-f4a3-2109-abcd-ef8765432109'
 const MOCK_ORG_METROLINE_NAME = 'Metroline Waste Services'
 const MOCK_ORG_ECOPACK_ID = '923fa611-571c-4948-ab7d-fbb75e75ed65'
 const MOCK_ORG_ECOPACK_NAME = 'EcoPack Compliance Ltd'
+const MOCK_ORG_ECOPACK_OPERATOR_NAME = 'EcoPack Group'
+const MOCK_ORG_STERLING_ID = 'f3b4c5d6-e7a8-9012-cdef-123456789abc'
+const MOCK_ORG_STERLING_NAME = 'Sterling Packaging Ltd'
+const MOCK_ORG_PINNACLE_ID = 'a4b5c6d7-e8f9-0123-defa-234567890bcd'
+const MOCK_ORG_PINNACLE_NAME = 'Pinnacle Containers Ltd'
+const MOCK_ORG_MERIDIAN_ID = 'b5c6d7e8-f9a0-1234-efab-345678901cde'
+const MOCK_ORG_MERIDIAN_NAME = 'Meridian Products Ltd'
 const MOCK_ORG_NATIONWIDE_ID = 'e1d2c3b4-a596-4878-9abc-def012345678'
 const MOCK_ORG_NATIONWIDE_NAME = 'Nationwide Packaging Scheme'
 const MOCK_ORG_NATIONWIDE_OPERATOR_NAME = 'Nationwide Packaging Group'
@@ -50,6 +57,9 @@ const MOCK_REF_GREENFIELD = '204872'
 const MOCK_REF_CS_GREENCIRCLE = 'CS-1002'
 const MOCK_REF_CS_NATIONWIDE = 'CS-2001'
 const MOCK_REF_CS_RIVERSIDE = 'CS-2002'
+const MOCK_REF_STERLING = '734921'
+const MOCK_REF_PINNACLE = '851036'
+const MOCK_REF_MERIDIAN = '962147'
 
 export const mockSummaryByOrganisationType = {
   'direct-producers': {
@@ -133,27 +143,27 @@ export const mockNotSubmittedItems = [
   },
   {
     id: null,
-    organisationId: 'f3b4c5d6-e7a8-9012-cdef-123456789abc',
-    organisationReferenceNumber: '734921',
-    organisationName: 'Sterling Packaging Ltd',
+    organisationId: MOCK_ORG_STERLING_ID,
+    organisationReferenceNumber: MOCK_REF_STERLING,
+    organisationName: MOCK_ORG_STERLING_NAME,
     recyclingObligationsMet: null,
     percentageMet: null,
     dateSubmitted: null
   },
   {
     id: null,
-    organisationId: 'a4b5c6d7-e8f9-0123-defa-234567890bcd',
-    organisationReferenceNumber: '851036',
-    organisationName: 'Pinnacle Containers Ltd',
+    organisationId: MOCK_ORG_PINNACLE_ID,
+    organisationReferenceNumber: MOCK_REF_PINNACLE,
+    organisationName: MOCK_ORG_PINNACLE_NAME,
     recyclingObligationsMet: false,
     percentageMet: 0,
     dateSubmitted: null
   },
   {
     id: null,
-    organisationId: 'b5c6d7e8-f9a0-1234-efab-345678901cde',
-    organisationReferenceNumber: '962147',
-    organisationName: 'Meridian Products Ltd',
+    organisationId: MOCK_ORG_MERIDIAN_ID,
+    organisationReferenceNumber: MOCK_REF_MERIDIAN,
+    organisationName: MOCK_ORG_MERIDIAN_NAME,
     recyclingObligationsMet: false,
     percentageMet: 0,
     dateSubmitted: null
@@ -542,11 +552,11 @@ const mockOrganisationsById = {
       }
     ]
   },
-  'f3b4c5d6-e7a8-9012-cdef-123456789abc': {
-    id: 'f3b4c5d6-e7a8-9012-cdef-123456789abc',
-    name: 'Sterling Packaging Ltd',
+  [MOCK_ORG_STERLING_ID]: {
+    id: MOCK_ORG_STERLING_ID,
+    name: MOCK_ORG_STERLING_NAME,
     tradingName: null,
-    businessCountry: 'GB-ENG',
+    businessCountry: MOCK_BUSINESS_COUNTRY,
     companiesHouseNumber: '34921001',
     address: {
       addressLine1: '14 Mill Lane',
@@ -555,19 +565,19 @@ const mockOrganisationsById = {
     },
     registrations: [
       {
-        created: '2026-03-31T23:20:34.294+00:00',
-        updated: '2026-03-31T23:20:34.294+00:00',
-        status: 'REGISTERED',
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
         type: 'LARGE_PRODUCER',
         registrationYear: 2026
       }
     ]
   },
-  'a4b5c6d7-e8f9-0123-defa-234567890bcd': {
-    id: 'a4b5c6d7-e8f9-0123-defa-234567890bcd',
-    name: 'Pinnacle Containers Ltd',
+  [MOCK_ORG_PINNACLE_ID]: {
+    id: MOCK_ORG_PINNACLE_ID,
+    name: MOCK_ORG_PINNACLE_NAME,
     tradingName: null,
-    businessCountry: 'GB-ENG',
+    businessCountry: MOCK_BUSINESS_COUNTRY,
     companiesHouseNumber: '51036002',
     address: {
       addressLine1: '7 Industrial Park',
@@ -576,19 +586,19 @@ const mockOrganisationsById = {
     },
     registrations: [
       {
-        created: '2026-03-31T23:20:34.294+00:00',
-        updated: '2026-03-31T23:20:34.294+00:00',
-        status: 'REGISTERED',
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
         type: 'LARGE_PRODUCER',
         registrationYear: 2026
       }
     ]
   },
-  'b5c6d7e8-f9a0-1234-efab-345678901cde': {
-    id: 'b5c6d7e8-f9a0-1234-efab-345678901cde',
-    name: 'Meridian Products Ltd',
+  [MOCK_ORG_MERIDIAN_ID]: {
+    id: MOCK_ORG_MERIDIAN_ID,
+    name: MOCK_ORG_MERIDIAN_NAME,
     tradingName: null,
-    businessCountry: 'GB-ENG',
+    businessCountry: MOCK_BUSINESS_COUNTRY,
     companiesHouseNumber: '62147003',
     address: {
       addressLine1: '22 Commerce Road',
@@ -597,9 +607,9 @@ const mockOrganisationsById = {
     },
     registrations: [
       {
-        created: '2026-03-31T23:20:34.294+00:00',
-        updated: '2026-03-31T23:20:34.294+00:00',
-        status: 'REGISTERED',
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
         type: 'LARGE_PRODUCER',
         registrationYear: 2026
       }
@@ -712,20 +722,20 @@ export const mockAccountOrganisationsByExternalId = {
     name: MOCK_ORG_METROLINE_NAME,
     referenceNumber: 'CS-3002'
   },
-  'f3b4c5d6-e7a8-9012-cdef-123456789abc': {
-    externalId: 'f3b4c5d6-e7a8-9012-cdef-123456789abc',
-    name: 'Sterling Packaging Ltd',
-    referenceNumber: '734921'
+  [MOCK_ORG_STERLING_ID]: {
+    externalId: MOCK_ORG_STERLING_ID,
+    name: MOCK_ORG_STERLING_NAME,
+    referenceNumber: MOCK_REF_STERLING
   },
-  'a4b5c6d7-e8f9-0123-defa-234567890bcd': {
-    externalId: 'a4b5c6d7-e8f9-0123-defa-234567890bcd',
-    name: 'Pinnacle Containers Ltd',
-    referenceNumber: '851036'
+  [MOCK_ORG_PINNACLE_ID]: {
+    externalId: MOCK_ORG_PINNACLE_ID,
+    name: MOCK_ORG_PINNACLE_NAME,
+    referenceNumber: MOCK_REF_PINNACLE
   },
-  'b5c6d7e8-f9a0-1234-efab-345678901cde': {
-    externalId: 'b5c6d7e8-f9a0-1234-efab-345678901cde',
-    name: 'Meridian Products Ltd',
-    referenceNumber: '962147'
+  [MOCK_ORG_MERIDIAN_ID]: {
+    externalId: MOCK_ORG_MERIDIAN_ID,
+    name: MOCK_ORG_MERIDIAN_NAME,
+    referenceNumber: MOCK_REF_MERIDIAN
   }
 }
 
@@ -774,7 +784,7 @@ export const mockComplianceSchemeDetailData = {
     registrationType: 'ComplianceScheme',
     name: null,
     complianceSchemeName: MOCK_ORG_ECOPACK_NAME,
-    schemeOperatorName: 'EcoPack Group',
+    schemeOperatorName: MOCK_ORG_ECOPACK_OPERATOR_NAME,
     referenceNumber: 'CS-1001',
     address: {},
     regulator: 'EA',
@@ -962,9 +972,9 @@ export const mockNoObligationsDetailData = {
   id: 'decl-no-obligations',
   organisation: {
     ...mockDetailData.organisation,
-    id: 'f3b4c5d6-e7a8-9012-cdef-123456789abc',
-    name: 'Sterling Packaging Ltd',
-    referenceNumber: '734921'
+    id: MOCK_ORG_STERLING_ID,
+    name: MOCK_ORG_STERLING_NAME,
+    referenceNumber: MOCK_REF_STERLING
   },
   obligations: null,
   obligationStatus: null
@@ -975,9 +985,9 @@ export const mockEmptyObligationsDetailData = {
   id: 'decl-empty-obligations',
   organisation: {
     ...mockDetailData.organisation,
-    id: 'a4b5c6d7-e8f9-0123-defa-234567890bcd',
-    name: 'Pinnacle Containers Ltd',
-    referenceNumber: '851036'
+    id: MOCK_ORG_PINNACLE_ID,
+    name: MOCK_ORG_PINNACLE_NAME,
+    referenceNumber: MOCK_REF_PINNACLE
   },
   obligations: [],
   obligationStatus: null
@@ -1195,11 +1205,11 @@ const mockObligationsAllZero = [
 
 const mockObligationDataByOrgId = {
   // Sterling Packaging Ltd — no obligations at all
-  'f3b4c5d6-e7a8-9012-cdef-123456789abc': { obligations: null },
+  [MOCK_ORG_STERLING_ID]: { obligations: null },
   // Pinnacle Containers Ltd — empty obligations array
-  'a4b5c6d7-e8f9-0123-defa-234567890bcd': { obligations: [] },
+  [MOCK_ORG_PINNACLE_ID]: { obligations: [] },
   // Meridian Products Ltd — all obligation values are zero
-  'b5c6d7e8-f9a0-1234-efab-345678901cde': {
+  [MOCK_ORG_MERIDIAN_ID]: {
     obligations: mockObligationsAllZero
   }
 }

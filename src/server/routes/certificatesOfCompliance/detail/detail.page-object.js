@@ -1,5 +1,13 @@
 import { load } from 'cheerio'
 
+const TONNAGE_COLUMN = {
+  MATERIAL: 0,
+  OBLIGATION_TO_MEET: 1,
+  AWAITING_ACCEPTANCE: 2,
+  ACCEPTED: 3,
+  OUTSTANDING: 4
+}
+
 function readTag($, row) {
   const tag = $(row).find('.govuk-tag')
   const cls = tag.attr('class') ?? ''
@@ -13,12 +21,12 @@ function readRow($, row) {
     .toArray()
     .map((c) => $(c).text().trim())
   return {
-    material: cells[0],
+    material: cells[TONNAGE_COLUMN.MATERIAL],
     tonnages: {
-      obligationToMeet: cells[1],
-      awaitingAcceptance: cells[2],
-      accepted: cells[3],
-      outstanding: cells[4]
+      obligationToMeet: cells[TONNAGE_COLUMN.OBLIGATION_TO_MEET],
+      awaitingAcceptance: cells[TONNAGE_COLUMN.AWAITING_ACCEPTANCE],
+      accepted: cells[TONNAGE_COLUMN.ACCEPTED],
+      outstanding: cells[TONNAGE_COLUMN.OUTSTANDING]
     },
     statusTag: readTag($, row)
   }
