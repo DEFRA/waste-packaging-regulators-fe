@@ -851,6 +851,49 @@ export function readAndClearCertificateActionBannerFlags(
   return { showApprovalBanner, showQueryBanner, showCancelBanner }
 }
 
+async function getMockDeclarationDetail(
+  accountApi,
+  organisationId,
+  id,
+  { traceId, session, obligationYear } = {}
+) {
+  const resolvedObligationYear =
+    obligationYear ?? Number(mockSummary.complianceYear)
+
+  if (!id) {
+    const accountOrganisation =
+      resolveMockAccountOrganisationDetails(organisationId)
+    return mapObligationToDetail(getMockObligationData(organisationId), {
+      organisationId,
+      obligationYear: resolvedObligationYear,
+      organisation: getMockOrganisationById(organisationId),
+      accountOrganisationName: accountOrganisation.name,
+      accountOrganisationReferenceNumber: accountOrganisation.referenceNumber
+    })
+  }
+
+  const mockData = applyMockDeclarationStatusOverride(
+    getMockDetailDataById(id),
+    getDeclarationSessionKey(organisationId, id),
+    session
+  )
+  const declarationsForYear = getMockDeclarationsByOrgYear(
+    mockData?.organisation?.id ?? organisationId,
+    mockData?.obligationYear
+  )
+  const submitterPhoneNumber = await fetchSubmitterPhoneNumber(
+    accountApi,
+    mockData.audit,
+    traceId
+  )
+  return mapDeclarationToDetail(mockData, {
+    organisationId,
+    id,
+    declarationsForYear,
+    submitterPhoneNumber
+  })
+}
+
 async function getDeclarationDetail(
   obligationsApi,
   organisationsApi,
@@ -860,39 +903,10 @@ async function getDeclarationDetail(
   { traceId, session, obligationYear } = {}
 ) {
   if (config.get('useMockApi')) {
-    const resolvedObligationYear =
-      obligationYear ?? Number(mockSummary.complianceYear)
-
-    if (!id) {
-      const accountOrganisation =
-        resolveMockAccountOrganisationDetails(organisationId)
-      return mapObligationToDetail(getMockObligationData(organisationId), {
-        organisationId,
-        obligationYear: resolvedObligationYear,
-        organisation: getMockOrganisationById(organisationId),
-        accountOrganisationName: accountOrganisation.name,
-        accountOrganisationReferenceNumber: accountOrganisation.referenceNumber
-      })
-    }
-    const mockData = applyMockDeclarationStatusOverride(
-      getMockDetailDataById(id),
-      getDeclarationSessionKey(organisationId, id),
-      session
-    )
-    const declarationsForYear = getMockDeclarationsByOrgYear(
-      mockData?.organisation?.id ?? organisationId,
-      mockData?.obligationYear
-    )
-    const submitterPhoneNumber = await fetchSubmitterPhoneNumber(
-      accountApi,
-      mockData.audit,
-      traceId
-    )
-    return mapDeclarationToDetail(mockData, {
-      organisationId,
-      id,
-      declarationsForYear,
-      submitterPhoneNumber
+    return getMockDeclarationDetail(accountApi, organisationId, id, {
+      traceId,
+      session,
+      obligationYear
     })
   }
 
