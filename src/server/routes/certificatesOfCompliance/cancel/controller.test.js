@@ -124,7 +124,7 @@ describe('certificates of compliance — cancel', () => {
 
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(page.heading).toBe(
-        `Why are you cancelling ${mockComplianceSchemeDetailData.organisation.complianceSchemeName}'s statement?`
+        `Why are you cancelling ${mockComplianceSchemeDetailData.organisation.schemeOperatorName}'s statement?`
       )
       expect(page.reasons[2].label).toBe(
         'Compliance scheme can meet recycling obligations'
