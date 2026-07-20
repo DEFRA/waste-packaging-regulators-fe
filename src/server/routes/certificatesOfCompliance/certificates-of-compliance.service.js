@@ -1529,7 +1529,9 @@ function mapObligationToDetail(
       urls: { accept: '#', cancel: '#' }
     },
     showAcceptedOutcome: false,
-    complianceStatusLabel: null,
+    complianceStatusLabel: buildComplianceStatusLabel(
+      orgFields.registrationType
+    ),
     acceptedBy: null,
     acceptedDate: null,
     currentYearActions: [],

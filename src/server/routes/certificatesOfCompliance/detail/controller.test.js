@@ -282,6 +282,20 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(response.payload).toContain('govuk-tag--grey')
       expect(response.payload).toContain('Not submitted')
     })
+
+    it('renders the Certificate status label for an unsubmitted direct producer', async () => {
+      const response = await inject(
+        '/e2f3a4b5-c6d7-8901-bcde-f23456789012/certificates-of-compliance?obligationYear=2026'
+      )
+      expect(response.payload).toContain('Certificate status')
+    })
+
+    it('renders the Statement status label for an unsubmitted compliance scheme', async () => {
+      const response = await inject(
+        '/a9b8c7d6-e5f4-3210-abcd-ef9876543210/certificates-of-compliance?obligationYear=2026'
+      )
+      expect(response.payload).toContain('Statement status')
+    })
   })
 
   describe('Accepted outcome summary', () => {
