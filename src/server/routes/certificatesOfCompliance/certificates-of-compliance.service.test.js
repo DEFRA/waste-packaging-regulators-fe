@@ -39,6 +39,7 @@ import {
   setMockDeclarationStatusOverride,
   certificateActionSessionKeys,
   deriveRegistrationType,
+  mapCompaniesHouseNumberFromWasteOrganisation,
   mapWasteOrganisationToDetailFields,
   findSubmittedAuditUser,
   mockSummary,
@@ -234,6 +235,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.complianceTypeLabel).toBe('2026 statement of compliance')
       expect(vm.showDeclaration).toBe(true)
       expect(vm.complianceDocumentNoun).toBe('statement of compliance')
+      expect(vm.companiesHouseNumber).toBe('87654321')
     })
 
     test('getCertificateOfComplianceDetailViewModel returns not-submitted mock detail with organisation name', async () => {
@@ -1046,6 +1048,39 @@ describe('getCertificatesOfComplianceViewModel', () => {
           { organisationId: 'org-abc', id: 'decl-1' },
           'trace-z'
         )
+      })
+
+      test('calls getOrganisation when loading submitted declaration detail', async () => {
+        await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1', {
+          traceId: 'trace-z'
+        })
+
+        expect(mockOrganisationsApi.getOrganisation).toHaveBeenCalledWith(
+          { organisationId: 'org-abc' },
+          'trace-z'
+        )
+      })
+
+      test('maps companiesHouseNumber from waste-organisations API for submitted declarations', async () => {
+        mockOrganisationsApi.getOrganisation.mockResolvedValue({
+          id: 'org-abc',
+          name: 'Live Producer Ltd',
+          companiesHouseNumber: '17121895',
+          registrations: [
+            {
+              type: 'LARGE_PRODUCER',
+              status: 'REGISTERED',
+              registrationYear: 2026
+            }
+          ]
+        })
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.companiesHouseNumber).toBe('17121895')
       })
 
       test('calls getAccountDetailsById with submitter user id from audit', async () => {
@@ -2080,11 +2115,13 @@ describe('getCertificatesOfComplianceViewModel', () => {
         mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
           ...mockDetailData,
           submitterName: null,
-          audit: [],
-          organisation: {
-            ...mockDetailData.organisation,
-            companiesHouseNumber: null
-          }
+          audit: []
+        })
+        mockOrganisationsApi.getOrganisation.mockResolvedValue({
+          id: 'org-abc',
+          name: 'Live Producer Ltd',
+          companiesHouseNumber: null,
+          registrations: []
         })
 
         const vm = await getCertificateOfComplianceDetailViewModel(
@@ -2661,6 +2698,20 @@ describe('organisation and audit detail mapping', () => {
     expect(
       findSubmittedAuditUser([{ action: 'Accepted', user: { name: 'Other' } }])
     ).toBeNull()
+  })
+
+  test('mapCompaniesHouseNumberFromWasteOrganisation maps companies house number', () => {
+    expect(
+      mapCompaniesHouseNumberFromWasteOrganisation({
+        companiesHouseNumber: '17121895'
+      })
+    ).toBe('17121895')
+    expect(mapCompaniesHouseNumberFromWasteOrganisation(null)).toBe('No data')
+    expect(
+      mapCompaniesHouseNumberFromWasteOrganisation({
+        companiesHouseNumber: null
+      })
+    ).toBe('No data')
   })
 
   test('mapWasteOrganisationToDetailFields maps companies house and derived type', () => {

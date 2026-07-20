@@ -19,7 +19,7 @@ export const certificatesOfComplianceController = {
     const viewModel = await getCertificatesOfComplianceViewModel(
       type,
       tab,
-      parseInt(page, 10),
+      Number.parseInt(page, 10),
       traceId
     )
 
