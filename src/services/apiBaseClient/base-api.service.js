@@ -1,4 +1,5 @@
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import { ApiError } from './api-error.js'
 import { getServiceOAuthAccessToken } from './oauth-token.js'
 
@@ -187,6 +188,19 @@ export class BaseApiService {
     return Math.round(performance.now() - startedAt)
   }
 
+  #resolveUpstreamLogLevel(statusCode, error) {
+    if (
+      error ||
+      (statusCode !== null && statusCode >= statusCodes.internalServerError)
+    ) {
+      return 'error'
+    }
+    if (statusCode !== null && statusCode >= statusCodes.badRequest) {
+      return 'warn'
+    }
+    return 'info'
+  }
+
   #logUpstreamCall({
     method,
     url,
@@ -194,15 +208,9 @@ export class BaseApiService {
     statusCode = null,
     error = null
   }) {
-    const ok = !error && statusCode !== null && statusCode < 400
-    let level
-    if (error || (statusCode !== null && statusCode >= 500)) {
-      level = 'error'
-    } else if (statusCode !== null && statusCode >= 400) {
-      level = 'warn'
-    } else {
-      level = 'info'
-    }
+    const ok =
+      !error && statusCode !== null && statusCode < statusCodes.badRequest
+    const level = this.#resolveUpstreamLogLevel(statusCode, error)
 
     const upper = method.toUpperCase()
     const statusLabel = statusCode ?? 'network-error'

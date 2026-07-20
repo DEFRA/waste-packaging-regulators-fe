@@ -5,19 +5,86 @@ import {
   getB2cAuthorityPrefix,
   resolvePostLogoutAbsoluteUri
 } from '#server/auth/azure-ad-b2c.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import { createAccountApiService } from '#services/account-api.service.js'
+
+const MAX_LOGOUT_REDIRECTS = 10
+
+function isRedirectStatus(status) {
+  return (
+    status >= statusCodes.multipleChoices && status < statusCodes.badRequest
+  )
+}
+
+function clearCookiesFromResponseHeaders(h, response) {
+  const setCookie =
+    response.headers.getSetCookie?.() || response.headers.get('set-cookie')
+  if (!setCookie) {
+    return
+  }
+
+  const cookies = Array.isArray(setCookie) ? setCookie : [setCookie]
+  for (const cookieStr of cookies) {
+    const name = cookieStr.split('=')[0].trim()
+    if (name) {
+      h.unstate(name)
+    }
+  }
+}
+
+async function callExternalLogout(request, h, logoutUrl) {
+  try {
+    await followLogoutRedirects(h, logoutUrl)
+  } catch (error) {
+    request.log('error', `Failed to call external logout URL: ${error.message}`)
+  }
+}
+
+async function followLogoutRedirects(h, logoutUrl) {
+  let currentUrl = logoutUrl
+  let redirectCount = 0
+
+  while (currentUrl && redirectCount < MAX_LOGOUT_REDIRECTS) {
+    const response = await fetch(currentUrl, { redirect: 'manual' })
+    clearCookiesFromResponseHeaders(h, response)
+
+    if (isRedirectStatus(response.status)) {
+      currentUrl = response.headers.get('location')
+      redirectCount++
+    } else {
+      currentUrl = null
+    }
+  }
+}
+
+function resetAuthSession(request, h) {
+  if (request.yar) {
+    request.yar.reset()
+  }
+  h.unstate(BELL_AZURE_AD_B2C_COOKIE)
+}
+
+function buildSignOutRedirect(h, azure, request) {
+  const prefix = getB2cAuthorityPrefix(azure)
+  if (!prefix) {
+    return h.redirect('/signed-out')
+  }
+
+  const pathOrUrl = azure.postLogoutRedirectPath || '/signed-out'
+  const postLogoutUri = resolvePostLogoutAbsoluteUri(request, pathOrUrl, azure)
+  return h.redirect(buildB2cLogoutUrl(prefix, postLogoutUri))
+}
 
 export const signinOidcController = {
   async handler(request, h) {
     if (request.auth?.credentials) {
       const apiAccount = createAccountApiService()
-      //Call to account api to get user details
       const user = await apiAccount.getAccountDetailsById(
         request.auth.credentials.profile.oid
       )
       user.id = request.auth.credentials.profile.oid
       user.email = request.auth.credentials.profile.email
-      user.name = user.firstName + ' ' + user.lastName
+      user.name = `${user.firstName} ${user.lastName}`
       request.yar.set('user', user)
     }
     const returnTo = request.yar.get('returnTo') || '/'
@@ -27,63 +94,15 @@ export const signinOidcController = {
 }
 export const signOutController = {
   async handler(request, h) {
-    if (request.yar) {
-      request.yar.reset()
-    }
-    h.unstate(BELL_AZURE_AD_B2C_COOKIE)
+    resetAuthSession(request, h)
 
     const azure = config.get('auth.azureAdB2c')
-    const prefix = getB2cAuthorityPrefix(azure)
-    const pathOrUrl = azure.postLogoutRedirectPath || '/signed-out'
-    const postLogoutUri = resolvePostLogoutAbsoluteUri(
-      request,
-      pathOrUrl,
-      azure
-    )
-
     const logoutUrl = azure.logoutUrl
     if (logoutUrl) {
-      try {
-        let currentUrl = logoutUrl
-        const maxRedirects = 10
-        let redirectCount = 0
-
-        while (currentUrl && redirectCount < maxRedirects) {
-          const response = await fetch(currentUrl, { redirect: 'manual' })
-
-          const setCookie =
-            response.headers.getSetCookie?.() ||
-            response.headers.get('set-cookie')
-          if (setCookie) {
-            const cookies = Array.isArray(setCookie) ? setCookie : [setCookie]
-            cookies.forEach((cookieStr) => {
-              const name = cookieStr.split('=')[0].trim()
-              if (name) {
-                h.unstate(name)
-              }
-            })
-          }
-
-          if (response.status >= 300 && response.status < 400) {
-            currentUrl = response.headers.get('location')
-            redirectCount++
-          } else {
-            currentUrl = null
-          }
-        }
-      } catch (error) {
-        request.log(
-          'error',
-          `Failed to call external logout URL: ${error.message}`
-        )
-      }
+      await callExternalLogout(request, h, logoutUrl)
     }
 
-    if (!prefix) {
-      return h.redirect('/signed-out')
-    }
-
-    return h.redirect(buildB2cLogoutUrl(prefix, postLogoutUri))
+    return buildSignOutRedirect(h, azure, request)
   }
 }
 
