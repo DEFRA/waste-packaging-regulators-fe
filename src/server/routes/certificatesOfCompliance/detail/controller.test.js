@@ -244,6 +244,46 @@ describe('#certificatesOfComplianceDetailController', () => {
     )
   })
 
+  describe('Submission status label', () => {
+    it('renders the Certificate status label for a direct producer', async () => {
+      const response = await inject(
+        '/org-123/certificates-of-compliance/101411'
+      )
+      expect(response.payload).toContain('Certificate status')
+    })
+
+    it('renders the Statement status label for a compliance scheme', async () => {
+      const response = await inject(
+        '/923fa611-571c-4948-ab7d-fbb75e75ed65/certificates-of-compliance/decl-cs-001'
+      )
+      expect(response.payload).toContain('Statement status')
+    })
+
+    it('renders a blue Pending tag for a submitted (pending review) declaration', async () => {
+      const response = await inject(
+        '/org-123/certificates-of-compliance/101411'
+      )
+      expect(response.payload).toContain('govuk-tag--blue')
+      expect(response.payload).toContain('Pending')
+    })
+
+    it('renders a teal Accepted tag for an accepted declaration', async () => {
+      const response = await inject(
+        '/a1b2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-309145'
+      )
+      expect(response.payload).toContain('govuk-tag--teal')
+      expect(response.payload).toContain('Accepted')
+    })
+
+    it('renders a grey Not submitted tag for an unsubmitted organisation', async () => {
+      const response = await inject(
+        '/e2f3a4b5-c6d7-8901-bcde-f23456789012/certificates-of-compliance?obligationYear=2026'
+      )
+      expect(response.payload).toContain('govuk-tag--grey')
+      expect(response.payload).toContain('Not submitted')
+    })
+  })
+
   describe('Accepted outcome summary', () => {
     it('renders certificate status, accepted by, and accepted date for an accepted direct producer', async () => {
       const response = await inject(
