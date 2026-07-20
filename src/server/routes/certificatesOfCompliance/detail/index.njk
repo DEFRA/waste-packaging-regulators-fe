@@ -48,7 +48,7 @@
       </div>
 
       <div class="govuk-grid-row">
-        <div class="govuk-grid-column-two-thirds">
+        <div class="govuk-grid-column-three-quarters">
           <dl class="govuk-summary-list">
             {% if registrationType == 'ComplianceScheme' %}
               <div class="govuk-summary-list__row">
@@ -57,7 +57,7 @@
                   {% if regulation43Met == null %}
                     No data
                   {% else %}
-                    {{ appStatusTag({ value: regulation43Met, trueText: 'Compliant', falseText: 'Not compliant' }) }}
+                    {{ appStatusTag({ value: regulation43Met, trueText: 'Compliant', falseText: 'Not compliant', fontSize:'' }) }}
                   {% endif %}
                 </dd>
               </div>
@@ -66,21 +66,27 @@
               <dt class="govuk-summary-list__key">Recycling obligations</dt>
               <dd class="govuk-summary-list__value">
                 {% if declarationStatus == 'Unsubmitted' %}
-                  <strong class="govuk-tag govuk-tag--grey govuk-!-font-size-16">Unsubmitted</strong>
+                  <strong class="govuk-tag govuk-tag--grey">Unsubmitted</strong>
                 {% elif recyclingObligationsMet == null %}
                   No data
                 {% else %}
-                  {{ appStatusTag({ value: recyclingObligationsMet, trueText: 'Met', falseText: 'Not met' }) }}
+                  {{ appStatusTag({ value: recyclingObligationsMet, trueText: 'Met', falseText: 'Not met', fontSize:'' }) }}
+                {% endif %}
+              </dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">{{ complianceStatusLabel }}</dt>
+              <dd class="govuk-summary-list__value">
+                {% if declarationStatus == 'Unsubmitted' %}
+                  <strong class="govuk-tag govuk-tag--grey">Not submitted</strong>
+                {% elseif declarationStatus == 'Pending'%}
+                  <strong class="govuk-tag govuk-tag--blue">Pending</strong>
+                {% else %}
+                  <strong class="govuk-tag govuk-tag--teal">Accepted</strong>
                 {% endif %}
               </dd>
             </div>
             {% if showAcceptedOutcome %}
-              <div class="govuk-summary-list__row">
-                <dt class="govuk-summary-list__key">{{ complianceStatusLabel }}</dt>
-                <dd class="govuk-summary-list__value">
-                  <strong class="govuk-tag govuk-tag--blue govuk-!-font-size-16">Accepted</strong>
-                </dd>
-              </div>
               <div class="govuk-summary-list__row">
                 <dt class="govuk-summary-list__key">Accepted by</dt>
                 <dd class="govuk-summary-list__value">{{ acceptedBy }}</dd>
@@ -99,7 +105,7 @@
       </div>
 
       <div class="govuk-grid-row">
-        <div class="govuk-grid-column-two-thirds">
+        <div class="govuk-grid-column-three-quarters">
           <dl class="govuk-summary-list govuk-!-margin-bottom-0">
             <div class="govuk-summary-list__row">
               <dt class="govuk-summary-list__key">Organisation type</dt>
@@ -132,7 +138,6 @@
         </div>
       </div>
 
-      <hr class="govuk-section-break govuk-section-break--l">
       <hr class="govuk-section-break govuk-section-break--l">
 
       {% if registrationType == 'ComplianceScheme' %}

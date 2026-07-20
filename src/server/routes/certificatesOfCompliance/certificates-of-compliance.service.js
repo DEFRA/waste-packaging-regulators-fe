@@ -495,7 +495,7 @@ function mapAcceptedOutcomeFields(data, registrationType) {
   if (data.status !== 'Accepted') {
     return {
       showAcceptedOutcome: false,
-      complianceStatusLabel: null,
+      complianceStatusLabel: buildComplianceStatusLabel(registrationType),
       acceptedBy: null,
       acceptedDate: null
     }
