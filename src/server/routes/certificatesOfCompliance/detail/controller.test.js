@@ -61,16 +61,23 @@ describe('#certificatesOfComplianceDetailController', () => {
     expect(response.headers.location).toBe('/signin-oidc')
   })
 
-  it('should render "Back to all submissions" as the backlink text', async () => {
+  it.each([
+    {
+      description: '"Back to all submissions" as the backlink text',
+      expected: 'Back to all submissions'
+    },
+    {
+      description:
+        'the compliance type label in the caption for a direct producer',
+      expected: `${mockDetailData.obligationYear} certificate of compliance`
+    },
+    {
+      description: 'the company name as the heading',
+      expected: mockDetailData.organisation.name
+    }
+  ])('should render $description', async ({ expected }) => {
     const response = await inject('/org-123/certificates-of-compliance/101411')
-    expect(response.payload).toContain('Back to all submissions')
-  })
-
-  it('should render the compliance type label in the caption for a direct producer', async () => {
-    const response = await inject('/org-123/certificates-of-compliance/101411')
-    expect(response.payload).toContain(
-      `${mockDetailData.obligationYear} certificate of compliance`
-    )
+    expect(response.payload).toContain(expected)
   })
 
   it('should render the compliance type label in the caption for a compliance scheme', async () => {
@@ -80,11 +87,6 @@ describe('#certificatesOfComplianceDetailController', () => {
     expect(response.payload).toContain(
       `${mockComplianceSchemeDetailData.obligationYear} statement of compliance`
     )
-  })
-
-  it('should render the company name as the heading', async () => {
-    const response = await inject('/org-123/certificates-of-compliance/101411')
-    expect(response.payload).toContain(mockDetailData.organisation.name)
   })
 
   it('should render the recycling obligations status', async () => {
