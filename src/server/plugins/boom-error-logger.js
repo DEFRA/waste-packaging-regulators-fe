@@ -2,6 +2,41 @@ import { statusCodes } from '../common/constants/status-codes.js'
 
 const SERVER_ERROR_THRESHOLD = 500
 
+function assignIfDefined(target, key, value) {
+  if (value !== undefined) {
+    target[key] = value
+  }
+}
+
+function assignIfPresent(target, key, value) {
+  if (value) {
+    target[key] = value
+  }
+}
+
+function assignUpstreamContext(out, err) {
+  assignIfDefined(out, 'code', err.code)
+  assignIfDefined(out, 'errno', err.errno)
+  if (err.status !== undefined && err.status !== null) {
+    out.status = err.status
+  }
+  assignIfPresent(out, 'service_name', err.serviceName)
+  assignIfPresent(out, 'method', err.method)
+  assignIfPresent(out, 'url', err.url)
+}
+
+function assignNestedErrors(out, err) {
+  if (Array.isArray(err.errors) && err.errors.length > 0) {
+    out.errors = err.errors.map(serializeError).filter(Boolean)
+  }
+  assignIfDefined(out, 'cause', serializeError(err.cause))
+}
+
+function assignOptionalErrorFields(out, err) {
+  assignUpstreamContext(out, err)
+  assignNestedErrors(out, err)
+}
+
 export function serializeError(err) {
   if (!(err instanceof Error)) {
     return undefined
@@ -13,16 +48,7 @@ export function serializeError(err) {
     stack_trace: err.stack
   }
 
-  if (err.code !== undefined) out.code = err.code
-  if (err.errno !== undefined) out.errno = err.errno
-  if (err.status !== undefined && err.status !== null) out.status = err.status
-  if (err.serviceName) out.service_name = err.serviceName
-  if (err.method) out.method = err.method
-  if (err.url) out.url = err.url
-  if (Array.isArray(err.errors) && err.errors.length > 0) {
-    out.errors = err.errors.map(serializeError).filter(Boolean)
-  }
-  if (err.cause !== undefined) out.cause = serializeError(err.cause)
+  assignOptionalErrorFields(out, err)
 
   return out
 }

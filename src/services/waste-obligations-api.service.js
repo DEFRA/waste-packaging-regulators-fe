@@ -1,6 +1,14 @@
 import { config } from '#config/config.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import { ApiError } from './apiBaseClient/api-error.js'
 import { BaseApiService } from './apiBaseClient/base-api.service.js'
+
+function buildPathWithQuery(basePath, queryString) {
+  if (!queryString) {
+    return basePath
+  }
+  return `${basePath}?${queryString}`
+}
 
 export class WasteObligationsApiService extends BaseApiService {
   constructor(options = {}) {
@@ -33,7 +41,7 @@ export class WasteObligationsApiService extends BaseApiService {
 
     const qs = params.toString()
     return this.getJson(
-      `/compliance-declarations${qs ? `?${qs}` : ''}`,
+      buildPathWithQuery('/compliance-declarations', qs),
       this.getTracingHeader(traceId)
     )
   }
@@ -49,8 +57,13 @@ export class WasteObligationsApiService extends BaseApiService {
     { organisationId, obligationYear } = {},
     traceId
   ) {
+    const params = new URLSearchParams()
+    params.set('obligationYear', String(obligationYear))
     return this.getJson(
-      `/organisations/${organisationId}/compliance-declarations?obligationYear=${obligationYear}`,
+      buildPathWithQuery(
+        `/organisations/${organisationId}/compliance-declarations`,
+        params.toString()
+      ),
       this.getTracingHeader(traceId)
     )
   }
@@ -78,7 +91,9 @@ export class WasteObligationsApiService extends BaseApiService {
         traceId
       )
     } catch (err) {
-      if (err instanceof ApiError && err.status === 404) return null
+      if (err instanceof ApiError && err.status === statusCodes.notFound) {
+        return null
+      }
       throw err
     }
   }
@@ -93,7 +108,7 @@ export class WasteObligationsApiService extends BaseApiService {
     }
     const qs = params.toString()
     return this.getJson(
-      `/organisations/${organisationId}/obligations${qs ? `?${qs}` : ''}`,
+      buildPathWithQuery(`/organisations/${organisationId}/obligations`, qs),
       this.getTracingHeader(traceId)
     )
   }

@@ -8,6 +8,7 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const fourHoursMs = 14400000
 const oneWeekMs = 604800000
+const DEFAULT_DEV_CLIENT_ID = 'Developer'
 
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
@@ -243,13 +244,13 @@ export const config = convict({
     clientId: {
       doc: 'Client ID for waste APIs',
       format: String,
-      default: 'Developer',
+      default: DEFAULT_DEV_CLIENT_ID,
       env: 'WASTE_ORGANISATIONS_API_CLIENT_ID'
     },
     clientSecret: {
       doc: 'Client secret for waste APIs',
       format: String,
-      default: 'developer-pwd',
+      default: '',
       env: 'WASTE_ORGANISATIONS_API_CLIENT_SECRET',
       sensitive: true
     },
@@ -278,13 +279,13 @@ export const config = convict({
     clientId: {
       doc: 'Client ID for waste obligations API',
       format: String,
-      default: 'Developer',
+      default: DEFAULT_DEV_CLIENT_ID,
       env: 'WASTE_OBLIGATIONS_API_CLIENT_ID'
     },
     clientSecret: {
       doc: 'Client secret for waste obligations API',
       format: String,
-      default: 'developer-pwd',
+      default: '',
       env: 'WASTE_OBLIGATIONS_API_CLIENT_SECRET',
       sensitive: true
     },
@@ -313,13 +314,13 @@ export const config = convict({
     clientId: {
       doc: 'Client ID for the Account API. In bearer mode this is the OAuth client (application) ID.',
       format: String,
-      default: 'Developer',
+      default: DEFAULT_DEV_CLIENT_ID,
       env: 'ACCOUNT_API_CLIENT_ID'
     },
     clientSecret: {
       doc: 'Client secret for the Account API. In bearer mode this is the OAuth client secret.',
       format: String,
-      default: 'developer-pwd',
+      default: '',
       env: 'ACCOUNT_API_CLIENT_SECRET',
       sensitive: true
     },

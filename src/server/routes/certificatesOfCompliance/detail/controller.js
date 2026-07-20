@@ -34,21 +34,20 @@ export const certificatesOfComplianceDetailController = {
       declarationKey
     )
 
-    try {
-      const viewModel = await getCertificateOfComplianceDetailViewModel(
-        organisationId,
-        id,
-        {
-          traceId,
-          bannerFlags,
-          session: request.yar,
-          obligationYear
-        }
-      )
-
-      return h.view('certificatesOfCompliance/detail/index', viewModel)
-    } catch (error) {
+    const viewModel = await getCertificateOfComplianceDetailViewModel(
+      organisationId,
+      id,
+      {
+        traceId,
+        bannerFlags,
+        session: request.yar,
+        obligationYear
+      }
+    ).catch((error) => {
       handleApiError(request, error)
-    }
+      throw error
+    })
+
+    return h.view('certificatesOfCompliance/detail/index', viewModel)
   }
 }

@@ -5,16 +5,26 @@
 /** Bell registers the OAuth state cookie as `bell-${provider.name}`. */
 export const BELL_AZURE_AD_B2C_COOKIE = 'bell-azure-ad-b2c'
 
+function buildAuthorityFromInstance(cfg) {
+  if (!cfg.instance || !cfg.domain || !cfg.userFlow) {
+    return null
+  }
+  const inst = String(cfg.instance).replace(/\/$/, '')
+  return `${inst}/${cfg.domain}/${cfg.userFlow}`
+}
+
+function buildAuthorityFromTenant(cfg) {
+  if (!cfg.tenantName || !cfg.userFlow) {
+    return null
+  }
+  return `https://${cfg.tenantName}.b2clogin.com/${cfg.tenantName}.onmicrosoft.com/${cfg.userFlow}`
+}
+
 export function getB2cAuthorityPrefix(cfg) {
-  if (!cfg) return null
-  if (cfg.instance && cfg.domain && cfg.userFlow) {
-    const inst = String(cfg.instance).replace(/\/$/, '')
-    return `${inst}/${cfg.domain}/${cfg.userFlow}`
+  if (!cfg) {
+    return null
   }
-  if (cfg.tenantName && cfg.userFlow) {
-    return `https://${cfg.tenantName}.b2clogin.com/${cfg.tenantName}.onmicrosoft.com/${cfg.userFlow}`
-  }
-  return null
+  return buildAuthorityFromInstance(cfg) ?? buildAuthorityFromTenant(cfg)
 }
 
 /**
@@ -36,14 +46,52 @@ export function buildB2cLogoutUrl(
 }
 
 function firstForwarded(value) {
-  if (!value || typeof value !== 'string') return undefined
+  if (!value || typeof value !== 'string') {
+    return undefined
+  }
   return value.split(',')[0].trim()
 }
 
 function isRequestHttps(request) {
   const proto = firstForwarded(request.headers['x-forwarded-proto'])
-  if (proto === 'https') return true
-  return request.server.info.protocol === 'https'
+  return proto === 'https' || request.server.info.protocol === 'https'
+}
+
+function upgradeToHttpsIfNeeded(request, url) {
+  if (isRequestHttps(request) && url.protocol === 'http:') {
+    url.protocol = 'https:'
+  }
+  return url.href
+}
+
+function resolveAbsoluteUrlFromConfiguredRedirect(request, path, redirectUri) {
+  const u = new URL(redirectUri)
+  upgradeToHttpsIfNeeded(request, u)
+  return new URL(path, u.origin).href
+}
+
+function resolveAbsoluteUrlFromRequestHost(request, path) {
+  const proto =
+    firstForwarded(request.headers['x-forwarded-proto']) ||
+    request.server.info.protocol
+  const host =
+    firstForwarded(request.headers['x-forwarded-host']) ||
+    request.headers.host ||
+    request.info.host
+  const scheme = proto === 'https' ? 'https' : 'http'
+  return `${scheme}://${host}${path}`
+}
+
+/**
+ * @param {string} pathOrUrl - path (e.g. `/signed-out`) or absolute URL
+ */
+function normalizeLogoutPathOrUrl(pathOrUrl) {
+  const raw = (pathOrUrl || '/signed-out').trim() || '/signed-out'
+  if (/^https?:\/\//i.test(raw)) {
+    return { kind: 'absolute', value: raw }
+  }
+  const path = raw.startsWith('/') ? raw : `/${raw}`
+  return { kind: 'path', value: path }
 }
 
 /**
@@ -55,30 +103,19 @@ function isRequestHttps(request) {
  * @param {object} azureConfig - `config.get('auth.azureAdB2c')`
  */
 export function resolvePostLogoutAbsoluteUri(request, pathOrUrl, azureConfig) {
-  const raw = (pathOrUrl || '/signed-out').trim() || '/signed-out'
-  if (/^https?:\/\//i.test(raw)) {
-    const u = new URL(raw)
-    if (isRequestHttps(request) && u.protocol === 'http:') {
-      u.protocol = 'https:'
-    }
-    return u.href
+  const normalized = normalizeLogoutPathOrUrl(pathOrUrl)
+  if (normalized.kind === 'absolute') {
+    return upgradeToHttpsIfNeeded(request, new URL(normalized.value))
   }
-  const path = raw.startsWith('/') ? raw : `/${raw}`
+
   const redirectUri = azureConfig?.redirectUri || ''
   if (/^https?:\/\//i.test(redirectUri)) {
-    const u = new URL(redirectUri)
-    if (isRequestHttps(request) && u.protocol === 'http:') {
-      u.protocol = 'https:'
-    }
-    return new URL(path, u.origin).href
+    return resolveAbsoluteUrlFromConfiguredRedirect(
+      request,
+      normalized.value,
+      redirectUri
+    )
   }
-  const proto =
-    firstForwarded(request.headers['x-forwarded-proto']) ||
-    request.server.info.protocol
-  const host =
-    firstForwarded(request.headers['x-forwarded-host']) ||
-    request.headers.host ||
-    request.info.host
-  const scheme = proto === 'https' ? 'https' : 'http'
-  return `${scheme}://${host}${path}`
+
+  return resolveAbsoluteUrlFromRequestHost(request, normalized.value)
 }
