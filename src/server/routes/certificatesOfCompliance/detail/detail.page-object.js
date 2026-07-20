@@ -40,6 +40,52 @@ function readTable($, testid) {
   }
 }
 
+function findSummaryRow($, key) {
+  return $('.govuk-summary-list__row')
+    .toArray()
+    .map((row) => $(row))
+    .find(($row) => $row.find('.govuk-summary-list__key').text().trim() === key)
+}
+
+function summaryValue($row) {
+  return $row?.find('.govuk-summary-list__value').text().trim() ?? null
+}
+
+function readCancellation($) {
+  const cancelledByRow = findSummaryRow($, 'Cancelled by')
+  if (!cancelledByRow) {
+    return { present: false }
+  }
+
+  const statusRow = $('.govuk-summary-list__row')
+    .toArray()
+    .map((row) => $(row))
+    .find(($row) => $row.find('.govuk-tag').text().trim() === 'Cancelled')
+
+  return {
+    present: true,
+    statusLabel: statusRow?.find('.govuk-summary-list__key').text().trim(),
+    statusTag: statusRow ? readTag($, statusRow) : null,
+    cancelledBy: summaryValue(cancelledByRow),
+    cancelledDate: summaryValue(findSummaryRow($, 'Cancelled date')),
+    reason: summaryValue(findSummaryRow($, 'Reason for cancellation'))
+  }
+}
+
+function readNotificationBanner($) {
+  const banner = $('.govuk-notification-banner')
+  if (banner.length === 0) {
+    return { present: false }
+  }
+
+  return {
+    present: true,
+    cancelled: banner.hasClass('app-notification-banner--cancelled'),
+    heading: banner.find('.govuk-notification-banner__title').text().trim(),
+    text: banner.find('.govuk-notification-banner__content').text().trim()
+  }
+}
+
 function readDeclaration($) {
   const section = $('[data-testid="declaration"]')
   return {
@@ -67,7 +113,9 @@ export function loadDetailPage(payload) {
   return {
     materials: readTable($, 'obligations-table'),
     glass: readTable($, 'glass-breakdown-table'),
+    banner: readNotificationBanner($),
     declaration: readDeclaration($),
+    cancellation: readCancellation($),
     regulation43: readRegulation43($),
     obligations: readObligationsSection($)
   }

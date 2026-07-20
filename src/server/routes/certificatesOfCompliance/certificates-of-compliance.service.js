@@ -495,13 +495,18 @@ export function mapWasteOrganisationToDetailFields(
   }
 }
 
-export function findSubmittedAuditUser(audit = []) {
-  const entry = audit.find((auditEntry) => auditEntry.action === 'Submitted')
-  return entry?.user ?? null
+const auditAction = {
+  submitted: 'Submitted',
+  accepted: 'Accepted',
+  cancelled: 'Cancelled'
 }
 
-function findAcceptedAuditEntry(audit = []) {
-  return audit.find((auditEntry) => auditEntry.action === 'Accepted')
+function findAuditEntryByAction(audit = [], action) {
+  return audit.find((auditEntry) => auditEntry.action === action)
+}
+
+export function findSubmittedAuditUser(audit = []) {
+  return findAuditEntryByAction(audit, auditAction.submitted)?.user ?? null
 }
 
 function buildComplianceStatusLabel(registrationType) {
@@ -520,7 +525,7 @@ function mapAcceptedOutcomeFields(data, registrationType) {
     }
   }
 
-  const acceptedAudit = findAcceptedAuditEntry(data.audit)
+  const acceptedAudit = findAuditEntryByAction(data.audit, auditAction.accepted)
 
   return {
     showAcceptedOutcome: true,
@@ -529,6 +534,31 @@ function mapAcceptedOutcomeFields(data, registrationType) {
     acceptedDate: displayOrNoData(
       formatSubmissionDate(acceptedAudit?.timestamp ?? data.updated)
     )
+  }
+}
+
+function mapCancelledOutcomeFields(data) {
+  if (data.status !== 'Cancelled') {
+    return {
+      showCancelledOutcome: false,
+      cancelledBy: null,
+      cancelledDate: null,
+      cancellationReason: null
+    }
+  }
+
+  const cancelledAudit = findAuditEntryByAction(
+    data.audit,
+    auditAction.cancelled
+  )
+
+  return {
+    showCancelledOutcome: true,
+    cancelledBy: displayOrNoData(cancelledAudit?.user?.name),
+    cancelledDate: displayOrNoData(
+      formatSubmissionDate(cancelledAudit?.timestamp ?? data.updated)
+    ),
+    cancellationReason: displayOrNoData(cancelledAudit?.reason)
   }
 }
 
@@ -1181,28 +1211,8 @@ function mapQueryDetails(queryDetails) {
   }
 }
 
-function mapResubmissionRequestedDisplay(cancellationDetails) {
-  const resubmission = cancellationDetails.resubmissionRequested
-  if (resubmission === true) {
-    return 'Yes'
-  }
-  if (resubmission === false) {
-    return 'No'
-  }
-  return cancellationDetails.resubmissionRequestedDisplay ?? null
-}
-
-function mapCancellationDetails(cancellationDetails) {
-  if (!cancellationDetails) {
-    return null
-  }
-  return {
-    reason: cancellationDetails.reason ?? null,
-    resubmissionRequested: mapResubmissionRequestedDisplay(cancellationDetails),
-    dateCancelled: formatDate(
-      cancellationDetails.dateCancelled ?? cancellationDetails.actionDate
-    )
-  }
+function mapQueriedOutcome(data) {
+  return data.status === 'Queried' ? mapQueryDetails(data.queryDetails) : null
 }
 
 function formatHistoryDate(isoString) {
@@ -1344,17 +1354,6 @@ function resolveDeclarationActions(
   }
 }
 
-function mapDeclarationStatusDetails(reviewStatus, data) {
-  return {
-    queryDetails:
-      reviewStatus === 'Queried' ? mapQueryDetails(data.queryDetails) : null,
-    cancellationDetails:
-      reviewStatus === 'Cancelled'
-        ? mapCancellationDetails(data.cancellationDetails)
-        : null
-  }
-}
-
 function mapDeclarationComplianceFields(
   organisation,
   {
@@ -1451,6 +1450,7 @@ function mapDeclarationToDetail(
       created
     }),
     ...mapAcceptedOutcomeFields(data, organisation.registrationType),
+    ...mapCancelledOutcomeFields(data),
     ...mapDeclarationContactFields(organisation, {
       wasteOrganisation,
       submittedUser,
@@ -1464,7 +1464,7 @@ function mapDeclarationToDetail(
       resolvedId,
       organisation.registrationType
     ),
-    ...mapDeclarationStatusDetails(reviewStatus, data),
+    queryDetails: mapQueriedOutcome(data),
     currentYearActions: mapCurrentYearHistory(historyDeclarations),
     showObligations: (obligations ?? []).length !== 0
   }
@@ -1525,6 +1525,10 @@ function mapObligationToDetail(
     ),
     acceptedBy: null,
     acceptedDate: null,
+    showCancelledOutcome: false,
+    cancelledBy: null,
+    cancelledDate: null,
+    cancellationReason: null,
     currentYearActions: [],
     showObligations: obligations.length !== 0
   }

@@ -329,9 +329,19 @@ describe('certificates of compliance — journey', () => {
         }
       })
 
-      expect(detailResponse.payload).toContain('Certificate cancelled')
-      expect(detailResponse.payload).toContain(
-        'app-notification-banner--cancelled'
+      const detailsPage = loadDetailPage(detailResponse.payload)
+      expect(detailsPage.banner.present).toBe(true)
+      expect(detailsPage.banner.cancelled).toBe(true)
+      expect(detailsPage.banner.heading).toBe('Certificate cancelled')
+      expect(detailsPage.cancellation.present).toBe(true)
+      expect(detailsPage.cancellation.statusLabel).toBe('Certificate status')
+      expect(detailsPage.cancellation.statusTag).toEqual({
+        text: 'Cancelled',
+        colour: 'yellow'
+      })
+      expect(detailsPage.cancellation.cancelledBy).toBe('John Doe')
+      expect(detailsPage.cancellation.reason).toBe(
+        'Producer requested to cancel'
       )
     })
 
@@ -349,12 +359,22 @@ describe('certificates of compliance — journey', () => {
         }
       })
 
-      expect(detailResponse.payload).toContain('Statement cancelled')
-      expect(detailResponse.payload).toContain(
+      const detailsPage = loadDetailPage(detailResponse.payload)
+      expect(detailsPage.banner.present).toBe(true)
+      expect(detailsPage.banner.cancelled).toBe(true)
+      expect(detailsPage.banner.heading).toBe('Statement cancelled')
+      expect(detailsPage.banner.text).toBe(
         'Statement has been cancelled and an email sent to the compliance scheme.'
       )
-      expect(detailResponse.payload).toContain(
-        'app-notification-banner--cancelled'
+      expect(detailsPage.cancellation.present).toBe(true)
+      expect(detailsPage.cancellation.statusLabel).toBe('Statement status')
+      expect(detailsPage.cancellation.statusTag).toEqual({
+        text: 'Cancelled',
+        colour: 'yellow'
+      })
+      expect(detailsPage.cancellation.cancelledBy).toBe('John Doe')
+      expect(detailsPage.cancellation.reason).toBe(
+        'Compliance scheme requested to cancel'
       )
     })
   })
@@ -593,7 +613,7 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('shows the declaration for a cancelled direct producer', async () => {
-      const { declaration } = loadDetailPage(
+      const detailsPage = loadDetailPage(
         (
           await inject(
             detailPathForDetailData(mockDirectProducerCancelledDetailData)
@@ -601,12 +621,27 @@ describe('certificates of compliance — journey', () => {
         ).payload
       )
 
-      expect(declaration.present).toBe(true)
-      expect(declaration.documentNoun).toBe('certificate of compliance')
+      expect(detailsPage.declaration.present).toBe(true)
+      expect(detailsPage.declaration.documentNoun).toBe(
+        'certificate of compliance'
+      )
+      expect(detailsPage.cancellation.present).toBe(true)
+      expect(detailsPage.cancellation.statusLabel).toBe('Certificate status')
+      expect(detailsPage.cancellation.statusTag).toEqual({
+        text: 'Cancelled',
+        colour: 'yellow'
+      })
+      expect(detailsPage.cancellation.cancelledBy).toBe('James Walker')
+      expect(detailsPage.cancellation.cancelledDate).toBe(
+        '10 March 2026 at 09:15'
+      )
+      expect(detailsPage.cancellation.reason).toBe(
+        'Submitted after the deadline.'
+      )
     })
 
     it('shows the declaration for a cancelled compliance scheme', async () => {
-      const { declaration } = loadDetailPage(
+      const detailsPage = loadDetailPage(
         (
           await inject(
             detailPathForDetailData(mockComplianceSchemeCancelledDetailData)
@@ -614,8 +649,23 @@ describe('certificates of compliance — journey', () => {
         ).payload
       )
 
-      expect(declaration.present).toBe(true)
-      expect(declaration.documentNoun).toBe('statement of compliance')
+      expect(detailsPage.declaration.present).toBe(true)
+      expect(detailsPage.declaration.documentNoun).toBe(
+        'statement of compliance'
+      )
+      expect(detailsPage.cancellation.present).toBe(true)
+      expect(detailsPage.cancellation.statusLabel).toBe('Statement status')
+      expect(detailsPage.cancellation.statusTag).toEqual({
+        text: 'Cancelled',
+        colour: 'yellow'
+      })
+      expect(detailsPage.cancellation.cancelledBy).toBe('James Walker')
+      expect(detailsPage.cancellation.cancelledDate).toBe(
+        '8 March 2026 at 11:30'
+      )
+      expect(detailsPage.cancellation.reason).toBe(
+        'Incomplete member data submitted.'
+      )
     })
   })
 

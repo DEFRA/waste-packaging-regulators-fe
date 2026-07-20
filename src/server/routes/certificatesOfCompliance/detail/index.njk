@@ -81,6 +81,8 @@
                   <strong class="govuk-tag govuk-tag--grey">Not submitted</strong>
                 {% elseif reviewStatus == 'Pending' %}
                   <strong class="govuk-tag govuk-tag--blue">Pending</strong>
+                {% elseif reviewStatus == 'Cancelled' %}
+                  <strong class="govuk-tag govuk-tag--yellow">Cancelled</strong>
                 {% else %}
                   <strong class="govuk-tag govuk-tag--teal">Accepted</strong>
                 {% endif %}
@@ -98,6 +100,20 @@
               <div class="govuk-summary-list__row">
                 <dt class="govuk-summary-list__key">Accepted date</dt>
                 <dd class="govuk-summary-list__value">{{ acceptedDate }}</dd>
+              </div>
+            {% endif %}
+            {% if showCancelledOutcome %}
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">Cancelled by</dt>
+                <dd class="govuk-summary-list__value">{{ cancelledBy }}</dd>
+              </div>
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">Cancelled date</dt>
+                <dd class="govuk-summary-list__value">{{ cancelledDate }}</dd>
+              </div>
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">Reason for cancellation</dt>
+                <dd class="govuk-summary-list__value">{{ cancellationReason }}</dd>
               </div>
             {% endif %}
           </dl>
@@ -182,26 +198,6 @@
             {
               key: { text: "Date queried" },
               value: { text: queryDetails.dateQueried }
-            }
-          ]
-        }) }}
-      {% endif %}
-
-      {% if cancellationDetails %}
-        <h2 class="govuk-heading-m">Cancellation details</h2>
-        {{ govukSummaryList({
-          rows: [
-            {
-              key: { text: "Reason" },
-              value: { text: cancellationDetails.reason }
-            },
-            {
-              key: { text: "Re-submission requested" },
-              value: { text: cancellationDetails.resubmissionRequested }
-            },
-            {
-              key: { text: "Date cancelled" },
-              value: { text: cancellationDetails.dateCancelled }
             }
           ]
         }) }}
