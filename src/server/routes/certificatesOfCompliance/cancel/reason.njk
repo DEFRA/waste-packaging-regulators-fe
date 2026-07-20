@@ -1,0 +1,40 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "csrf-field/macro.njk" import appCsrfField %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if errors %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: errors.summary
+        }) }}
+      {% endif %}
+
+      <form method="post" action="/{{ organisationId }}/certificates-of-compliance/{{ id }}/cancel/reason" novalidate>
+        {{ appCsrfField(CSRFToken) }}
+        {{ govukRadios({
+          name: "cancel-reason",
+          fieldset: {
+            legend: {
+              text: "Why are you cancelling " + companyName + "'s " + docTypeLower + "?",
+              isPageHeading: true,
+              classes: "govuk-fieldset__legend--l"
+            }
+          },
+          errorMessage: errors.cancelReason if errors,
+          items: reasonItems
+        }) }}
+
+        {{ govukButton({
+          text: "Continue",
+          preventDoubleClick: true
+        }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

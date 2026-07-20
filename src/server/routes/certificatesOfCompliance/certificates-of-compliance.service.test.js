@@ -32,12 +32,14 @@ import {
   mapDeclarationStatusToReviewStatus,
   mapSessionUserToApiUser,
   approveComplianceDeclaration,
+  cancelComplianceDeclaration,
   readAndClearCertificateActionBannerFlags,
   canApproveComplianceDeclaration,
   canCancelComplianceDeclaration,
   setMockDeclarationStatusOverride,
   certificateActionSessionKeys,
   deriveRegistrationType,
+  mapCompaniesHouseNumberFromWasteOrganisation,
   mapWasteOrganisationToDetailFields,
   findSubmittedAuditUser,
   mockSummary,
@@ -210,7 +212,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         },
         urls: {
           accept: '/org-abc/certificates-of-compliance/decl-1/accept',
-          cancel: '/org-abc/certificates-of-compliance/decl-1/cancel'
+          cancel: '/org-abc/certificates-of-compliance/decl-1/cancel/reason'
         }
       })
       expect(vm.successBanner).toBeNull()
@@ -233,6 +235,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.complianceTypeLabel).toBe('2026 statement of compliance')
       expect(vm.showDeclaration).toBe(true)
       expect(vm.complianceDocumentNoun).toBe('statement of compliance')
+      expect(vm.companiesHouseNumber).toBe('87654321')
     })
 
     test('getCertificateOfComplianceDetailViewModel returns not-submitted mock detail with organisation name', async () => {
@@ -280,38 +283,37 @@ describe('getCertificatesOfComplianceViewModel', () => {
     })
 
     describe('showObligations', () => {
-      test('is true when the org has obligations', async () => {
-        const item = mockNotSubmittedItems[0] // Redwood Retail — uses default mockObligationData
-        const vm = await getCertificateOfComplianceDetailViewModel(
-          item.organisationId,
-          undefined,
-          { obligationYear: 2026 }
-        )
+      test.each([
+        // Redwood Retail — uses default mockObligationData
+        {
+          obligations: 'obligations',
+          item: mockNotSubmittedItems[0],
+          expected: true
+        },
+        // Pinnacle Containers Ltd — obligations: []
+        {
+          obligations: 'an empty obligations array',
+          item: mockNotSubmittedItems[3],
+          expected: false
+        },
+        // Sterling Packaging Ltd — obligations: null
+        {
+          obligations: 'null obligations',
+          item: mockNotSubmittedItems[2],
+          expected: false
+        }
+      ])(
+        'is $expected when the org has $obligations',
+        async ({ item, expected }) => {
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            item.organisationId,
+            undefined,
+            { obligationYear: 2026 }
+          )
 
-        expect(vm.showObligations).toBe(true)
-      })
-
-      test('is false when the org has an empty obligations array', async () => {
-        const item = mockNotSubmittedItems[3] // Pinnacle Containers Ltd — obligations: []
-        const vm = await getCertificateOfComplianceDetailViewModel(
-          item.organisationId,
-          undefined,
-          { obligationYear: 2026 }
-        )
-
-        expect(vm.showObligations).toBe(false)
-      })
-
-      test('is false when the org has null obligations', async () => {
-        const item = mockNotSubmittedItems[2] // Sterling Packaging Ltd — obligations: null
-        const vm = await getCertificateOfComplianceDetailViewModel(
-          item.organisationId,
-          undefined,
-          { obligationYear: 2026 }
-        )
-
-        expect(vm.showObligations).toBe(false)
-      })
+          expect(vm.showObligations).toBe(expected)
+        }
+      )
     })
 
     test('getCertificateOfComplianceDetailViewModel returns accepted direct producer detail', async () => {
@@ -1046,6 +1048,39 @@ describe('getCertificatesOfComplianceViewModel', () => {
           { organisationId: 'org-abc', id: 'decl-1' },
           'trace-z'
         )
+      })
+
+      test('calls getOrganisation when loading submitted declaration detail', async () => {
+        await getCertificateOfComplianceDetailViewModel('org-abc', 'decl-1', {
+          traceId: 'trace-z'
+        })
+
+        expect(mockOrganisationsApi.getOrganisation).toHaveBeenCalledWith(
+          { organisationId: 'org-abc' },
+          'trace-z'
+        )
+      })
+
+      test('maps companiesHouseNumber from waste-organisations API for submitted declarations', async () => {
+        mockOrganisationsApi.getOrganisation.mockResolvedValue({
+          id: 'org-abc',
+          name: 'Live Producer Ltd',
+          companiesHouseNumber: '17121895',
+          registrations: [
+            {
+              type: 'LARGE_PRODUCER',
+              status: 'REGISTERED',
+              registrationYear: 2026
+            }
+          ]
+        })
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-1'
+        )
+
+        expect(vm.companiesHouseNumber).toBe('17121895')
       })
 
       test('calls getAccountDetailsById with submitter user id from audit', async () => {
@@ -2080,11 +2115,13 @@ describe('getCertificatesOfComplianceViewModel', () => {
         mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
           ...mockDetailData,
           submitterName: null,
-          audit: [],
-          organisation: {
-            ...mockDetailData.organisation,
-            companiesHouseNumber: null
-          }
+          audit: []
+        })
+        mockOrganisationsApi.getOrganisation.mockResolvedValue({
+          id: 'org-abc',
+          name: 'Live Producer Ltd',
+          companiesHouseNumber: null,
+          registrations: []
         })
 
         const vm = await getCertificateOfComplianceDetailViewModel(
@@ -2663,6 +2700,20 @@ describe('organisation and audit detail mapping', () => {
     ).toBeNull()
   })
 
+  test('mapCompaniesHouseNumberFromWasteOrganisation maps companies house number', () => {
+    expect(
+      mapCompaniesHouseNumberFromWasteOrganisation({
+        companiesHouseNumber: '17121895'
+      })
+    ).toBe('17121895')
+    expect(mapCompaniesHouseNumberFromWasteOrganisation(null)).toBe('No data')
+    expect(
+      mapCompaniesHouseNumberFromWasteOrganisation({
+        companiesHouseNumber: null
+      })
+    ).toBe('No data')
+  })
+
   test('mapWasteOrganisationToDetailFields maps companies house and derived type', () => {
     expect(
       mapWasteOrganisationToDetailFields(
@@ -2770,7 +2821,7 @@ describe('certificate detail action helpers', () => {
       },
       urls: {
         accept: '/org-1/certificates-of-compliance/decl-1/accept',
-        cancel: '/org-1/certificates-of-compliance/decl-1/cancel'
+        cancel: '/org-1/certificates-of-compliance/decl-1/cancel/reason'
       }
     })
     expect(
@@ -2945,9 +2996,11 @@ describe('certificate detail action helpers', () => {
 
     setMockDeclarationStatusOverride(session, 'org-1/decl-1', 'Approved')
 
-    expect(session.data['coc-mock-status:org-1/decl-1']).toBe('Accepted')
-    expect(session.data['coc-mock-audit:org-1/decl-1']).toHaveLength(1)
-    expect(session.data['coc-mock-audit:org-1/decl-1'][0].action).toBe(
+    expect(session.data['certificate-mock-status:org-1/decl-1']).toBe(
+      'Accepted'
+    )
+    expect(session.data['certificate-mock-audit:org-1/decl-1']).toHaveLength(1)
+    expect(session.data['certificate-mock-audit:org-1/decl-1'][0].action).toBe(
       'Accepted'
     )
   })
@@ -2996,7 +3049,7 @@ describe('certificate detail action helpers', () => {
   test('getCertificateOfComplianceDetailViewModel applies mock status override from session', async () => {
     config.get.mockReturnValue(true)
     const session = {
-      data: { 'coc-mock-status:org-abc/decl-1': 'Accepted' },
+      data: { 'certificate-mock-status:org-abc/decl-1': 'Accepted' },
       get(key) {
         return this.data[key]
       }
@@ -3119,6 +3172,51 @@ describe('certificate detail action helpers', () => {
           organisationId: 'org-1',
           id: 'decl-1',
           status: 'Accepted',
+          user: {
+            id: 'user-oid-1',
+            email: 'user@example.com',
+            name: 'John Doe'
+          }
+        },
+        'trace-1'
+      )
+    })
+  })
+
+  describe('cancelComplianceDeclaration', () => {
+    test('skips API call when useMockApi is true', async () => {
+      config.get.mockReturnValue(true)
+
+      await cancelComplianceDeclaration(
+        'org-1',
+        'decl-1',
+        { user: 'mock-user' },
+        'Producer requested to cancel',
+        'trace-1'
+      )
+
+      expect(createWasteObligationsApiService).not.toHaveBeenCalled()
+    })
+
+    test('sends status Cancelled with the reason when useMockApi is false', async () => {
+      config.get.mockReturnValue(false)
+      const mockApi = { updateComplianceDeclaration: vi.fn() }
+      createWasteObligationsApiService.mockReturnValue(mockApi)
+
+      await cancelComplianceDeclaration(
+        'org-1',
+        'decl-1',
+        { id: 'user-oid-1', email: 'user@example.com', name: 'John Doe' },
+        'Producer requested to cancel',
+        'trace-1'
+      )
+
+      expect(mockApi.updateComplianceDeclaration).toHaveBeenCalledWith(
+        {
+          organisationId: 'org-1',
+          id: 'decl-1',
+          status: 'Cancelled',
+          reason: 'Producer requested to cancel',
           user: {
             id: 'user-oid-1',
             email: 'user@example.com',

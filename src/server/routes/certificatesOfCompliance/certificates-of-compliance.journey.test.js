@@ -86,6 +86,21 @@ describe('certificates of compliance — journey', () => {
     })
   }
 
+  // Drive the two-step cancel flow: choose a reason, then confirm and send.
+  // The reason travels in the form body, not the session.
+  const cancelCertificate = async (item, cookie) => {
+    await postForm(
+      `${detailPathFor(item)}/cancel/reason`,
+      cookie,
+      'cancel-reason=producer-request'
+    )
+    return postForm(
+      `${detailPathFor(item)}/cancel`,
+      cookie,
+      'cancel-reason=producer-request'
+    )
+  }
+
   describe('unauthenticated access', () => {
     it('redirects the list page to /signin-oidc and stores returnTo', async () => {
       const listUrl =
@@ -260,7 +275,7 @@ describe('certificates of compliance — journey', () => {
       expect(response.payload).not.toContain('/approve')
       expect(response.payload).toContain('Cancel certificate')
       expect(response.payload).toContain(
-        `${detailPathFor(mockAcceptedItems[0])}/cancel`
+        `${detailPathFor(mockAcceptedItems[0])}/cancel/reason`
       )
     })
 
@@ -272,7 +287,7 @@ describe('certificates of compliance — journey', () => {
       expect(response.payload).not.toContain('Accept statement')
       expect(response.payload).not.toContain('/approve')
       expect(response.payload).toContain('Cancel statement')
-      expect(response.payload).toContain(`${detailPathFor(item)}/cancel`)
+      expect(response.payload).toContain(`${detailPathFor(item)}/cancel/reason`)
     })
 
     it('shows no action buttons for a cancelled direct producer', async () => {
@@ -301,10 +316,7 @@ describe('certificates of compliance — journey', () => {
 
     it('cancel flow redirects to detail with cancelled banner styling', async () => {
       const item = mockPendingItems[0]
-      const cancelResponse = await postForm(
-        `${detailPathFor(item)}/cancel`,
-        sessionCookie
-      )
+      const cancelResponse = await cancelCertificate(item, sessionCookie)
 
       expect(cancelResponse.statusCode).toBe(302)
       expect(cancelResponse.headers.location).toBe(detailPathFor(item))
@@ -325,10 +337,7 @@ describe('certificates of compliance — journey', () => {
 
     it('compliance scheme cancel flow shows statement cancelled banner', async () => {
       const item = mockComplianceSchemePendingItems[0]
-      const cancelResponse = await postForm(
-        `${detailPathFor(item)}/cancel`,
-        sessionCookie
-      )
+      const cancelResponse = await cancelCertificate(item, sessionCookie)
 
       expect(cancelResponse.statusCode).toBe(302)
 
@@ -370,10 +379,7 @@ describe('certificates of compliance — journey', () => {
       const cookie = authCookiesFromResponse(signinResponse)
 
       const item = mockPendingItems[0]
-      const cancelResponse = await postForm(
-        `${detailPathFor(item)}/cancel`,
-        cookie
-      )
+      const cancelResponse = await cancelCertificate(item, cookie)
 
       expect(cancelResponse.statusCode).toBe(302)
       expect(cancelResponse.headers.location).toBe(detailPathFor(item))
@@ -528,10 +534,7 @@ describe('certificates of compliance — journey', () => {
       expect(acceptResponse.statusCode).toBe(302)
 
       let cookie = mergeCookiesFromResponse(freshCookie, acceptResponse)
-      const cancelResponse = await postForm(
-        `${detailPathFor(item)}/cancel`,
-        cookie
-      )
+      const cancelResponse = await cancelCertificate(item, cookie)
       expect(cancelResponse.statusCode).toBe(302)
 
       cookie = mergeCookiesFromResponse(cookie, cancelResponse)

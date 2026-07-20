@@ -326,21 +326,17 @@
       <hr class="govuk-section-break govuk-section-break--l">
 
       {% if actions.showAccept or actions.showCancel %}
-        <div class="govuk-button-group govuk-!-display-inline">
-          <form method="post" action="{{ actions.urls.cancel }}">
-            {{ appCsrfField(CSRFToken) }}
-            {% if actions.showAccept %}
-              <a href="{{ actions.urls.accept }}" role="button" draggable="false" class="govuk-button" data-module="govuk-button">
-                {{ actions.labels.accept }}
-              </a>
-            {% endif %}
-            {% if actions.showCancel %}
-              <button type="submit" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-prevent-double-click="true">
-                {{ actions.labels.cancel }}
-              </button>
-            {% endif %}
-          </form>
-          </div>
+        <div class="govuk-button-group">
+          {% if actions.showAccept %}
+            <a href="{{ actions.urls.accept }}" role="button" draggable="false" class="govuk-button" data-module="govuk-button">
+              {{ actions.labels.accept }}
+            </a>
+          {% endif %}
+          {% if actions.showCancel %}
+            <a href="{{ actions.urls.cancel }}" role="button" draggable="false" class="govuk-button govuk-button--secondary" data-module="govuk-button">
+              {{ actions.labels.cancel }}
+            </a>
+          {% endif %}
         </div>
       {% endif %}
     </div>

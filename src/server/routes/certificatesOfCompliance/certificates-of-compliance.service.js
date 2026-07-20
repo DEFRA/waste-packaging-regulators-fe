@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { ApiError } from '#services/apiBaseClient/api-error.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import { createAccountApiService } from '#services/account-api.service.js'
 import { format, isDate, parseISO } from 'date-fns'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
@@ -48,6 +49,8 @@ const statusByTab = {
 const PAGE_SIZE = 20
 const DECLARATIONS_BATCH_SIZE = 100
 const NO_DATA = 'No data'
+const UNKNOWN_ORGANISATION = 'Unknown organisation'
+const COMPLIANCE_SCHEMES = 'compliance-schemes'
 
 export function displayOrNoData(value) {
   return value == null || value === '' ? NO_DATA : value
@@ -56,7 +59,7 @@ export function displayOrNoData(value) {
 function isComplianceSchemeRegistrationType(registrationType) {
   return (
     registrationType === 'ComplianceScheme' ||
-    registrationType === 'compliance-schemes'
+    registrationType === COMPLIANCE_SCHEMES
   )
 }
 
@@ -91,10 +94,10 @@ function mapOrganisationName(organisation) {
       organisation.tradingName ??
       organisation.name ??
       organisation.complianceSchemeName ??
-      'Unknown organisation'
+      UNKNOWN_ORGANISATION
     )
   }
-  return organisation.name ?? 'Unknown organisation'
+  return organisation.name ?? UNKNOWN_ORGANISATION
 }
 
 function mapRecyclingObligationsMet(obligationStatus) {
@@ -121,7 +124,7 @@ function mapDeclarationToItem(declaration) {
       organisation.name ??
       organisation.complianceSchemeName ??
       organisation.schemeOperatorName ??
-      'Unknown organisation',
+      UNKNOWN_ORGANISATION,
     recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
     regulation43Met: isRegulation43Compliant,
     percentageMet: percentageMet ?? null,
@@ -133,15 +136,13 @@ function mapDeclarationToItem(declaration) {
 // organisation name keeps its compliance-scheme-aware derivation.
 function mapOrganisationToItem(organisation, organisationType) {
   const organisationName =
-    organisationType === 'compliance-schemes'
-      ? (organisation.tradingName ??
-        organisation.name ??
-        'Unknown organisation')
-      : (organisation.name ?? 'Unknown organisation')
+    organisationType === COMPLIANCE_SCHEMES
+      ? (organisation.tradingName ?? organisation.name ?? UNKNOWN_ORGANISATION)
+      : (organisation.name ?? UNKNOWN_ORGANISATION)
   return {
     id: null,
     organisationId: organisation.id,
-    organisationReferenceNumber: 'No data',
+    organisationReferenceNumber: NO_DATA,
     organisationName
   }
 }
@@ -168,7 +169,7 @@ async function resolveNotSubmittedOrganisationDetails(
     organisations.map((org) => [org.externalId, org])
   )
 
-  const resolvesName = organisationType === 'compliance-schemes'
+  const resolvesName = organisationType === COMPLIANCE_SCHEMES
   for (const item of items) {
     const details = detailsByExternalId.get(item.organisationId)
     item.organisationReferenceNumber = details?.referenceNumber ?? NO_DATA
@@ -447,32 +448,54 @@ export function deriveRegistrationType(registrations, obligationYear) {
   return selectFromPool(latestRegistrations)
 }
 
+const emptyWasteOrganisationDetailFields = {
+  companyName: null,
+  registrationType: null,
+  organisationType: NO_DATA,
+  companiesHouseNumber: NO_DATA
+}
+
+function resolveWasteOrganisationRegistrationType(
+  organisation,
+  obligationYear
+) {
+  return (
+    organisation.registrationType ??
+    deriveRegistrationType(organisation.registrations, obligationYear)
+  )
+}
+
+function mapRegistrationTypeToOrganisationType(registrationType) {
+  return displayOrNoData(
+    registrationType
+      ? (organisationTypeDisplayNames[registrationType] ?? registrationType)
+      : null
+  )
+}
+
+export function mapCompaniesHouseNumberFromWasteOrganisation(organisation) {
+  return displayOrNoData(organisation?.companiesHouseNumber)
+}
+
 export function mapWasteOrganisationToDetailFields(
   organisation,
   { obligationYear } = {}
 ) {
   if (!organisation) {
-    return {
-      companyName: null,
-      registrationType: null,
-      organisationType: NO_DATA,
-      companiesHouseNumber: NO_DATA
-    }
+    return emptyWasteOrganisationDetailFields
   }
 
-  const registrationType =
-    organisation.registrationType ??
-    deriveRegistrationType(organisation.registrations, obligationYear)
+  const registrationType = resolveWasteOrganisationRegistrationType(
+    organisation,
+    obligationYear
+  )
 
   return {
     companyName: mapOrganisationName({ ...organisation, registrationType }),
     registrationType,
-    organisationType: displayOrNoData(
-      registrationType
-        ? (organisationTypeDisplayNames[registrationType] ?? registrationType)
-        : null
-    ),
-    companiesHouseNumber: displayOrNoData(organisation.companiesHouseNumber)
+    organisationType: mapRegistrationTypeToOrganisationType(registrationType),
+    companiesHouseNumber:
+      mapCompaniesHouseNumberFromWasteOrganisation(organisation)
   }
 }
 
@@ -523,7 +546,7 @@ async function fetchSubmitterPhoneNumber(accountApi, audit, traceId) {
     const details = await accountApi.getAccountDetailsById(userId, traceId)
     return details.telephone ?? null
   } catch (err) {
-    if (err instanceof ApiError && err.status === 404) {
+    if (err instanceof ApiError && err.status === statusCodes.notFound) {
       return null
     }
     throw err
@@ -608,7 +631,7 @@ export function buildCertificateDetailActionUrls(organisationId, id) {
   return {
     accept: `${base}/accept`,
     query: `${base}/query`,
-    cancel: `${base}/cancel`
+    cancel: `${base}/cancel/reason`
   }
 }
 
@@ -674,11 +697,15 @@ const declarationStatusByReviewStatus = {
 }
 
 function mockStatusSessionKey(declarationKey) {
-  return `coc-mock-status:${declarationKey}`
+  return `certificate-mock-status:${declarationKey}`
 }
 
 function mockAuditSessionKey(declarationKey) {
-  return `coc-mock-audit:${declarationKey}`
+  return `certificate-mock-audit:${declarationKey}`
+}
+
+function mockCancelReasonSessionKey(declarationKey) {
+  return `certificate-mock-cancel-reason:${declarationKey}`
 }
 
 function appendMockTransitionAudit(session, declarationKey, auditEntry) {
@@ -711,7 +738,8 @@ export function canCancelComplianceDeclaration(reviewStatus) {
 export function setMockDeclarationStatusOverride(
   session,
   declarationKey,
-  reviewStatus
+  reviewStatus,
+  { reason } = {}
 ) {
   if (!config.get('useMockApi')) {
     return
@@ -728,6 +756,9 @@ export function setMockDeclarationStatusOverride(
   }
 
   if (reviewStatus === 'Cancelled') {
+    if (reason != null) {
+      session.set(mockCancelReasonSessionKey(declarationKey), reason)
+    }
     const { auditEntry } = buildMockCancelledAuditEntry(session, declarationKey)
     appendMockTransitionAudit(session, declarationKey, auditEntry)
   }
@@ -763,12 +794,15 @@ function buildMockCancelledAuditEntry(session, declarationKey) {
   const sessionUser = session?.get?.('user')
   const user = mapSessionUserToApiUser(sessionUser)
   const timestamp = nextMockAuditTimestamp(session, declarationKey)
+  const reason =
+    session?.get?.(mockCancelReasonSessionKey(declarationKey)) ?? null
 
   return {
     auditEntry: {
       action: 'Cancelled',
       timestamp,
-      user
+      user,
+      reason
     },
     updated: timestamp
   }
@@ -800,6 +834,8 @@ function applyMockDeclarationStatusOverride(data, declarationKey, session) {
         declarationKey
       )
       sessionAudits = [auditEntry]
+    } else {
+      // No other status synthesises a mock audit entry - this else is only here to satisfy SonarQube rules.
     }
   }
 
@@ -837,6 +873,120 @@ export function readAndClearCertificateActionBannerFlags(
   return { showApprovalBanner, showQueryBanner, showCancelBanner }
 }
 
+async function getMockDeclarationDetail(
+  accountApi,
+  organisationId,
+  id,
+  { traceId, session, obligationYear } = {}
+) {
+  const resolvedObligationYear =
+    obligationYear ?? Number(mockSummary.complianceYear)
+
+  if (!id) {
+    const accountOrganisation =
+      resolveMockAccountOrganisationDetails(organisationId)
+    return mapObligationToDetail(getMockObligationData(organisationId), {
+      organisationId,
+      obligationYear: resolvedObligationYear,
+      organisation: getMockOrganisationById(organisationId),
+      accountOrganisationName: accountOrganisation.name,
+      accountOrganisationReferenceNumber: accountOrganisation.referenceNumber
+    })
+  }
+
+  const mockData = applyMockDeclarationStatusOverride(
+    getMockDetailDataById(id),
+    getDeclarationSessionKey(organisationId, id),
+    session
+  )
+  const declarationsForYear = getMockDeclarationsByOrgYear(
+    mockData?.organisation?.id ?? organisationId,
+    mockData?.obligationYear
+  )
+  const submitterPhoneNumber = await fetchSubmitterPhoneNumber(
+    accountApi,
+    mockData.audit,
+    traceId
+  )
+  const resolvedOrganisationId = mockData?.organisation?.id ?? organisationId
+  return mapDeclarationToDetail(mockData, {
+    organisationId,
+    id,
+    declarationsForYear,
+    submitterPhoneNumber,
+    wasteOrganisation: getMockOrganisationById(resolvedOrganisationId)
+  })
+}
+
+async function getNotSubmittedDeclarationDetail(
+  obligationsApi,
+  organisationsApi,
+  accountApi,
+  organisationId,
+  obligationYear,
+  traceId
+) {
+  const [unsubmittedObligationData, organisation, accountOrganisation] =
+    await Promise.all([
+      obligationsApi.getComplianceObligation(
+        { organisationId, obligationYear },
+        traceId
+      ),
+      organisationsApi.getOrganisation({ organisationId }, traceId),
+      fetchAccountOrganisationDetails(accountApi, organisationId, traceId)
+    ])
+  return mapObligationToDetail(unsubmittedObligationData, {
+    organisationId,
+    obligationYear,
+    organisation,
+    accountOrganisationName: accountOrganisation.name,
+    accountOrganisationReferenceNumber: accountOrganisation.referenceNumber
+  })
+}
+
+async function getSubmittedDeclarationDetail(
+  obligationsApi,
+  organisationsApi,
+  accountApi,
+  organisationId,
+  id,
+  obligationYear,
+  traceId
+) {
+  const declaration = await obligationsApi.getComplianceDeclarationOrNull(
+    { id, organisationId },
+    traceId
+  )
+
+  if (declaration != null) {
+    const [listResponse, submitterPhoneNumber, wasteOrganisation] =
+      await Promise.all([
+        obligationsApi.listOrganisationComplianceDeclarations(
+          { organisationId, obligationYear: declaration.obligationYear },
+          traceId
+        ),
+        fetchSubmitterPhoneNumber(accountApi, declaration.audit, traceId),
+        organisationsApi.getOrganisation({ organisationId }, traceId)
+      ])
+    return mapDeclarationToDetail(declaration, {
+      organisationId,
+      id,
+      declarationsForYear: listResponse?.complianceDeclarations ?? [],
+      submitterPhoneNumber,
+      wasteOrganisation
+    })
+  }
+
+  const fallbackObligationData = await obligationsApi.getComplianceObligation(
+    { organisationId, obligationYear },
+    traceId
+  )
+  return mapObligationToDetail(fallbackObligationData, {
+    organisationId,
+    obligationYear
+  })
+}
+
 async function getDeclarationDetail(
   obligationsApi,
   organisationsApi,
@@ -846,90 +996,33 @@ async function getDeclarationDetail(
   { traceId, session, obligationYear } = {}
 ) {
   if (config.get('useMockApi')) {
-    const resolvedObligationYear =
-      obligationYear ?? Number(mockSummary.complianceYear)
-
-    if (!id) {
-      const accountOrganisation =
-        resolveMockAccountOrganisationDetails(organisationId)
-      return mapObligationToDetail(getMockObligationData(organisationId), {
-        organisationId,
-        obligationYear: resolvedObligationYear,
-        organisation: getMockOrganisationById(organisationId),
-        accountOrganisationName: accountOrganisation.name,
-        accountOrganisationReferenceNumber: accountOrganisation.referenceNumber
-      })
-    }
-    const mockData = applyMockDeclarationStatusOverride(
-      getMockDetailDataById(id),
-      getDeclarationSessionKey(organisationId, id),
-      session
-    )
-    const declarationsForYear = getMockDeclarationsByOrgYear(
-      mockData?.organisation?.id ?? organisationId,
-      mockData?.obligationYear
-    )
-    const submitterPhoneNumber = await fetchSubmitterPhoneNumber(
-      accountApi,
-      mockData.audit,
-      traceId
-    )
-    return mapDeclarationToDetail(mockData, {
-      organisationId,
-      id,
-      declarationsForYear,
-      submitterPhoneNumber
+    return getMockDeclarationDetail(accountApi, organisationId, id, {
+      traceId,
+      session,
+      obligationYear
     })
   }
 
   if (!id) {
-    const [obligationData, organisation, accountOrganisation] =
-      await Promise.all([
-        obligationsApi.getComplianceObligation(
-          { organisationId, obligationYear },
-          traceId
-        ),
-        organisationsApi.getOrganisation({ organisationId }, traceId),
-        fetchAccountOrganisationDetails(accountApi, organisationId, traceId)
-      ])
-    return mapObligationToDetail(obligationData, {
+    return getNotSubmittedDeclarationDetail(
+      obligationsApi,
+      organisationsApi,
+      accountApi,
       organisationId,
       obligationYear,
-      organisation,
-      accountOrganisationName: accountOrganisation.name,
-      accountOrganisationReferenceNumber: accountOrganisation.referenceNumber
-    })
+      traceId
+    )
   }
 
-  const declaration = await obligationsApi.getComplianceDeclarationOrNull(
-    { id, organisationId },
-    traceId
-  )
-
-  if (declaration != null) {
-    const [listResponse, submitterPhoneNumber] = await Promise.all([
-      obligationsApi.listOrganisationComplianceDeclarations(
-        { organisationId, obligationYear: declaration.obligationYear },
-        traceId
-      ),
-      fetchSubmitterPhoneNumber(accountApi, declaration.audit, traceId)
-    ])
-    return mapDeclarationToDetail(declaration, {
-      organisationId,
-      id,
-      declarationsForYear: listResponse?.complianceDeclarations ?? [],
-      submitterPhoneNumber
-    })
-  }
-
-  const obligationData = await obligationsApi.getComplianceObligation(
-    { organisationId, obligationYear },
-    traceId
-  )
-  return mapObligationToDetail(obligationData, {
+  return getSubmittedDeclarationDetail(
+    obligationsApi,
+    organisationsApi,
+    accountApi,
     organisationId,
-    obligationYear
-  })
+    id,
+    obligationYear,
+    traceId
+  )
 }
 
 export async function getComplianceDeclarationReviewStatus(
@@ -990,16 +1083,44 @@ export async function approveComplianceDeclaration(
   )
 }
 
+export async function cancelComplianceDeclaration(
+  organisationId,
+  id,
+  sessionUser,
+  reason,
+  traceId
+) {
+  if (config.get('useMockApi')) {
+    return null
+  }
+
+  const api = createWasteObligationsApiService()
+  return api.updateComplianceDeclaration(
+    {
+      organisationId,
+      id,
+      status: 'Cancelled',
+      reason,
+      user: mapSessionUserToApiUser(sessionUser)
+    },
+    traceId
+  )
+}
+
 const GLASS_BREAKDOWN_MATERIALS = new Set(['GlassRemelt', 'RemainingGlass'])
 
 function formatSubmissionDate(isoString) {
-  if (!isoString) return null
+  if (!isoString) {
+    return null
+  }
   const date = isDate(isoString) ? isoString : parseISO(isoString)
   return format(date, "d MMMM yyyy 'at' HH:mm")
 }
 
 function formatDate(isoString) {
-  if (!isoString) return null
+  if (!isoString) {
+    return null
+  }
   return new Date(isoString).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'long',
@@ -1034,8 +1155,12 @@ function mapObligation(obligation) {
 }
 
 function deriveTotalsStatus(rows) {
-  if (rows.some((r) => r.status === 'not-met')) return 'not-met'
-  if (rows.every((r) => r.status === 'no-data')) return 'no-data'
+  if (rows.some((r) => r.status === 'not-met')) {
+    return 'not-met'
+  }
+  if (rows.every((r) => r.status === 'no-data')) {
+    return 'no-data'
+  }
   return 'met'
 }
 
@@ -1050,7 +1175,9 @@ function computeTotals(rows) {
 }
 
 function mapQueryDetails(queryDetails) {
-  if (!queryDetails) return null
+  if (!queryDetails) {
+    return null
+  }
   return {
     queriedMaterials: queryDetails.queriedMaterials ?? null,
     reason: queryDetails.reason ?? null,
@@ -1070,7 +1197,9 @@ function mapResubmissionRequestedDisplay(cancellationDetails) {
 }
 
 function mapCancellationDetails(cancellationDetails) {
-  if (!cancellationDetails) return null
+  if (!cancellationDetails) {
+    return null
+  }
   return {
     reason: cancellationDetails.reason ?? null,
     resubmissionRequested: mapResubmissionRequestedDisplay(cancellationDetails),
@@ -1081,7 +1210,9 @@ function mapCancellationDetails(cancellationDetails) {
 }
 
 function formatHistoryDate(isoString) {
-  if (!isoString) return null
+  if (!isoString) {
+    return null
+  }
   const d = new Date(isoString)
   const datePart = d.toLocaleDateString('en-GB', {
     day: 'numeric',
@@ -1144,13 +1275,11 @@ function mapCurrentYearHistory(declarations = []) {
     }
   }
 
-  return rows
-    .sort(
-      (a, b) =>
-        new Date(b.sortTimestamp).getTime() -
-        new Date(a.sortTimestamp).getTime()
-    )
-    .map(({ sortTimestamp, ...row }) => row)
+  const sorted = rows.toSorted(
+    (a, b) =>
+      new Date(b.sortTimestamp).getTime() - new Date(a.sortTimestamp).getTime()
+  )
+  return sorted.map(({ sortTimestamp: _sortTimestamp, ...row }) => row)
 }
 
 function buildCurrentYearDeclarations(
@@ -1166,7 +1295,7 @@ function buildCurrentYearDeclarations(
       (declaration) => declaration.id !== declarationId
     )
 
-    return [...withoutCurrent, data].sort(
+    return [...withoutCurrent, data].toSorted(
       (a, b) => new Date(b.updated).getTime() - new Date(a.updated).getTime()
     )
   }
@@ -1174,9 +1303,124 @@ function buildCurrentYearDeclarations(
   return declarations
 }
 
+function mapDeclarationMaterialGroups(obligations) {
+  const resolvedObligations = obligations ?? []
+  const allMapped = resolvedObligations.map(mapObligation)
+  const materials = allMapped.filter(
+    (_, i) => !GLASS_BREAKDOWN_MATERIALS.has(resolvedObligations[i].material)
+  )
+  const glassBreakdown = allMapped.filter((_, i) =>
+    GLASS_BREAKDOWN_MATERIALS.has(resolvedObligations[i].material)
+  )
+
+  return {
+    materials,
+    materialTotals: computeTotals(materials),
+    glassBreakdown,
+    glassBreakdownTotals: computeTotals(glassBreakdown)
+  }
+}
+
+function resolveDeclarationCompanyName(organisation) {
+  return (
+    organisation.name ??
+    organisation.complianceSchemeName ??
+    organisation.schemeOperatorName ??
+    UNKNOWN_ORGANISATION
+  )
+}
+
+function resolveDeclarationActions(
+  reviewStatus,
+  resolvedOrganisationId,
+  resolvedId,
+  registrationType
+) {
+  if (resolvedOrganisationId && resolvedId) {
+    return buildCertificateDetailActions(
+      reviewStatus,
+      resolvedOrganisationId,
+      resolvedId,
+      registrationType
+    )
+  }
+
+  return {
+    showAccept: false,
+    showCancel: false,
+    labels: certificateActionLabelsByRegistrationType.DirectProducer,
+    urls: { accept: '#', cancel: '#' }
+  }
+}
+
+function mapDeclarationStatusDetails(reviewStatus, data) {
+  return {
+    queryDetails:
+      reviewStatus === 'Queried' ? mapQueryDetails(data.queryDetails) : null,
+    cancellationDetails:
+      reviewStatus === 'Cancelled'
+        ? mapCancellationDetails(data.cancellationDetails)
+        : null
+  }
+}
+
+function mapDeclarationComplianceFields(
+  organisation,
+  {
+    obligationYear,
+    obligationStatus,
+    isRegulation43Compliant,
+    companyName,
+    created
+  }
+) {
+  return {
+    complianceYear: obligationYear == null ? null : String(obligationYear),
+    complianceTypeLabel: buildComplianceTypeLabel(
+      obligationYear,
+      organisation.registrationType
+    ),
+    complianceDocumentNoun: complianceDocumentNoun(
+      organisation.registrationType
+    ),
+    recyclingObligationsMet: mapRecyclingObligationsMet(obligationStatus),
+    regulation43Met: isRegulation43Compliant ?? null,
+    regulation43Statement: buildRegulation43Statement(
+      isRegulation43Compliant ?? null,
+      companyName
+    ),
+    dateDeclarationSubmitted: displayOrNoData(formatSubmissionDate(created))
+  }
+}
+
+function mapDeclarationContactFields(
+  organisation,
+  { wasteOrganisation, submittedUser, submitterPhoneNumber, submitterName }
+) {
+  return {
+    organisationType: mapRegistrationTypeToOrganisationType(
+      organisation.registrationType
+    ),
+    registrationType: organisation.registrationType,
+    organisationRef: displayOrNoData(organisation.referenceNumber),
+    companiesHouseNumber:
+      mapCompaniesHouseNumberFromWasteOrganisation(wasteOrganisation),
+    nameOnAccount: displayOrNoData(submittedUser?.name),
+    declarationEmailAddress: displayOrNoData(submittedUser?.email),
+    companyPhoneNumber: displayOrNoData(submitterPhoneNumber),
+    declarationSignedBy: displayOrNoData(submitterName)
+  }
+}
+
 function mapDeclarationToDetail(
   data,
-  { organisationId, id, declarationsForYear, submitterPhoneNumber } = {}
+  {
+    organisationId,
+    id,
+    declarationsForYear,
+    submitterPhoneNumber,
+    wasteOrganisation
+  } = {}
 ) {
   const {
     organisation,
@@ -1192,46 +1436,8 @@ function mapDeclarationToDetail(
   const reviewStatus = mapDeclarationStatusToReviewStatus(status)
   const resolvedOrganisationId = organisationId ?? organisation?.id ?? null
   const resolvedId = id ?? data.id ?? null
-
-  const companyName =
-    organisation.name ??
-    organisation.complianceSchemeName ??
-    organisation.schemeOperatorName ??
-    'Unknown organisation'
-
-  const allMapped = obligations.map(mapObligation)
-  const materials = allMapped.filter(
-    (_, i) => !GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
-  )
-  const glassBreakdown = allMapped.filter((_, i) =>
-    GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
-  )
-
-  const actions =
-    resolvedOrganisationId && resolvedId
-      ? buildCertificateDetailActions(
-          reviewStatus,
-          resolvedOrganisationId,
-          resolvedId,
-          organisation.registrationType
-        )
-      : {
-          showAccept: false,
-          showCancel: false,
-          labels: certificateActionLabelsByRegistrationType.DirectProducer,
-          urls: { accept: '#', cancel: '#' }
-        }
-
-  const organisationTypeDisplay =
-    organisationTypeDisplayNames[organisation.registrationType] ??
-    organisation.registrationType
-
+  const companyName = resolveDeclarationCompanyName(organisation)
   const submittedUser = findSubmittedAuditUser(data.audit)
-  const acceptedOutcome = mapAcceptedOutcomeFields(
-    data,
-    organisation.registrationType
-  )
-
   const historyDeclarations = buildCurrentYearDeclarations(
     declarationsForYear,
     data,
@@ -1242,47 +1448,34 @@ function mapDeclarationToDetail(
   return {
     organisationId: resolvedOrganisationId,
     declarationId: resolvedId,
-    complianceYear: obligationYear == null ? null : String(obligationYear),
-    complianceTypeLabel: buildComplianceTypeLabel(
-      obligationYear,
-      organisation.registrationType
-    ),
     companyName,
     declarationStatus: data.status,
     reviewStatus,
     showDeclaration: true,
-    complianceDocumentNoun: complianceDocumentNoun(
+    ...mapDeclarationComplianceFields(organisation, {
+      obligationYear,
+      obligationStatus,
+      isRegulation43Compliant,
+      companyName,
+      created
+    }),
+    ...mapAcceptedOutcomeFields(data, organisation.registrationType),
+    ...mapDeclarationContactFields(organisation, {
+      wasteOrganisation,
+      submittedUser,
+      submitterPhoneNumber,
+      submitterName
+    }),
+    ...mapDeclarationMaterialGroups(obligations),
+    actions: resolveDeclarationActions(
+      reviewStatus,
+      resolvedOrganisationId,
+      resolvedId,
       organisation.registrationType
     ),
-    recyclingObligationsMet: mapRecyclingObligationsMet(obligationStatus),
-    regulation43Met: isRegulation43Compliant ?? null,
-    regulation43Statement: buildRegulation43Statement(
-      isRegulation43Compliant ?? null,
-      companyName
-    ),
-    dateDeclarationSubmitted: displayOrNoData(formatSubmissionDate(created)),
-    ...acceptedOutcome,
-    organisationType: displayOrNoData(organisationTypeDisplay),
-    registrationType: organisation.registrationType,
-    organisationRef: displayOrNoData(organisation.referenceNumber),
-    companiesHouseNumber: displayOrNoData(organisation.companiesHouseNumber),
-    nameOnAccount: displayOrNoData(submittedUser?.name),
-    declarationEmailAddress: displayOrNoData(submittedUser?.email),
-    companyPhoneNumber: displayOrNoData(submitterPhoneNumber),
-    declarationSignedBy: displayOrNoData(submitterName),
-    materials,
-    materialTotals: computeTotals(materials),
-    glassBreakdown,
-    glassBreakdownTotals: computeTotals(glassBreakdown),
-    actions,
-    queryDetails:
-      reviewStatus === 'Queried' ? mapQueryDetails(data.queryDetails) : null,
-    cancellationDetails:
-      reviewStatus === 'Cancelled'
-        ? mapCancellationDetails(data.cancellationDetails)
-        : null,
+    ...mapDeclarationStatusDetails(reviewStatus, data),
     currentYearActions: mapCurrentYearHistory(historyDeclarations),
-    showObligations: obligations.length !== 0
+    showObligations: (obligations ?? []).length !== 0
   }
 }
 
@@ -1297,14 +1490,6 @@ function mapObligationToDetail(
   } = {}
 ) {
   const obligations = data?.obligations ?? []
-
-  const allMapped = obligations.map(mapObligation)
-  const materials = allMapped.filter(
-    (_, i) => !GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
-  )
-  const glassBreakdown = allMapped.filter((_, i) =>
-    GLASS_BREAKDOWN_MATERIALS.has(obligations[i].material)
-  )
 
   const orgFields = mapWasteOrganisationToDetailFields(organisation, {
     obligationYear
@@ -1336,10 +1521,7 @@ function mapObligationToDetail(
     declarationEmailAddress: NO_DATA,
     companyPhoneNumber: NO_DATA,
     declarationSignedBy: NO_DATA,
-    materials,
-    materialTotals: computeTotals(materials),
-    glassBreakdown,
-    glassBreakdownTotals: computeTotals(glassBreakdown),
+    ...mapDeclarationMaterialGroups(obligations),
     actions: {
       showAccept: false,
       showCancel: false,
