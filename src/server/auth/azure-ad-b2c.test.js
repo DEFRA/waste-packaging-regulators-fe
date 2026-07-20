@@ -18,8 +18,18 @@ describe('getB2cAuthorityPrefix', () => {
     expect(getB2cAuthorityPrefix(undefined)).toBeNull()
   })
 
-  it('returns null when config has none of the required fields', () => {
-    expect(getB2cAuthorityPrefix({})).toBeNull()
+  it.each([
+    { description: 'config has none of the required fields', cfg: {} },
+    {
+      description: 'only userFlow is provided',
+      cfg: { userFlow: 'B2C_1_signupsignin' }
+    },
+    {
+      description: 'only tenantName is provided',
+      cfg: { tenantName: 'mytenant' }
+    }
+  ])('returns null when $description', ({ cfg }) => {
+    expect(getB2cAuthorityPrefix(cfg)).toBeNull()
   })
 
   it('builds prefix from instance + domain + userFlow (strips trailing slash from instance)', () => {
@@ -61,14 +71,6 @@ describe('getB2cAuthorityPrefix', () => {
     expect(getB2cAuthorityPrefix(cfg)).toBe(
       'https://mytenant.b2clogin.com/mytenant.onmicrosoft.com/B2C_1_signupsignin'
     )
-  })
-
-  it('returns null when only userFlow is provided', () => {
-    expect(getB2cAuthorityPrefix({ userFlow: 'B2C_1_signupsignin' })).toBeNull()
-  })
-
-  it('returns null when only tenantName is provided', () => {
-    expect(getB2cAuthorityPrefix({ tenantName: 'mytenant' })).toBeNull()
   })
 })
 
@@ -121,33 +123,25 @@ describe('resolvePostLogoutAbsoluteUri', () => {
   }
 
   describe('when pathOrUrl is an absolute URL', () => {
-    it('returns the URL as-is when already https', () => {
-      const request = makeRequest({ protocol: 'http' })
-      const result = resolvePostLogoutAbsoluteUri(
-        request,
-        'https://example.com/signed-out',
-        {}
-      )
-      expect(result).toBe('https://example.com/signed-out')
-    })
-
-    it('upgrades http to https when request is https via x-forwarded-proto', () => {
-      const request = makeRequest({ xForwardedProto: 'https' })
-      const result = resolvePostLogoutAbsoluteUri(
-        request,
-        'http://example.com/signed-out',
-        {}
-      )
-      expect(result).toBe('https://example.com/signed-out')
-    })
-
-    it('upgrades http to https when server protocol is https', () => {
-      const request = makeRequest({ protocol: 'https' })
-      const result = resolvePostLogoutAbsoluteUri(
-        request,
-        'http://example.com/signed-out',
-        {}
-      )
+    it.each([
+      {
+        description: 'returns the URL as-is when already https',
+        request: makeRequest({ protocol: 'http' }),
+        pathOrUrl: 'https://example.com/signed-out'
+      },
+      {
+        description:
+          'upgrades http to https when request is https via x-forwarded-proto',
+        request: makeRequest({ xForwardedProto: 'https' }),
+        pathOrUrl: 'http://example.com/signed-out'
+      },
+      {
+        description: 'upgrades http to https when server protocol is https',
+        request: makeRequest({ protocol: 'https' }),
+        pathOrUrl: 'http://example.com/signed-out'
+      }
+    ])('$description', ({ request, pathOrUrl }) => {
+      const result = resolvePostLogoutAbsoluteUri(request, pathOrUrl, {})
       expect(result).toBe('https://example.com/signed-out')
     })
 
