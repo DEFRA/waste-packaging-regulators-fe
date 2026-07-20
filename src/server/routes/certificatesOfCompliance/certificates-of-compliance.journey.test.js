@@ -629,7 +629,7 @@ describe('certificates of compliance — journey', () => {
       const response = await inject(ECOPACK_DETAIL_URL)
 
       expect(response.payload).toContain(
-        'The information on this certificate was correct at the time of submission.'
+        'The information on this statement was correct at the time of submission.'
       )
     })
 

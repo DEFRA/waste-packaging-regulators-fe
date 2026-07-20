@@ -32,14 +32,18 @@
       <h1 class="govuk-heading-xl govuk-!-margin-bottom-4">{{ companyName }}</h1>
 
       <div class="govuk-inset-text govuk-!-margin-top-0 govuk-!-margin-bottom-6">
-        {% if declarationStatus == 'Unsubmitted' %}
-          {% if registrationType == 'ComplianceScheme' %}
+        {% if registrationType == 'ComplianceScheme' %}
+          {% if declarationStatus == 'Unsubmitted' %}
             <p class="govuk-body">This statement is not submitted so the information will update if changed by the compliance scheme.</p>
           {% else %}
-            <p class="govuk-body">This certificate is not submitted so the information will update if changed by the producer.</p>
+            <p class="govuk-body">The information on this statement was correct at the time of submission.</p>
           {% endif %}
         {% else %}
-          <p class="govuk-body">The information on this certificate was correct at the time of submission.</p>
+          {% if declarationStatus == 'Unsubmitted' %}
+            <p class="govuk-body">This certificate is not submitted so the information will update if changed by the producer.</p>
+          {% else %}
+            <p class="govuk-body">The information on this certificate was correct at the time of submission.</p>
+          {% endif %}
         {% endif %}
       </div>
 
