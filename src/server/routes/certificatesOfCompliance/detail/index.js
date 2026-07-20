@@ -1,5 +1,4 @@
 import { certificatesOfComplianceDetailController } from './controller.js'
-import { certificatesOfComplianceCancelController } from './actions-controller.js'
 
 export const certificatesOfComplianceDetail = {
   plugin: {
@@ -12,14 +11,6 @@ export const certificatesOfComplianceDetail = {
           options: {
             auth: false,
             ...certificatesOfComplianceDetailController
-          }
-        },
-        {
-          method: 'POST',
-          path: '/{organisationId}/certificates-of-compliance/{id}/cancel',
-          options: {
-            auth: false,
-            ...certificatesOfComplianceCancelController
           }
         }
       ])

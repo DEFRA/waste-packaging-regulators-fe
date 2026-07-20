@@ -32,6 +32,7 @@ import {
   mapDeclarationStatusToReviewStatus,
   mapSessionUserToApiUser,
   approveComplianceDeclaration,
+  cancelComplianceDeclaration,
   readAndClearCertificateActionBannerFlags,
   canApproveComplianceDeclaration,
   canCancelComplianceDeclaration,
@@ -210,7 +211,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         },
         urls: {
           accept: '/org-abc/certificates-of-compliance/decl-1/accept',
-          cancel: '/org-abc/certificates-of-compliance/decl-1/cancel'
+          cancel: '/org-abc/certificates-of-compliance/decl-1/cancel/reason'
         }
       })
       expect(vm.successBanner).toBeNull()
@@ -280,38 +281,37 @@ describe('getCertificatesOfComplianceViewModel', () => {
     })
 
     describe('showObligations', () => {
-      test('is true when the org has obligations', async () => {
-        const item = mockNotSubmittedItems[0] // Redwood Retail — uses default mockObligationData
-        const vm = await getCertificateOfComplianceDetailViewModel(
-          item.organisationId,
-          undefined,
-          { obligationYear: 2026 }
-        )
+      test.each([
+        // Redwood Retail — uses default mockObligationData
+        {
+          obligations: 'obligations',
+          item: mockNotSubmittedItems[0],
+          expected: true
+        },
+        // Pinnacle Containers Ltd — obligations: []
+        {
+          obligations: 'an empty obligations array',
+          item: mockNotSubmittedItems[3],
+          expected: false
+        },
+        // Sterling Packaging Ltd — obligations: null
+        {
+          obligations: 'null obligations',
+          item: mockNotSubmittedItems[2],
+          expected: false
+        }
+      ])(
+        'is $expected when the org has $obligations',
+        async ({ item, expected }) => {
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            item.organisationId,
+            undefined,
+            { obligationYear: 2026 }
+          )
 
-        expect(vm.showObligations).toBe(true)
-      })
-
-      test('is false when the org has an empty obligations array', async () => {
-        const item = mockNotSubmittedItems[3] // Pinnacle Containers Ltd — obligations: []
-        const vm = await getCertificateOfComplianceDetailViewModel(
-          item.organisationId,
-          undefined,
-          { obligationYear: 2026 }
-        )
-
-        expect(vm.showObligations).toBe(false)
-      })
-
-      test('is false when the org has null obligations', async () => {
-        const item = mockNotSubmittedItems[2] // Sterling Packaging Ltd — obligations: null
-        const vm = await getCertificateOfComplianceDetailViewModel(
-          item.organisationId,
-          undefined,
-          { obligationYear: 2026 }
-        )
-
-        expect(vm.showObligations).toBe(false)
-      })
+          expect(vm.showObligations).toBe(expected)
+        }
+      )
     })
 
     test('getCertificateOfComplianceDetailViewModel returns accepted direct producer detail', async () => {
@@ -2770,7 +2770,7 @@ describe('certificate detail action helpers', () => {
       },
       urls: {
         accept: '/org-1/certificates-of-compliance/decl-1/accept',
-        cancel: '/org-1/certificates-of-compliance/decl-1/cancel'
+        cancel: '/org-1/certificates-of-compliance/decl-1/cancel/reason'
       }
     })
     expect(
@@ -2945,9 +2945,11 @@ describe('certificate detail action helpers', () => {
 
     setMockDeclarationStatusOverride(session, 'org-1/decl-1', 'Approved')
 
-    expect(session.data['coc-mock-status:org-1/decl-1']).toBe('Accepted')
-    expect(session.data['coc-mock-audit:org-1/decl-1']).toHaveLength(1)
-    expect(session.data['coc-mock-audit:org-1/decl-1'][0].action).toBe(
+    expect(session.data['certificate-mock-status:org-1/decl-1']).toBe(
+      'Accepted'
+    )
+    expect(session.data['certificate-mock-audit:org-1/decl-1']).toHaveLength(1)
+    expect(session.data['certificate-mock-audit:org-1/decl-1'][0].action).toBe(
       'Accepted'
     )
   })
@@ -2996,7 +2998,7 @@ describe('certificate detail action helpers', () => {
   test('getCertificateOfComplianceDetailViewModel applies mock status override from session', async () => {
     config.get.mockReturnValue(true)
     const session = {
-      data: { 'coc-mock-status:org-abc/decl-1': 'Accepted' },
+      data: { 'certificate-mock-status:org-abc/decl-1': 'Accepted' },
       get(key) {
         return this.data[key]
       }
@@ -3119,6 +3121,51 @@ describe('certificate detail action helpers', () => {
           organisationId: 'org-1',
           id: 'decl-1',
           status: 'Accepted',
+          user: {
+            id: 'user-oid-1',
+            email: 'user@example.com',
+            name: 'John Doe'
+          }
+        },
+        'trace-1'
+      )
+    })
+  })
+
+  describe('cancelComplianceDeclaration', () => {
+    test('skips API call when useMockApi is true', async () => {
+      config.get.mockReturnValue(true)
+
+      await cancelComplianceDeclaration(
+        'org-1',
+        'decl-1',
+        { user: 'mock-user' },
+        'Producer requested to cancel',
+        'trace-1'
+      )
+
+      expect(createWasteObligationsApiService).not.toHaveBeenCalled()
+    })
+
+    test('sends status Cancelled with the reason when useMockApi is false', async () => {
+      config.get.mockReturnValue(false)
+      const mockApi = { updateComplianceDeclaration: vi.fn() }
+      createWasteObligationsApiService.mockReturnValue(mockApi)
+
+      await cancelComplianceDeclaration(
+        'org-1',
+        'decl-1',
+        { id: 'user-oid-1', email: 'user@example.com', name: 'John Doe' },
+        'Producer requested to cancel',
+        'trace-1'
+      )
+
+      expect(mockApi.updateComplianceDeclaration).toHaveBeenCalledWith(
+        {
+          organisationId: 'org-1',
+          id: 'decl-1',
+          status: 'Cancelled',
+          reason: 'Producer requested to cancel',
           user: {
             id: 'user-oid-1',
             email: 'user@example.com',

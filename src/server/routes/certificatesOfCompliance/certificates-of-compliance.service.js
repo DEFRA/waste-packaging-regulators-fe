@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { ApiError } from '#services/apiBaseClient/api-error.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import { createAccountApiService } from '#services/account-api.service.js'
 import { format, isDate, parseISO } from 'date-fns'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
@@ -48,6 +49,8 @@ const statusByTab = {
 const PAGE_SIZE = 20
 const DECLARATIONS_BATCH_SIZE = 100
 const NO_DATA = 'No data'
+const UNKNOWN_ORGANISATION = 'Unknown organisation'
+const COMPLIANCE_SCHEMES = 'compliance-schemes'
 
 export function displayOrNoData(value) {
   return value == null || value === '' ? NO_DATA : value
@@ -56,7 +59,7 @@ export function displayOrNoData(value) {
 function isComplianceSchemeRegistrationType(registrationType) {
   return (
     registrationType === 'ComplianceScheme' ||
-    registrationType === 'compliance-schemes'
+    registrationType === COMPLIANCE_SCHEMES
   )
 }
 
@@ -91,10 +94,10 @@ function mapOrganisationName(organisation) {
       organisation.tradingName ??
       organisation.name ??
       organisation.complianceSchemeName ??
-      'Unknown organisation'
+      UNKNOWN_ORGANISATION
     )
   }
-  return organisation.name ?? 'Unknown organisation'
+  return organisation.name ?? UNKNOWN_ORGANISATION
 }
 
 function mapRecyclingObligationsMet(obligationStatus) {
@@ -121,7 +124,7 @@ function mapDeclarationToItem(declaration) {
       organisation.name ??
       organisation.complianceSchemeName ??
       organisation.schemeOperatorName ??
-      'Unknown organisation',
+      UNKNOWN_ORGANISATION,
     recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
     regulation43Met: isRegulation43Compliant,
     percentageMet: percentageMet ?? null,
@@ -133,11 +136,9 @@ function mapDeclarationToItem(declaration) {
 // organisation name keeps its compliance-scheme-aware derivation.
 function mapOrganisationToItem(organisation, organisationType) {
   const organisationName =
-    organisationType === 'compliance-schemes'
-      ? (organisation.tradingName ??
-        organisation.name ??
-        'Unknown organisation')
-      : (organisation.name ?? 'Unknown organisation')
+    organisationType === COMPLIANCE_SCHEMES
+      ? (organisation.tradingName ?? organisation.name ?? UNKNOWN_ORGANISATION)
+      : (organisation.name ?? UNKNOWN_ORGANISATION)
   return {
     id: null,
     organisationId: organisation.id,
@@ -168,7 +169,7 @@ async function resolveNotSubmittedOrganisationDetails(
     organisations.map((org) => [org.externalId, org])
   )
 
-  const resolvesName = organisationType === 'compliance-schemes'
+  const resolvesName = organisationType === COMPLIANCE_SCHEMES
   for (const item of items) {
     const details = detailsByExternalId.get(item.organisationId)
     item.organisationReferenceNumber = details?.referenceNumber ?? NO_DATA
@@ -523,7 +524,7 @@ async function fetchSubmitterPhoneNumber(accountApi, audit, traceId) {
     const details = await accountApi.getAccountDetailsById(userId, traceId)
     return details.telephone ?? null
   } catch (err) {
-    if (err instanceof ApiError && err.status === 404) {
+    if (err instanceof ApiError && err.status === statusCodes.notFound) {
       return null
     }
     throw err
@@ -608,7 +609,7 @@ export function buildCertificateDetailActionUrls(organisationId, id) {
   return {
     accept: `${base}/accept`,
     query: `${base}/query`,
-    cancel: `${base}/cancel`
+    cancel: `${base}/cancel/reason`
   }
 }
 
@@ -674,11 +675,15 @@ const declarationStatusByReviewStatus = {
 }
 
 function mockStatusSessionKey(declarationKey) {
-  return `coc-mock-status:${declarationKey}`
+  return `certificate-mock-status:${declarationKey}`
 }
 
 function mockAuditSessionKey(declarationKey) {
-  return `coc-mock-audit:${declarationKey}`
+  return `certificate-mock-audit:${declarationKey}`
+}
+
+function mockCancelReasonSessionKey(declarationKey) {
+  return `certificate-mock-cancel-reason:${declarationKey}`
 }
 
 function appendMockTransitionAudit(session, declarationKey, auditEntry) {
@@ -711,7 +716,8 @@ export function canCancelComplianceDeclaration(reviewStatus) {
 export function setMockDeclarationStatusOverride(
   session,
   declarationKey,
-  reviewStatus
+  reviewStatus,
+  { reason } = {}
 ) {
   if (!config.get('useMockApi')) {
     return
@@ -728,6 +734,9 @@ export function setMockDeclarationStatusOverride(
   }
 
   if (reviewStatus === 'Cancelled') {
+    if (reason != null) {
+      session.set(mockCancelReasonSessionKey(declarationKey), reason)
+    }
     const { auditEntry } = buildMockCancelledAuditEntry(session, declarationKey)
     appendMockTransitionAudit(session, declarationKey, auditEntry)
   }
@@ -763,12 +772,15 @@ function buildMockCancelledAuditEntry(session, declarationKey) {
   const sessionUser = session?.get?.('user')
   const user = mapSessionUserToApiUser(sessionUser)
   const timestamp = nextMockAuditTimestamp(session, declarationKey)
+  const reason =
+    session?.get?.(mockCancelReasonSessionKey(declarationKey)) ?? null
 
   return {
     auditEntry: {
       action: 'Cancelled',
       timestamp,
-      user
+      user,
+      reason
     },
     updated: timestamp
   }
@@ -800,6 +812,8 @@ function applyMockDeclarationStatusOverride(data, declarationKey, session) {
         declarationKey
       )
       sessionAudits = [auditEntry]
+    } else {
+      // No other status synthesises a mock audit entry - this else is only here to satisfy SonarQube rules.
     }
   }
 
@@ -837,6 +851,49 @@ export function readAndClearCertificateActionBannerFlags(
   return { showApprovalBanner, showQueryBanner, showCancelBanner }
 }
 
+async function getMockDeclarationDetail(
+  accountApi,
+  organisationId,
+  id,
+  { traceId, session, obligationYear } = {}
+) {
+  const resolvedObligationYear =
+    obligationYear ?? Number(mockSummary.complianceYear)
+
+  if (!id) {
+    const accountOrganisation =
+      resolveMockAccountOrganisationDetails(organisationId)
+    return mapObligationToDetail(getMockObligationData(organisationId), {
+      organisationId,
+      obligationYear: resolvedObligationYear,
+      organisation: getMockOrganisationById(organisationId),
+      accountOrganisationName: accountOrganisation.name,
+      accountOrganisationReferenceNumber: accountOrganisation.referenceNumber
+    })
+  }
+
+  const mockData = applyMockDeclarationStatusOverride(
+    getMockDetailDataById(id),
+    getDeclarationSessionKey(organisationId, id),
+    session
+  )
+  const declarationsForYear = getMockDeclarationsByOrgYear(
+    mockData?.organisation?.id ?? organisationId,
+    mockData?.obligationYear
+  )
+  const submitterPhoneNumber = await fetchSubmitterPhoneNumber(
+    accountApi,
+    mockData.audit,
+    traceId
+  )
+  return mapDeclarationToDetail(mockData, {
+    organisationId,
+    id,
+    declarationsForYear,
+    submitterPhoneNumber
+  })
+}
+
 async function getDeclarationDetail(
   obligationsApi,
   organisationsApi,
@@ -846,39 +903,10 @@ async function getDeclarationDetail(
   { traceId, session, obligationYear } = {}
 ) {
   if (config.get('useMockApi')) {
-    const resolvedObligationYear =
-      obligationYear ?? Number(mockSummary.complianceYear)
-
-    if (!id) {
-      const accountOrganisation =
-        resolveMockAccountOrganisationDetails(organisationId)
-      return mapObligationToDetail(getMockObligationData(organisationId), {
-        organisationId,
-        obligationYear: resolvedObligationYear,
-        organisation: getMockOrganisationById(organisationId),
-        accountOrganisationName: accountOrganisation.name,
-        accountOrganisationReferenceNumber: accountOrganisation.referenceNumber
-      })
-    }
-    const mockData = applyMockDeclarationStatusOverride(
-      getMockDetailDataById(id),
-      getDeclarationSessionKey(organisationId, id),
-      session
-    )
-    const declarationsForYear = getMockDeclarationsByOrgYear(
-      mockData?.organisation?.id ?? organisationId,
-      mockData?.obligationYear
-    )
-    const submitterPhoneNumber = await fetchSubmitterPhoneNumber(
-      accountApi,
-      mockData.audit,
-      traceId
-    )
-    return mapDeclarationToDetail(mockData, {
-      organisationId,
-      id,
-      declarationsForYear,
-      submitterPhoneNumber
+    return getMockDeclarationDetail(accountApi, organisationId, id, {
+      traceId,
+      session,
+      obligationYear
     })
   }
 
@@ -922,11 +950,11 @@ async function getDeclarationDetail(
     })
   }
 
-  const obligationData = await obligationsApi.getComplianceObligation(
+  const fallbackObligationData = await obligationsApi.getComplianceObligation(
     { organisationId, obligationYear },
     traceId
   )
-  return mapObligationToDetail(obligationData, {
+  return mapObligationToDetail(fallbackObligationData, {
     organisationId,
     obligationYear
   })
@@ -984,6 +1012,30 @@ export async function approveComplianceDeclaration(
       organisationId,
       id,
       status: 'Accepted',
+      user: mapSessionUserToApiUser(sessionUser)
+    },
+    traceId
+  )
+}
+
+export async function cancelComplianceDeclaration(
+  organisationId,
+  id,
+  sessionUser,
+  reason,
+  traceId
+) {
+  if (config.get('useMockApi')) {
+    return null
+  }
+
+  const api = createWasteObligationsApiService()
+  return api.updateComplianceDeclaration(
+    {
+      organisationId,
+      id,
+      status: 'Cancelled',
+      reason,
       user: mapSessionUserToApiUser(sessionUser)
     },
     traceId
@@ -1197,7 +1249,7 @@ function mapDeclarationToDetail(
     organisation.name ??
     organisation.complianceSchemeName ??
     organisation.schemeOperatorName ??
-    'Unknown organisation'
+    UNKNOWN_ORGANISATION
 
   const allMapped = obligations.map(mapObligation)
   const materials = allMapped.filter(

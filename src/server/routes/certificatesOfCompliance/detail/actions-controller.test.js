@@ -3,7 +3,6 @@ import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
   authCookiesFromResponse,
-  csrfTokenCookieFromResponse,
   crumbTokenFromCookie,
   mergeCookiesFromResponse
 } from '#test-helpers/cookies.js'
@@ -15,7 +14,7 @@ describe('redirectToSignIn', () => {
     const request = {
       yar,
       url: {
-        pathname: '/org-123/certificates-of-compliance/decl-1/approve',
+        pathname: '/org-123/certificates-of-compliance/decl-1/accept',
         search: ''
       }
     }
@@ -25,7 +24,7 @@ describe('redirectToSignIn', () => {
 
     expect(yar.set).toHaveBeenCalledWith(
       'returnTo',
-      '/org-123/certificates-of-compliance/decl-1/approve'
+      '/org-123/certificates-of-compliance/decl-1/accept'
     )
   })
 
@@ -59,12 +58,9 @@ describe('redirectToSignIn', () => {
   })
 })
 
-describe('certificates of compliance action controllers', () => {
+describe('certificates of compliance detail action buttons', () => {
   let server
   let sessionCookie
-  // A crumb minted without signing in, mirroring a real browser that still
-  // holds the form's crumb after its session has lapsed.
-  let anonCrumbCookie
 
   beforeAll(async () => {
     server = await createServer()
@@ -74,12 +70,6 @@ describe('certificates of compliance action controllers', () => {
       url: '/signin-oidc'
     })
     sessionCookie = authCookiesFromResponse(response)
-
-    const anonResponse = await server.inject({
-      method: 'GET',
-      url: '/certificates-of-compliance'
-    })
-    anonCrumbCookie = csrfTokenCookieFromResponse(anonResponse)
   })
 
   afterAll(async () => {
@@ -115,13 +105,24 @@ describe('certificates of compliance action controllers', () => {
       'confirm-accept=yes'
     )
 
-  // Unauthenticated / missing-CSRF rejection is covered by the cancel block,
-  // which shares the same action-controller guards.
+  // Cancellation is a two-step flow: choose a reason, then confirm and send.
+  // The reason travels in the form body, not the session.
+  const cancelDeclaration = async (cookie = sessionCookie) => {
+    await postWithCrumb(
+      '/org-123/certificates-of-compliance/decl-1/cancel/reason',
+      cookie,
+      'cancel-reason=producer-request'
+    )
+    return postWithCrumb(
+      '/org-123/certificates-of-compliance/decl-1/cancel',
+      cookie,
+      'cancel-reason=producer-request'
+    )
+  }
+
   describe('approval (via the accept confirmation)', () => {
     it('does not show the accepted banner when the declaration is already cancelled', async () => {
-      const cancelResponse = await postWithCrumb(
-        '/org-123/certificates-of-compliance/decl-1/cancel'
-      )
+      const cancelResponse = await cancelDeclaration()
       const cookieAfterCancel = mergeCookiesFromResponse(
         sessionCookie,
         cancelResponse
@@ -170,88 +171,14 @@ describe('certificates of compliance action controllers', () => {
       expect(detailResponse.payload).not.toContain('Accept certificate')
       expect(detailResponse.payload).toContain('Cancel certificate')
       expect(detailResponse.payload).toContain(
-        '/org-123/certificates-of-compliance/decl-1/cancel'
-      )
-      expect(detailResponse.payload).toContain(
-        'data-prevent-double-click="true"'
+        '/org-123/certificates-of-compliance/decl-1/cancel/reason'
       )
     })
   })
 
   describe('cancel', () => {
-    it('redirects unauthenticated users to sign in', async () => {
-      const response = await postWithCrumb(
-        '/org-123/certificates-of-compliance/decl-1/cancel',
-        anonCrumbCookie
-      )
-
-      expect(response.statusCode).toBe(302)
-      expect(response.headers.location).toBe('/signin-oidc')
-    })
-
-    it('shows the cancelled banner when cancelling a declaration that is already cancelled', async () => {
-      const firstCancelResponse = await postWithCrumb(
-        '/org-123/certificates-of-compliance/decl-1/cancel'
-      )
-      const cookieAfterFirstCancel = mergeCookiesFromResponse(
-        sessionCookie,
-        firstCancelResponse
-      )
-
-      // Clear the first banner by visiting the detail page
-      const firstDetailResponse = await inject(
-        {
-          method: 'GET',
-          url: '/org-123/certificates-of-compliance/decl-1'
-        },
-        cookieAfterFirstCancel
-      )
-      const cookieAfterFirstView = mergeCookiesFromResponse(
-        cookieAfterFirstCancel,
-        firstDetailResponse
-      )
-
-      // Cancel again — declaration is already Cancelled, hits the reviewStatus === 'Cancelled' branch
-      const secondCancelResponse = await postWithCrumb(
-        '/org-123/certificates-of-compliance/decl-1/cancel',
-        cookieAfterFirstView
-      )
-
-      expect(secondCancelResponse.statusCode).toBe(302)
-
-      const detailResponse = await inject(
-        {
-          method: 'GET',
-          url: '/org-123/certificates-of-compliance/decl-1'
-        },
-        mergeCookiesFromResponse(cookieAfterFirstView, secondCancelResponse)
-      )
-
-      expect(detailResponse.payload).toContain('Certificate cancelled')
-    })
-
-    it('rejects when user not authenticated', async () => {
-      const response = await inject({
-        method: 'POST',
-        url: '/org-123/certificates-of-compliance/decl-1/cancel'
-      })
-
-      expect(response.statusCode).toBe(statusCodes.forbidden)
-    })
-
-    it('rejects a request with no CSRF token', async () => {
-      const response = await server.inject({
-        method: 'POST',
-        url: '/org-123/certificates-of-compliance/decl-1/cancel'
-      })
-
-      expect(response.statusCode).toBe(statusCodes.forbidden)
-    })
-
-    it('redirects to the detail page, shows the cancelled banner, and hides action buttons based on API status', async () => {
-      const cancelResponse = await postWithCrumb(
-        '/org-123/certificates-of-compliance/decl-1/cancel'
-      )
+    it('redirects to the detail page, shows the cancelled banner, and hides the action buttons', async () => {
+      const cancelResponse = await cancelDeclaration()
 
       expect(cancelResponse.statusCode).toBe(302)
       expect(cancelResponse.headers.location).toBe(
@@ -276,8 +203,6 @@ describe('certificates of compliance action controllers', () => {
       )
       expect(detailResponse.payload).not.toContain('Accept certificate')
       expect(detailResponse.payload).not.toContain('Cancel certificate')
-      expect(detailResponse.payload).not.toContain('/approve')
-      expect(detailResponse.payload).not.toContain('/cancel')
     })
   })
 

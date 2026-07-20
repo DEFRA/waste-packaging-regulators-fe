@@ -9,6 +9,7 @@ import { about } from '../routes/about/index.js'
 import { certificatesOfComplianceList } from '../routes/certificatesOfCompliance/list/index.js'
 import { certificatesOfComplianceDetail } from '../routes/certificatesOfCompliance/detail/index.js'
 import { certificatesOfComplianceAccept } from '../routes/certificatesOfCompliance/accept/index.js'
+import { certificatesOfComplianceCancel } from '../routes/certificatesOfCompliance/cancel/index.js'
 import { serveStaticFiles } from './serve-static-files.js'
 import { router } from './router.js'
 
@@ -78,7 +79,8 @@ describe('router plugin', () => {
       about,
       certificatesOfComplianceList,
       certificatesOfComplianceDetail,
-      certificatesOfComplianceAccept
+      certificatesOfComplianceAccept,
+      certificatesOfComplianceCancel
     ])
   })
 
