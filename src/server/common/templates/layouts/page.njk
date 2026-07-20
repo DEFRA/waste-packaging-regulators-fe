@@ -52,7 +52,7 @@
   {% elseif backlink.length >1 %}
     <nav aria-label="Back">
       {{ govukBackLink({
-        text: "Back",
+        text: backlinkText | default("Back"),
         href: backlink
       }) }}
     </nav>

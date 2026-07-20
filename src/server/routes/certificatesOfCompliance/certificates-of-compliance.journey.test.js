@@ -30,6 +30,8 @@ const GREENCIRCLE_DETAIL_URL =
   '/f3a2b1c0-d9e8-47f6-a5b4-c3d2e1f0a9b8/certificates-of-compliance/decl-cs-002'
 const REDWOOD_UNSUBMITTED_URL =
   '/d1e2f3a4-b5c6-7890-abcd-ef1234567890/certificates-of-compliance?obligationYear=2026'
+const FUTUREPACK_UNSUBMITTED_URL =
+  '/a9b8c7d6-e5f4-3210-abcd-ef9876543210/certificates-of-compliance?obligationYear=2026'
 
 function detailPathFor(item) {
   return `/${item.organisationId}/certificates-of-compliance/${item.id}`
@@ -614,6 +616,40 @@ describe('certificates of compliance — journey', () => {
 
       expect(declaration.present).toBe(true)
       expect(declaration.documentNoun).toBe('statement of compliance')
+    })
+  })
+
+  describe('inset text', () => {
+    it('shows the submission message for a submitted direct producer', async () => {
+      const response = await inject(HOWCO_DETAIL_URL)
+
+      expect(response.payload).toContain(
+        'The information on this certificate was correct at the time of submission.'
+      )
+    })
+
+    it('shows the submission message for a submitted compliance scheme', async () => {
+      const response = await inject(ECOPACK_DETAIL_URL)
+
+      expect(response.payload).toContain(
+        'The information on this statement was correct at the time of submission.'
+      )
+    })
+
+    it('shows the not-submitted certificate message for an unsubmitted direct producer', async () => {
+      const response = await inject(REDWOOD_UNSUBMITTED_URL)
+
+      expect(response.payload).toContain(
+        'This certificate is not submitted so the information will update if changed by the producer.'
+      )
+    })
+
+    it('shows the not-submitted statement message for an unsubmitted compliance scheme', async () => {
+      const response = await inject(FUTUREPACK_UNSUBMITTED_URL)
+
+      expect(response.payload).toContain(
+        'This statement is not submitted so the information will update if changed by the compliance scheme.'
+      )
     })
   })
 

@@ -518,7 +518,7 @@ function mapAcceptedOutcomeFields(data, registrationType) {
   if (data.status !== 'Accepted') {
     return {
       showAcceptedOutcome: false,
-      complianceStatusLabel: null,
+      complianceStatusLabel: buildComplianceStatusLabel(registrationType),
       acceptedBy: null,
       acceptedDate: null
     }
@@ -1560,6 +1560,7 @@ export async function getCertificateOfComplianceDetailViewModel(
   return {
     heading: 'Certificate of compliance',
     backlink: '/certificates-of-compliance',
+    backlinkText: 'Back to all submissions',
     successBanner: buildCertificateSuccessBanner(
       bannerFlags,
       detail.registrationType
