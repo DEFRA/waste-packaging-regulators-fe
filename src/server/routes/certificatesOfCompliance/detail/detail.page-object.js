@@ -127,19 +127,57 @@ function readRegulation43($) {
 
 function readObligationsSection($) {
   return {
-    tablePresent: $('[data-testid="obligations-table"]').length > 0
+    tablePresent: $('[data-testid="obligations-table"]').length > 0,
+    noData: $('[data-testid="obligations-no-data"]').length > 0
   }
+}
+
+function readButton($, button) {
+  return { text: $(button).text().trim(), href: $(button).attr('href') }
+}
+
+function readActions($) {
+  const buttons = $('.govuk-button-group a[role="button"]').toArray()
+  const findByPrefix = (prefix) => {
+    const button = buttons.find(($button) =>
+      $($button).text().trim().startsWith(prefix)
+    )
+    return button ? readButton($, button) : null
+  }
+  return {
+    accept: findByPrefix('Accept'),
+    cancel: findByPrefix('Cancel')
+  }
+}
+
+function readCurrentYear($) {
+  const rows = $('[data-testid="current-year-table"] tbody tr')
+    .toArray()
+    .map((row) => {
+      const cells = $(row).find('td')
+      return {
+        date: cells.eq(0).text().trim(),
+        action: cells.eq(1).find('.govuk-tag').text().trim(),
+        by: cells.eq(2).text().trim(),
+        reason: cells.eq(3).text().trim()
+      }
+    })
+  return { rows }
 }
 
 export function loadDetailPage(payload) {
   const $ = load(payload)
   return {
+    heading: $('h1').first().text().trim(),
+    insetText: $('.govuk-inset-text').text().trim(),
     materials: readTable($, 'obligations-table'),
     glass: readTable($, 'glass-breakdown-table'),
     banner: readNotificationBanner($),
     declaration: readDeclaration($),
     accepted: readAccepted($),
     cancellation: readCancellation($),
+    actions: readActions($),
+    currentYear: readCurrentYear($),
     regulation43: readRegulation43($),
     obligations: readObligationsSection($)
   }
