@@ -509,17 +509,10 @@ export function findSubmittedAuditUser(audit = []) {
   return findAuditEntryByAction(audit, auditAction.submitted)?.user ?? null
 }
 
-function buildComplianceStatusLabel(registrationType) {
-  return registrationType === 'ComplianceScheme'
-    ? 'Statement status'
-    : 'Certificate status'
-}
-
-function mapAcceptedOutcomeFields(data, registrationType) {
+function mapAcceptedOutcomeFields(data) {
   if (data.status !== 'Accepted') {
     return {
       showAcceptedOutcome: false,
-      complianceStatusLabel: buildComplianceStatusLabel(registrationType),
       acceptedBy: null,
       acceptedDate: null
     }
@@ -529,7 +522,6 @@ function mapAcceptedOutcomeFields(data, registrationType) {
 
   return {
     showAcceptedOutcome: true,
-    complianceStatusLabel: buildComplianceStatusLabel(registrationType),
     acceptedBy: displayOrNoData(acceptedAudit?.user?.name),
     acceptedDate: displayOrNoData(
       formatSubmissionDate(acceptedAudit?.timestamp ?? data.updated)
@@ -1449,7 +1441,7 @@ function mapDeclarationToDetail(
       companyName,
       created
     }),
-    ...mapAcceptedOutcomeFields(data, organisation.registrationType),
+    ...mapAcceptedOutcomeFields(data),
     ...mapCancelledOutcomeFields(data),
     ...mapDeclarationContactFields(organisation, {
       wasteOrganisation,
@@ -1520,9 +1512,6 @@ function mapObligationToDetail(
       urls: { accept: '#', cancel: '#' }
     },
     showAcceptedOutcome: false,
-    complianceStatusLabel: buildComplianceStatusLabel(
-      orgFields.registrationType
-    ),
     acceptedBy: null,
     acceptedDate: null,
     showCancelledOutcome: false,

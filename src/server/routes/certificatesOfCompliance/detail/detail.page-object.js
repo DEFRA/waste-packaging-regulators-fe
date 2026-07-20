@@ -11,7 +11,7 @@ const TONNAGE_COLUMN = {
 function readTag($, row) {
   const tag = $(row).find('.govuk-tag')
   const cls = tag.attr('class') ?? ''
-  const colour = /govuk-tag--(green|red|grey|blue|yellow)/.exec(cls)?.[1]
+  const colour = /govuk-tag--(green|red|grey|blue|yellow|teal)/.exec(cls)?.[1]
   return { text: tag.text().trim(), colour: colour ?? null }
 }
 
@@ -51,21 +51,44 @@ function summaryValue($row) {
   return $row?.find('.govuk-summary-list__value').text().trim() ?? null
 }
 
+function readOutcomeStatus($) {
+  const statusRow = $('.govuk-summary-list__row')
+    .toArray()
+    .map((row) => $(row))
+    .find(
+      ($row) =>
+        $row.find('.govuk-summary-list__key').text().trim() ===
+        'Submission status'
+    )
+  return {
+    statusLabel: statusRow?.find('.govuk-summary-list__key').text().trim(),
+    statusTag: statusRow ? readTag($, statusRow) : null
+  }
+}
+
+function readAccepted($) {
+  const acceptedByRow = findSummaryRow($, 'Accepted by')
+  if (!acceptedByRow) {
+    return { present: false }
+  }
+
+  return {
+    present: true,
+    ...readOutcomeStatus($),
+    acceptedBy: summaryValue(acceptedByRow),
+    acceptedDate: summaryValue(findSummaryRow($, 'Accepted date'))
+  }
+}
+
 function readCancellation($) {
   const cancelledByRow = findSummaryRow($, 'Cancelled by')
   if (!cancelledByRow) {
     return { present: false }
   }
 
-  const statusRow = $('.govuk-summary-list__row')
-    .toArray()
-    .map((row) => $(row))
-    .find(($row) => $row.find('.govuk-tag').text().trim() === 'Cancelled')
-
   return {
     present: true,
-    statusLabel: statusRow?.find('.govuk-summary-list__key').text().trim(),
-    statusTag: statusRow ? readTag($, statusRow) : null,
+    ...readOutcomeStatus($),
     cancelledBy: summaryValue(cancelledByRow),
     cancelledDate: summaryValue(findSummaryRow($, 'Cancelled date')),
     reason: summaryValue(findSummaryRow($, 'Reason for cancellation'))
@@ -115,6 +138,7 @@ export function loadDetailPage(payload) {
     glass: readTable($, 'glass-breakdown-table'),
     banner: readNotificationBanner($),
     declaration: readDeclaration($),
+    accepted: readAccepted($),
     cancellation: readCancellation($),
     regulation43: readRegulation43($),
     obligations: readObligationsSection($)

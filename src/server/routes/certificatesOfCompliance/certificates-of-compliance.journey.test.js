@@ -334,7 +334,7 @@ describe('certificates of compliance — journey', () => {
       expect(detailsPage.banner.cancelled).toBe(true)
       expect(detailsPage.banner.heading).toBe('Certificate cancelled')
       expect(detailsPage.cancellation.present).toBe(true)
-      expect(detailsPage.cancellation.statusLabel).toBe('Certificate status')
+      expect(detailsPage.cancellation.statusLabel).toBe('Submission status')
       expect(detailsPage.cancellation.statusTag).toEqual({
         text: 'Cancelled',
         colour: 'yellow'
@@ -367,7 +367,7 @@ describe('certificates of compliance — journey', () => {
         'Statement has been cancelled and an email sent to the compliance scheme.'
       )
       expect(detailsPage.cancellation.present).toBe(true)
-      expect(detailsPage.cancellation.statusLabel).toBe('Statement status')
+      expect(detailsPage.cancellation.statusLabel).toBe('Submission status')
       expect(detailsPage.cancellation.statusTag).toEqual({
         text: 'Cancelled',
         colour: 'yellow'
@@ -483,18 +483,19 @@ describe('certificates of compliance — journey', () => {
           cookie: mergeCookiesFromResponse(sessionCookie, yesResponse)
         }
       })
-      expect(detailResponse.payload).toContain('Certificate accepted')
-      expect(detailResponse.payload).toContain('Certificate has been accepted.')
-      expect(detailResponse.payload).not.toContain(
-        'govuk-notification-banner--success'
-      )
-      expect(detailResponse.payload).not.toContain(
-        'app-notification-banner--cancelled'
-      )
-      expect(detailResponse.payload).toContain('Certificate status')
-      expect(detailResponse.payload).toContain('Accepted by')
-      expect(detailResponse.payload).toContain('Accepted date')
-      expect(detailResponse.payload).toContain('John Doe')
+      const detailsPage = loadDetailPage(detailResponse.payload)
+      expect(detailsPage.banner.present).toBe(true)
+      expect(detailsPage.banner.cancelled).toBe(false)
+      expect(detailsPage.banner.heading).toBe('Certificate accepted')
+      expect(detailsPage.banner.text).toBe('Certificate has been accepted.')
+      expect(detailsPage.accepted.present).toBe(true)
+      expect(detailsPage.accepted.statusLabel).toBe('Submission status')
+      expect(detailsPage.accepted.statusTag).toEqual({
+        text: 'Accepted',
+        colour: 'teal'
+      })
+      expect(detailsPage.accepted.acceptedBy).toBe('John Doe')
+      expect(detailsPage.accepted.acceptedDate).toBeTruthy()
     })
 
     it('"no" returns to detail without invoking the approve action', async () => {
@@ -535,11 +536,13 @@ describe('certificates of compliance — journey', () => {
           cookie: mergeCookiesFromResponse(sessionCookie, yesResponse)
         }
       })
-      expect(detailResponse.payload).toContain('Statement accepted')
-      expect(detailResponse.payload).toContain('Statement has been accepted.')
-      expect(detailResponse.payload).toContain('Statement status')
-      expect(detailResponse.payload).toContain('Accepted by')
-      expect(detailResponse.payload).toContain('John Doe')
+      const detailsPage = loadDetailPage(detailResponse.payload)
+      expect(detailsPage.banner.present).toBe(true)
+      expect(detailsPage.banner.heading).toBe('Statement accepted')
+      expect(detailsPage.banner.text).toBe('Statement has been accepted.')
+      expect(detailsPage.accepted.present).toBe(true)
+      expect(detailsPage.accepted.statusLabel).toBe('Submission status')
+      expect(detailsPage.accepted.acceptedBy).toBe('John Doe')
     })
 
     it('accept then cancel shows Accepted and Cancelled rows in current year', async () => {
@@ -626,7 +629,7 @@ describe('certificates of compliance — journey', () => {
         'certificate of compliance'
       )
       expect(detailsPage.cancellation.present).toBe(true)
-      expect(detailsPage.cancellation.statusLabel).toBe('Certificate status')
+      expect(detailsPage.cancellation.statusLabel).toBe('Submission status')
       expect(detailsPage.cancellation.statusTag).toEqual({
         text: 'Cancelled',
         colour: 'yellow'
@@ -654,7 +657,7 @@ describe('certificates of compliance — journey', () => {
         'statement of compliance'
       )
       expect(detailsPage.cancellation.present).toBe(true)
-      expect(detailsPage.cancellation.statusLabel).toBe('Statement status')
+      expect(detailsPage.cancellation.statusLabel).toBe('Submission status')
       expect(detailsPage.cancellation.statusTag).toEqual({
         text: 'Cancelled',
         colour: 'yellow'
