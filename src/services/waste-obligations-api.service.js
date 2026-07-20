@@ -7,7 +7,7 @@ function buildPathWithQuery(basePath, queryString) {
   if (!queryString) {
     return basePath
   }
-  return basePath + '?' + queryString
+  return `${basePath}?${queryString}`
 }
 
 export class WasteObligationsApiService extends BaseApiService {
