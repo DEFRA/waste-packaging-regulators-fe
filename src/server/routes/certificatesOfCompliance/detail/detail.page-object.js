@@ -62,12 +62,7 @@ function summaryValue($row) {
 }
 
 function readOutcomeStatus($) {
-  const statusRow = $(SUMMARY_ROW)
-    .toArray()
-    .map((row) => $(row))
-    .find(
-      ($row) => $row.find(SUMMARY_KEY).text().trim() === 'Submission status'
-    )
+  const statusRow = findSummaryRow($, 'Submission status')
   return {
     statusLabel: statusRow?.find(SUMMARY_KEY).text().trim(),
     statusTag: statusRow ? readTag($, statusRow) : null
