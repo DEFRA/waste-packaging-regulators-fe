@@ -26,8 +26,8 @@ const GREENFIELD_DETAIL_URL =
   '/b1e2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-204872'
 const ECOPACK_DETAIL_URL =
   '/923fa611-571c-4948-ab7d-fbb75e75ed65/certificates-of-compliance/decl-cs-001'
-const GREENCIRCLE_DETAIL_URL =
-  '/f3a2b1c0-d9e8-47f6-a5b4-c3d2e1f0a9b8/certificates-of-compliance/decl-cs-002'
+const RIVERSIDE_DETAIL_URL =
+  '/6d9a1e77-1b3f-4c22-8a41-8f5c1e9d2b34/certificates-of-compliance/decl-cs-102'
 const REDWOOD_UNSUBMITTED_URL =
   '/d1e2f3a4-b5c6-7890-abcd-ef1234567890/certificates-of-compliance?obligationYear=2026'
 const FUTUREPACK_UNSUBMITTED_URL =
@@ -867,7 +867,7 @@ describe('certificates of compliance — journey', () => {
     describe('mixed compliance scheme detail', () => {
       it('renders the correct 3-state tag per material row', async () => {
         const { materials } = loadDetailPage(
-          (await inject(GREENCIRCLE_DETAIL_URL)).payload
+          (await inject(RIVERSIDE_DETAIL_URL)).payload
         )
         const byName = Object.fromEntries(
           materials.rows.map((r) => [r.material, r.statusTag])
@@ -880,7 +880,7 @@ describe('certificates of compliance — journey', () => {
 
       it('renders a red Not met tag on the materials totals row', async () => {
         const { materials } = loadDetailPage(
-          (await inject(GREENCIRCLE_DETAIL_URL)).payload
+          (await inject(RIVERSIDE_DETAIL_URL)).payload
         )
 
         expect(materials.totals.statusTag).toEqual(notMet)

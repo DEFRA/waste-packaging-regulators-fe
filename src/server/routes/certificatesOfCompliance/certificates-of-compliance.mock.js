@@ -186,9 +186,9 @@ export const mockComplianceSchemePendingItems = [
     organisationId: MOCK_ORG_GREENCIRCLE_ID,
     organisationReferenceNumber: MOCK_REF_CS_GREENCIRCLE,
     organisationName: MOCK_ORG_GREENCIRCLE_OPERATOR_NAME,
-    recyclingObligationsMet: false,
+    recyclingObligationsMet: true,
     regulation43Met: true,
-    percentageMet: 88,
+    percentageMet: 100,
     dateSubmitted: '2027-01-18'
   }
 ]
@@ -886,7 +886,7 @@ export const mockDirectProducerPendingNotMetDetailData = {
   isRegulation43Compliant: false
 }
 
-export const mockComplianceSchemePendingNotMetDetailData = {
+export const mockComplianceSchemePendingCompliantDetailData = {
   ...mockComplianceSchemeDetailData,
   id: MOCK_DECL_CS_PENDING_SECONDARY_ID,
   created: '2027-01-18T00:00:00Z',
@@ -900,8 +900,8 @@ export const mockComplianceSchemePendingNotMetDetailData = {
     referenceNumber: MOCK_REF_CS_GREENCIRCLE,
     companiesHouseNumber: '77889900'
   },
-  obligations: mockObligationsMixed,
-  obligationStatus: 'NotMet',
+  obligations: mockObligationsAllMet,
+  obligationStatus: 'Met',
   submitterName: 'Aled Bevan',
   isRegulation43Compliant: true
 }
@@ -1164,7 +1164,7 @@ const mockDetailById = {
   'decl-cancelled': mockDirectProducerCancelledDetailData,
   [MOCK_DECL_CS_PENDING_ID]: mockComplianceSchemeDetailData,
   [MOCK_DECL_CS_PENDING_SECONDARY_ID]:
-    mockComplianceSchemePendingNotMetDetailData,
+    mockComplianceSchemePendingCompliantDetailData,
   [MOCK_DECL_CS_ACCEPTED_ID]: mockComplianceSchemeAcceptedDetailData,
   [MOCK_DECL_CS_ACCEPTED_SECONDARY_ID]:
     mockComplianceSchemeAcceptedNotMetDetailData,
