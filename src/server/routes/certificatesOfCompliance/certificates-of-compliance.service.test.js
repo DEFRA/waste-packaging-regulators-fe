@@ -1982,7 +1982,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
               name: 'Legal Name',
               tradingName: 'Trading Scheme Co',
               registrationType: 'ComplianceScheme',
-              referenceNumber: 'CS-3001'
+              referenceNumber: '183551'
             })
           })
 
