@@ -8,6 +8,16 @@ const TONNAGE_COLUMN = {
   OUTSTANDING: 4
 }
 
+const CURRENT_YEAR_COLUMN = {
+  DATE: 0,
+  ACTION: 1,
+  BY: 2,
+  REASON: 3
+}
+
+const SUMMARY_ROW = '.govuk-summary-list__row'
+const SUMMARY_KEY = '.govuk-summary-list__key'
+
 function readTag($, row) {
   const tag = $(row).find('.govuk-tag')
   const cls = tag.attr('class') ?? ''
@@ -41,10 +51,10 @@ function readTable($, testid) {
 }
 
 function findSummaryRow($, key) {
-  return $('.govuk-summary-list__row')
+  return $(SUMMARY_ROW)
     .toArray()
     .map((row) => $(row))
-    .find(($row) => $row.find('.govuk-summary-list__key').text().trim() === key)
+    .find(($row) => $row.find(SUMMARY_KEY).text().trim() === key)
 }
 
 function summaryValue($row) {
@@ -52,16 +62,14 @@ function summaryValue($row) {
 }
 
 function readOutcomeStatus($) {
-  const statusRow = $('.govuk-summary-list__row')
+  const statusRow = $(SUMMARY_ROW)
     .toArray()
     .map((row) => $(row))
     .find(
-      ($row) =>
-        $row.find('.govuk-summary-list__key').text().trim() ===
-        'Submission status'
+      ($row) => $row.find(SUMMARY_KEY).text().trim() === 'Submission status'
     )
   return {
-    statusLabel: statusRow?.find('.govuk-summary-list__key').text().trim(),
+    statusLabel: statusRow?.find(SUMMARY_KEY).text().trim(),
     statusTag: statusRow ? readTag($, statusRow) : null
   }
 }
@@ -156,10 +164,14 @@ function readCurrentYear($) {
     .map((row) => {
       const cells = $(row).find('td')
       return {
-        date: cells.eq(0).text().trim(),
-        action: cells.eq(1).find('.govuk-tag').text().trim(),
-        by: cells.eq(2).text().trim(),
-        reason: cells.eq(3).text().trim()
+        date: cells.eq(CURRENT_YEAR_COLUMN.DATE).text().trim(),
+        action: cells
+          .eq(CURRENT_YEAR_COLUMN.ACTION)
+          .find('.govuk-tag')
+          .text()
+          .trim(),
+        by: cells.eq(CURRENT_YEAR_COLUMN.BY).text().trim(),
+        reason: cells.eq(CURRENT_YEAR_COLUMN.REASON).text().trim()
       }
     })
   return { rows }
