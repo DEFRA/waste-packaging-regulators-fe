@@ -501,8 +501,8 @@ const auditAction = {
   cancelled: 'Cancelled'
 }
 
-function findAuditEntryByAction(audit = [], action) {
-  return audit.find((auditEntry) => auditEntry.action === action)
+function findAuditEntryByAction(audit, action) {
+  return (audit ?? []).find((auditEntry) => auditEntry.action === action)
 }
 
 export function findSubmittedAuditUser(audit = []) {
