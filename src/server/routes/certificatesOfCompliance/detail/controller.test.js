@@ -2,7 +2,7 @@ import { vi } from 'vitest'
 import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { ApiError } from '#services/apiBaseClient/api-error.js'
-import * as certificatesService from '../certificates-of-compliance.service.js'
+import * as detailService from './detail.service.js'
 import {
   mockComplianceSchemeDetailData,
   mockDetailData
@@ -373,7 +373,7 @@ describe('#certificatesOfComplianceDetailController', () => {
 
   it('should render an error page when the obligations API returns 500', async () => {
     vi.spyOn(
-      certificatesService,
+      detailService,
       'getCertificateOfComplianceDetailViewModel'
     ).mockRejectedValueOnce(
       ApiError.from({
