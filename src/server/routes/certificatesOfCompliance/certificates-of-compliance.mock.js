@@ -133,7 +133,7 @@ export const mockComplianceSchemeNotSubmittedItems = [
   {
     id: null,
     organisationId: 'a9b8c7d6-e5f4-3210-abcd-ef9876543210',
-    organisationReferenceNumber: 'CS-3001',
+    organisationReferenceNumber: '530001',
     organisationName: 'FuturePack Operators',
     recyclingObligationsMet: false,
     regulation43Met: false,
@@ -143,7 +143,7 @@ export const mockComplianceSchemeNotSubmittedItems = [
   {
     id: null,
     organisationId: 'b8c7d6e5-f4a3-2109-abcd-ef8765432109',
-    organisationReferenceNumber: 'CS-3002',
+    organisationReferenceNumber: '530002',
     organisationName: 'Metroline Waste Services',
     recyclingObligationsMet: false,
     regulation43Met: false,
@@ -498,12 +498,12 @@ export const mockAccountOrganisationsByExternalId = {
   'a9b8c7d6-e5f4-3210-abcd-ef9876543210': {
     externalId: 'a9b8c7d6-e5f4-3210-abcd-ef9876543210',
     name: 'FuturePack Operators',
-    referenceNumber: 'CS-3001'
+    referenceNumber: '530001'
   },
   'b8c7d6e5-f4a3-2109-abcd-ef8765432109': {
     externalId: 'b8c7d6e5-f4a3-2109-abcd-ef8765432109',
     name: 'Metroline Waste Services',
-    referenceNumber: 'CS-3002'
+    referenceNumber: '530002'
   }
 }
 
