@@ -54,9 +54,9 @@ const MOCK_DECL_CS_PENDING_SECONDARY_ID = 'decl-cs-002'
 const MOCK_DECL_CS_ACCEPTED_ID = 'decl-cs-101'
 const MOCK_DECL_CS_ACCEPTED_SECONDARY_ID = 'decl-cs-102'
 const MOCK_REF_GREENFIELD = '204872'
-const MOCK_REF_CS_GREENCIRCLE = 'CS-1002'
-const MOCK_REF_CS_NATIONWIDE = 'CS-2001'
-const MOCK_REF_CS_RIVERSIDE = 'CS-2002'
+const MOCK_REF_CS_GREENCIRCLE = '110987'
+const MOCK_REF_CS_NATIONWIDE = '164447'
+const MOCK_REF_CS_RIVERSIDE = '172908'
 const MOCK_REF_STERLING = '734921'
 const MOCK_REF_PINNACLE = '851036'
 const MOCK_REF_MERIDIAN = '962147'
@@ -174,7 +174,7 @@ export const mockComplianceSchemePendingItems = [
   {
     id: MOCK_DECL_CS_PENDING_ID,
     organisationId: MOCK_ORG_ECOPACK_ID,
-    organisationReferenceNumber: 'CS-1001',
+    organisationReferenceNumber: '110234',
     organisationName: MOCK_ORG_ECOPACK_OPERATOR_NAME,
     recyclingObligationsMet: true,
     regulation43Met: false,
@@ -220,7 +220,7 @@ export const mockComplianceSchemeNotSubmittedItems = [
   {
     id: null,
     organisationId: MOCK_ORG_FUTUREPACK_ID,
-    organisationReferenceNumber: 'CS-3001',
+    organisationReferenceNumber: '183551',
     organisationName: MOCK_ORG_FUTUREPACK_NAME,
     recyclingObligationsMet: false,
     regulation43Met: false,
@@ -230,7 +230,7 @@ export const mockComplianceSchemeNotSubmittedItems = [
   {
     id: null,
     organisationId: MOCK_ORG_METROLINE_ID,
-    organisationReferenceNumber: 'CS-3002',
+    organisationReferenceNumber: '194620',
     organisationName: MOCK_ORG_METROLINE_NAME,
     recyclingObligationsMet: false,
     regulation43Met: false,
@@ -715,12 +715,12 @@ export const mockAccountOrganisationsByExternalId = {
   [MOCK_ORG_FUTUREPACK_ID]: {
     externalId: MOCK_ORG_FUTUREPACK_ID,
     name: MOCK_ORG_FUTUREPACK_NAME,
-    referenceNumber: 'CS-3001'
+    referenceNumber: '183551'
   },
   [MOCK_ORG_METROLINE_ID]: {
     externalId: MOCK_ORG_METROLINE_ID,
     name: MOCK_ORG_METROLINE_NAME,
-    referenceNumber: 'CS-3002'
+    referenceNumber: '194620'
   },
   [MOCK_ORG_STERLING_ID]: {
     externalId: MOCK_ORG_STERLING_ID,
@@ -785,7 +785,7 @@ export const mockComplianceSchemeDetailData = {
     name: null,
     complianceSchemeName: MOCK_ORG_ECOPACK_NAME,
     schemeOperatorName: MOCK_ORG_ECOPACK_OPERATOR_NAME,
-    referenceNumber: 'CS-1001',
+    referenceNumber: '110234',
     address: {},
     regulator: 'EA',
     regulatorEmail: 'ea@environment-agency.gov.uk',
