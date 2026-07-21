@@ -176,9 +176,9 @@ export const mockComplianceSchemePendingItems = [
     organisationId: MOCK_ORG_ECOPACK_ID,
     organisationReferenceNumber: 'CS-1001',
     organisationName: MOCK_ORG_ECOPACK_OPERATOR_NAME,
-    recyclingObligationsMet: false,
+    recyclingObligationsMet: true,
     regulation43Met: false,
-    percentageMet: 91,
+    percentageMet: 100,
     dateSubmitted: '2027-01-20'
   },
   {
