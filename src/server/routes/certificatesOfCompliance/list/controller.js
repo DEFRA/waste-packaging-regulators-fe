@@ -1,5 +1,5 @@
 import { config } from '#config/config.js'
-import { getCertificatesOfComplianceViewModel } from '../certificates-of-compliance.service.js'
+import { getCertificatesOfComplianceViewModel } from './list.service.js'
 
 export const certificatesOfComplianceController = {
   async handler(request, h) {

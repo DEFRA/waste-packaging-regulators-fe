@@ -1,13 +1,13 @@
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
+import { cancelComplianceDeclaration } from '../actions/cancel.service.js'
+import { getComplianceDeclarationReviewStatus } from '../actions/review-status.service.js'
 import {
-  getCertificateOfComplianceDetailViewModel,
-  getComplianceDeclarationReviewStatus,
-  canCancelComplianceDeclaration,
-  cancelComplianceDeclaration,
   certificateActionSessionKeys,
   getDeclarationSessionKey,
   setMockDeclarationStatusOverride
-} from '../certificates-of-compliance.service.js'
+} from '../actions/session.service.js'
+import { canCancelComplianceDeclaration } from '../actions/status.js'
+import { getCertificateOfComplianceDetailViewModel } from '../detail/detail.service.js'
 import { redirectToSignIn } from '../detail/actions-controller.js'
 import {
   buildCancelReasonItems,
