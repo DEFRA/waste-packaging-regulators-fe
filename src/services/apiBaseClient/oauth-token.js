@@ -13,10 +13,18 @@ function buildCacheKey(clientId, scope) {
 
 function assertOAuthOptions({ clientId, clientSecret, scope, tokenEndpoint }) {
   const missing = []
-  if (!clientId) missing.push('clientId')
-  if (!clientSecret) missing.push('clientSecret')
-  if (!scope) missing.push('scope')
-  if (!tokenEndpoint) missing.push('tokenEndpoint')
+  if (!clientId) {
+    missing.push('clientId')
+  }
+  if (!clientSecret) {
+    missing.push('clientSecret')
+  }
+  if (!scope) {
+    missing.push('scope')
+  }
+  if (!tokenEndpoint) {
+    missing.push('tokenEndpoint')
+  }
 
   if (missing.length > 0) {
     throw new Error(

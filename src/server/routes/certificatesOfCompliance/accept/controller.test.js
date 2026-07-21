@@ -7,6 +7,12 @@ import {
   mockDetailData,
   mockComplianceSchemeDetailData
 } from '../certificates-of-compliance.mock.js'
+import {
+  authCookiesFromResponse,
+  csrfTokenCookieFromResponse,
+  crumbTokenFromCookie,
+  mergeCookiesFromResponse
+} from '#test-helpers/cookies.js'
 
 const DP_ITEM = mockPendingItems[0]
 const CS_ITEM = mockComplianceSchemePendingItems[0]
@@ -20,42 +26,56 @@ const detailUrlFor = (item) =>
 // hapi/yar stores the session in the cookie itself by default, so each
 // response carries an updated Set-Cookie that the next request must use.
 function nextCookie(response, fallback) {
-  return response.headers['set-cookie']?.[0]?.split(';')[0] ?? fallback
+  return mergeCookiesFromResponse(fallback, response)
 }
 
 describe('#certificatesOfComplianceAcceptController', () => {
   let server
+  // A crumb minted without signing in, mirroring a real browser that still
+  // holds the form's crumb after its session has lapsed.
+  let anonCrumbCookie
 
   beforeAll(async () => {
     server = await createServer()
     await server.initialize()
+
+    const anonResponse = await server.inject({
+      method: 'GET',
+      url: '/certificates-of-compliance'
+    })
+    anonCrumbCookie = csrfTokenCookieFromResponse(anonResponse)
   })
 
   afterAll(async () => {
     await server.stop({ timeout: 0 })
   })
 
+  // Returns a cookie header carrying both the yar `session` and the `CSRFToken`
+  // crumb, so authenticated POSTs can echo the token back to satisfy CSRF.
   async function signIn() {
-    const { headers } = await server.inject({
+    const response = await server.inject({
       method: 'GET',
       url: '/signin-oidc'
     })
-    return headers['set-cookie']?.[0]?.split(';')[0]
+    return authCookiesFromResponse(response)
   }
 
   const get = (url, cookie) =>
     server.inject({ method: 'GET', url, headers: { cookie } })
 
-  const post = (url, payload, cookie) =>
-    server.inject({
+  const post = (url, payload, cookie) => {
+    const crumb = crumbTokenFromCookie(cookie)
+    const body = [payload, `CSRFToken=${crumb}`].filter(Boolean).join('&')
+    return server.inject({
       method: 'POST',
       url,
-      payload,
+      payload: body,
       headers: {
         cookie,
         'content-type': 'application/x-www-form-urlencoded'
       }
     })
+  }
 
   describe('GET', () => {
     it('redirects unauthenticated users to /signin-oidc', async () => {
@@ -80,12 +100,20 @@ describe('#certificatesOfComplianceAcceptController', () => {
       expect(response.payload).toContain('Continue')
     })
 
+    it('renders a CSRF token in the confirmation form', async () => {
+      const cookie = await signIn()
+      const response = await get(acceptUrlFor(DP_ITEM), cookie)
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.payload).toContain('name="CSRFToken"')
+      expect(response.payload).toContain('id="csrf-crumb"')
+    })
+
     it('renders the confirmation form with statement wording for a Compliance Scheme', async () => {
       const cookie = await signIn()
       const response = await get(acceptUrlFor(CS_ITEM), cookie)
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(response.payload).toContain(
-        `Are you sure you want to accept this statement for ${mockComplianceSchemeDetailData.organisation.complianceSchemeName}?`
+        `Are you sure you want to accept this statement for ${mockComplianceSchemeDetailData.organisation.schemeOperatorName}?`
       )
     })
 
@@ -99,14 +127,23 @@ describe('#certificatesOfComplianceAcceptController', () => {
 
   describe('POST', () => {
     it('redirects unauthenticated users to /signin-oidc', async () => {
+      const response = await post(
+        acceptUrlFor(DP_ITEM),
+        'confirm-accept=yes',
+        anonCrumbCookie
+      )
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe('/signin-oidc')
+    })
+
+    it('rejects a request with no CSRF token', async () => {
       const response = await server.inject({
         method: 'POST',
         url: acceptUrlFor(DP_ITEM),
         payload: 'confirm-accept=yes',
         headers: { 'content-type': 'application/x-www-form-urlencoded' }
       })
-      expect(response.statusCode).toBe(302)
-      expect(response.headers.location).toBe('/signin-oidc')
+      expect(response.statusCode).toBe(statusCodes.forbidden)
     })
 
     it('re-renders the form with an error summary when no choice is made', async () => {

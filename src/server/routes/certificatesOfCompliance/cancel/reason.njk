@@ -15,23 +15,19 @@
         }) }}
       {% endif %}
 
-      {% set docTypeLower = "statement" if registrationType == "ComplianceScheme" else "certificate" %}
-      <form method="post" action="/{{ organisationId }}/certificates-of-compliance/{{ id }}/accept" novalidate>
+      <form method="post" action="/{{ organisationId }}/certificates-of-compliance/{{ id }}/cancel/reason" novalidate>
         {{ appCsrfField(CSRFToken) }}
         {{ govukRadios({
-          name: "confirm-accept",
+          name: "cancel-reason",
           fieldset: {
             legend: {
-              text: "Are you sure you want to accept this " + docTypeLower + " for " + companyName + "?",
+              text: "Why are you cancelling " + companyName + "'s " + docTypeLower + "?",
               isPageHeading: true,
               classes: "govuk-fieldset__legend--l"
             }
           },
-          errorMessage: errors.confirmAccept if errors,
-          items: [
-            { value: "yes", text: "Yes" },
-            { value: "no", text: "No" }
-          ]
+          errorMessage: errors.cancelReason if errors,
+          items: reasonItems
         }) }}
 
         {{ govukButton({

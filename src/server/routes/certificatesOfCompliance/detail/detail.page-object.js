@@ -1,5 +1,13 @@
 import { load } from 'cheerio'
 
+const TONNAGE_COLUMN = {
+  MATERIAL: 0,
+  OBLIGATION_TO_MEET: 1,
+  AWAITING_ACCEPTANCE: 2,
+  ACCEPTED: 3,
+  OUTSTANDING: 4
+}
+
 function readTag($, row) {
   const tag = $(row).find('.govuk-tag')
   const cls = tag.attr('class') ?? ''
@@ -13,12 +21,12 @@ function readRow($, row) {
     .toArray()
     .map((c) => $(c).text().trim())
   return {
-    material: cells[0],
+    material: cells[TONNAGE_COLUMN.MATERIAL],
     tonnages: {
-      obligationToMeet: cells[1],
-      awaitingAcceptance: cells[2],
-      accepted: cells[3],
-      outstanding: cells[4]
+      obligationToMeet: cells[TONNAGE_COLUMN.OBLIGATION_TO_MEET],
+      awaitingAcceptance: cells[TONNAGE_COLUMN.AWAITING_ACCEPTANCE],
+      accepted: cells[TONNAGE_COLUMN.ACCEPTED],
+      outstanding: cells[TONNAGE_COLUMN.OUTSTANDING]
     },
     statusTag: readTag($, row)
   }
@@ -40,11 +48,27 @@ function readDeclaration($) {
   }
 }
 
+function readRegulation43($) {
+  const section = $('[data-testid="regulation-43"]')
+  return {
+    present: section.length > 0,
+    text: section.find('p').text().trim()
+  }
+}
+
+function readObligationsSection($) {
+  return {
+    tablePresent: $('[data-testid="obligations-table"]').length > 0
+  }
+}
+
 export function loadDetailPage(payload) {
   const $ = load(payload)
   return {
     materials: readTable($, 'obligations-table'),
     glass: readTable($, 'glass-breakdown-table'),
-    declaration: readDeclaration($)
+    declaration: readDeclaration($),
+    regulation43: readRegulation43($),
+    obligations: readObligationsSection($)
   }
 }

@@ -1,6 +1,23 @@
 import { config } from '#config/config.js'
 import { BaseApiService } from './apiBaseClient/base-api.service.js'
 
+function buildPathWithQuery(basePath, queryString) {
+  return queryString ? `${basePath}?${queryString}` : basePath
+}
+
+function setRegistrationFilter(params, registrationType) {
+  switch (registrationType) {
+    case 'ComplianceScheme':
+      params.set('registrations', 'COMPLIANCE_SCHEME')
+      break
+    case 'DirectProducer':
+      params.set('registrations', 'SMALL_PRODUCER,LARGE_PRODUCER')
+      break
+    default:
+      break
+  }
+}
+
 export class WasteOrganisationsApiService extends BaseApiService {
   constructor(options = {}) {
     super({
@@ -18,14 +35,7 @@ export class WasteOrganisationsApiService extends BaseApiService {
     params.set('statuses', 'REGISTERED')
 
     if (registrationType != null) {
-      switch (registrationType) {
-        case 'ComplianceScheme':
-          params.set('registrations', 'COMPLIANCE_SCHEME')
-          break
-        case 'DirectProducer':
-          params.set('registrations', 'SMALL_PRODUCER,LARGE_PRODUCER')
-          break
-      }
+      setRegistrationFilter(params, registrationType)
     }
     if (registrationYears != null) {
       params.set('registrationYears', String(registrationYears))
@@ -33,7 +43,7 @@ export class WasteOrganisationsApiService extends BaseApiService {
 
     const qs = params.toString()
     return this.getJson(
-      `/organisations${qs ? `?${qs}` : ''}`,
+      buildPathWithQuery('/organisations', qs),
       this.getTracingHeader(traceId),
       `organisations-${registrationType}`
     )

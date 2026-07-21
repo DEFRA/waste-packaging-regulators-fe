@@ -1,6 +1,66 @@
 // Mock data for certificates of compliance routes.
 // Used when useMockApi=true and exported so tests can assert against the same values.
 
+const MOCK_ORG_HOWCO_ID = '497f6eca-6276-4993-bfeb-53cbbbba6f08'
+const MOCK_ORG_HOWCO_NAME = 'Howco Group plc'
+const MOCK_ORG_GREENFIELD_ID = 'b1e2c3d4-e5f6-7890-abcd-ef1234567890'
+const MOCK_ORG_GREENFIELD_NAME = 'Greenfield Packaging Ltd'
+const MOCK_ORG_REDWOOD_ID = 'd1e2f3a4-b5c6-7890-abcd-ef1234567890'
+const MOCK_ORG_REDWOOD_NAME = 'Redwood Retail Group'
+const MOCK_ORG_GREENCIRCLE_ID = 'f3a2b1c0-d9e8-47f6-a5b4-c3d2e1f0a9b8'
+const MOCK_ORG_GREENCIRCLE_NAME = 'GreenCircle Schemes'
+const MOCK_ORG_FUTUREPACK_ID = 'a9b8c7d6-e5f4-3210-abcd-ef9876543210'
+const MOCK_ORG_FUTUREPACK_NAME = 'FuturePack Operators'
+const MOCK_ORG_COASTAL_ID = 'e2f3a4b5-c6d7-8901-bcde-f23456789012'
+const MOCK_ORG_COASTAL_NAME = 'Coastal Bottling Co'
+const MOCK_ORG_METROLINE_ID = 'b8c7d6e5-f4a3-2109-abcd-ef8765432109'
+const MOCK_ORG_METROLINE_NAME = 'Metroline Waste Services'
+const MOCK_ORG_ECOPACK_ID = '923fa611-571c-4948-ab7d-fbb75e75ed65'
+const MOCK_ORG_ECOPACK_NAME = 'EcoPack Compliance Ltd'
+const MOCK_ORG_ECOPACK_OPERATOR_NAME = 'EcoPack Group'
+const MOCK_ORG_STERLING_ID = 'f3b4c5d6-e7a8-9012-cdef-123456789abc'
+const MOCK_ORG_STERLING_NAME = 'Sterling Packaging Ltd'
+const MOCK_ORG_PINNACLE_ID = 'a4b5c6d7-e8f9-0123-defa-234567890bcd'
+const MOCK_ORG_PINNACLE_NAME = 'Pinnacle Containers Ltd'
+const MOCK_ORG_MERIDIAN_ID = 'b5c6d7e8-f9a0-1234-efab-345678901cde'
+const MOCK_ORG_MERIDIAN_NAME = 'Meridian Products Ltd'
+const MOCK_ORG_NATIONWIDE_ID = 'e1d2c3b4-a596-4878-9abc-def012345678'
+const MOCK_ORG_NATIONWIDE_NAME = 'Nationwide Packaging Scheme'
+const MOCK_ORG_NATIONWIDE_OPERATOR_NAME = 'Nationwide Packaging Group'
+const MOCK_ORG_RIVERSIDE_ID = '6d9a1e77-1b3f-4c22-8a41-8f5c1e9d2b34'
+const MOCK_ORG_RIVERSIDE_NAME = 'Riverside Compliance Partners'
+const MOCK_ORG_RIVERSIDE_OPERATOR_NAME = 'Riverside Group'
+const MOCK_ORG_GREENCIRCLE_OPERATOR_NAME = 'GreenCircle Group'
+const MOCK_STATUS_SUBMITTED = 'Submitted'
+const MOCK_STATUS_ACCEPTED = 'Accepted'
+const MOCK_STATUS_CANCELLED = 'Cancelled'
+const MOCK_STATUS_QUERIED = 'Queried'
+const MOCK_REGISTRATION_STATUS = 'REGISTERED'
+const MOCK_BUSINESS_COUNTRY = 'GB-ENG'
+const MOCK_REGISTRATION_TIMESTAMP = '2026-03-31T23:20:34.294+00:00'
+const MOCK_CURRENT_YEAR_ACCEPTED_TIMESTAMP = '2026-02-13T09:42:00Z'
+const MOCK_CURRENT_YEAR_CANCELLED_TIMESTAMP = '2026-05-22T14:18:00Z'
+const MOCK_CS_CURRENT_YEAR_ACCEPTED_TIMESTAMP = '2026-03-04T11:05:00Z'
+const MOCK_CS_CURRENT_YEAR_CANCELLED_TIMESTAMP = '2026-05-12T13:30:00Z'
+const MOCK_ACCEPTED_ONLY_TIMESTAMP = '2026-04-15T11:20:00Z'
+const MOCK_CANCELLED_ONLY_TIMESTAMP = '2026-04-08T10:00:00Z'
+const MOCK_CS_SUBMITTED_TIMESTAMP = '2027-01-20T00:00:00Z'
+const MOCK_DECL_HOWCO_ID = 'decl-101411'
+const MOCK_DECL_GREENFIELD_ID = 'decl-204872'
+const MOCK_DECL_ACME_ID = 'decl-309145'
+const MOCK_DECL_BLUESKY_ID = 'decl-412067'
+const MOCK_DECL_CS_PENDING_ID = 'decl-cs-001'
+const MOCK_DECL_CS_PENDING_SECONDARY_ID = 'decl-cs-002'
+const MOCK_DECL_CS_ACCEPTED_ID = 'decl-cs-101'
+const MOCK_DECL_CS_ACCEPTED_SECONDARY_ID = 'decl-cs-102'
+const MOCK_REF_GREENFIELD = '204872'
+const MOCK_REF_CS_GREENCIRCLE = 'CS-1002'
+const MOCK_REF_CS_NATIONWIDE = 'CS-2001'
+const MOCK_REF_CS_RIVERSIDE = 'CS-2002'
+const MOCK_REF_STERLING = '734921'
+const MOCK_REF_PINNACLE = '851036'
+const MOCK_REF_MERIDIAN = '962147'
+
 export const mockSummaryByOrganisationType = {
   'direct-producers': {
     complianceYear: '2026',
@@ -20,19 +80,19 @@ export const mockSummary = mockSummaryByOrganisationType['direct-producers']
 
 export const mockPendingItems = [
   {
-    id: 'decl-101411',
-    organisationId: '497f6eca-6276-4993-bfeb-53cbbbba6f08',
+    id: MOCK_DECL_HOWCO_ID,
+    organisationId: MOCK_ORG_HOWCO_ID,
     organisationReferenceNumber: '101411',
-    organisationName: 'Howco Group plc',
+    organisationName: MOCK_ORG_HOWCO_NAME,
     recyclingObligationsMet: false,
     percentageMet: 97,
     dateSubmitted: '2027-01-31'
   },
   {
-    id: 'decl-204872',
-    organisationId: 'b1e2c3d4-e5f6-7890-abcd-ef1234567890',
-    organisationReferenceNumber: '204872',
-    organisationName: 'Greenfield Packaging Ltd',
+    id: MOCK_DECL_GREENFIELD_ID,
+    organisationId: MOCK_ORG_GREENFIELD_ID,
+    organisationReferenceNumber: MOCK_REF_GREENFIELD,
+    organisationName: MOCK_ORG_GREENFIELD_NAME,
     recyclingObligationsMet: false,
     percentageMet: 84,
     dateSubmitted: '2027-01-28'
@@ -41,7 +101,7 @@ export const mockPendingItems = [
 
 export const mockAcceptedItems = [
   {
-    id: 'decl-309145',
+    id: MOCK_DECL_ACME_ID,
     organisationId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     organisationReferenceNumber: '309145',
     organisationName: 'Acme Compliance Co',
@@ -51,7 +111,7 @@ export const mockAcceptedItems = [
     dateSubmitted: '2027-01-15'
   },
   {
-    id: 'decl-412067',
+    id: MOCK_DECL_BLUESKY_ID,
     organisationId: 'c1d2e3f4-a5b6-7890-abcd-ef1234567890',
     organisationReferenceNumber: '412067',
     organisationName: 'BlueSky Materials plc',
@@ -65,18 +125,45 @@ export const mockAcceptedItems = [
 export const mockNotSubmittedItems = [
   {
     id: null,
-    organisationId: 'd1e2f3a4-b5c6-7890-abcd-ef1234567890',
+    organisationId: MOCK_ORG_REDWOOD_ID,
     organisationReferenceNumber: '518293',
-    organisationName: 'Redwood Retail Group',
+    organisationName: MOCK_ORG_REDWOOD_NAME,
     recyclingObligationsMet: false,
     percentageMet: 0,
     dateSubmitted: null
   },
   {
     id: null,
-    organisationId: 'e2f3a4b5-c6d7-8901-bcde-f23456789012',
+    organisationId: MOCK_ORG_COASTAL_ID,
     organisationReferenceNumber: '627148',
-    organisationName: 'Coastal Bottling Co',
+    organisationName: MOCK_ORG_COASTAL_NAME,
+    recyclingObligationsMet: false,
+    percentageMet: 0,
+    dateSubmitted: null
+  },
+  {
+    id: null,
+    organisationId: MOCK_ORG_STERLING_ID,
+    organisationReferenceNumber: MOCK_REF_STERLING,
+    organisationName: MOCK_ORG_STERLING_NAME,
+    recyclingObligationsMet: null,
+    percentageMet: null,
+    dateSubmitted: null
+  },
+  {
+    id: null,
+    organisationId: MOCK_ORG_PINNACLE_ID,
+    organisationReferenceNumber: MOCK_REF_PINNACLE,
+    organisationName: MOCK_ORG_PINNACLE_NAME,
+    recyclingObligationsMet: false,
+    percentageMet: 0,
+    dateSubmitted: null
+  },
+  {
+    id: null,
+    organisationId: MOCK_ORG_MERIDIAN_ID,
+    organisationReferenceNumber: MOCK_REF_MERIDIAN,
+    organisationName: MOCK_ORG_MERIDIAN_NAME,
     recyclingObligationsMet: false,
     percentageMet: 0,
     dateSubmitted: null
@@ -85,20 +172,20 @@ export const mockNotSubmittedItems = [
 
 export const mockComplianceSchemePendingItems = [
   {
-    id: 'decl-cs-001',
-    organisationId: '923fa611-571c-4948-ab7d-fbb75e75ed65',
+    id: MOCK_DECL_CS_PENDING_ID,
+    organisationId: MOCK_ORG_ECOPACK_ID,
     organisationReferenceNumber: 'CS-1001',
-    organisationName: 'EcoPack Compliance Ltd',
+    organisationName: MOCK_ORG_ECOPACK_OPERATOR_NAME,
     recyclingObligationsMet: false,
     regulation43Met: false,
     percentageMet: 91,
     dateSubmitted: '2027-01-20'
   },
   {
-    id: 'decl-cs-002',
-    organisationId: 'f3a2b1c0-d9e8-47f6-a5b4-c3d2e1f0a9b8',
-    organisationReferenceNumber: 'CS-1002',
-    organisationName: 'GreenCircle Schemes',
+    id: MOCK_DECL_CS_PENDING_SECONDARY_ID,
+    organisationId: MOCK_ORG_GREENCIRCLE_ID,
+    organisationReferenceNumber: MOCK_REF_CS_GREENCIRCLE,
+    organisationName: MOCK_ORG_GREENCIRCLE_OPERATOR_NAME,
     recyclingObligationsMet: false,
     regulation43Met: true,
     percentageMet: 88,
@@ -108,20 +195,20 @@ export const mockComplianceSchemePendingItems = [
 
 export const mockComplianceSchemeAcceptedItems = [
   {
-    id: 'decl-cs-101',
-    organisationId: 'e1d2c3b4-a596-4878-9abc-def012345678',
-    organisationReferenceNumber: 'CS-2001',
-    organisationName: 'Nationwide Packaging Scheme',
+    id: MOCK_DECL_CS_ACCEPTED_ID,
+    organisationId: MOCK_ORG_NATIONWIDE_ID,
+    organisationReferenceNumber: MOCK_REF_CS_NATIONWIDE,
+    organisationName: MOCK_ORG_NATIONWIDE_OPERATOR_NAME,
     recyclingObligationsMet: true,
     regulation43Met: true,
     percentageMet: 105,
     dateSubmitted: '2027-01-12'
   },
   {
-    id: 'decl-cs-102',
-    organisationId: '6d9a1e77-1b3f-4c22-8a41-8f5c1e9d2b34',
-    organisationReferenceNumber: 'CS-2002',
-    organisationName: 'Riverside Compliance Partners',
+    id: MOCK_DECL_CS_ACCEPTED_SECONDARY_ID,
+    organisationId: MOCK_ORG_RIVERSIDE_ID,
+    organisationReferenceNumber: MOCK_REF_CS_RIVERSIDE,
+    organisationName: MOCK_ORG_RIVERSIDE_OPERATOR_NAME,
     recyclingObligationsMet: false,
     regulation43Met: false,
     percentageMet: 92,
@@ -132,9 +219,9 @@ export const mockComplianceSchemeAcceptedItems = [
 export const mockComplianceSchemeNotSubmittedItems = [
   {
     id: null,
-    organisationId: 'a9b8c7d6-e5f4-3210-abcd-ef9876543210',
+    organisationId: MOCK_ORG_FUTUREPACK_ID,
     organisationReferenceNumber: '530001',
-    organisationName: 'FuturePack Operators',
+    organisationName: MOCK_ORG_FUTUREPACK_NAME,
     recyclingObligationsMet: false,
     regulation43Met: false,
     percentageMet: 0,
@@ -142,9 +229,9 @@ export const mockComplianceSchemeNotSubmittedItems = [
   },
   {
     id: null,
-    organisationId: 'b8c7d6e5-f4a3-2109-abcd-ef8765432109',
+    organisationId: MOCK_ORG_METROLINE_ID,
     organisationReferenceNumber: '530002',
-    organisationName: 'Metroline Waste Services',
+    organisationName: MOCK_ORG_METROLINE_NAME,
     recyclingObligationsMet: false,
     regulation43Met: false,
     percentageMet: 0,
@@ -384,7 +471,7 @@ export const mockSubmittedAuditEntry = {
     name: 'Test User'
   },
   timestamp: '2026-07-02T16:12:48.816+00:00',
-  action: 'Submitted'
+  action: MOCK_STATUS_SUBMITTED
 }
 
 export const mockComplianceSchemeSubmittedAuditEntry = {
@@ -393,16 +480,43 @@ export const mockComplianceSchemeSubmittedAuditEntry = {
     email: 'jane.doe@ecopack.co.uk',
     name: 'Jane Doe'
   },
-  timestamp: '2027-01-20T00:00:00Z',
-  action: 'Submitted'
+  timestamp: MOCK_CS_SUBMITTED_TIMESTAMP,
+  action: MOCK_STATUS_SUBMITTED
+}
+
+const mockRegulator = {
+  id: 'mock-regulator-1',
+  name: 'James Walker',
+  email: 'mock-regulator-1@example.test'
 }
 
 const mockOrganisationsById = {
-  'd1e2f3a4-b5c6-7890-abcd-ef1234567890': {
-    id: 'd1e2f3a4-b5c6-7890-abcd-ef1234567890',
-    name: 'Redwood Retail Group',
+  [MOCK_ORG_HOWCO_ID]: {
+    id: MOCK_ORG_HOWCO_ID,
+    name: MOCK_ORG_HOWCO_NAME,
     tradingName: null,
-    businessCountry: 'GB-ENG',
+    businessCountry: MOCK_BUSINESS_COUNTRY,
+    companiesHouseNumber: '12345678',
+    address: {
+      addressLine1: 'Registered Add Line 1',
+      postcode: 'CB113DG',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
+        type: 'LARGE_PRODUCER',
+        registrationYear: 2026
+      }
+    ]
+  },
+  [MOCK_ORG_REDWOOD_ID]: {
+    id: MOCK_ORG_REDWOOD_ID,
+    name: MOCK_ORG_REDWOOD_NAME,
+    tradingName: null,
+    businessCountry: MOCK_BUSINESS_COUNTRY,
     companiesHouseNumber: '17121895',
     address: {
       addressLine1: 'Registered Add Line 1',
@@ -411,19 +525,19 @@ const mockOrganisationsById = {
     },
     registrations: [
       {
-        created: '2026-03-31T23:20:34.294+00:00',
-        updated: '2026-03-31T23:20:34.294+00:00',
-        status: 'REGISTERED',
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
         type: 'LARGE_PRODUCER',
         registrationYear: 2026
       }
     ]
   },
-  'a9b8c7d6-e5f4-3210-abcd-ef9876543210': {
-    id: 'a9b8c7d6-e5f4-3210-abcd-ef9876543210',
+  [MOCK_ORG_FUTUREPACK_ID]: {
+    id: MOCK_ORG_FUTUREPACK_ID,
     name: 'FuturePack Operators Ltd',
     tradingName: 'FuturePack Operators',
-    businessCountry: 'GB-ENG',
+    businessCountry: MOCK_BUSINESS_COUNTRY,
     companiesHouseNumber: '87654321',
     address: {
       addressLine1: 'Scheme House',
@@ -432,9 +546,156 @@ const mockOrganisationsById = {
     },
     registrations: [
       {
-        created: '2026-03-31T23:20:34.294+00:00',
-        updated: '2026-03-31T23:20:34.294+00:00',
-        status: 'REGISTERED',
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
+        type: 'COMPLIANCE_SCHEME',
+        registrationYear: 2026
+      }
+    ]
+  },
+  [MOCK_ORG_STERLING_ID]: {
+    id: MOCK_ORG_STERLING_ID,
+    name: MOCK_ORG_STERLING_NAME,
+    tradingName: null,
+    businessCountry: MOCK_BUSINESS_COUNTRY,
+    companiesHouseNumber: '34921001',
+    address: {
+      addressLine1: '14 Mill Lane',
+      postcode: 'LS1 4PL',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
+        type: 'LARGE_PRODUCER',
+        registrationYear: 2026
+      }
+    ]
+  },
+  [MOCK_ORG_PINNACLE_ID]: {
+    id: MOCK_ORG_PINNACLE_ID,
+    name: MOCK_ORG_PINNACLE_NAME,
+    tradingName: null,
+    businessCountry: MOCK_BUSINESS_COUNTRY,
+    companiesHouseNumber: '51036002',
+    address: {
+      addressLine1: '7 Industrial Park',
+      postcode: 'M1 2AB',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
+        type: 'LARGE_PRODUCER',
+        registrationYear: 2026
+      }
+    ]
+  },
+  [MOCK_ORG_MERIDIAN_ID]: {
+    id: MOCK_ORG_MERIDIAN_ID,
+    name: MOCK_ORG_MERIDIAN_NAME,
+    tradingName: null,
+    businessCountry: MOCK_BUSINESS_COUNTRY,
+    companiesHouseNumber: '62147003',
+    address: {
+      addressLine1: '22 Commerce Road',
+      postcode: 'B1 1BB',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
+        type: 'LARGE_PRODUCER',
+        registrationYear: 2026
+      }
+    ]
+  },
+  [MOCK_ORG_ECOPACK_ID]: {
+    id: MOCK_ORG_ECOPACK_ID,
+    name: MOCK_ORG_ECOPACK_NAME,
+    tradingName: 'EcoPack Group',
+    businessCountry: MOCK_BUSINESS_COUNTRY,
+    companiesHouseNumber: '87654321',
+    address: {
+      addressLine1: 'EcoPack House',
+      postcode: 'SW1A 1AA',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
+        type: 'COMPLIANCE_SCHEME',
+        registrationYear: 2026
+      }
+    ]
+  },
+  [MOCK_ORG_GREENCIRCLE_ID]: {
+    id: MOCK_ORG_GREENCIRCLE_ID,
+    name: MOCK_ORG_GREENCIRCLE_NAME,
+    tradingName: MOCK_ORG_GREENCIRCLE_OPERATOR_NAME,
+    businessCountry: MOCK_BUSINESS_COUNTRY,
+    companiesHouseNumber: '77889900',
+    address: {
+      addressLine1: 'GreenCircle House',
+      postcode: 'SW1A 1AA',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
+        type: 'COMPLIANCE_SCHEME',
+        registrationYear: 2026
+      }
+    ]
+  },
+  [MOCK_ORG_NATIONWIDE_ID]: {
+    id: MOCK_ORG_NATIONWIDE_ID,
+    name: MOCK_ORG_NATIONWIDE_NAME,
+    tradingName: MOCK_ORG_NATIONWIDE_OPERATOR_NAME,
+    businessCountry: MOCK_BUSINESS_COUNTRY,
+    companiesHouseNumber: '87654321',
+    address: {
+      addressLine1: 'Nationwide House',
+      postcode: 'SW1A 1AA',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
+        type: 'COMPLIANCE_SCHEME',
+        registrationYear: 2026
+      }
+    ]
+  },
+  [MOCK_ORG_RIVERSIDE_ID]: {
+    id: MOCK_ORG_RIVERSIDE_ID,
+    name: MOCK_ORG_RIVERSIDE_NAME,
+    tradingName: MOCK_ORG_RIVERSIDE_OPERATOR_NAME,
+    businessCountry: MOCK_BUSINESS_COUNTRY,
+    companiesHouseNumber: '55221199',
+    address: {
+      addressLine1: 'Riverside House',
+      postcode: 'SW1A 1AA',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
         type: 'COMPLIANCE_SCHEME',
         registrationYear: 2026
       }
@@ -485,25 +746,40 @@ const mockOrganisationsById = {
 }
 
 export const mockAccountOrganisationsByExternalId = {
-  'd1e2f3a4-b5c6-7890-abcd-ef1234567890': {
-    externalId: 'd1e2f3a4-b5c6-7890-abcd-ef1234567890',
-    name: 'Redwood Retail Group',
+  [MOCK_ORG_REDWOOD_ID]: {
+    externalId: MOCK_ORG_REDWOOD_ID,
+    name: MOCK_ORG_REDWOOD_NAME,
     referenceNumber: '518293'
   },
-  'e2f3a4b5-c6d7-8901-bcde-f23456789012': {
-    externalId: 'e2f3a4b5-c6d7-8901-bcde-f23456789012',
-    name: 'Coastal Bottling Co',
+  [MOCK_ORG_COASTAL_ID]: {
+    externalId: MOCK_ORG_COASTAL_ID,
+    name: MOCK_ORG_COASTAL_NAME,
     referenceNumber: '627148'
   },
-  'a9b8c7d6-e5f4-3210-abcd-ef9876543210': {
-    externalId: 'a9b8c7d6-e5f4-3210-abcd-ef9876543210',
-    name: 'FuturePack Operators',
+  [MOCK_ORG_FUTUREPACK_ID]: {
+    externalId: MOCK_ORG_FUTUREPACK_ID,
+    name: MOCK_ORG_FUTUREPACK_NAME,
     referenceNumber: '530001'
   },
-  'b8c7d6e5-f4a3-2109-abcd-ef8765432109': {
-    externalId: 'b8c7d6e5-f4a3-2109-abcd-ef8765432109',
-    name: 'Metroline Waste Services',
+  [MOCK_ORG_METROLINE_ID]: {
+    externalId: MOCK_ORG_METROLINE_ID,
+    name: MOCK_ORG_METROLINE_NAME,
     referenceNumber: '530002'
+  },
+  [MOCK_ORG_STERLING_ID]: {
+    externalId: MOCK_ORG_STERLING_ID,
+    name: MOCK_ORG_STERLING_NAME,
+    referenceNumber: MOCK_REF_STERLING
+  },
+  [MOCK_ORG_PINNACLE_ID]: {
+    externalId: MOCK_ORG_PINNACLE_ID,
+    name: MOCK_ORG_PINNACLE_NAME,
+    referenceNumber: MOCK_REF_PINNACLE
+  },
+  [MOCK_ORG_MERIDIAN_ID]: {
+    externalId: MOCK_ORG_MERIDIAN_ID,
+    name: MOCK_ORG_MERIDIAN_NAME,
+    referenceNumber: MOCK_REF_MERIDIAN
   }
 }
 
@@ -517,14 +793,14 @@ export function getMockOrganisationById(organisationId) {
 
 // Matches the raw API response shape from GET /organisations/{organisationId}/compliance-declarations/{id}
 export const mockDetailData = {
-  id: 'decl-101411',
+  id: MOCK_DECL_HOWCO_ID,
   created: '2027-01-31T00:00:00Z',
   updated: '2027-01-31T00:00:00Z',
-  status: 'Submitted',
+  status: MOCK_STATUS_SUBMITTED,
   organisation: {
-    id: '497f6eca-6276-4993-bfeb-53cbbbba6f08',
+    id: MOCK_ORG_HOWCO_ID,
     registrationType: 'DirectProducer',
-    name: 'Howco Group plc',
+    name: MOCK_ORG_HOWCO_NAME,
     complianceSchemeName: null,
     schemeOperatorName: null,
     referenceNumber: '101411',
@@ -543,16 +819,16 @@ export const mockDetailData = {
 }
 
 export const mockComplianceSchemeDetailData = {
-  id: 'decl-cs-001',
-  created: '2027-01-20T00:00:00Z',
-  updated: '2027-01-20T00:00:00Z',
-  status: 'Submitted',
+  id: MOCK_DECL_CS_PENDING_ID,
+  created: MOCK_CS_SUBMITTED_TIMESTAMP,
+  updated: MOCK_CS_SUBMITTED_TIMESTAMP,
+  status: MOCK_STATUS_SUBMITTED,
   organisation: {
-    id: '923fa611-571c-4948-ab7d-fbb75e75ed65',
+    id: MOCK_ORG_ECOPACK_ID,
     registrationType: 'ComplianceScheme',
     name: null,
-    complianceSchemeName: 'EcoPack Compliance Ltd',
-    schemeOperatorName: 'EcoPack Group',
+    complianceSchemeName: MOCK_ORG_ECOPACK_NAME,
+    schemeOperatorName: MOCK_ORG_ECOPACK_OPERATOR_NAME,
     referenceNumber: 'CS-1001',
     address: {},
     regulator: 'EA',
@@ -574,38 +850,54 @@ export const mockComplianceSchemeDetailData = {
 export const mockComplianceSchemeAcceptedDetailData = {
   ...mockComplianceSchemeDetailData,
   obligationStatus: 'Met',
-  id: 'decl-cs-101',
+  id: MOCK_DECL_CS_ACCEPTED_ID,
   created: '2027-01-12T00:00:00Z',
-  updated: '2027-01-12T00:00:00Z',
-  status: 'Accepted',
+  updated: '2027-01-12T12:05:00Z',
+  status: MOCK_STATUS_ACCEPTED,
   organisation: {
     ...mockComplianceSchemeDetailData.organisation,
-    id: 'e1d2c3b4-a596-4878-9abc-def012345678',
-    complianceSchemeName: 'Nationwide Packaging Scheme',
-    schemeOperatorName: 'Nationwide Packaging Group',
-    referenceNumber: 'CS-2001'
+    id: MOCK_ORG_NATIONWIDE_ID,
+    complianceSchemeName: MOCK_ORG_NATIONWIDE_NAME,
+    schemeOperatorName: MOCK_ORG_NATIONWIDE_OPERATOR_NAME,
+    referenceNumber: MOCK_REF_CS_NATIONWIDE
   },
-  isRegulation43Compliant: true
+  isRegulation43Compliant: true,
+  audit: [
+    mockComplianceSchemeSubmittedAuditEntry,
+    {
+      action: MOCK_STATUS_ACCEPTED,
+      timestamp: '2027-01-12T12:05:00Z',
+      user: mockRegulator
+    }
+  ]
 }
 
 export const mockDirectProducerAcceptedDetailData = {
   ...mockDetailData,
   obligationStatus: 'Met',
-  id: 'decl-309145',
+  id: MOCK_DECL_ACME_ID,
   created: '2027-01-15T00:00:00Z',
-  updated: '2027-01-15T00:00:00Z',
-  status: 'Accepted',
+  updated: '2027-01-15T14:30:00Z',
+  status: MOCK_STATUS_ACCEPTED,
   organisation: {
     ...mockDetailData.organisation,
     id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     name: 'Acme Compliance Co',
     referenceNumber: '309145'
-  }
+  },
+  audit: [
+    mockSubmittedAuditEntry,
+    {
+      action: MOCK_STATUS_ACCEPTED,
+      timestamp: '2027-01-15T14:30:00Z',
+      user: mockRegulator
+    }
+  ]
 }
 
 export const mockDirectProducerAcceptedDetailDataSecondary = {
   ...mockDirectProducerAcceptedDetailData,
-  id: 'decl-412067',
+  id: MOCK_DECL_BLUESKY_ID,
   created: '2027-01-10T00:00:00Z',
   updated: '2027-01-10T00:00:00Z',
   organisation: {
@@ -621,15 +913,15 @@ export const mockDirectProducerAcceptedDetailDataSecondary = {
 
 export const mockDirectProducerPendingNotMetDetailData = {
   ...mockDetailData,
-  id: 'decl-204872',
+  id: MOCK_DECL_GREENFIELD_ID,
   created: '2027-01-28T00:00:00Z',
   updated: '2027-01-28T00:00:00Z',
-  status: 'Submitted',
+  status: MOCK_STATUS_SUBMITTED,
   organisation: {
     ...mockDetailData.organisation,
-    id: 'b1e2c3d4-e5f6-7890-abcd-ef1234567890',
-    name: 'Greenfield Packaging Ltd',
-    referenceNumber: '204872',
+    id: MOCK_ORG_GREENFIELD_ID,
+    name: MOCK_ORG_GREENFIELD_NAME,
+    referenceNumber: MOCK_REF_GREENFIELD,
     companiesHouseNumber: '23456789'
   },
   obligations: mockObligationsMixed,
@@ -640,16 +932,16 @@ export const mockDirectProducerPendingNotMetDetailData = {
 
 export const mockComplianceSchemePendingNotMetDetailData = {
   ...mockComplianceSchemeDetailData,
-  id: 'decl-cs-002',
+  id: MOCK_DECL_CS_PENDING_SECONDARY_ID,
   created: '2027-01-18T00:00:00Z',
   updated: '2027-01-18T00:00:00Z',
-  status: 'Submitted',
+  status: MOCK_STATUS_SUBMITTED,
   organisation: {
     ...mockComplianceSchemeDetailData.organisation,
-    id: 'f3a2b1c0-d9e8-47f6-a5b4-c3d2e1f0a9b8',
-    complianceSchemeName: 'GreenCircle Schemes',
-    schemeOperatorName: 'GreenCircle Group',
-    referenceNumber: 'CS-1002',
+    id: MOCK_ORG_GREENCIRCLE_ID,
+    complianceSchemeName: MOCK_ORG_GREENCIRCLE_NAME,
+    schemeOperatorName: MOCK_ORG_GREENCIRCLE_OPERATOR_NAME,
+    referenceNumber: MOCK_REF_CS_GREENCIRCLE,
     companiesHouseNumber: '77889900'
   },
   obligations: mockObligationsMixed,
@@ -660,16 +952,16 @@ export const mockComplianceSchemePendingNotMetDetailData = {
 
 export const mockComplianceSchemeAcceptedNotMetDetailData = {
   ...mockComplianceSchemeDetailData,
-  id: 'decl-cs-102',
+  id: MOCK_DECL_CS_ACCEPTED_SECONDARY_ID,
   created: '2027-01-08T00:00:00Z',
   updated: '2027-01-08T00:00:00Z',
-  status: 'Accepted',
+  status: MOCK_STATUS_ACCEPTED,
   organisation: {
     ...mockComplianceSchemeDetailData.organisation,
-    id: '6d9a1e77-1b3f-4c22-8a41-8f5c1e9d2b34',
-    complianceSchemeName: 'Riverside Compliance Partners',
-    schemeOperatorName: 'Riverside Group',
-    referenceNumber: 'CS-2002',
+    id: MOCK_ORG_RIVERSIDE_ID,
+    complianceSchemeName: MOCK_ORG_RIVERSIDE_NAME,
+    schemeOperatorName: MOCK_ORG_RIVERSIDE_OPERATOR_NAME,
+    referenceNumber: MOCK_REF_CS_RIVERSIDE,
     companiesHouseNumber: '55221199'
   },
   obligations: mockObligationsMixed,
@@ -681,7 +973,7 @@ export const mockComplianceSchemeAcceptedNotMetDetailData = {
 export const mockQueriedDetailData = {
   ...mockDetailData,
   id: 'decl-queried',
-  status: 'Queried',
+  status: MOCK_STATUS_QUERIED,
   queryDetails: {
     queriedMaterials: 'Plastic, Steel',
     reason: 'Tonnage figures do not match submitted evidence.',
@@ -692,7 +984,7 @@ export const mockQueriedDetailData = {
 export const mockComplianceSchemeQueriedDetailData = {
   ...mockComplianceSchemeDetailData,
   id: 'decl-cs-queried',
-  status: 'Queried',
+  status: MOCK_STATUS_QUERIED,
   queryDetails: {
     queriedMaterials: 'Plastic',
     reason: 'Scheme member totals require clarification.',
@@ -703,12 +995,12 @@ export const mockComplianceSchemeQueriedDetailData = {
 export const mockDirectProducerCancelledDetailData = {
   ...mockDetailData,
   id: 'decl-dp-cancelled',
-  status: 'Cancelled',
+  status: MOCK_STATUS_CANCELLED,
   organisation: {
     ...mockDetailData.organisation,
-    id: 'b1e2c3d4-e5f6-7890-abcd-ef1234567890',
-    name: 'Greenfield Packaging Ltd',
-    referenceNumber: '204872'
+    id: MOCK_ORG_GREENFIELD_ID,
+    name: MOCK_ORG_GREENFIELD_NAME,
+    referenceNumber: MOCK_REF_GREENFIELD
   },
   cancellationDetails: {
     reason: 'Submitted after the deadline.',
@@ -719,16 +1011,42 @@ export const mockDirectProducerCancelledDetailData = {
 
 export const mockCancelledDetailData = mockDirectProducerCancelledDetailData
 
+export const mockNoObligationsDetailData = {
+  ...mockDetailData,
+  id: 'decl-no-obligations',
+  organisation: {
+    ...mockDetailData.organisation,
+    id: MOCK_ORG_STERLING_ID,
+    name: MOCK_ORG_STERLING_NAME,
+    referenceNumber: MOCK_REF_STERLING
+  },
+  obligations: null,
+  obligationStatus: null
+}
+
+export const mockEmptyObligationsDetailData = {
+  ...mockDetailData,
+  id: 'decl-empty-obligations',
+  organisation: {
+    ...mockDetailData.organisation,
+    id: MOCK_ORG_PINNACLE_ID,
+    name: MOCK_ORG_PINNACLE_NAME,
+    referenceNumber: MOCK_REF_PINNACLE
+  },
+  obligations: [],
+  obligationStatus: null
+}
+
 export const mockComplianceSchemeCancelledDetailData = {
   ...mockComplianceSchemeDetailData,
   id: 'decl-cs-cancelled',
-  status: 'Cancelled',
+  status: MOCK_STATUS_CANCELLED,
   organisation: {
     ...mockComplianceSchemeDetailData.organisation,
-    id: 'f3a2b1c0-d9e8-47f6-a5b4-c3d2e1f0a9b8',
-    complianceSchemeName: 'GreenCircle Schemes',
-    schemeOperatorName: 'GreenCircle Group',
-    referenceNumber: 'CS-1002'
+    id: MOCK_ORG_GREENCIRCLE_ID,
+    complianceSchemeName: MOCK_ORG_GREENCIRCLE_NAME,
+    schemeOperatorName: MOCK_ORG_GREENCIRCLE_OPERATOR_NAME,
+    referenceNumber: MOCK_REF_CS_GREENCIRCLE
   },
   cancellationDetails: {
     reason: 'Incomplete member data submitted.',
@@ -737,22 +1055,17 @@ export const mockComplianceSchemeCancelledDetailData = {
   }
 }
 
-const mockRegulator = {
-  id: 'mock-regulator-1',
-  email: 'mock-regulator-1@example.test'
-}
-
 const mockCurrentYearAcceptedDeclaration = {
   ...mockDetailData,
   id: 'decl-101411-prev-accepted',
-  created: '2026-02-13T09:42:00Z',
-  updated: '2026-02-13T09:42:00Z',
-  status: 'Accepted',
+  created: MOCK_CURRENT_YEAR_ACCEPTED_TIMESTAMP,
+  updated: MOCK_CURRENT_YEAR_ACCEPTED_TIMESTAMP,
+  status: MOCK_STATUS_ACCEPTED,
   submitterName: 'Test Submitter A',
   audit: [
     {
-      action: 'Accepted',
-      timestamp: '2026-02-13T09:42:00Z',
+      action: MOCK_STATUS_ACCEPTED,
+      timestamp: MOCK_CURRENT_YEAR_ACCEPTED_TIMESTAMP,
       user: mockRegulator
     }
   ]
@@ -761,14 +1074,14 @@ const mockCurrentYearAcceptedDeclaration = {
 const mockCurrentYearCancelledDeclaration = {
   ...mockDetailData,
   id: 'decl-101411-prev-cancelled',
-  created: '2026-05-22T14:18:00Z',
-  updated: '2026-05-22T14:18:00Z',
-  status: 'Cancelled',
+  created: MOCK_CURRENT_YEAR_CANCELLED_TIMESTAMP,
+  updated: MOCK_CURRENT_YEAR_CANCELLED_TIMESTAMP,
+  status: MOCK_STATUS_CANCELLED,
   submitterName: 'Test Submitter A',
   audit: [
     {
-      action: 'Cancelled',
-      timestamp: '2026-05-22T14:18:00Z',
+      action: MOCK_STATUS_CANCELLED,
+      timestamp: MOCK_CURRENT_YEAR_CANCELLED_TIMESTAMP,
       user: mockRegulator,
       reason: 'Test cancellation reason'
     }
@@ -778,14 +1091,14 @@ const mockCurrentYearCancelledDeclaration = {
 const mockComplianceSchemeCurrentYearAcceptedDeclaration = {
   ...mockComplianceSchemeDetailData,
   id: 'decl-cs-001-prev-accepted',
-  created: '2026-03-04T11:05:00Z',
-  updated: '2026-03-04T11:05:00Z',
-  status: 'Accepted',
+  created: MOCK_CS_CURRENT_YEAR_ACCEPTED_TIMESTAMP,
+  updated: MOCK_CS_CURRENT_YEAR_ACCEPTED_TIMESTAMP,
+  status: MOCK_STATUS_ACCEPTED,
   submitterName: 'Test Submitter B',
   audit: [
     {
-      action: 'Accepted',
-      timestamp: '2026-03-04T11:05:00Z',
+      action: MOCK_STATUS_ACCEPTED,
+      timestamp: MOCK_CS_CURRENT_YEAR_ACCEPTED_TIMESTAMP,
       user: { id: 'mock-regulator-2', email: 'mock-regulator-2@example.test' }
     }
   ]
@@ -794,14 +1107,14 @@ const mockComplianceSchemeCurrentYearAcceptedDeclaration = {
 const mockComplianceSchemeCurrentYearCancelledDeclaration = {
   ...mockComplianceSchemeDetailData,
   id: 'decl-cs-001-prev-cancelled',
-  created: '2026-05-12T13:30:00Z',
-  updated: '2026-05-12T13:30:00Z',
-  status: 'Cancelled',
+  created: MOCK_CS_CURRENT_YEAR_CANCELLED_TIMESTAMP,
+  updated: MOCK_CS_CURRENT_YEAR_CANCELLED_TIMESTAMP,
+  status: MOCK_STATUS_CANCELLED,
   submitterName: 'Test Submitter B',
   audit: [
     {
-      action: 'Cancelled',
-      timestamp: '2026-05-12T13:30:00Z',
+      action: MOCK_STATUS_CANCELLED,
+      timestamp: MOCK_CS_CURRENT_YEAR_CANCELLED_TIMESTAMP,
       user: { id: 'mock-regulator-2', email: 'mock-regulator-2@example.test' },
       reason: 'Tonnage discrepancy identified'
     }
@@ -811,9 +1124,9 @@ const mockComplianceSchemeCurrentYearCancelledDeclaration = {
 const mockAcceptedOnlyDeclaration = {
   ...mockDetailData,
   id: 'decl-accepted-only',
-  created: '2026-04-15T11:20:00Z',
-  updated: '2026-04-15T11:20:00Z',
-  status: 'Accepted',
+  created: MOCK_ACCEPTED_ONLY_TIMESTAMP,
+  updated: MOCK_ACCEPTED_ONLY_TIMESTAMP,
+  status: MOCK_STATUS_ACCEPTED,
   submitterName: 'Test Submitter D',
   organisation: {
     ...mockDetailData.organisation,
@@ -823,8 +1136,8 @@ const mockAcceptedOnlyDeclaration = {
   },
   audit: [
     {
-      action: 'Accepted',
-      timestamp: '2026-04-15T11:20:00Z',
+      action: MOCK_STATUS_ACCEPTED,
+      timestamp: MOCK_ACCEPTED_ONLY_TIMESTAMP,
       user: mockRegulator
     }
   ]
@@ -833,9 +1146,9 @@ const mockAcceptedOnlyDeclaration = {
 const mockCancelledOnlyDeclaration = {
   ...mockDetailData,
   id: 'decl-cancelled-only',
-  created: '2026-04-08T10:00:00Z',
-  updated: '2026-04-08T10:00:00Z',
-  status: 'Cancelled',
+  created: MOCK_CANCELLED_ONLY_TIMESTAMP,
+  updated: MOCK_CANCELLED_ONLY_TIMESTAMP,
+  status: MOCK_STATUS_CANCELLED,
   submitterName: 'Test Submitter C',
   organisation: {
     ...mockDetailData.organisation,
@@ -845,8 +1158,8 @@ const mockCancelledOnlyDeclaration = {
   },
   audit: [
     {
-      action: 'Cancelled',
-      timestamp: '2026-04-08T10:00:00Z',
+      action: MOCK_STATUS_CANCELLED,
+      timestamp: MOCK_CANCELLED_ONLY_TIMESTAMP,
       user: mockRegulator,
       reason: 'Information could not be verified'
     }
@@ -854,12 +1167,12 @@ const mockCancelledOnlyDeclaration = {
 }
 
 const mockDeclarationsByOrgYear = {
-  '497f6eca-6276-4993-bfeb-53cbbbba6f08:2026': [
+  [`${MOCK_ORG_HOWCO_ID}:2026`]: [
     mockCurrentYearCancelledDeclaration,
     mockCurrentYearAcceptedDeclaration,
     mockDetailData
   ],
-  '923fa611-571c-4948-ab7d-fbb75e75ed65:2026': [
+  [`${MOCK_ORG_ECOPACK_ID}:2026`]: [
     mockComplianceSchemeCurrentYearCancelledDeclaration,
     mockComplianceSchemeCurrentYearAcceptedDeclaration,
     mockComplianceSchemeDetailData
@@ -869,26 +1182,32 @@ const mockDeclarationsByOrgYear = {
 }
 
 export function getMockDeclarationsByOrgYear(organisationId, obligationYear) {
-  if (organisationId == null || obligationYear == null) return []
+  if (organisationId == null || obligationYear == null) {
+    return []
+  }
   return mockDeclarationsByOrgYear[`${organisationId}:${obligationYear}`] ?? []
 }
 
 const mockDetailById = {
-  'decl-101411': mockDetailData,
-  'decl-204872': mockDirectProducerPendingNotMetDetailData,
-  'decl-309145': mockDirectProducerAcceptedDetailData,
-  'decl-412067': mockDirectProducerAcceptedDetailDataSecondary,
+  [MOCK_DECL_HOWCO_ID]: mockDetailData,
+  [MOCK_DECL_GREENFIELD_ID]: mockDirectProducerPendingNotMetDetailData,
+  [MOCK_DECL_ACME_ID]: mockDirectProducerAcceptedDetailData,
+  [MOCK_DECL_BLUESKY_ID]: mockDirectProducerAcceptedDetailDataSecondary,
   'decl-dp-cancelled': mockDirectProducerCancelledDetailData,
   'decl-queried': mockQueriedDetailData,
   'decl-cancelled': mockDirectProducerCancelledDetailData,
-  'decl-cs-001': mockComplianceSchemeDetailData,
-  'decl-cs-002': mockComplianceSchemePendingNotMetDetailData,
-  'decl-cs-101': mockComplianceSchemeAcceptedDetailData,
-  'decl-cs-102': mockComplianceSchemeAcceptedNotMetDetailData,
+  [MOCK_DECL_CS_PENDING_ID]: mockComplianceSchemeDetailData,
+  [MOCK_DECL_CS_PENDING_SECONDARY_ID]:
+    mockComplianceSchemePendingNotMetDetailData,
+  [MOCK_DECL_CS_ACCEPTED_ID]: mockComplianceSchemeAcceptedDetailData,
+  [MOCK_DECL_CS_ACCEPTED_SECONDARY_ID]:
+    mockComplianceSchemeAcceptedNotMetDetailData,
   'decl-cs-queried': mockComplianceSchemeQueriedDetailData,
   'decl-cs-cancelled': mockComplianceSchemeCancelledDetailData,
   'decl-accepted-only': mockAcceptedOnlyDeclaration,
-  'decl-cancelled-only': mockCancelledOnlyDeclaration
+  'decl-cancelled-only': mockCancelledOnlyDeclaration,
+  'decl-no-obligations': mockNoObligationsDetailData,
+  'decl-empty-obligations': mockEmptyObligationsDetailData
 }
 
 export function getMockDetailDataById(id) {
@@ -904,6 +1223,43 @@ export function getMockDetailDataById(id) {
     ? mockComplianceSchemeDetailData
     : mockDetailData
   return { ...base, id }
+}
+
+const mockObligationsAllZero = [
+  'Aluminium',
+  'Glass',
+  'PaperBoardFibre',
+  'Plastic',
+  'Steel',
+  'Wood',
+  'GlassRemelt',
+  'RemainingGlass'
+].map((material) => ({
+  material,
+  recyclingTarget: 0,
+  tonnages: {
+    material: 0,
+    awaitingAcceptance: 0,
+    accepted: 0,
+    outstanding: 0,
+    obligated: 0
+  },
+  status: 'NoDataYet'
+}))
+
+const mockObligationDataByOrgId = {
+  // Sterling Packaging Ltd — no obligations at all
+  [MOCK_ORG_STERLING_ID]: { obligations: null },
+  // Pinnacle Containers Ltd — empty obligations array
+  [MOCK_ORG_PINNACLE_ID]: { obligations: [] },
+  // Meridian Products Ltd — all obligation values are zero
+  [MOCK_ORG_MERIDIAN_ID]: {
+    obligations: mockObligationsAllZero
+  }
+}
+
+export function getMockObligationData(organisationId) {
+  return mockObligationDataByOrgId[organisationId] ?? mockObligationData
 }
 
 export const mockObligationData = {

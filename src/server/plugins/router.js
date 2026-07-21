@@ -9,6 +9,7 @@ import { config } from '#config/config.js'
 import { certificatesOfComplianceList } from '../routes/certificatesOfCompliance/list/index.js'
 import { certificatesOfComplianceDetail } from '../routes/certificatesOfCompliance/detail/index.js'
 import { certificatesOfComplianceAccept } from '../routes/certificatesOfCompliance/accept/index.js'
+import { certificatesOfComplianceCancel } from '../routes/certificatesOfCompliance/cancel/index.js'
 
 export const router = {
   plugin: {
@@ -28,7 +29,8 @@ export const router = {
         about,
         certificatesOfComplianceList,
         certificatesOfComplianceDetail,
-        certificatesOfComplianceAccept
+        certificatesOfComplianceAccept,
+        certificatesOfComplianceCancel
       ])
 
       // Static assets

@@ -1,5 +1,6 @@
 import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { sessionCookieFromResponse } from '#test-helpers/cookies.js'
 import {
   mockSummary,
   mockPendingItems,
@@ -17,11 +18,11 @@ describe('#certificatesOfComplianceController', () => {
     server = await createServer()
     await server.initialize()
     // Sign in via mock strategy to get a session cookie for use in all tests
-    const { headers } = await server.inject({
+    const response = await server.inject({
       method: 'GET',
       url: '/signin-oidc'
     })
-    sessionCookie = headers['set-cookie']?.[0]?.split(';')[0]
+    sessionCookie = sessionCookieFromResponse(response)
   })
 
   afterAll(async () => {
