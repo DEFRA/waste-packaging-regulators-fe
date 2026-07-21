@@ -86,6 +86,10 @@
                 {% endif %}
               </dd>
             </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Submitted on</dt>
+              <dd class="govuk-summary-list__value">{{ dateDeclarationSubmitted }}</dd>
+            </div>
             {% if showAcceptedOutcome %}
               <div class="govuk-summary-list__row">
                 <dt class="govuk-summary-list__key">Accepted by</dt>
@@ -96,10 +100,6 @@
                 <dd class="govuk-summary-list__value">{{ acceptedDate }}</dd>
               </div>
             {% endif %}
-            <div class="govuk-summary-list__row">
-              <dt class="govuk-summary-list__key">Submitted on</dt>
-              <dd class="govuk-summary-list__value">{{ dateDeclarationSubmitted }}</dd>
-            </div>
           </dl>
         </div>
       </div>
