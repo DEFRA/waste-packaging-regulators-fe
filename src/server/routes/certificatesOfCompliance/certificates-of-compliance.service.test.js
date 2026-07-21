@@ -326,7 +326,6 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.actions.showAccept).toBe(false)
       expect(vm.actions.showCancel).toBe(true)
       expect(vm.showAcceptedOutcome).toBe(true)
-      expect(vm.complianceStatusLabel).toBe('Certificate status')
       expect(vm.acceptedBy).toBe('James Walker')
       expect(vm.acceptedDate).toBe('15 January 2027 at 14:30')
     })
@@ -342,7 +341,6 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.actions.showCancel).toBe(true)
       expect(vm.actions.labels.accept).toBe('Accept statement')
       expect(vm.showAcceptedOutcome).toBe(true)
-      expect(vm.complianceStatusLabel).toBe('Statement status')
       expect(vm.acceptedBy).toBe('James Walker')
       expect(vm.acceptedDate).toBe('12 January 2027 at 12:05')
     })
@@ -357,9 +355,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.showDeclaration).toBe(true)
       expect(vm.actions.showAccept).toBe(false)
       expect(vm.actions.showCancel).toBe(false)
-      expect(vm.cancellationDetails.reason).toBe(
-        mockDirectProducerCancelledDetailData.cancellationDetails.reason
-      )
+      expect(vm.showCancelledOutcome).toBe(true)
+      expect(vm.cancelledBy).toBe('James Walker')
+      expect(vm.cancellationReason).toBe('Submitted after the deadline.')
     })
 
     test('getCertificateOfComplianceDetailViewModel returns cancelled compliance scheme detail', async () => {
@@ -371,7 +369,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.reviewStatus).toBe('Cancelled')
       expect(vm.actions.showAccept).toBe(false)
       expect(vm.actions.showCancel).toBe(false)
-      expect(vm.cancellationDetails.resubmissionRequested).toBe('No')
+      expect(vm.showCancelledOutcome).toBe(true)
+      expect(vm.cancellationReason).toBe('Incomplete member data submitted.')
     })
 
     test('getCertificateOfComplianceDetailViewModel returns success banner when flagged', async () => {
@@ -1555,7 +1554,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         })
       })
 
-      test('maps Cancelled status with cancellation details', async () => {
+      test('maps the Cancelled outcome from the cancellation audit entry', async () => {
         mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue(
           mockCancelledDetailData
         )
@@ -1566,11 +1565,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
 
         expect(vm.reviewStatus).toBe('Cancelled')
-        expect(vm.cancellationDetails).toEqual({
-          reason: mockCancelledDetailData.cancellationDetails.reason,
-          resubmissionRequested: 'Yes',
-          dateCancelled: '10 March 2026'
-        })
+        expect(vm.showCancelledOutcome).toBe(true)
+        expect(vm.cancelledBy).toBe('James Walker')
+        expect(vm.cancelledDate).toBe('10 March 2026 at 09:15')
+        expect(vm.cancellationReason).toBe('Submitted after the deadline.')
       })
 
       test('sets declarationStatus from declaration data.status', async () => {
@@ -2167,28 +2165,6 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
 
         expect(vm.queryDetails).toBeNull()
-      })
-
-      test('uses resubmissionRequestedDisplay when resubmissionRequested is neither true nor false', async () => {
-        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
-          ...mockDetailData,
-          status: 'Cancelled',
-          cancellationDetails: {
-            reason: 'Test reason',
-            resubmissionRequested: undefined,
-            resubmissionRequestedDisplay: 'Pending decision',
-            dateCancelled: '2026-03-10T00:00:00Z'
-          }
-        })
-
-        const vm = await getCertificateOfComplianceDetailViewModel(
-          'org-abc',
-          'decl-1'
-        )
-
-        expect(vm.cancellationDetails.resubmissionRequested).toBe(
-          'Pending decision'
-        )
       })
 
       test('maps history entry date to null when updated is absent', async () => {

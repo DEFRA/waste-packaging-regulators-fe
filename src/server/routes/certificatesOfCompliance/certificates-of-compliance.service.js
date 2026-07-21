@@ -495,40 +495,62 @@ export function mapWasteOrganisationToDetailFields(
   }
 }
 
+const auditAction = {
+  submitted: 'Submitted',
+  accepted: 'Accepted',
+  cancelled: 'Cancelled'
+}
+
+function findAuditEntryByAction(audit, action) {
+  return (audit ?? []).find((auditEntry) => auditEntry.action === action)
+}
+
 export function findSubmittedAuditUser(audit = []) {
-  const entry = audit.find((auditEntry) => auditEntry.action === 'Submitted')
-  return entry?.user ?? null
+  return findAuditEntryByAction(audit, auditAction.submitted)?.user ?? null
 }
 
-function findAcceptedAuditEntry(audit = []) {
-  return audit.find((auditEntry) => auditEntry.action === 'Accepted')
-}
-
-function buildComplianceStatusLabel(registrationType) {
-  return registrationType === 'ComplianceScheme'
-    ? 'Statement status'
-    : 'Certificate status'
-}
-
-function mapAcceptedOutcomeFields(data, registrationType) {
+function mapAcceptedOutcomeFields(data) {
   if (data.status !== 'Accepted') {
     return {
       showAcceptedOutcome: false,
-      complianceStatusLabel: buildComplianceStatusLabel(registrationType),
       acceptedBy: null,
       acceptedDate: null
     }
   }
 
-  const acceptedAudit = findAcceptedAuditEntry(data.audit)
+  const acceptedAudit = findAuditEntryByAction(data.audit, auditAction.accepted)
 
   return {
     showAcceptedOutcome: true,
-    complianceStatusLabel: buildComplianceStatusLabel(registrationType),
     acceptedBy: displayOrNoData(acceptedAudit?.user?.name),
     acceptedDate: displayOrNoData(
       formatSubmissionDate(acceptedAudit?.timestamp ?? data.updated)
     )
+  }
+}
+
+function mapCancelledOutcomeFields(data) {
+  if (data.status !== 'Cancelled') {
+    return {
+      showCancelledOutcome: false,
+      cancelledBy: null,
+      cancelledDate: null,
+      cancellationReason: null
+    }
+  }
+
+  const cancelledAudit = findAuditEntryByAction(
+    data.audit,
+    auditAction.cancelled
+  )
+
+  return {
+    showCancelledOutcome: true,
+    cancelledBy: displayOrNoData(cancelledAudit?.user?.name),
+    cancelledDate: displayOrNoData(
+      formatSubmissionDate(cancelledAudit?.timestamp ?? data.updated)
+    ),
+    cancellationReason: displayOrNoData(cancelledAudit?.reason)
   }
 }
 
@@ -1181,28 +1203,8 @@ function mapQueryDetails(queryDetails) {
   }
 }
 
-function mapResubmissionRequestedDisplay(cancellationDetails) {
-  const resubmission = cancellationDetails.resubmissionRequested
-  if (resubmission === true) {
-    return 'Yes'
-  }
-  if (resubmission === false) {
-    return 'No'
-  }
-  return cancellationDetails.resubmissionRequestedDisplay ?? null
-}
-
-function mapCancellationDetails(cancellationDetails) {
-  if (!cancellationDetails) {
-    return null
-  }
-  return {
-    reason: cancellationDetails.reason ?? null,
-    resubmissionRequested: mapResubmissionRequestedDisplay(cancellationDetails),
-    dateCancelled: formatDate(
-      cancellationDetails.dateCancelled ?? cancellationDetails.actionDate
-    )
-  }
+function mapQueriedOutcome(data) {
+  return data.status === 'Queried' ? mapQueryDetails(data.queryDetails) : null
 }
 
 function formatHistoryDate(isoString) {
@@ -1344,17 +1346,6 @@ function resolveDeclarationActions(
   }
 }
 
-function mapDeclarationStatusDetails(reviewStatus, data) {
-  return {
-    queryDetails:
-      reviewStatus === 'Queried' ? mapQueryDetails(data.queryDetails) : null,
-    cancellationDetails:
-      reviewStatus === 'Cancelled'
-        ? mapCancellationDetails(data.cancellationDetails)
-        : null
-  }
-}
-
 function mapDeclarationComplianceFields(
   organisation,
   {
@@ -1450,7 +1441,8 @@ function mapDeclarationToDetail(
       companyName,
       created
     }),
-    ...mapAcceptedOutcomeFields(data, organisation.registrationType),
+    ...mapAcceptedOutcomeFields(data),
+    ...mapCancelledOutcomeFields(data),
     ...mapDeclarationContactFields(organisation, {
       wasteOrganisation,
       submittedUser,
@@ -1464,7 +1456,7 @@ function mapDeclarationToDetail(
       resolvedId,
       organisation.registrationType
     ),
-    ...mapDeclarationStatusDetails(reviewStatus, data),
+    queryDetails: mapQueriedOutcome(data),
     currentYearActions: mapCurrentYearHistory(historyDeclarations),
     showObligations: (obligations ?? []).length !== 0
   }
@@ -1520,11 +1512,12 @@ function mapObligationToDetail(
       urls: { accept: '#', cancel: '#' }
     },
     showAcceptedOutcome: false,
-    complianceStatusLabel: buildComplianceStatusLabel(
-      orgFields.registrationType
-    ),
     acceptedBy: null,
     acceptedDate: null,
+    showCancelledOutcome: false,
+    cancelledBy: null,
+    cancelledDate: null,
+    cancellationReason: null,
     currentYearActions: [],
     showObligations: obligations.length !== 0
   }

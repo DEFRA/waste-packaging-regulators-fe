@@ -176,9 +176,9 @@ export const mockComplianceSchemePendingItems = [
     organisationId: MOCK_ORG_ECOPACK_ID,
     organisationReferenceNumber: 'CS-1001',
     organisationName: MOCK_ORG_ECOPACK_OPERATOR_NAME,
-    recyclingObligationsMet: false,
+    recyclingObligationsMet: true,
     regulation43Met: false,
-    percentageMet: 91,
+    percentageMet: 100,
     dateSubmitted: '2027-01-20'
   },
   {
@@ -186,9 +186,9 @@ export const mockComplianceSchemePendingItems = [
     organisationId: MOCK_ORG_GREENCIRCLE_ID,
     organisationReferenceNumber: MOCK_REF_CS_GREENCIRCLE,
     organisationName: MOCK_ORG_GREENCIRCLE_OPERATOR_NAME,
-    recyclingObligationsMet: false,
+    recyclingObligationsMet: true,
     regulation43Met: true,
-    percentageMet: 88,
+    percentageMet: 100,
     dateSubmitted: '2027-01-18'
   }
 ]
@@ -886,7 +886,7 @@ export const mockDirectProducerPendingNotMetDetailData = {
   isRegulation43Compliant: false
 }
 
-export const mockComplianceSchemePendingNotMetDetailData = {
+export const mockComplianceSchemePendingCompliantDetailData = {
   ...mockComplianceSchemeDetailData,
   id: MOCK_DECL_CS_PENDING_SECONDARY_ID,
   created: '2027-01-18T00:00:00Z',
@@ -900,8 +900,8 @@ export const mockComplianceSchemePendingNotMetDetailData = {
     referenceNumber: MOCK_REF_CS_GREENCIRCLE,
     companiesHouseNumber: '77889900'
   },
-  obligations: mockObligationsMixed,
-  obligationStatus: 'NotMet',
+  obligations: mockObligationsAllMet,
+  obligationStatus: 'Met',
   submitterName: 'Aled Bevan',
   isRegulation43Compliant: true
 }
@@ -952,17 +952,22 @@ export const mockDirectProducerCancelledDetailData = {
   ...mockDetailData,
   id: 'decl-dp-cancelled',
   status: MOCK_STATUS_CANCELLED,
+  updated: '2026-03-10T09:15:00Z',
   organisation: {
     ...mockDetailData.organisation,
     id: MOCK_ORG_GREENFIELD_ID,
     name: MOCK_ORG_GREENFIELD_NAME,
     referenceNumber: MOCK_REF_GREENFIELD
   },
-  cancellationDetails: {
-    reason: 'Submitted after the deadline.',
-    resubmissionRequested: true,
-    dateCancelled: '2026-03-10T00:00:00Z'
-  }
+  audit: [
+    mockSubmittedAuditEntry,
+    {
+      action: MOCK_STATUS_CANCELLED,
+      timestamp: '2026-03-10T09:15:00Z',
+      user: mockRegulator,
+      reason: 'Submitted after the deadline.'
+    }
+  ]
 }
 
 export const mockCancelledDetailData = mockDirectProducerCancelledDetailData
@@ -997,6 +1002,7 @@ export const mockComplianceSchemeCancelledDetailData = {
   ...mockComplianceSchemeDetailData,
   id: 'decl-cs-cancelled',
   status: MOCK_STATUS_CANCELLED,
+  updated: '2026-03-08T11:30:00Z',
   organisation: {
     ...mockComplianceSchemeDetailData.organisation,
     id: MOCK_ORG_GREENCIRCLE_ID,
@@ -1004,11 +1010,15 @@ export const mockComplianceSchemeCancelledDetailData = {
     schemeOperatorName: MOCK_ORG_GREENCIRCLE_OPERATOR_NAME,
     referenceNumber: MOCK_REF_CS_GREENCIRCLE
   },
-  cancellationDetails: {
-    reason: 'Incomplete member data submitted.',
-    resubmissionRequested: false,
-    dateCancelled: '2026-03-08T00:00:00Z'
-  }
+  audit: [
+    mockComplianceSchemeSubmittedAuditEntry,
+    {
+      action: MOCK_STATUS_CANCELLED,
+      timestamp: '2026-03-08T11:30:00Z',
+      user: mockRegulator,
+      reason: 'Incomplete member data submitted.'
+    }
+  ]
 }
 
 const mockCurrentYearAcceptedDeclaration = {
@@ -1154,7 +1164,7 @@ const mockDetailById = {
   'decl-cancelled': mockDirectProducerCancelledDetailData,
   [MOCK_DECL_CS_PENDING_ID]: mockComplianceSchemeDetailData,
   [MOCK_DECL_CS_PENDING_SECONDARY_ID]:
-    mockComplianceSchemePendingNotMetDetailData,
+    mockComplianceSchemePendingCompliantDetailData,
   [MOCK_DECL_CS_ACCEPTED_ID]: mockComplianceSchemeAcceptedDetailData,
   [MOCK_DECL_CS_ACCEPTED_SECONDARY_ID]:
     mockComplianceSchemeAcceptedNotMetDetailData,

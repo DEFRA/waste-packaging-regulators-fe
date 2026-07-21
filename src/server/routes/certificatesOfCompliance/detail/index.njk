@@ -75,12 +75,14 @@
               </dd>
             </div>
             <div class="govuk-summary-list__row">
-              <dt class="govuk-summary-list__key">{{ complianceStatusLabel }}</dt>
+              <dt class="govuk-summary-list__key">Submission status</dt>
               <dd class="govuk-summary-list__value">
                 {% if declarationStatus == 'Unsubmitted' %}
                   <strong class="govuk-tag govuk-tag--grey">Not submitted</strong>
                 {% elseif reviewStatus == 'Pending' %}
                   <strong class="govuk-tag govuk-tag--blue">Pending</strong>
+                {% elseif reviewStatus == 'Cancelled' %}
+                  <strong class="govuk-tag govuk-tag--yellow">Cancelled</strong>
                 {% else %}
                   <strong class="govuk-tag govuk-tag--teal">Accepted</strong>
                 {% endif %}
@@ -98,6 +100,20 @@
               <div class="govuk-summary-list__row">
                 <dt class="govuk-summary-list__key">Accepted date</dt>
                 <dd class="govuk-summary-list__value">{{ acceptedDate }}</dd>
+              </div>
+            {% endif %}
+            {% if showCancelledOutcome %}
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">Cancelled by</dt>
+                <dd class="govuk-summary-list__value">{{ cancelledBy }}</dd>
+              </div>
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">Cancelled date</dt>
+                <dd class="govuk-summary-list__value">{{ cancelledDate }}</dd>
+              </div>
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">Reason for cancellation</dt>
+                <dd class="govuk-summary-list__value">{{ cancellationReason }}</dd>
               </div>
             {% endif %}
           </dl>
@@ -187,26 +203,6 @@
         }) }}
       {% endif %}
 
-      {% if cancellationDetails %}
-        <h2 class="govuk-heading-m">Cancellation details</h2>
-        {{ govukSummaryList({
-          rows: [
-            {
-              key: { text: "Reason" },
-              value: { text: cancellationDetails.reason }
-            },
-            {
-              key: { text: "Re-submission requested" },
-              value: { text: cancellationDetails.resubmissionRequested }
-            },
-            {
-              key: { text: "Date cancelled" },
-              value: { text: cancellationDetails.dateCancelled }
-            }
-          ]
-        }) }}
-      {% endif %}
-
       <h2 class="govuk-heading-m">Recycling obligations</h2>
       {%  if showObligations %}
         <p class="govuk-body-m govuk-!-margin-bottom-3">All values are in tonnes.</p>
@@ -287,7 +283,7 @@
           </tbody>
         </table>
       {% else %}
-        <p class="govuk-body-m">No data</p>
+        <p class="govuk-body-m" data-testid="obligations-no-data">No data</p>
       {% endif %}
       <hr class="govuk-section-break govuk-section-break--l">
 
@@ -295,7 +291,7 @@
       {% if currentYearActions.length === 0 %}
         <p class="govuk-body">No previous submissions</p>
       {% else %}
-        <table class="govuk-table">
+        <table class="govuk-table" data-testid="current-year-table">
           <thead class="govuk-table__head">
             <tr class="govuk-table__row">
               <th scope="col" class="govuk-table__header">Date</th>
