@@ -26,8 +26,8 @@ const GREENFIELD_DETAIL_URL =
   '/b1e2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-204872'
 const ECOPACK_DETAIL_URL =
   '/923fa611-571c-4948-ab7d-fbb75e75ed65/certificates-of-compliance/decl-cs-001'
-const GREENCIRCLE_DETAIL_URL =
-  '/f3a2b1c0-d9e8-47f6-a5b4-c3d2e1f0a9b8/certificates-of-compliance/decl-cs-002'
+const RIVERSIDE_DETAIL_URL =
+  '/6d9a1e77-1b3f-4c22-8a41-8f5c1e9d2b34/certificates-of-compliance/decl-cs-102'
 const REDWOOD_UNSUBMITTED_URL =
   '/d1e2f3a4-b5c6-7890-abcd-ef1234567890/certificates-of-compliance?obligationYear=2026'
 const FUTUREPACK_UNSUBMITTED_URL =
@@ -210,10 +210,10 @@ describe('certificates of compliance — journey', () => {
         detailResponse.statusCode,
         'Should successfully call detail page'
       ).toBe(statusCodes.ok)
-      expect(
-        detailResponse.payload,
-        'Should get organisation name from detail page'
-      ).toContain(mockDetailData.organisation.name)
+      const { heading } = loadDetailPage(detailResponse.payload)
+      expect(heading, 'Should show organisation name on detail page').toContain(
+        mockDetailData.organisation.name
+      )
     })
 
     it('following an accepted item link loads the detail page', async () => {
@@ -240,10 +240,10 @@ describe('certificates of compliance — journey', () => {
         detailResponse.statusCode,
         'Should successfully call detail page'
       ).toBe(statusCodes.ok)
-      expect(
-        detailResponse.payload,
-        'Should get organisation name from detail page'
-      ).toContain(mockAcceptedItems[0].organisationName)
+      const { heading } = loadDetailPage(detailResponse.payload)
+      expect(heading, 'Should show organisation name on detail page').toContain(
+        mockAcceptedItems[0].organisationName
+      )
     })
   })
 
@@ -252,9 +252,9 @@ describe('certificates of compliance — journey', () => {
       const response = await inject(detailPathFor(mockPendingItems[0]))
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).toContain('Accept certificate')
-      expect(response.payload).toContain('Cancel certificate')
-      expect(response.payload).not.toContain('Query')
+      const { actions } = loadDetailPage(response.payload)
+      expect(actions.accept.text).toBe('Accept certificate')
+      expect(actions.cancel.text).toBe('Cancel certificate')
     })
 
     it('shows Accept and Cancel statement buttons for a pending compliance scheme', async () => {
@@ -262,19 +262,19 @@ describe('certificates of compliance — journey', () => {
       const response = await inject(detailPathFor(item))
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).toContain('Accept statement')
-      expect(response.payload).toContain('Cancel statement')
-      expect(response.payload).not.toContain('Query')
+      const { actions } = loadDetailPage(response.payload)
+      expect(actions.accept.text).toBe('Accept statement')
+      expect(actions.cancel.text).toBe('Cancel statement')
     })
 
     it('shows cancel only for an accepted direct producer', async () => {
       const response = await inject(detailPathFor(mockAcceptedItems[0]))
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).not.toContain('Accept certificate')
-      expect(response.payload).not.toContain('/approve')
-      expect(response.payload).toContain('Cancel certificate')
-      expect(response.payload).toContain(
+      const { actions } = loadDetailPage(response.payload)
+      expect(actions.accept).toBeNull()
+      expect(actions.cancel.text).toBe('Cancel certificate')
+      expect(actions.cancel.href).toBe(
         `${detailPathFor(mockAcceptedItems[0])}/cancel/reason`
       )
     })
@@ -284,10 +284,10 @@ describe('certificates of compliance — journey', () => {
       const response = await inject(detailPathFor(item))
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).not.toContain('Accept statement')
-      expect(response.payload).not.toContain('/approve')
-      expect(response.payload).toContain('Cancel statement')
-      expect(response.payload).toContain(`${detailPathFor(item)}/cancel/reason`)
+      const { actions } = loadDetailPage(response.payload)
+      expect(actions.accept).toBeNull()
+      expect(actions.cancel.text).toBe('Cancel statement')
+      expect(actions.cancel.href).toBe(`${detailPathFor(item)}/cancel/reason`)
     })
 
     it('shows no action buttons for a cancelled direct producer', async () => {
@@ -296,10 +296,9 @@ describe('certificates of compliance — journey', () => {
       )
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).not.toContain('Accept certificate')
-      expect(response.payload).not.toContain('Cancel certificate')
-      expect(response.payload).not.toContain('/approve')
-      expect(response.payload).not.toContain('/cancel')
+      const { actions } = loadDetailPage(response.payload)
+      expect(actions.accept).toBeNull()
+      expect(actions.cancel).toBeNull()
     })
 
     it('shows no action buttons for a cancelled compliance scheme', async () => {
@@ -308,10 +307,9 @@ describe('certificates of compliance — journey', () => {
       )
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).not.toContain('Accept statement')
-      expect(response.payload).not.toContain('Cancel statement')
-      expect(response.payload).not.toContain('/approve')
-      expect(response.payload).not.toContain('/cancel')
+      const { actions } = loadDetailPage(response.payload)
+      expect(actions.accept).toBeNull()
+      expect(actions.cancel).toBeNull()
     })
 
     it('cancel flow redirects to detail with cancelled banner styling', async () => {
@@ -329,9 +327,19 @@ describe('certificates of compliance — journey', () => {
         }
       })
 
-      expect(detailResponse.payload).toContain('Certificate cancelled')
-      expect(detailResponse.payload).toContain(
-        'app-notification-banner--cancelled'
+      const detailsPage = loadDetailPage(detailResponse.payload)
+      expect(detailsPage.banner.present).toBe(true)
+      expect(detailsPage.banner.cancelled).toBe(true)
+      expect(detailsPage.banner.heading).toBe('Certificate cancelled')
+      expect(detailsPage.cancellation.present).toBe(true)
+      expect(detailsPage.cancellation.statusLabel).toBe('Submission status')
+      expect(detailsPage.cancellation.statusTag).toEqual({
+        text: 'Cancelled',
+        colour: 'yellow'
+      })
+      expect(detailsPage.cancellation.cancelledBy).toBe('John Doe')
+      expect(detailsPage.cancellation.reason).toBe(
+        'Producer requested to cancel'
       )
     })
 
@@ -349,12 +357,22 @@ describe('certificates of compliance — journey', () => {
         }
       })
 
-      expect(detailResponse.payload).toContain('Statement cancelled')
-      expect(detailResponse.payload).toContain(
+      const detailsPage = loadDetailPage(detailResponse.payload)
+      expect(detailsPage.banner.present).toBe(true)
+      expect(detailsPage.banner.cancelled).toBe(true)
+      expect(detailsPage.banner.heading).toBe('Statement cancelled')
+      expect(detailsPage.banner.text).toBe(
         'Statement has been cancelled and an email sent to the compliance scheme.'
       )
-      expect(detailResponse.payload).toContain(
-        'app-notification-banner--cancelled'
+      expect(detailsPage.cancellation.present).toBe(true)
+      expect(detailsPage.cancellation.statusLabel).toBe('Submission status')
+      expect(detailsPage.cancellation.statusTag).toEqual({
+        text: 'Cancelled',
+        colour: 'yellow'
+      })
+      expect(detailsPage.cancellation.cancelledBy).toBe('John Doe')
+      expect(detailsPage.cancellation.reason).toBe(
+        'Compliance scheme requested to cancel'
       )
     })
   })
@@ -438,7 +456,8 @@ describe('certificates of compliance — journey', () => {
       const response = await inject(detailPathFor(item))
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).toContain(`href="${acceptPathFor(item)}"`)
+      const { actions } = loadDetailPage(response.payload)
+      expect(actions.accept.href).toBe(acceptPathFor(item))
     })
 
     it('GET on the confirmation page renders the Yes/No form', async () => {
@@ -463,18 +482,19 @@ describe('certificates of compliance — journey', () => {
           cookie: mergeCookiesFromResponse(sessionCookie, yesResponse)
         }
       })
-      expect(detailResponse.payload).toContain('Certificate accepted')
-      expect(detailResponse.payload).toContain('Certificate has been accepted.')
-      expect(detailResponse.payload).not.toContain(
-        'govuk-notification-banner--success'
-      )
-      expect(detailResponse.payload).not.toContain(
-        'app-notification-banner--cancelled'
-      )
-      expect(detailResponse.payload).toContain('Certificate status')
-      expect(detailResponse.payload).toContain('Accepted by')
-      expect(detailResponse.payload).toContain('Accepted date')
-      expect(detailResponse.payload).toContain('John Doe')
+      const detailsPage = loadDetailPage(detailResponse.payload)
+      expect(detailsPage.banner.present).toBe(true)
+      expect(detailsPage.banner.cancelled).toBe(false)
+      expect(detailsPage.banner.heading).toBe('Certificate accepted')
+      expect(detailsPage.banner.text).toBe('Certificate has been accepted.')
+      expect(detailsPage.accepted.present).toBe(true)
+      expect(detailsPage.accepted.statusLabel).toBe('Submission status')
+      expect(detailsPage.accepted.statusTag).toEqual({
+        text: 'Accepted',
+        colour: 'teal'
+      })
+      expect(detailsPage.accepted.acceptedBy).toBe('John Doe')
+      expect(detailsPage.accepted.acceptedDate).toBeTruthy()
     })
 
     it('"no" returns to detail without invoking the approve action', async () => {
@@ -491,7 +511,8 @@ describe('certificates of compliance — journey', () => {
         }
       })
       expect(detailResponse.statusCode).toBe(statusCodes.ok)
-      expect(detailResponse.payload).not.toContain('govuk-notification-banner')
+      const { banner } = loadDetailPage(detailResponse.payload)
+      expect(banner.present).toBe(false)
     })
 
     it('submitting without a choice re-renders the form with an error summary', async () => {
@@ -515,11 +536,13 @@ describe('certificates of compliance — journey', () => {
           cookie: mergeCookiesFromResponse(sessionCookie, yesResponse)
         }
       })
-      expect(detailResponse.payload).toContain('Statement accepted')
-      expect(detailResponse.payload).toContain('Statement has been accepted.')
-      expect(detailResponse.payload).toContain('Statement status')
-      expect(detailResponse.payload).toContain('Accepted by')
-      expect(detailResponse.payload).toContain('John Doe')
+      const detailsPage = loadDetailPage(detailResponse.payload)
+      expect(detailsPage.banner.present).toBe(true)
+      expect(detailsPage.banner.heading).toBe('Statement accepted')
+      expect(detailsPage.banner.text).toBe('Statement has been accepted.')
+      expect(detailsPage.accepted.present).toBe(true)
+      expect(detailsPage.accepted.statusLabel).toBe('Submission status')
+      expect(detailsPage.accepted.acceptedBy).toBe('John Doe')
     })
 
     it('accept then cancel shows Accepted and Cancelled rows in current year', async () => {
@@ -544,16 +567,11 @@ describe('certificates of compliance — journey', () => {
         headers: { cookie }
       })
 
-      const cancelledTags = (
-        detailResponse.payload.match(/govuk-tag govuk-tag--grey/g) ?? []
-      ).length
-      const acceptedTags = (
-        detailResponse.payload.match(/govuk-tag govuk-tag--blue/g) ?? []
-      ).length
-
-      expect(cancelledTags).toBeGreaterThanOrEqual(1)
-      expect(acceptedTags).toBeGreaterThanOrEqual(1)
-      expect(detailResponse.payload).toContain('John Doe')
+      const { currentYear } = loadDetailPage(detailResponse.payload)
+      const rowActions = currentYear.rows.map((row) => row.action)
+      expect(rowActions).toContain('Accepted')
+      expect(rowActions).toContain('Cancelled')
+      expect(currentYear.rows.some((row) => row.by === 'John Doe')).toBe(true)
     })
   })
 
@@ -593,7 +611,7 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('shows the declaration for a cancelled direct producer', async () => {
-      const { declaration } = loadDetailPage(
+      const detailsPage = loadDetailPage(
         (
           await inject(
             detailPathForDetailData(mockDirectProducerCancelledDetailData)
@@ -601,12 +619,27 @@ describe('certificates of compliance — journey', () => {
         ).payload
       )
 
-      expect(declaration.present).toBe(true)
-      expect(declaration.documentNoun).toBe('certificate of compliance')
+      expect(detailsPage.declaration.present).toBe(true)
+      expect(detailsPage.declaration.documentNoun).toBe(
+        'certificate of compliance'
+      )
+      expect(detailsPage.cancellation.present).toBe(true)
+      expect(detailsPage.cancellation.statusLabel).toBe('Submission status')
+      expect(detailsPage.cancellation.statusTag).toEqual({
+        text: 'Cancelled',
+        colour: 'yellow'
+      })
+      expect(detailsPage.cancellation.cancelledBy).toBe('James Walker')
+      expect(detailsPage.cancellation.cancelledDate).toBe(
+        '10 March 2026 at 09:15'
+      )
+      expect(detailsPage.cancellation.reason).toBe(
+        'Submitted after the deadline.'
+      )
     })
 
     it('shows the declaration for a cancelled compliance scheme', async () => {
-      const { declaration } = loadDetailPage(
+      const detailsPage = loadDetailPage(
         (
           await inject(
             detailPathForDetailData(mockComplianceSchemeCancelledDetailData)
@@ -614,40 +647,63 @@ describe('certificates of compliance — journey', () => {
         ).payload
       )
 
-      expect(declaration.present).toBe(true)
-      expect(declaration.documentNoun).toBe('statement of compliance')
+      expect(detailsPage.declaration.present).toBe(true)
+      expect(detailsPage.declaration.documentNoun).toBe(
+        'statement of compliance'
+      )
+      expect(detailsPage.cancellation.present).toBe(true)
+      expect(detailsPage.cancellation.statusLabel).toBe('Submission status')
+      expect(detailsPage.cancellation.statusTag).toEqual({
+        text: 'Cancelled',
+        colour: 'yellow'
+      })
+      expect(detailsPage.cancellation.cancelledBy).toBe('James Walker')
+      expect(detailsPage.cancellation.cancelledDate).toBe(
+        '8 March 2026 at 11:30'
+      )
+      expect(detailsPage.cancellation.reason).toBe(
+        'Incomplete member data submitted.'
+      )
     })
   })
 
   describe('inset text', () => {
     it('shows the submission message for a submitted direct producer', async () => {
-      const response = await inject(HOWCO_DETAIL_URL)
+      const { insetText } = loadDetailPage(
+        (await inject(HOWCO_DETAIL_URL)).payload
+      )
 
-      expect(response.payload).toContain(
+      expect(insetText).toContain(
         'The information on this certificate was correct at the time of submission.'
       )
     })
 
     it('shows the submission message for a submitted compliance scheme', async () => {
-      const response = await inject(ECOPACK_DETAIL_URL)
+      const { insetText } = loadDetailPage(
+        (await inject(ECOPACK_DETAIL_URL)).payload
+      )
 
-      expect(response.payload).toContain(
+      expect(insetText).toContain(
         'The information on this statement was correct at the time of submission.'
       )
     })
 
     it('shows the not-submitted certificate message for an unsubmitted direct producer', async () => {
-      const response = await inject(REDWOOD_UNSUBMITTED_URL)
+      const { insetText } = loadDetailPage(
+        (await inject(REDWOOD_UNSUBMITTED_URL)).payload
+      )
 
-      expect(response.payload).toContain(
+      expect(insetText).toContain(
         'This certificate is not submitted so the information will update if changed by the producer.'
       )
     })
 
     it('shows the not-submitted statement message for an unsubmitted compliance scheme', async () => {
-      const response = await inject(FUTUREPACK_UNSUBMITTED_URL)
+      const { insetText } = loadDetailPage(
+        (await inject(FUTUREPACK_UNSUBMITTED_URL)).payload
+      )
 
-      expect(response.payload).toContain(
+      expect(insetText).toContain(
         'This statement is not submitted so the information will update if changed by the compliance scheme.'
       )
     })
@@ -811,7 +867,7 @@ describe('certificates of compliance — journey', () => {
     describe('mixed compliance scheme detail', () => {
       it('renders the correct 3-state tag per material row', async () => {
         const { materials } = loadDetailPage(
-          (await inject(GREENCIRCLE_DETAIL_URL)).payload
+          (await inject(RIVERSIDE_DETAIL_URL)).payload
         )
         const byName = Object.fromEntries(
           materials.rows.map((r) => [r.material, r.statusTag])
@@ -824,7 +880,7 @@ describe('certificates of compliance — journey', () => {
 
       it('renders a red Not met tag on the materials totals row', async () => {
         const { materials } = loadDetailPage(
-          (await inject(GREENCIRCLE_DETAIL_URL)).payload
+          (await inject(RIVERSIDE_DETAIL_URL)).payload
         )
 
         expect(materials.totals.statusTag).toEqual(notMet)
@@ -863,9 +919,7 @@ describe('certificates of compliance — journey', () => {
         expect(response.statusCode).toBe(statusCodes.ok)
         const { obligations } = loadDetailPage(response.payload)
         expect(obligations.tablePresent).toBe(false)
-        expect(response.payload).toContain(
-          '<p class="govuk-body-m">No data</p>'
-        )
+        expect(obligations.noData).toBe(true)
       })
 
       it('hides the obligations table and shows No data when obligations is an empty array', async () => {
@@ -874,9 +928,7 @@ describe('certificates of compliance — journey', () => {
         expect(response.statusCode).toBe(statusCodes.ok)
         const { obligations } = loadDetailPage(response.payload)
         expect(obligations.tablePresent).toBe(false)
-        expect(response.payload).toContain(
-          '<p class="govuk-body-m">No data</p>'
-        )
+        expect(obligations.noData).toBe(true)
       })
     })
   })

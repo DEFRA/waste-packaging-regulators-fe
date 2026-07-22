@@ -2,7 +2,7 @@ import { vi } from 'vitest'
 import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { ApiError } from '#services/apiBaseClient/api-error.js'
-import * as certificatesService from '../certificates-of-compliance.service.js'
+import * as detailService from './detail.service.js'
 import {
   mockComplianceSchemeDetailData,
   mockDetailData
@@ -247,18 +247,11 @@ describe('#certificatesOfComplianceDetailController', () => {
   })
 
   describe('Submission status label', () => {
-    it('renders the Certificate status label for a direct producer', async () => {
+    it('renders the Submission status label for a submitted declaration', async () => {
       const response = await inject(
         '/org-123/certificates-of-compliance/101411'
       )
-      expect(response.payload).toContain('Certificate status')
-    })
-
-    it('renders the Statement status label for a compliance scheme', async () => {
-      const response = await inject(
-        '/923fa611-571c-4948-ab7d-fbb75e75ed65/certificates-of-compliance/decl-cs-001'
-      )
-      expect(response.payload).toContain('Statement status')
+      expect(response.payload).toContain('Submission status')
     })
 
     it('renders a blue Pending tag for a submitted (pending review) declaration', async () => {
@@ -285,40 +278,33 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(response.payload).toContain('Not submitted')
     })
 
-    it('renders the Certificate status label for an unsubmitted direct producer', async () => {
+    it('renders the Submission status label for an unsubmitted organisation', async () => {
       const response = await inject(
         '/e2f3a4b5-c6d7-8901-bcde-f23456789012/certificates-of-compliance?obligationYear=2026'
       )
-      expect(response.payload).toContain('Certificate status')
-    })
-
-    it('renders the Statement status label for an unsubmitted compliance scheme', async () => {
-      const response = await inject(
-        '/a9b8c7d6-e5f4-3210-abcd-ef9876543210/certificates-of-compliance?obligationYear=2026'
-      )
-      expect(response.payload).toContain('Statement status')
+      expect(response.payload).toContain('Submission status')
     })
   })
 
   describe('Accepted outcome summary', () => {
-    it('renders certificate status, accepted by, and accepted date for an accepted direct producer', async () => {
+    it('renders submission status, accepted by, and accepted date for an accepted direct producer', async () => {
       const response = await inject(
         '/a1b2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-309145'
       )
 
-      expect(response.payload).toContain('Certificate status')
+      expect(response.payload).toContain('Submission status')
       expect(response.payload).toContain('Accepted by')
       expect(response.payload).toContain('Accepted date')
       expect(response.payload).toContain('James Walker')
       expect(response.payload).toContain('15 January 2027 at 14:30')
     })
 
-    it('renders statement status for an accepted compliance scheme', async () => {
+    it('renders submission status for an accepted compliance scheme', async () => {
       const response = await inject(
         '/e1d2c3b4-a596-4878-9abc-def012345678/certificates-of-compliance/decl-cs-101'
       )
 
-      expect(response.payload).toContain('Statement status')
+      expect(response.payload).toContain('Submission status')
       expect(response.payload).toContain('Accepted by')
       expect(response.payload).toContain('James Walker')
       expect(response.payload).toContain('12 January 2027 at 12:05')
@@ -387,7 +373,7 @@ describe('#certificatesOfComplianceDetailController', () => {
 
   it('should render an error page when the obligations API returns 500', async () => {
     vi.spyOn(
-      certificatesService,
+      detailService,
       'getCertificateOfComplianceDetailViewModel'
     ).mockRejectedValueOnce(
       ApiError.from({

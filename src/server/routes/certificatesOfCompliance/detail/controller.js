@@ -1,10 +1,10 @@
 import { config } from '#config/config.js'
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import {
-  getCertificateOfComplianceDetailViewModel,
   getDeclarationSessionKey,
   readAndClearCertificateActionBannerFlags
-} from '../certificates-of-compliance.service.js'
+} from '../actions/session.service.js'
+import { getCertificateOfComplianceDetailViewModel } from './detail.service.js'
 import { redirectToSignIn } from './actions-controller.js'
 
 function parseObligationYearQuery(value) {

@@ -1,14 +1,14 @@
 import { config } from '#config/config.js'
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
+import { approveComplianceDeclaration } from '../actions/approve.service.js'
+import { getComplianceDeclarationReviewStatus } from '../actions/review-status.service.js'
 import {
-  getCertificateOfComplianceDetailViewModel,
-  getComplianceDeclarationReviewStatus,
-  canApproveComplianceDeclaration,
-  approveComplianceDeclaration,
   certificateActionSessionKeys,
   getDeclarationSessionKey,
   setMockDeclarationStatusOverride
-} from '../certificates-of-compliance.service.js'
+} from '../actions/session.service.js'
+import { canApproveComplianceDeclaration } from '../actions/status.js'
+import { getCertificateOfComplianceDetailViewModel } from '../detail/detail.service.js'
 import { redirectToSignIn } from '../detail/actions-controller.js'
 
 const ERROR_TEXT = 'Select yes or no'
