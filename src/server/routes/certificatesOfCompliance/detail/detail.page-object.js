@@ -17,9 +17,10 @@ const CURRENT_YEAR_COLUMN = {
 
 const SUMMARY_ROW = '.govuk-summary-list__row'
 const SUMMARY_KEY = '.govuk-summary-list__key'
+const GOVUK_TAG = '.govuk-tag'
 
 function readTag($, row) {
-  const tag = $(row).find('.govuk-tag')
+  const tag = $(row).find(GOVUK_TAG)
   const cls = tag.attr('class') ?? ''
   const colour = /govuk-tag--(green|red|grey|blue|yellow|teal)/.exec(cls)?.[1]
   return { text: tag.text().trim(), colour: colour ?? null }
@@ -68,7 +69,7 @@ function readSummaryRow($, key) {
   }
 
   const tag = readTag($, row)
-  const hasTag = $(row).find('.govuk-tag').length > 0
+  const hasTag = $(row).find(GOVUK_TAG).length > 0
 
   return {
     present: true,
@@ -178,7 +179,7 @@ function readCurrentYear($) {
         date: cells.eq(CURRENT_YEAR_COLUMN.DATE).text().trim(),
         action: cells
           .eq(CURRENT_YEAR_COLUMN.ACTION)
-          .find('.govuk-tag')
+          .find(GOVUK_TAG)
           .text()
           .trim(),
         by: cells.eq(CURRENT_YEAR_COLUMN.BY).text().trim(),
