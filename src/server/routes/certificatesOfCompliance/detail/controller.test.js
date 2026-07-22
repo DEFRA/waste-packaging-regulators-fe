@@ -6,7 +6,7 @@ import * as detailService from './detail.service.js'
 import {
   mockComplianceSchemeDetailData,
   mockDetailData
-} from '../certificates-of-compliance.service.js'
+} from '../certificates-of-compliance.mock.js'
 import { sessionCookieFromResponse } from '#test-helpers/cookies.js'
 
 // Derive expected view model values from the raw API mock shape
