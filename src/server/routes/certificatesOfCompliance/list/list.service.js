@@ -190,46 +190,14 @@ async function getComplianceSummary(
   }
 }
 
-async function getNotSubmittedComplianceList(
-  obligationsApi,
-  organisationsApi,
+// Direct producers resolve by external id; compliance schemes by Companies
+// House number (their external id doesn't match the Account API).
+async function resolveNotSubmittedReferenceNumbers(
   accountApi,
-  organisationType,
-  registrationType,
-  page,
-  traceId
+  items,
+  traceId,
+  organisationType
 ) {
-  const [orgsResult, pendingDeclarations, acceptedDeclarations] =
-    await Promise.all([
-      organisationsApi.listComplianceOrganisations(
-        { registrationType, registrationYears: COMPLIANCE_YEAR },
-        traceId
-      ),
-      fetchAllDeclarations(
-        obligationsApi,
-        { status: 'Submitted', registrationType },
-        traceId
-      ),
-      fetchAllDeclarations(
-        obligationsApi,
-        { status: 'Accepted', registrationType },
-        traceId
-      )
-    ])
-
-  const submittedIds = new Set([
-    ...pendingDeclarations.map((d) => d.organisation.id),
-    ...acceptedDeclarations.map((d) => d.organisation.id)
-  ])
-
-  const allItems = orgsResult.organisations
-    .filter((org) => !submittedIds.has(org.id))
-    .map((org) => mapOrganisationToItem(org, organisationType))
-
-  const totalPages = Math.ceil(allItems.length / PAGE_SIZE) || 1
-  const start = (page - 1) * PAGE_SIZE
-  const items = allItems.slice(start, start + PAGE_SIZE)
-
   if (organisationType === COMPLIANCE_SCHEMES) {
     await resolveNotSubmittedComplianceSchemeReferenceNumbers(
       accountApi,
@@ -242,12 +210,6 @@ async function getNotSubmittedComplianceList(
       items,
       traceId
     )
-  }
-
-  return {
-    items,
-    totalPages,
-    currentPage: page
   }
 }
 
@@ -272,15 +234,49 @@ async function getComplianceList(
   const registrationType = registrationTypeByOrganisationType[organisationType]
 
   if (tab === 'not-submitted') {
-    return getNotSubmittedComplianceList(
-      obligationsApi,
-      organisationsApi,
+    const [orgsResult, pendingDeclarations, acceptedDeclarations] =
+      await Promise.all([
+        organisationsApi.listComplianceOrganisations(
+          { registrationType, registrationYears: COMPLIANCE_YEAR },
+          traceId
+        ),
+        fetchAllDeclarations(
+          obligationsApi,
+          { status: 'Submitted', registrationType },
+          traceId
+        ),
+        fetchAllDeclarations(
+          obligationsApi,
+          { status: 'Accepted', registrationType },
+          traceId
+        )
+      ])
+
+    const submittedIds = new Set([
+      ...pendingDeclarations.map((d) => d.organisation.id),
+      ...acceptedDeclarations.map((d) => d.organisation.id)
+    ])
+
+    const allItems = orgsResult.organisations
+      .filter((org) => !submittedIds.has(org.id))
+      .map((org) => mapOrganisationToItem(org, organisationType))
+
+    const totalPages = Math.ceil(allItems.length / PAGE_SIZE) || 1
+    const start = (page - 1) * PAGE_SIZE
+    const items = allItems.slice(start, start + PAGE_SIZE)
+
+    await resolveNotSubmittedReferenceNumbers(
       accountApi,
-      organisationType,
-      registrationType,
-      page,
-      traceId
+      items,
+      traceId,
+      organisationType
     )
+
+    return {
+      items,
+      totalPages,
+      currentPage: page
+    }
   }
 
   const status = statusByTab[tab]
