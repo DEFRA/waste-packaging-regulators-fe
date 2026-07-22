@@ -284,6 +284,32 @@ describe('#certificatesOfComplianceDetailController', () => {
       )
       expect(response.payload).toContain('Submission status')
     })
+
+    it('does not render Submitted on or Name on account for an unsubmitted organisation', async () => {
+      const response = await inject(
+        '/e2f3a4b5-c6d7-8901-bcde-f23456789012/certificates-of-compliance?obligationYear=2026'
+      )
+
+      expect(response.payload).not.toMatch(
+        /<dt class="govuk-summary-list__key">Submitted on<\/dt>/
+      )
+      expect(response.payload).not.toMatch(
+        /<dt class="govuk-summary-list__key">Name on account<\/dt>/
+      )
+    })
+
+    it('renders Submitted on and Name on account for a submitted declaration', async () => {
+      const response = await inject(
+        '/a1b2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-309145'
+      )
+
+      expect(response.payload).toMatch(
+        /<dt class="govuk-summary-list__key">Submitted on<\/dt>/
+      )
+      expect(response.payload).toMatch(
+        /<dt class="govuk-summary-list__key">Name on account<\/dt>/
+      )
+    })
   })
 
   describe('Accepted outcome summary', () => {

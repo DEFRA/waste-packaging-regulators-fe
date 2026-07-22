@@ -61,6 +61,22 @@ function summaryValue($row) {
   return $row?.find('.govuk-summary-list__value').text().trim() ?? null
 }
 
+function readSummaryRow($, key) {
+  const row = findSummaryRow($, key)
+  if (!row) {
+    return { present: false, value: null, tag: null }
+  }
+
+  const tag = readTag($, row)
+  const hasTag = $(row).find('.govuk-tag').length > 0
+
+  return {
+    present: true,
+    value: summaryValue(row),
+    tag: hasTag ? tag : null
+  }
+}
+
 function readOutcomeStatus($) {
   const statusRow = findSummaryRow($, 'Submission status')
   return {
@@ -177,6 +193,12 @@ export function loadDetailPage(payload) {
   return {
     heading: $('h1').first().text().trim(),
     insetText: $('.govuk-inset-text').text().trim(),
+    summaryRows: {
+      recyclingObligations: readSummaryRow($, 'Recycling obligations'),
+      submissionStatus: readSummaryRow($, 'Submission status'),
+      submittedOn: readSummaryRow($, 'Submitted on'),
+      nameOnAccount: readSummaryRow($, 'Name on account')
+    },
     materials: readTable($, 'obligations-table'),
     glass: readTable($, 'glass-breakdown-table'),
     banner: readNotificationBanner($),

@@ -899,6 +899,40 @@ describe('certificates of compliance — journey', () => {
         expect(materials.totals.statusTag).toEqual(noData)
         expect(glass.totals.statusTag).toEqual(noData)
       })
+
+      it('hides submission-only summary rows and shows live recycling status', async () => {
+        const { summaryRows } = loadDetailPage(
+          (await inject(REDWOOD_UNSUBMITTED_URL)).payload
+        )
+
+        expect(summaryRows.submissionStatus.present).toBe(true)
+        expect(summaryRows.submissionStatus.tag).toEqual({
+          text: 'Not submitted',
+          colour: 'grey'
+        })
+        expect(summaryRows.submittedOn.present).toBe(false)
+        expect(summaryRows.nameOnAccount.present).toBe(false)
+        expect(summaryRows.recyclingObligations.present).toBe(true)
+        expect(summaryRows.recyclingObligations.tag).toEqual({
+          text: 'Not met',
+          colour: 'red'
+        })
+      })
+    })
+
+    describe('not-submitted compliance scheme detail', () => {
+      it('hides submission-only summary rows', async () => {
+        const { summaryRows } = loadDetailPage(
+          (await inject(FUTUREPACK_UNSUBMITTED_URL)).payload
+        )
+
+        expect(summaryRows.submittedOn.present).toBe(false)
+        expect(summaryRows.nameOnAccount.present).toBe(false)
+        expect(summaryRows.submissionStatus.tag).toEqual({
+          text: 'Not submitted',
+          colour: 'grey'
+        })
+      })
     })
 
     describe('showObligations', () => {
