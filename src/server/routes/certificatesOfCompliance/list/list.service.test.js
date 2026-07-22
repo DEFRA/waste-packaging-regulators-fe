@@ -2133,6 +2133,33 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.recyclingObligationsMet).toBe(false)
         })
 
+        test('sets recyclingObligationsMet to true when all obligation materials are met', async () => {
+          createWasteObligationsApiService.mockReturnValue({
+            getComplianceObligation: vi.fn().mockResolvedValue({
+              obligations: mockObligationData.obligations.map((o) => ({
+                ...o,
+                status: 'Met'
+              }))
+            })
+          })
+          createWasteOrganisationsApiService.mockReturnValue({
+            getOrganisation: vi.fn().mockResolvedValue({
+              id: 'org-abc',
+              name: 'Live Producer Ltd',
+              registrationType: 'DirectProducer',
+              referenceNumber: '518293'
+            })
+          })
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'org-abc',
+            undefined,
+            { obligationYear: 2026 }
+          )
+
+          expect(vm.recyclingObligationsMet).toBe(true)
+        })
+
         test('sets recyclingObligationsMet to null when obligations are absent', async () => {
           createWasteObligationsApiService.mockReturnValue({
             getComplianceObligation: vi
