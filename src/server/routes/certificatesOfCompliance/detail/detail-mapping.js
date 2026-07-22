@@ -7,7 +7,8 @@ import {
   displayOrNoData,
   complianceDocumentNoun,
   buildComplianceTypeLabel,
-  buildRegulation43Statement
+  buildRegulation43Statement,
+  isComplianceSchemeRegistrationType
 } from '../common/display.js'
 import { mapOrganisationName } from '../common/organisation.js'
 import {
@@ -400,7 +401,6 @@ export function mapDeclarationToDetail(
 export function mapObligationToDetail(
   data,
   {
-    organisationId,
     obligationYear,
     organisation,
     accountOrganisationName,
@@ -414,6 +414,15 @@ export function mapObligationToDetail(
     obligationYear
   })
 
+  // Compliance schemes take their name from the waste-organisations record (as
+  // on the listing); direct producers keep the Account API name (waste-org as
+  // fallback).
+  const companyName = isComplianceSchemeRegistrationType(
+    orgFields.registrationType
+  )
+    ? orgFields.companyName
+    : (accountOrganisationName ?? orgFields.companyName)
+
   return {
     complianceYear: obligationYear == null ? null : String(obligationYear),
     complianceTypeLabel: buildComplianceTypeLabel(
@@ -421,9 +430,7 @@ export function mapObligationToDetail(
       orgFields.registrationType
     ),
     ...orgFields,
-    companyName: displayOrNoData(
-      accountOrganisationName ?? orgFields.companyName
-    ),
+    companyName: displayOrNoData(companyName),
     declarationStatus: 'Unsubmitted',
     reviewStatus: null,
     showDeclaration: false,
@@ -436,10 +443,10 @@ export function mapObligationToDetail(
     ),
     regulation43Met: null,
     dateDeclarationSubmitted: NO_DATA,
+    // Organisation ID mirrors the listing: the Account API reference number
+    // (or "No data"). Never the internal external id / GUID.
     organisationRef: displayOrNoData(
-      accountOrganisationReferenceNumber ??
-        organisation?.referenceNumber ??
-        organisationId
+      accountOrganisationReferenceNumber ?? organisation?.referenceNumber
     ),
     nameOnAccount: NO_DATA,
     declarationEmailAddress: NO_DATA,
