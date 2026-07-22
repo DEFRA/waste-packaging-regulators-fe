@@ -17,9 +17,10 @@ const CURRENT_YEAR_COLUMN = {
 
 const SUMMARY_ROW = '.govuk-summary-list__row'
 const SUMMARY_KEY = '.govuk-summary-list__key'
+const GOVUK_TAG = '.govuk-tag'
 
 function readTag($, row) {
-  const tag = $(row).find('.govuk-tag')
+  const tag = $(row).find(GOVUK_TAG)
   const cls = tag.attr('class') ?? ''
   const colour = /govuk-tag--(green|red|grey|blue|yellow|teal)/.exec(cls)?.[1]
   return { text: tag.text().trim(), colour: colour ?? null }
@@ -59,6 +60,22 @@ function findSummaryRow($, key) {
 
 function summaryValue($row) {
   return $row?.find('.govuk-summary-list__value').text().trim() ?? null
+}
+
+function readSummaryRow($, key) {
+  const row = findSummaryRow($, key)
+  if (!row) {
+    return { present: false, value: null, tag: null }
+  }
+
+  const tag = readTag($, row)
+  const hasTag = $(row).find(GOVUK_TAG).length > 0
+
+  return {
+    present: true,
+    value: summaryValue(row),
+    tag: hasTag ? tag : null
+  }
 }
 
 function readOutcomeStatus($) {
@@ -162,7 +179,7 @@ function readCurrentYear($) {
         date: cells.eq(CURRENT_YEAR_COLUMN.DATE).text().trim(),
         action: cells
           .eq(CURRENT_YEAR_COLUMN.ACTION)
-          .find('.govuk-tag')
+          .find(GOVUK_TAG)
           .text()
           .trim(),
         by: cells.eq(CURRENT_YEAR_COLUMN.BY).text().trim(),
@@ -177,6 +194,12 @@ export function loadDetailPage(payload) {
   return {
     heading: $('h1').first().text().trim(),
     insetText: $('.govuk-inset-text').text().trim(),
+    summaryRows: {
+      recyclingObligations: readSummaryRow($, 'Recycling obligations'),
+      submissionStatus: readSummaryRow($, 'Submission status'),
+      submittedOn: readSummaryRow($, 'Submitted on'),
+      nameOnAccount: readSummaryRow($, 'Name on account')
+    },
     materials: readTable($, 'obligations-table'),
     glass: readTable($, 'glass-breakdown-table'),
     banner: readNotificationBanner($),

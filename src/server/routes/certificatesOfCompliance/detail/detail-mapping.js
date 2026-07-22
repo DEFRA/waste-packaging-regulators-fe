@@ -35,6 +35,25 @@ function mapRecyclingObligationsMet(obligationStatus) {
   return obligationStatus.toLowerCase() === 'met'
 }
 
+function mapMaterialTotalsStatusToRecyclingObligationsMet(
+  status,
+  { hasObligations } = {}
+) {
+  if (!hasObligations) {
+    return null
+  }
+
+  switch (status) {
+    case 'met':
+      return true
+    case 'not-met':
+    case 'no-data':
+      return false
+    default:
+      throw new Error(`Unexpected material totals status: ${status}`)
+  }
+}
+
 function mapAcceptedOutcomeFields(data) {
   if (data.status !== 'Accepted') {
     return {
@@ -348,6 +367,8 @@ export function mapDeclarationToDetail(
     declarationStatus: data.status,
     reviewStatus,
     showDeclaration: true,
+    showSubmittedOn: true,
+    showNameOnAccount: true,
     ...mapDeclarationComplianceFields(organisation, {
       obligationYear,
       obligationStatus,
@@ -387,6 +408,7 @@ export function mapObligationToDetail(
   } = {}
 ) {
   const obligations = data?.obligations ?? []
+  const materialGroups = mapDeclarationMaterialGroups(obligations)
 
   const orgFields = mapWasteOrganisationToDetailFields(organisation, {
     obligationYear
@@ -405,8 +427,13 @@ export function mapObligationToDetail(
     declarationStatus: 'Unsubmitted',
     reviewStatus: null,
     showDeclaration: false,
+    showSubmittedOn: false,
+    showNameOnAccount: false,
     complianceDocumentNoun: complianceDocumentNoun(orgFields.registrationType),
-    recyclingObligationsMet: null,
+    recyclingObligationsMet: mapMaterialTotalsStatusToRecyclingObligationsMet(
+      materialGroups.materialTotals.status,
+      { hasObligations: obligations.length !== 0 }
+    ),
     regulation43Met: null,
     dateDeclarationSubmitted: NO_DATA,
     organisationRef: displayOrNoData(
@@ -418,7 +445,7 @@ export function mapObligationToDetail(
     declarationEmailAddress: NO_DATA,
     companyPhoneNumber: NO_DATA,
     declarationSignedBy: NO_DATA,
-    ...mapDeclarationMaterialGroups(obligations),
+    ...materialGroups,
     actions: {
       showAccept: false,
       showCancel: false,

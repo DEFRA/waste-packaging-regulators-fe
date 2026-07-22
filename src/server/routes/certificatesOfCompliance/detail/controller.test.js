@@ -8,6 +8,7 @@ import {
   mockDetailData
 } from '../certificates-of-compliance.mock.js'
 import { sessionCookieFromResponse } from '#test-helpers/cookies.js'
+import { loadDetailPage } from './detail.page-object.js'
 
 // Derive expected view model values from the raw API mock shape
 const GLASS_BREAKDOWN_MATERIALS = new Set(['GlassRemelt', 'RemainingGlass'])
@@ -283,6 +284,32 @@ describe('#certificatesOfComplianceDetailController', () => {
         '/e2f3a4b5-c6d7-8901-bcde-f23456789012/certificates-of-compliance?obligationYear=2026'
       )
       expect(response.payload).toContain('Submission status')
+    })
+
+    it('does not render Submitted on or Name on account for an unsubmitted organisation', async () => {
+      const { summaryRows } = loadDetailPage(
+        (
+          await inject(
+            '/e2f3a4b5-c6d7-8901-bcde-f23456789012/certificates-of-compliance?obligationYear=2026'
+          )
+        ).payload
+      )
+
+      expect(summaryRows.submittedOn.present).toBe(false)
+      expect(summaryRows.nameOnAccount.present).toBe(false)
+    })
+
+    it('renders Submitted on and Name on account for a submitted declaration', async () => {
+      const { summaryRows } = loadDetailPage(
+        (
+          await inject(
+            '/a1b2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-309145'
+          )
+        ).payload
+      )
+
+      expect(summaryRows.submittedOn.present).toBe(true)
+      expect(summaryRows.nameOnAccount.present).toBe(true)
     })
   })
 
