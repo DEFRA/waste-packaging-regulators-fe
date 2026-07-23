@@ -18,6 +18,7 @@
         <th class="govuk-table__header" scope="col">Recycling obligations</th>
         {% if organisationType == 'compliance-schemes' %}
           <th class="govuk-table__header" scope="col">Regulation 43</th>
+          <th class="govuk-table__header" scope="col">Percentage met</th>
         {% else %}
           <th class="govuk-table__header" scope="col">Percentage met</th>
         {% endif %}
@@ -47,8 +48,9 @@
             <td class="govuk-table__cell">
               {{ appStatusTag({ value: item.regulation43Met, trueText: 'Compliant', falseText: 'Not compliant' }) }}
             </td>
+            <td class="govuk-table__cell">{% if item.overallAccepted !== null %}{{ item.overallAccepted }}%{% else %}—{% endif %}</td>
           {% else %}
-            <td class="govuk-table__cell">{% if item.percentageMet !== null %}{{ item.percentageMet }}%{% else %}—{% endif %}</td>
+            <td class="govuk-table__cell">{% if item.overallAccepted !== null %}{{ item.overallAccepted }}%{% else %}—{% endif %}</td>
           {% endif %}
           {% if activeTab != 'not-submitted' %}
             <td class="govuk-table__cell">{{ item.dateSubmitted | formatDate('do MMMM yyyy') }}</td>

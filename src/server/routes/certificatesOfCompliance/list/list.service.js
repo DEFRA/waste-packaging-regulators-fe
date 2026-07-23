@@ -26,7 +26,7 @@ function mapDeclarationToItem(declaration) {
     obligationStatus,
     isRegulation43Compliant,
     created,
-    percentageMet
+    overallAccepted
   } = declaration
   return {
     id,
@@ -35,7 +35,7 @@ function mapDeclarationToItem(declaration) {
     organisationName: mapOrganisationName(organisation),
     recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
     regulation43Met: isRegulation43Compliant,
-    percentageMet: percentageMet ?? null,
+    overallAccepted: overallAccepted ?? null,
     dateSubmitted: created
   }
 }

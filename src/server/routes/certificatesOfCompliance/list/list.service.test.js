@@ -59,7 +59,7 @@ const makeDeclaration = ({
   obligationStatus: 'Met',
   isRegulation43Compliant: true,
   created: '2027-01-15',
-  percentageMet: 105,
+  overallAccepted: 105,
   ...rest
 })
 
@@ -154,6 +154,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
       )
       expect(vm.items[0].organisationName).toBe('EcoPack Group')
       expect(vm.items[0].regulation43Met).toBe(false)
+      expect(vm.items[0].overallAccepted).toBe(100)
     })
 
     test('returns empty array for unknown tab', async () => {
@@ -619,7 +620,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           organisationName: 'Test Org',
           recyclingObligationsMet: true,
           regulation43Met: true,
-          percentageMet: 105,
+          overallAccepted: 105,
           dateSubmitted: '2027-01-15'
         })
       })
@@ -1021,14 +1022,38 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.items[0].organisationName).toBe('Unknown organisation')
       })
 
-      test('sets percentageMet to null when not provided', async () => {
-        setupPendingTab([makeDeclaration({ percentageMet: undefined })])
+      test('sets overallAccepted to null when not provided by the API', async () => {
+        setupPendingTab([makeDeclaration({ overallAccepted: undefined })])
         const vm = await getCertificatesOfComplianceViewModel(
           'direct-producers',
           'pending',
           1
         )
-        expect(vm.items[0].percentageMet).toBeNull()
+        expect(vm.items[0].overallAccepted).toBeNull()
+      })
+
+      test('maps overallAccepted from the API to list items', async () => {
+        setupPendingTab([makeDeclaration({ overallAccepted: 84 })])
+
+        const vm = await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'pending',
+          1
+        )
+
+        expect(vm.items[0].overallAccepted).toBe(84)
+      })
+
+      test('maps overallAccepted for compliance-schemes pending items', async () => {
+        setupPendingTab([makeDeclaration({ overallAccepted: 88 })])
+
+        const vm = await getCertificatesOfComplianceViewModel(
+          'compliance-schemes',
+          'pending',
+          1
+        )
+
+        expect(vm.items[0].overallAccepted).toBe(88)
       })
 
       test('maps obligationStatus=Met to recyclingObligationsMet=true', async () => {
