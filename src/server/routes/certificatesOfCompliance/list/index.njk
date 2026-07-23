@@ -17,8 +17,8 @@
         {%- from "moj/components/search/macro.njk" import mojSearch -%}
 
         {{ mojSearch({
-          action: "#",
-          method: "post",
+          action: "/certificates-of-compliance",
+          method: "get",
           input: {
             id: "search",
             name: "search"
