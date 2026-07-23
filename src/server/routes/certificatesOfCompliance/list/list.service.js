@@ -41,7 +41,8 @@ function mapDeclarationToItem(declaration) {
 }
 
 // Reference number is resolved from the Account API (default 'No data'); the
-// organisation name keeps its compliance-scheme-aware derivation.
+// organisation name comes from the waste-organisations record via the
+// compliance-scheme-aware derivation below.
 function mapOrganisationToItem(organisation, organisationType) {
   const organisationName =
     organisationType === COMPLIANCE_SCHEMES
@@ -50,17 +51,18 @@ function mapOrganisationToItem(organisation, organisationType) {
   return {
     id: null,
     organisationId: organisation.id,
+    companiesHouseNumber: organisation.companiesHouseNumber ?? null,
     organisationReferenceNumber: NO_DATA,
     organisationName
   }
 }
 
-// Fills the reference number (and, for compliance schemes, the name) for "Not submitted" rows from the Account API bulk lookup.
-async function resolveNotSubmittedOrganisationDetails(
+// Direct producers share an external id between waste-organisations and the
+// Account API, so their reference number is resolved by external id.
+async function resolveNotSubmittedOrganisationReferenceNumbers(
   accountApi,
   items,
-  traceId,
-  organisationType
+  traceId
 ) {
   const externalIds = items.map((item) => item.organisationId).filter(Boolean)
 
@@ -77,13 +79,47 @@ async function resolveNotSubmittedOrganisationDetails(
     organisations.map((org) => [org.externalId, org])
   )
 
-  const resolvesName = organisationType === COMPLIANCE_SCHEMES
   for (const item of items) {
     const details = detailsByExternalId.get(item.organisationId)
     item.organisationReferenceNumber = details?.referenceNumber ?? NO_DATA
-    if (resolvesName) {
-      item.organisationName = details?.name ?? NO_DATA
-    }
+  }
+}
+
+// Compliance schemes do NOT share an external id with the Account API (the
+// scheme identity lives in a separate table). Their reference number lives on
+// the operator organisation and is matched by Companies House number instead.
+async function resolveNotSubmittedComplianceSchemeReferenceNumbers(
+  accountApi,
+  items,
+  traceId
+) {
+  const companiesHouseNumbers = items
+    .map((item) => item.companiesHouseNumber)
+    .filter(Boolean)
+
+  if (companiesHouseNumbers.length === 0) {
+    return
+  }
+
+  const organisations =
+    await accountApi.getOrganisationsByCompaniesHouseNumbers(
+      companiesHouseNumbers,
+      traceId
+    )
+
+  // A Companies House number can match more than one organisation (e.g. a
+  // producer and the scheme operator); keep the compliance-scheme operator.
+  const complianceSchemeByCompaniesHouseNumber = new Map(
+    organisations
+      .filter((org) => org.isComplianceScheme)
+      .map((org) => [org.companiesHouseNumber, org])
+  )
+
+  for (const item of items) {
+    const details = complianceSchemeByCompaniesHouseNumber.get(
+      item.companiesHouseNumber
+    )
+    item.organisationReferenceNumber = details?.referenceNumber ?? NO_DATA
   }
 }
 
@@ -154,6 +190,29 @@ async function getComplianceSummary(
   }
 }
 
+// Direct producers resolve by external id; compliance schemes by Companies
+// House number (their external id doesn't match the Account API).
+async function resolveNotSubmittedReferenceNumbers(
+  accountApi,
+  items,
+  traceId,
+  organisationType
+) {
+  if (organisationType === COMPLIANCE_SCHEMES) {
+    await resolveNotSubmittedComplianceSchemeReferenceNumbers(
+      accountApi,
+      items,
+      traceId
+    )
+  } else {
+    await resolveNotSubmittedOrganisationReferenceNumbers(
+      accountApi,
+      items,
+      traceId
+    )
+  }
+}
+
 async function getComplianceList(
   obligationsApi,
   organisationsApi,
@@ -206,7 +265,7 @@ async function getComplianceList(
     const start = (page - 1) * PAGE_SIZE
     const items = allItems.slice(start, start + PAGE_SIZE)
 
-    await resolveNotSubmittedOrganisationDetails(
+    await resolveNotSubmittedReferenceNumbers(
       accountApi,
       items,
       traceId,

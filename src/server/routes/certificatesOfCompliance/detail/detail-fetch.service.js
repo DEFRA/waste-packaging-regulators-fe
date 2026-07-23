@@ -18,6 +18,8 @@ import {
   mapDeclarationToDetail,
   mapObligationToDetail
 } from './detail-mapping.js'
+import { deriveRegistrationType } from '../common/registration-type.js'
+import { isComplianceSchemeRegistrationType } from '../common/display.js'
 
 export { findSubmittedAuditUser } from './audit.js'
 
@@ -56,6 +58,54 @@ async function fetchAccountOrganisationDetails(
     name: organisation?.name ?? null,
     referenceNumber: organisation?.referenceNumber ?? null
   }
+}
+
+async function fetchComplianceSchemeAccountDetailsByCompaniesHouseNumber(
+  accountApi,
+  companiesHouseNumber,
+  traceId
+) {
+  if (!companiesHouseNumber) {
+    return { name: null, referenceNumber: null }
+  }
+
+  const organisations =
+    await accountApi.getOrganisationsByCompaniesHouseNumbers(
+      [companiesHouseNumber],
+      traceId
+    )
+  // A Companies House number can match more than one organisation (e.g. a
+  // producer and the scheme operator); only the compliance-scheme operator
+  // carries the reference number we want (matches the not-submitted list).
+  const organisation = organisations.find((org) => org.isComplianceScheme)
+  return {
+    name: organisation?.name ?? null,
+    referenceNumber: organisation?.referenceNumber ?? null
+  }
+}
+
+// Direct producers resolve against the Account API by external id; compliance
+// schemes only by Companies House number (mirrors the not-submitted list).
+async function fetchNotSubmittedAccountOrganisationDetails(
+  accountApi,
+  organisation,
+  organisationId,
+  obligationYear,
+  traceId
+) {
+  const registrationType =
+    organisation?.registrationType ??
+    deriveRegistrationType(organisation?.registrations, obligationYear)
+
+  if (isComplianceSchemeRegistrationType(registrationType)) {
+    return fetchComplianceSchemeAccountDetailsByCompaniesHouseNumber(
+      accountApi,
+      organisation?.companiesHouseNumber,
+      traceId
+    )
+  }
+
+  return fetchAccountOrganisationDetails(accountApi, organisationId, traceId)
 }
 
 function resolveMockAccountOrganisationDetails(organisationId) {
@@ -119,15 +169,23 @@ async function getNotSubmittedDeclarationDetail(
   obligationYear,
   traceId
 ) {
-  const [unsubmittedObligationData, organisation, accountOrganisation] =
-    await Promise.all([
-      obligationsApi.getComplianceObligation(
-        { organisationId, obligationYear },
-        traceId
-      ),
-      organisationsApi.getOrganisation({ organisationId }, traceId),
-      fetchAccountOrganisationDetails(accountApi, organisationId, traceId)
-    ])
+  // The waste-organisations record is needed before the Account lookup so we
+  // know whether to resolve by external id (direct producers) or Companies
+  // House number (compliance schemes).
+  const [unsubmittedObligationData, organisation] = await Promise.all([
+    obligationsApi.getComplianceObligation(
+      { organisationId, obligationYear },
+      traceId
+    ),
+    organisationsApi.getOrganisation({ organisationId }, traceId)
+  ])
+  const accountOrganisation = await fetchNotSubmittedAccountOrganisationDetails(
+    accountApi,
+    organisation,
+    organisationId,
+    obligationYear,
+    traceId
+  )
   return mapObligationToDetail(unsubmittedObligationData, {
     organisationId,
     obligationYear,

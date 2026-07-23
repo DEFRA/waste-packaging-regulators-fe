@@ -456,6 +456,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         getOrganisationsByExternalIds: vi
           .fn()
           .mockResolvedValue({ organisations: [], notFoundExternalIds: [] }),
+        getOrganisationsByCompaniesHouseNumbers: vi.fn().mockResolvedValue([]),
         getAccountDetailsById: vi
           .fn()
           .mockResolvedValue({ telephone: '01234 567890' })
@@ -1794,13 +1795,13 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.declarationSignedBy).toBe('No data')
         })
 
-        test('sets organisationRef to organisationId on fallback path', async () => {
+        test('sets organisationRef to No data on fallback path when no reference number is available', async () => {
           const vm = await getCertificateOfComplianceDetailViewModel(
             'org-abc',
             'decl-1'
           )
 
-          expect(vm.organisationRef).toBe('org-abc')
+          expect(vm.organisationRef).toBe('No data')
         })
 
         test('currentYearActions is an empty array on fallback path', async () => {
@@ -1950,7 +1951,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.organisationRef).toBe('518293')
         })
 
-        test('falls back to organisationId when Account API and waste-organisations have no referenceNumber', async () => {
+        test('shows No data (not the external id) when Account API and waste-organisations have no referenceNumber', async () => {
           createWasteObligationsApiService.mockReturnValue({
             getComplianceObligation: vi
               .fn()
@@ -1970,7 +1971,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
             { obligationYear: 2026 }
           )
 
-          expect(vm.organisationRef).toBe('org-abc')
+          expect(vm.organisationRef).toBe('No data')
         })
 
         test('falls back to waste-organisations name when Account API returns no match', async () => {
@@ -1995,6 +1996,121 @@ describe('getCertificatesOfComplianceViewModel', () => {
           )
 
           expect(vm.companyName).toBe('Live Producer Ltd')
+        })
+
+        test('resolves a compliance-scheme name from waste-organisations and reference number by Companies House number', async () => {
+          createWasteObligationsApiService.mockReturnValue({
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          })
+          createWasteOrganisationsApiService.mockReturnValue({
+            getOrganisation: vi.fn().mockResolvedValue({
+              id: 'cs-org-abc',
+              name: 'Waste Org Scheme Ltd',
+              companiesHouseNumber: 'CHN-CS-DETAIL',
+              registrationType: 'ComplianceScheme'
+            })
+          })
+          mockAccountApi.getOrganisationsByCompaniesHouseNumbers.mockResolvedValue(
+            [
+              {
+                companiesHouseNumber: 'CHN-CS-DETAIL',
+                name: 'Account Scheme Name',
+                referenceNumber: '530001',
+                isComplianceScheme: true
+              }
+            ]
+          )
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'cs-org-abc',
+            undefined,
+            { obligationYear: 2026 }
+          )
+
+          expect(vm.companyName).toBe('Waste Org Scheme Ltd')
+          expect(vm.organisationRef).toBe('530001')
+          expect(
+            mockAccountApi.getOrganisationsByCompaniesHouseNumbers
+          ).toHaveBeenCalledWith(['CHN-CS-DETAIL'], undefined)
+          expect(
+            mockAccountApi.getOrganisationsByExternalIds
+          ).not.toHaveBeenCalled()
+        })
+
+        test('resolves the compliance-scheme operator when a producer shares the Companies House number', async () => {
+          createWasteObligationsApiService.mockReturnValue({
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          })
+          createWasteOrganisationsApiService.mockReturnValue({
+            getOrganisation: vi.fn().mockResolvedValue({
+              id: 'cs-org-abc',
+              name: 'Scheme legal name',
+              companiesHouseNumber: 'CHN-SHARED',
+              registrationType: 'ComplianceScheme'
+            })
+          })
+          mockAccountApi.getOrganisationsByCompaniesHouseNumbers.mockResolvedValue(
+            [
+              {
+                companiesHouseNumber: 'CHN-SHARED',
+                name: 'Producer',
+                referenceNumber: '111111',
+                isComplianceScheme: false
+              },
+              {
+                companiesHouseNumber: 'CHN-SHARED',
+                name: 'Scheme Operator',
+                referenceNumber: '530009',
+                isComplianceScheme: true
+              }
+            ]
+          )
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'cs-org-abc',
+            undefined,
+            { obligationYear: 2026 }
+          )
+
+          expect(vm.organisationRef).toBe('530009')
+        })
+
+        test('shows "No data" when only a non-compliance-scheme organisation matches the Companies House number', async () => {
+          createWasteObligationsApiService.mockReturnValue({
+            getComplianceObligation: vi
+              .fn()
+              .mockResolvedValue(mockObligationData)
+          })
+          createWasteOrganisationsApiService.mockReturnValue({
+            getOrganisation: vi.fn().mockResolvedValue({
+              id: 'cs-org-abc',
+              name: 'Scheme legal name',
+              companiesHouseNumber: 'CHN-PRODUCER-ONLY',
+              registrationType: 'ComplianceScheme'
+            })
+          })
+          mockAccountApi.getOrganisationsByCompaniesHouseNumbers.mockResolvedValue(
+            [
+              {
+                companiesHouseNumber: 'CHN-PRODUCER-ONLY',
+                name: 'Producer',
+                referenceNumber: '111111',
+                isComplianceScheme: false
+              }
+            ]
+          )
+
+          const vm = await getCertificateOfComplianceDetailViewModel(
+            'cs-org-abc',
+            undefined,
+            { obligationYear: 2026 }
+          )
+
+          expect(vm.organisationRef).toBe('No data')
         })
 
         test('falls back to Unknown organisation when Account API has no match and waste-organisations has no name', async () => {
@@ -2571,24 +2687,22 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.items[0].organisationId).toBe('org-1')
       })
 
-      describe('compliance-schemes — organisation name from Account API', () => {
-        test('calls the Account API with the compliance-scheme org ids and traceId', async () => {
+      describe('compliance-schemes — reference number by Companies House number', () => {
+        test('calls the Account API with the compliance-scheme Companies House numbers and traceId, not external ids', async () => {
           setupNotSubmittedTab([
             {
               id: 'cs-guid-1',
               name: 'Org record name',
+              companiesHouseNumber: 'CHN-CS-1',
               registrationType: 'ComplianceScheme'
             },
             {
               id: 'cs-guid-2',
               name: 'Org record name',
+              companiesHouseNumber: 'CHN-CS-2',
               registrationType: 'ComplianceScheme'
             }
           ])
-          mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
-            organisations: [],
-            notFoundExternalIds: []
-          })
 
           await getCertificatesOfComplianceViewModel(
             'compliance-schemes',
@@ -2598,38 +2712,79 @@ describe('getCertificatesOfComplianceViewModel', () => {
           )
 
           expect(
+            mockAccountApi.getOrganisationsByCompaniesHouseNumbers
+          ).toHaveBeenCalledWith(['CHN-CS-1', 'CHN-CS-2'], 'trace-cs')
+          expect(
             mockAccountApi.getOrganisationsByExternalIds
-          ).toHaveBeenCalledWith(['cs-guid-1', 'cs-guid-2'], 'trace-cs')
+          ).not.toHaveBeenCalled()
         })
 
-        test('displays the Account API name for each compliance-scheme row', async () => {
+        test('ignores a non-compliance-scheme organisation that shares a Companies House number', async () => {
+          setupNotSubmittedTab([
+            {
+              id: 'cs-guid-1',
+              name: 'Scheme record',
+              companiesHouseNumber: 'CHN-SHARED',
+              registrationType: 'ComplianceScheme'
+            }
+          ])
+          mockAccountApi.getOrganisationsByCompaniesHouseNumbers.mockResolvedValue(
+            [
+              {
+                companiesHouseNumber: 'CHN-SHARED',
+                name: 'Producer',
+                referenceNumber: '111111',
+                isComplianceScheme: false
+              },
+              {
+                companiesHouseNumber: 'CHN-SHARED',
+                name: 'Scheme Operator',
+                referenceNumber: '530009',
+                isComplianceScheme: true
+              }
+            ]
+          )
+
+          const vm = await getCertificatesOfComplianceViewModel(
+            'compliance-schemes',
+            'not-submitted',
+            1
+          )
+
+          expect(vm.items[0].organisationReferenceNumber).toBe('530009')
+        })
+
+        test('displays the waste-organisations record name and the Account API reference number for each row', async () => {
           setupNotSubmittedTab([
             {
               id: 'cs-guid-1',
               name: 'Org record name 1',
+              companiesHouseNumber: 'CHN-CS-1',
               registrationType: 'ComplianceScheme'
             },
             {
               id: 'cs-guid-2',
               name: 'Org record name 2',
+              companiesHouseNumber: 'CHN-CS-2',
               registrationType: 'ComplianceScheme'
             }
           ])
-          mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
-            organisations: [
+          mockAccountApi.getOrganisationsByCompaniesHouseNumbers.mockResolvedValue(
+            [
               {
-                externalId: 'cs-guid-1',
-                name: 'EcoPack Compliance Ltd',
-                referenceNumber: '518293'
+                companiesHouseNumber: 'CHN-CS-1',
+                name: 'Ignored Account Name',
+                referenceNumber: '530001',
+                isComplianceScheme: true
               },
               {
-                externalId: 'cs-guid-2',
-                name: 'GreenCircle Schemes',
-                referenceNumber: '600124'
+                companiesHouseNumber: 'CHN-CS-2',
+                name: 'Ignored Account Name',
+                referenceNumber: '530002',
+                isComplianceScheme: true
               }
-            ],
-            notFoundExternalIds: []
-          })
+            ]
+          )
 
           const vm = await getCertificatesOfComplianceViewModel(
             'compliance-schemes',
@@ -2640,40 +2795,42 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.items).toEqual([
             expect.objectContaining({
               organisationId: 'cs-guid-1',
-              organisationReferenceNumber: '518293',
-              organisationName: 'EcoPack Compliance Ltd'
+              organisationReferenceNumber: '530001',
+              organisationName: 'Org record name 1'
             }),
             expect.objectContaining({
               organisationId: 'cs-guid-2',
-              organisationReferenceNumber: '600124',
-              organisationName: 'GreenCircle Schemes'
+              organisationReferenceNumber: '530002',
+              organisationName: 'Org record name 2'
             })
           ])
         })
 
-        test('shows "No data" name for a 404 id while other rows render', async () => {
+        test('shows "No data" reference number for an unmatched Companies House number while keeping the record name', async () => {
           setupNotSubmittedTab([
             {
               id: 'cs-guid-1',
               name: 'Org record name 1',
+              companiesHouseNumber: 'CHN-CS-1',
               registrationType: 'ComplianceScheme'
             },
             {
               id: 'cs-guid-2',
               name: 'Org record name 2',
+              companiesHouseNumber: 'CHN-CS-2',
               registrationType: 'ComplianceScheme'
             }
           ])
-          mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
-            organisations: [
+          mockAccountApi.getOrganisationsByCompaniesHouseNumbers.mockResolvedValue(
+            [
               {
-                externalId: 'cs-guid-1',
-                name: 'EcoPack Compliance Ltd',
-                referenceNumber: '518293'
+                companiesHouseNumber: 'CHN-CS-1',
+                name: 'Ignored Account Name',
+                referenceNumber: '530001',
+                isComplianceScheme: true
               }
-            ],
-            notFoundExternalIds: ['cs-guid-2']
-          })
+            ]
+          )
 
           const vm = await getCertificatesOfComplianceViewModel(
             'compliance-schemes',
@@ -2683,12 +2840,13 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
           expect(vm.items[0]).toMatchObject({
             organisationId: 'cs-guid-1',
-            organisationName: 'EcoPack Compliance Ltd'
+            organisationReferenceNumber: '530001',
+            organisationName: 'Org record name 1'
           })
           expect(vm.items[1]).toMatchObject({
             organisationId: 'cs-guid-2',
             organisationReferenceNumber: 'No data',
-            organisationName: 'No data'
+            organisationName: 'Org record name 2'
           })
         })
 
@@ -2697,6 +2855,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
             {
               id: 'cs-guid-1',
               name: 'Org record name',
+              companiesHouseNumber: 'CHN-CS-1',
               registrationType: 'ComplianceScheme'
             }
           ])
@@ -2705,7 +2864,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
             name: 'ApiError',
             status: 500
           })
-          mockAccountApi.getOrganisationsByExternalIds.mockRejectedValue(
+          mockAccountApi.getOrganisationsByCompaniesHouseNumbers.mockRejectedValue(
             apiError
           )
 

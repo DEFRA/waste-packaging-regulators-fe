@@ -33,6 +33,23 @@ export class AccountApiService extends BaseApiService {
     }
   }
 
+  // Compliance schemes don't share an external id between waste-organisations and
+  // the Account API, so their reference number is resolved by Companies House
+  // number instead (the operator organisation carries the reference number).
+  // Returns the matching organisations (each with referenceNumber, companiesHouseNumber
+  // and isComplianceScheme); unmatched numbers are simply absent.
+  async getOrganisationsByCompaniesHouseNumbers(
+    companiesHouseNumbers,
+    traceId
+  ) {
+    const response = await this.postJson(
+      '/api/organisations/organisations-by-companies-house-numbers',
+      { companiesHouseNumbers },
+      this.getTracingHeader(traceId)
+    )
+    return Array.isArray(response) ? response : []
+  }
+
   async getAccountDetailsById(userId, traceId) {
     if (config.get('useMockApi')) {
       this.logger?.debug?.(

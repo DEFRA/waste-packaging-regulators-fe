@@ -91,6 +91,62 @@ describe('AccountApiService', () => {
     })
   })
 
+  test('getOrganisationsByCompaniesHouseNumbers POSTs the numbers and returns the matching organisations', async () => {
+    const companiesHouseNumbers = ['12345678', '87654321']
+    const responseBody = [
+      {
+        externalId: externalIds[0],
+        name: 'EcoPack Compliance Ltd',
+        referenceNumber: '530001',
+        companiesHouseNumber: '12345678',
+        isComplianceScheme: true
+      }
+    ]
+    const fetchImpl = vi.fn().mockResolvedValue(mockOkResponse(responseBody))
+    const service = new AccountApiService({
+      baseUrl: 'http://localhost:3001',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    const result = await service.getOrganisationsByCompaniesHouseNumbers(
+      companiesHouseNumbers,
+      'trace-1'
+    )
+
+    expect(result).toEqual(responseBody)
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:3001/api/organisations/organisations-by-companies-house-numbers',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ companiesHouseNumbers }),
+        headers: expect.objectContaining({
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: expect.stringMatching(/^Basic /),
+          'x-cdp-request-id': 'trace-1'
+        })
+      })
+    )
+  })
+
+  test('getOrganisationsByCompaniesHouseNumbers returns an empty array when the response is not a list', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(mockOkResponse(''))
+    const service = new AccountApiService({
+      baseUrl: 'http://localhost:3001',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    const result = await service.getOrganisationsByCompaniesHouseNumbers([
+      '12345678'
+    ])
+
+    expect(result).toEqual([])
+  })
+
   test('throws when the Account API responds with a non-success status', async () => {
     const fetchImpl = vi.fn().mockResolvedValue({
       ok: false,
