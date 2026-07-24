@@ -240,7 +240,7 @@ describe('#certificatesOfComplianceController', () => {
 
     test('Should render Percentage met for compliance-schemes items', async () => {
       const item = mockComplianceSchemeAcceptedItems.find(
-        (entry) => entry.overallAccepted === 105
+        (entry) => entry.obligationCoveragePercentage === 105
       )
       const { result } = await inject(
         '/certificates-of-compliance?type=compliance-schemes&tab=accepted'

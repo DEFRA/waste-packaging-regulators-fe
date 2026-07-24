@@ -59,7 +59,7 @@ const makeDeclaration = ({
   obligationStatus: 'Met',
   isRegulation43Compliant: true,
   created: '2027-01-15',
-  overallAccepted: 105,
+  obligationCoveragePercentage: 105,
   ...rest
 })
 
@@ -154,7 +154,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
       )
       expect(vm.items[0].organisationName).toBe('EcoPack Group')
       expect(vm.items[0].regulation43Met).toBe(false)
-      expect(vm.items[0].overallAccepted).toBe(100)
+      expect(vm.items[0].obligationCoveragePercentage).toBe(100)
     })
 
     test('returns empty array for unknown tab', async () => {
@@ -620,7 +620,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           organisationName: 'Test Org',
           recyclingObligationsMet: true,
           regulation43Met: true,
-          overallAccepted: 105,
+          obligationCoveragePercentage: 105,
           dateSubmitted: '2027-01-15'
         })
       })
@@ -1022,18 +1022,20 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.items[0].organisationName).toBe('Unknown organisation')
       })
 
-      test('sets overallAccepted to null when not provided by the API', async () => {
-        setupPendingTab([makeDeclaration({ overallAccepted: undefined })])
+      test('sets obligationCoveragePercentage to null when not provided by the API', async () => {
+        setupPendingTab([
+          makeDeclaration({ obligationCoveragePercentage: undefined })
+        ])
         const vm = await getCertificatesOfComplianceViewModel(
           'direct-producers',
           'pending',
           1
         )
-        expect(vm.items[0].overallAccepted).toBeNull()
+        expect(vm.items[0].obligationCoveragePercentage).toBeNull()
       })
 
-      test('maps overallAccepted from the API to list items', async () => {
-        setupPendingTab([makeDeclaration({ overallAccepted: 84 })])
+      test('maps obligationCoveragePercentage from the API to list items', async () => {
+        setupPendingTab([makeDeclaration({ obligationCoveragePercentage: 84 })])
 
         const vm = await getCertificatesOfComplianceViewModel(
           'direct-producers',
@@ -1041,11 +1043,11 @@ describe('getCertificatesOfComplianceViewModel', () => {
           1
         )
 
-        expect(vm.items[0].overallAccepted).toBe(84)
+        expect(vm.items[0].obligationCoveragePercentage).toBe(84)
       })
 
-      test('maps overallAccepted for compliance-schemes pending items', async () => {
-        setupPendingTab([makeDeclaration({ overallAccepted: 88 })])
+      test('maps obligationCoveragePercentage for compliance-schemes pending items', async () => {
+        setupPendingTab([makeDeclaration({ obligationCoveragePercentage: 88 })])
 
         const vm = await getCertificatesOfComplianceViewModel(
           'compliance-schemes',
@@ -1053,7 +1055,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           1
         )
 
-        expect(vm.items[0].overallAccepted).toBe(88)
+        expect(vm.items[0].obligationCoveragePercentage).toBe(88)
       })
 
       test('maps obligationStatus=Met to recyclingObligationsMet=true', async () => {
