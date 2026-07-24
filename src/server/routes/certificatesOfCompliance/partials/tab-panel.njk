@@ -29,13 +29,13 @@
       {% for item in items %}
         <tr class="govuk-table__row">
           {% if item.id == null %}
-            <td class="govuk-table__cell">
+            <th scope="row" class="govuk-table__header govuk-!-width-one-quarter">
               <a href="./{{ item.organisationId }}/certificates-of-compliance?obligationYear={{ complianceYear }}" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
-            </td>
+            </th>
           {% else %}
-            <td class="govuk-table__cell">
+            <th scope="row" class="govuk-table__header govuk-!-width-one-quarter">
               <a href="./{{ item.organisationId }}/certificates-of-compliance/{{ item.id }}" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
-            </td>
+            </th>
           {% endif %}
 
           <td class="govuk-table__cell">{{ item.organisationReferenceNumber }}</td>

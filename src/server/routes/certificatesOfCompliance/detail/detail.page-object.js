@@ -1,11 +1,12 @@
 import { load } from 'cheerio'
 
+// The first column (material name / date) is a `<th scope="row">` row header,
+// so these indexes count only the `<td>` cells that follow it.
 const TONNAGE_COLUMN = {
-  MATERIAL: 0,
-  OBLIGATION_TO_MEET: 1,
-  AWAITING_ACCEPTANCE: 2,
-  ACCEPTED: 3,
-  OUTSTANDING: 4
+  OBLIGATION_TO_MEET: 0,
+  AWAITING_ACCEPTANCE: 1,
+  ACCEPTED: 2,
+  OUTSTANDING: 3
 }
 
 const CURRENT_YEAR_COLUMN = {
@@ -32,7 +33,7 @@ function readRow($, row) {
     .toArray()
     .map((c) => $(c).text().trim())
   return {
-    material: cells[TONNAGE_COLUMN.MATERIAL],
+    material: $(row).find('th').first().text().trim(),
     tonnages: {
       obligationToMeet: cells[TONNAGE_COLUMN.OBLIGATION_TO_MEET],
       awaitingAcceptance: cells[TONNAGE_COLUMN.AWAITING_ACCEPTANCE],
@@ -44,10 +45,11 @@ function readRow($, row) {
 }
 
 function readTable($, testid) {
-  const bodyRows = $(`[data-testid="${testid}"] tbody tr`).toArray()
   return {
-    rows: bodyRows.slice(0, -1).map((r) => readRow($, r)),
-    totals: readRow($, bodyRows.at(-1))
+    rows: $(`[data-testid="${testid}"] tbody tr`)
+      .toArray()
+      .map((r) => readRow($, r)),
+    totals: readRow($, $(`[data-testid="${testid}"] tfoot tr`).get(0))
   }
 }
 
