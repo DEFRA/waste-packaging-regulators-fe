@@ -47,7 +47,7 @@
               {{ appStatusTag({ value: item.regulation43Met, trueText: 'Compliant', falseText: 'Not compliant' }) }}
             </td>
           {% endif %}
-          <td class="govuk-table__cell">{% if item.obligationCoveragePercentage !== null %}{{ item.obligationCoveragePercentage }}%{% else %}—{% endif %}</td>
+          <td class="govuk-table__cell">{% if item.obligationCoveragePercentage !== null %}{{ item.obligationCoveragePercentage }}%{% else %}<span aria-hidden="true">—</span><span class="govuk-visually-hidden">No data</span>{% endif %}</td>
           {% if activeTab != 'not-submitted' %}
             <td class="govuk-table__cell">{{ item.dateSubmitted | formatDate('do MMMM yyyy') }}</td>
           {% endif %}
