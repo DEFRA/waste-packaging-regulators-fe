@@ -59,7 +59,7 @@ const makeDeclaration = ({
   obligationStatus: 'Met',
   isRegulation43Compliant: true,
   created: '2027-01-15',
-  obligationCoveragePercentage: 105,
+  obligationCoveragePercentage: 84,
   ...rest
 })
 
@@ -620,7 +620,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           organisationName: 'Test Org',
           recyclingObligationsMet: true,
           regulation43Met: true,
-          obligationCoveragePercentage: 105,
+          obligationCoveragePercentage: 84,
           dateSubmitted: '2027-01-15'
         })
       })

@@ -107,7 +107,7 @@ export const mockAcceptedItems = [
     organisationName: 'Acme Compliance Co',
     recyclingObligationsMet: true,
     regulation43Met: true,
-    obligationCoveragePercentage: 112,
+    obligationCoveragePercentage: 100,
     dateSubmitted: '2027-01-15'
   },
   {
@@ -196,7 +196,7 @@ export const mockComplianceSchemeAcceptedItems = [
     organisationName: MOCK_ORG_NATIONWIDE_OPERATOR_NAME,
     recyclingObligationsMet: true,
     regulation43Met: true,
-    obligationCoveragePercentage: 105,
+    obligationCoveragePercentage: 100,
     dateSubmitted: '2027-01-12'
   },
   {
