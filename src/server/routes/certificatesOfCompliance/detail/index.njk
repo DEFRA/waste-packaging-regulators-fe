@@ -210,6 +210,7 @@
         <p class="govuk-body-m govuk-!-margin-bottom-3">All values are in tonnes.</p>
 
         <table class="govuk-table" data-testid="obligations-table">
+          <caption class="govuk-table__caption govuk-visually-hidden">Recycling obligations by material, in tonnes</caption>
           <thead class="govuk-table__head">
             <tr class="govuk-table__row">
               <th scope="col" class="govuk-table__header">Material</th>
@@ -223,7 +224,7 @@
           <tbody class="govuk-table__body">
             {% for material in materials %}
               <tr class="govuk-table__row">
-                <td class="govuk-table__cell">{{ material.name }}</td>
+                <th scope="row" class="govuk-table__header">{{ material.name }}</th>
                 <td class="govuk-table__cell govuk-table__cell--numeric">{{ material.obligationToMeet }}</td>
                 <td class="govuk-table__cell govuk-table__cell--numeric">{{ material.awaitingAcceptance }}</td>
                 <td class="govuk-table__cell govuk-table__cell--numeric">{{ material.accepted }}</td>
@@ -233,8 +234,10 @@
                 </td>
               </tr>
             {% endfor %}
+          </tbody>
+          <tfoot class="govuk-table__foot">
             <tr class="govuk-table__row">
-              <td class="govuk-table__cell govuk-!-font-weight-bold">Totals</td>
+              <th scope="row" class="govuk-table__header">Totals</th>
               <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.obligationToMeet }}</td>
               <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.awaitingAcceptance }}</td>
               <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.accepted }}</td>
@@ -243,12 +246,13 @@
                 {{ materialStatusTag(materialTotals.status) }}
               </td>
             </tr>
-          </tbody>
+          </tfoot>
         </table>
 
         <h3 class="govuk-heading-s govuk-!-margin-top-8">Glass recycling obligation breakdown</h3>
 
         <table class="govuk-table" data-testid="glass-breakdown-table">
+          <caption class="govuk-table__caption govuk-visually-hidden">Glass recycling obligation breakdown by material, in tonnes</caption>
           <thead class="govuk-table__head">
             <tr class="govuk-table__row">
               <th scope="col" class="govuk-table__header">Material</th>
@@ -262,7 +266,7 @@
           <tbody class="govuk-table__body">
             {% for row in glassBreakdown %}
               <tr class="govuk-table__row">
-                <td class="govuk-table__cell">{{ row.name }}</td>
+                <th scope="row" class="govuk-table__header">{{ row.name }}</th>
                 <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.obligationToMeet }}</td>
                 <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.awaitingAcceptance }}</td>
                 <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.accepted }}</td>
@@ -272,8 +276,10 @@
                 </td>
               </tr>
             {% endfor %}
+          </tbody>
+          <tfoot class="govuk-table__foot">
             <tr class="govuk-table__row">
-              <td class="govuk-table__cell govuk-!-font-weight-bold">Totals</td>
+              <th scope="row" class="govuk-table__header">Totals</th>
               <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.obligationToMeet }}</td>
               <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.awaitingAcceptance }}</td>
               <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.accepted }}</td>
@@ -282,7 +288,7 @@
                 {{ materialStatusTag(glassBreakdownTotals.status) }}
               </td>
             </tr>
-          </tbody>
+          </tfoot>
         </table>
       {% else %}
         <p class="govuk-body-m" data-testid="obligations-no-data">No data</p>
@@ -294,6 +300,7 @@
         <p class="govuk-body">No previous submissions</p>
       {% else %}
         <table class="govuk-table" data-testid="current-year-table">
+          <caption class="govuk-table__caption govuk-visually-hidden">Current year submission history</caption>
           <thead class="govuk-table__head">
             <tr class="govuk-table__row">
               <th scope="col" class="govuk-table__header">Date</th>
