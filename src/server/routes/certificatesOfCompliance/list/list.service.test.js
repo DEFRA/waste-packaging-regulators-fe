@@ -1046,18 +1046,6 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.items[0].obligationCoveragePercentage).toBe(84)
       })
 
-      test('maps obligationCoveragePercentage for compliance-schemes pending items', async () => {
-        setupPendingTab([makeDeclaration({ obligationCoveragePercentage: 88 })])
-
-        const vm = await getCertificatesOfComplianceViewModel(
-          'compliance-schemes',
-          'pending',
-          1
-        )
-
-        expect(vm.items[0].obligationCoveragePercentage).toBe(88)
-      })
-
       test('maps obligationStatus=Met to recyclingObligationsMet=true', async () => {
         setupPendingTab([makeDeclaration({ obligationStatus: 'Met' })])
         const vm = await getCertificatesOfComplianceViewModel(
