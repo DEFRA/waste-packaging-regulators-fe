@@ -35,6 +35,7 @@ function mapDeclarationToItem(declaration) {
     organisationName: mapOrganisationName(organisation),
     recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
     regulation43Met: isRegulation43Compliant,
+    // Whole number from the obligations API — display as-is (no frontend rounding).
     obligationCoveragePercentage: obligationCoveragePercentage ?? null,
     dateSubmitted: created
   }
