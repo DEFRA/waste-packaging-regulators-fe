@@ -76,7 +76,9 @@ async function fetchSchemeOperatorAccountDetails(
     [companiesHouseNumber],
     traceId
   )
-  return mapAccountOrganisationDetails(schemeOperators.get(companiesHouseNumber))
+  return mapAccountOrganisationDetails(
+    schemeOperators.get(companiesHouseNumber)
+  )
 }
 
 // Direct producers resolve against the Account API by external id; compliance

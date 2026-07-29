@@ -65,10 +65,13 @@ describe('mapOrganisationContact', () => {
     ).toEqual(noContact)
   })
 
-  test.each([[null], [undefined], [{}], [{ persons: null }], [{ persons: [] }]])(
-    'returns nulls for %s',
-    (organisationWithPersons) => {
-      expect(mapOrganisationContact(organisationWithPersons)).toEqual(noContact)
-    }
-  )
+  test.each([
+    [null],
+    [undefined],
+    [{}],
+    [{ persons: null }],
+    [{ persons: [] }]
+  ])('returns nulls for %s', (organisationWithPersons) => {
+    expect(mapOrganisationContact(organisationWithPersons)).toEqual(noContact)
+  })
 })

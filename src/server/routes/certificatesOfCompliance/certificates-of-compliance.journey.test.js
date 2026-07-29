@@ -722,7 +722,9 @@ describe('certificates of compliance — journey', () => {
       const payload = (await inject(FUTUREPACK_UNSUBMITTED_URL)).payload
       const { summaryRows } = loadDetailPage(payload)
 
-      expect(summaryRows.emailAddress.value).toBe('nadia.clarke@futurepack.test')
+      expect(summaryRows.emailAddress.value).toBe(
+        'nadia.clarke@futurepack.test'
+      )
       expect(summaryRows.phoneNumber.value).toBe('020 7946 0103')
       expect(payload).not.toContain('sam.reed@example.test')
     })
