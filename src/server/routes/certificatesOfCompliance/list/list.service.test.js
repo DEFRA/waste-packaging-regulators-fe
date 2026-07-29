@@ -451,7 +451,13 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
     beforeEach(() => {
       config.get.mockReturnValue(false)
-      mockObligationsApi = { listComplianceDeclarations: vi.fn() }
+      mockObligationsApi = {
+        listComplianceDeclarations: vi.fn(),
+        getComplianceObligation: vi.fn().mockResolvedValue({ obligations: [] }),
+        getComplianceObligationOrNull: vi
+          .fn()
+          .mockResolvedValue({ obligations: [] })
+      }
       mockOrganisationsApi = { listComplianceOrganisations: vi.fn() }
       mockAccountApi = {
         getOrganisationsByExternalIds: vi
@@ -2495,6 +2501,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
           total: 0,
           complianceDeclarations: []
         })
+        mockObligationsApi.getComplianceObligationOrNull = vi
+          .fn()
+          .mockResolvedValue({ obligations: [] })
         mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
           organisations: orgs
         })
@@ -2891,6 +2900,202 @@ describe('getCertificatesOfComplianceViewModel', () => {
             )
           ).rejects.toMatchObject({ name: 'ApiError', status: 500 })
         })
+      })
+    })
+
+    describe('not-submitted — obligation coverage percentage', () => {
+      const setupNotSubmittedDirectProducerTab = (
+        orgs,
+        obligationByOrgId = {}
+      ) => {
+        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
+          total: 0,
+          complianceDeclarations: []
+        })
+        mockObligationsApi.getComplianceObligationOrNull = vi
+          .fn()
+          .mockImplementation(({ organisationId }) =>
+            Promise.resolve(
+              obligationByOrgId[organisationId] ?? { obligations: [] }
+            )
+          )
+        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
+          organisations: orgs
+        })
+      }
+
+      test('calls getComplianceObligationOrNull for each direct producer on the page', async () => {
+        setupNotSubmittedDirectProducerTab([
+          {
+            id: 'org-1',
+            name: 'Org One',
+            registrationType: 'DirectProducer'
+          },
+          {
+            id: 'org-2',
+            name: 'Org Two',
+            registrationType: 'DirectProducer'
+          }
+        ])
+
+        await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'not-submitted',
+          1,
+          'trace-obl'
+        )
+
+        expect(
+          mockObligationsApi.getComplianceObligationOrNull
+        ).toHaveBeenCalledTimes(2)
+        expect(
+          mockObligationsApi.getComplianceObligationOrNull
+        ).toHaveBeenCalledWith(
+          { organisationId: 'org-1', obligationYear: 2026 },
+          'trace-obl'
+        )
+        expect(
+          mockObligationsApi.getComplianceObligationOrNull
+        ).toHaveBeenCalledWith(
+          { organisationId: 'org-2', obligationYear: 2026 },
+          'trace-obl'
+        )
+      })
+
+      test('maps calculated obligationCoveragePercentage from obligations', async () => {
+        setupNotSubmittedDirectProducerTab(
+          [
+            {
+              id: 'org-1',
+              name: 'Org One',
+              registrationType: 'DirectProducer'
+            }
+          ],
+          {
+            'org-1': {
+              obligations: [{ tonnages: { accepted: 850, obligated: 925 } }]
+            }
+          }
+        )
+
+        const vm = await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'not-submitted',
+          1
+        )
+
+        expect(vm.items[0].obligationCoveragePercentage).toBe(92)
+      })
+
+      test('returns 0% when obligations are empty', async () => {
+        setupNotSubmittedDirectProducerTab([
+          {
+            id: 'org-1',
+            name: 'Org One',
+            registrationType: 'DirectProducer'
+          }
+        ])
+
+        const vm = await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'not-submitted',
+          1
+        )
+
+        expect(vm.items[0].obligationCoveragePercentage).toBe(0)
+      })
+
+      test('returns 0% when obligations API responds with 404', async () => {
+        setupNotSubmittedDirectProducerTab([
+          {
+            id: 'org-1',
+            name: 'Org One',
+            registrationType: 'DirectProducer'
+          }
+        ])
+        mockObligationsApi.getComplianceObligationOrNull.mockResolvedValue(null)
+
+        const vm = await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'not-submitted',
+          1
+        )
+
+        expect(vm.items[0].obligationCoveragePercentage).toBe(0)
+      })
+
+      test('does not call getComplianceObligationOrNull for compliance-schemes not-submitted tab', async () => {
+        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
+          total: 0,
+          complianceDeclarations: []
+        })
+        mockObligationsApi.getComplianceObligationOrNull = vi.fn()
+        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
+          organisations: [
+            {
+              id: 'cs-1',
+              name: 'Scheme',
+              companiesHouseNumber: 'CH001',
+              registrationType: 'ComplianceScheme'
+            }
+          ]
+        })
+
+        await getCertificatesOfComplianceViewModel(
+          'compliance-schemes',
+          'not-submitted',
+          1
+        )
+
+        expect(
+          mockObligationsApi.getComplianceObligationOrNull
+        ).not.toHaveBeenCalled()
+      })
+
+      test('does not call getComplianceObligationOrNull for pending tab', async () => {
+        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
+          total: 0,
+          complianceDeclarations: []
+        })
+        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
+          organisations: []
+        })
+        mockObligationsApi.getComplianceObligationOrNull.mockClear()
+
+        await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'pending',
+          1
+        )
+
+        expect(
+          mockObligationsApi.getComplianceObligationOrNull
+        ).not.toHaveBeenCalled()
+      })
+
+      test('propagates obligations API failures', async () => {
+        setupNotSubmittedDirectProducerTab([
+          {
+            id: 'org-1',
+            name: 'Org One',
+            registrationType: 'DirectProducer'
+          }
+        ])
+        const apiError = Object.assign(new Error('obligations API failed'), {
+          name: 'ApiError',
+          status: 500
+        })
+        mockObligationsApi.getComplianceObligationOrNull.mockRejectedValue(
+          apiError
+        )
+
+        await expect(
+          getCertificatesOfComplianceViewModel(
+            'direct-producers',
+            'not-submitted',
+            1
+          )
+        ).rejects.toMatchObject({ name: 'ApiError', status: 500 })
       })
     })
   })

@@ -346,6 +346,75 @@ describe('WasteObligationsApiService', () => {
     )
   })
 
+  describe('getComplianceObligationOrNull', () => {
+    test('returns data when obligations exist', async () => {
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValue(
+          mockOkResponse({ obligations: [{ material: 'Glass' }] })
+        )
+      const service = new WasteObligationsApiService({
+        baseUrl: 'http://localhost:8080',
+        clientId: 'Developer',
+        clientSecret: 'developer-pwd',
+        fetchImpl
+      })
+
+      const result = await service.getComplianceObligationOrNull({
+        organisationId: 'org-abc',
+        obligationYear: 2026
+      })
+
+      expect(result).toMatchObject({
+        obligations: [{ material: 'Glass' }]
+      })
+    })
+
+    test('returns null when the API responds with 404', async () => {
+      const fetchImpl = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        headers: { get: vi.fn().mockReturnValue('application/problem+json') },
+        json: vi.fn().mockResolvedValue({ title: 'Not Found', status: 404 })
+      })
+      const service = new WasteObligationsApiService({
+        baseUrl: 'http://localhost:8080',
+        clientId: 'Developer',
+        clientSecret: 'developer-pwd',
+        fetchImpl
+      })
+
+      const result = await service.getComplianceObligationOrNull({
+        organisationId: 'org-abc',
+        obligationYear: 2026
+      })
+
+      expect(result).toBeNull()
+    })
+
+    test('rethrows non-404 API errors', async () => {
+      const fetchImpl = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        headers: { get: vi.fn().mockReturnValue('application/problem+json') },
+        json: vi.fn().mockResolvedValue({ title: 'Server Error', status: 500 })
+      })
+      const service = new WasteObligationsApiService({
+        baseUrl: 'http://localhost:8080',
+        clientId: 'Developer',
+        clientSecret: 'developer-pwd',
+        fetchImpl
+      })
+
+      await expect(
+        service.getComplianceObligationOrNull({
+          organisationId: 'org-abc',
+          obligationYear: 2026
+        })
+      ).rejects.toMatchObject({ status: 500 })
+    })
+  })
+
   test('updateComplianceDeclaration calls the correct PATCH endpoint', async () => {
     const fetchImpl = vi
       .fn()
