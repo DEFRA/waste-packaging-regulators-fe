@@ -1417,16 +1417,18 @@ export function getMockDeclarationsByOrgYear(organisationId, obligationYear) {
   return mockDeclarationsByOrgYear[`${organisationId}:${obligationYear}`] ?? []
 }
 
-function mockComplianceSchemeAcceptedDetail(
+function mockComplianceSchemeAcceptedDetail({
   id,
   organisationId,
-  tradingName,
-  operatorName,
+  complianceSchemeName,
+  schemeOperatorName,
   referenceNumber,
   companiesHouseNumber,
   timestamp,
-  { obligations, obligationStatus, isRegulation43Compliant }
-) {
+  obligations,
+  obligationStatus,
+  isRegulation43Compliant
+}) {
   return {
     ...mockComplianceSchemeAcceptedDetailData,
     id,
@@ -1435,8 +1437,8 @@ function mockComplianceSchemeAcceptedDetail(
     organisation: {
       ...mockComplianceSchemeDetailData.organisation,
       id: organisationId,
-      complianceSchemeName: tradingName,
-      schemeOperatorName: operatorName,
+      complianceSchemeName,
+      schemeOperatorName,
       referenceNumber,
       companiesHouseNumber
     },
@@ -1451,62 +1453,54 @@ function mockComplianceSchemeAcceptedDetail(
 }
 
 const mockDetailById = {
-  [MOCK_DECL_CS_ACCEPTED_ASHCROFT_ID]: mockComplianceSchemeAcceptedDetail(
-    MOCK_DECL_CS_ACCEPTED_ASHCROFT_ID,
-    MOCK_ORG_ASHCROFT_ID,
-    MOCK_ORG_ASHCROFT_NAME,
-    MOCK_ORG_ASHCROFT_OPERATOR_NAME,
-    MOCK_REF_CS_ASHCROFT,
-    MOCK_CHN_CS_ASHCROFT,
-    '2027-01-06T10:15:00Z',
-    {
-      obligations: mockObligationsAllMet,
-      obligationStatus: 'Met',
-      isRegulation43Compliant: true
-    }
-  ),
-  [MOCK_DECL_CS_ACCEPTED_BRAMBLE_ID]: mockComplianceSchemeAcceptedDetail(
-    MOCK_DECL_CS_ACCEPTED_BRAMBLE_ID,
-    MOCK_ORG_BRAMBLE_ID,
-    MOCK_ORG_BRAMBLE_NAME,
-    MOCK_ORG_BRAMBLE_OPERATOR_NAME,
-    MOCK_REF_CS_BRAMBLE,
-    MOCK_CHN_CS_BRAMBLE,
-    '2027-01-05T09:40:00Z',
-    {
-      obligations: mockObligationsAllMet,
-      obligationStatus: 'Met',
-      isRegulation43Compliant: false
-    }
-  ),
-  [MOCK_DECL_CS_ACCEPTED_CALDERA_ID]: mockComplianceSchemeAcceptedDetail(
-    MOCK_DECL_CS_ACCEPTED_CALDERA_ID,
-    MOCK_ORG_CALDERA_ID,
-    MOCK_ORG_CALDERA_NAME,
-    MOCK_ORG_CALDERA_OPERATOR_NAME,
-    MOCK_REF_CS_CALDERA,
-    MOCK_CHN_CS_CALDERA,
-    '2027-01-04T15:20:00Z',
-    {
-      obligations: mockObligationsMixed,
-      obligationStatus: 'NotMet',
-      isRegulation43Compliant: true
-    }
-  ),
-  [MOCK_DECL_CS_ACCEPTED_DOVETAIL_ID]: mockComplianceSchemeAcceptedDetail(
-    MOCK_DECL_CS_ACCEPTED_DOVETAIL_ID,
-    MOCK_ORG_DOVETAIL_ID,
-    MOCK_ORG_DOVETAIL_NAME,
-    MOCK_ORG_DOVETAIL_OPERATOR_NAME,
-    MOCK_REF_CS_DOVETAIL,
-    MOCK_CHN_CS_DOVETAIL,
-    '2027-01-02T11:00:00Z',
-    {
-      obligations: mockObligationsAllMet,
-      obligationStatus: 'Met',
-      isRegulation43Compliant: true
-    }
-  ),
+  [MOCK_DECL_CS_ACCEPTED_ASHCROFT_ID]: mockComplianceSchemeAcceptedDetail({
+    id: MOCK_DECL_CS_ACCEPTED_ASHCROFT_ID,
+    organisationId: MOCK_ORG_ASHCROFT_ID,
+    complianceSchemeName: MOCK_ORG_ASHCROFT_NAME,
+    schemeOperatorName: MOCK_ORG_ASHCROFT_OPERATOR_NAME,
+    referenceNumber: MOCK_REF_CS_ASHCROFT,
+    companiesHouseNumber: MOCK_CHN_CS_ASHCROFT,
+    timestamp: '2027-01-06T10:15:00Z',
+    obligations: mockObligationsAllMet,
+    obligationStatus: 'Met',
+    isRegulation43Compliant: true
+  }),
+  [MOCK_DECL_CS_ACCEPTED_BRAMBLE_ID]: mockComplianceSchemeAcceptedDetail({
+    id: MOCK_DECL_CS_ACCEPTED_BRAMBLE_ID,
+    organisationId: MOCK_ORG_BRAMBLE_ID,
+    complianceSchemeName: MOCK_ORG_BRAMBLE_NAME,
+    schemeOperatorName: MOCK_ORG_BRAMBLE_OPERATOR_NAME,
+    referenceNumber: MOCK_REF_CS_BRAMBLE,
+    companiesHouseNumber: MOCK_CHN_CS_BRAMBLE,
+    timestamp: '2027-01-05T09:40:00Z',
+    obligations: mockObligationsAllMet,
+    obligationStatus: 'Met',
+    isRegulation43Compliant: false
+  }),
+  [MOCK_DECL_CS_ACCEPTED_CALDERA_ID]: mockComplianceSchemeAcceptedDetail({
+    id: MOCK_DECL_CS_ACCEPTED_CALDERA_ID,
+    organisationId: MOCK_ORG_CALDERA_ID,
+    complianceSchemeName: MOCK_ORG_CALDERA_NAME,
+    schemeOperatorName: MOCK_ORG_CALDERA_OPERATOR_NAME,
+    referenceNumber: MOCK_REF_CS_CALDERA,
+    companiesHouseNumber: MOCK_CHN_CS_CALDERA,
+    timestamp: '2027-01-04T15:20:00Z',
+    obligations: mockObligationsMixed,
+    obligationStatus: 'NotMet',
+    isRegulation43Compliant: true
+  }),
+  [MOCK_DECL_CS_ACCEPTED_DOVETAIL_ID]: mockComplianceSchemeAcceptedDetail({
+    id: MOCK_DECL_CS_ACCEPTED_DOVETAIL_ID,
+    organisationId: MOCK_ORG_DOVETAIL_ID,
+    complianceSchemeName: MOCK_ORG_DOVETAIL_NAME,
+    schemeOperatorName: MOCK_ORG_DOVETAIL_OPERATOR_NAME,
+    referenceNumber: MOCK_REF_CS_DOVETAIL,
+    companiesHouseNumber: MOCK_CHN_CS_DOVETAIL,
+    timestamp: '2027-01-02T11:00:00Z',
+    obligations: mockObligationsAllMet,
+    obligationStatus: 'Met',
+    isRegulation43Compliant: true
+  }),
   [MOCK_DECL_HOWCO_ID]: mockDetailData,
   [MOCK_DECL_GREENFIELD_ID]: mockDirectProducerPendingNotMetDetailData,
   [MOCK_DECL_ACME_ID]: mockDirectProducerAcceptedDetailData,
