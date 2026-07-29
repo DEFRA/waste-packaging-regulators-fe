@@ -21,6 +21,7 @@ import {
 } from './detail-mapping.js'
 import { deriveRegistrationType } from '../common/registration-type.js'
 import { isComplianceSchemeRegistrationType } from '../common/display.js'
+import { resolveSchemeOperators } from '../common/scheme-operator.js'
 
 export { findSubmittedAuditUser } from './audit.js'
 
@@ -65,31 +66,23 @@ async function fetchAccountOrganisationDetails(
   return mapAccountOrganisationDetails(organisations[0])
 }
 
-async function fetchComplianceSchemeAccountDetailsByCompaniesHouseNumber(
+async function fetchSchemeOperatorAccountDetails(
   accountApi,
   companiesHouseNumber,
   traceId
 ) {
-  if (!companiesHouseNumber) {
-    return mapAccountOrganisationDetails(null)
-  }
-
-  const organisations =
-    await accountApi.getOrganisationsByCompaniesHouseNumbers(
-      [companiesHouseNumber],
-      traceId
-    )
-  // A Companies House number can match more than one organisation (e.g. a
-  // producer and the scheme operator); only the compliance-scheme operator
-  // carries the reference number we want (matches the not-submitted list).
-  return mapAccountOrganisationDetails(
-    organisations.find((org) => org.isComplianceScheme)
+  const schemeOperators = await resolveSchemeOperators(
+    accountApi,
+    [companiesHouseNumber],
+    traceId
   )
+  return mapAccountOrganisationDetails(schemeOperators.get(companiesHouseNumber))
 }
 
 // Direct producers resolve against the Account API by external id; compliance
-// schemes only by Companies House number (mirrors the not-submitted list).
-async function fetchNotSubmittedAccountOrganisationDetails(
+// schemes only by Companies House number (mirrors the not-submitted list). The
+// contact details then hang off whichever Account organisation was matched.
+async function fetchNotSubmittedAccountOrganisation(
   accountApi,
   organisation,
   organisationId,
@@ -100,18 +93,33 @@ async function fetchNotSubmittedAccountOrganisationDetails(
     organisation?.registrationType ??
     deriveRegistrationType(organisation?.registrations, obligationYear)
 
-  if (isComplianceSchemeRegistrationType(registrationType)) {
-    return fetchComplianceSchemeAccountDetailsByCompaniesHouseNumber(
+  const details = isComplianceSchemeRegistrationType(registrationType)
+    ? await fetchSchemeOperatorAccountDetails(
+        accountApi,
+        organisation?.companiesHouseNumber,
+        traceId
+      )
+    : await fetchAccountOrganisationDetails(accountApi, organisationId, traceId)
+
+  return {
+    ...details,
+    contact: await fetchOrganisationContact(
       accountApi,
-      organisation?.companiesHouseNumber,
+      details.externalId,
       traceId
     )
   }
-
-  return fetchAccountOrganisationDetails(accountApi, organisationId, traceId)
 }
 
-function resolveMockAccountOrganisationDetails(organisationId) {
+async function fetchOrganisationContact(accountApi, externalId, traceId) {
+  const organisationWithPersons = externalId
+    ? await accountApi.getOrganisationWithPersonsOrNull(externalId, traceId)
+    : null
+
+  return mapOrganisationContact(organisationWithPersons)
+}
+
+function resolveMockAccountOrganisation(organisationId) {
   const organisation = getMockAccountOrganisationByExternalId(organisationId)
   return {
     ...mapAccountOrganisationDetails(organisation),
@@ -129,8 +137,7 @@ async function getMockDeclarationDetail(
     obligationYear ?? Number(mockSummary.complianceYear)
 
   if (!id) {
-    const accountOrganisation =
-      resolveMockAccountOrganisationDetails(organisationId)
+    const accountOrganisation = resolveMockAccountOrganisation(organisationId)
     return mapObligationToDetail(getMockObligationData(organisationId), {
       organisationId,
       obligationYear: resolvedObligationYear,
@@ -183,24 +190,20 @@ async function getNotSubmittedDeclarationDetail(
     ),
     organisationsApi.getOrganisation({ organisationId }, traceId)
   ])
-  const accountOrganisation = await fetchNotSubmittedAccountOrganisationDetails(
+  const accountOrganisation = await fetchNotSubmittedAccountOrganisation(
     accountApi,
     organisation,
     organisationId,
     obligationYear,
     traceId
   )
-  const { externalId } = accountOrganisation
-  const organisationWithPersons = externalId
-    ? await accountApi.getOrganisationWithPersonsOrNull(externalId, traceId)
-    : null
   return mapObligationToDetail(unsubmittedObligationData, {
     organisationId,
     obligationYear,
     organisation,
     accountOrganisationName: accountOrganisation.name,
     accountOrganisationReferenceNumber: accountOrganisation.referenceNumber,
-    accountOrganisationContact: mapOrganisationContact(organisationWithPersons)
+    accountOrganisationContact: accountOrganisation.contact
   })
 }
 

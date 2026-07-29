@@ -44,6 +44,15 @@ import {
   mockDirectProducerPendingNotMetDetailData
 } from '../certificates-of-compliance.mock.js'
 
+// waste-organisations records carry no registrationType — it is derived from
+// the registrations they do carry, so fixtures must supply those instead.
+const complianceSchemeRegistrations = [
+  { type: 'COMPLIANCE_SCHEME', registrationYear: 2026, status: 'REGISTERED' }
+]
+const directProducerRegistrations = [
+  { type: 'LARGE_PRODUCER', registrationYear: 2026, status: 'REGISTERED' }
+]
+
 const makeDeclaration = ({
   organisation: orgOverrides = {},
   ...rest
@@ -2175,7 +2184,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
               id: 'org-cs',
               name: 'Scheme Operator Co',
               tradingName: 'Trading Scheme Co',
-              registrationType: 'ComplianceScheme',
+              registrations: complianceSchemeRegistrations,
               referenceNumber: '183551'
             })
           })
@@ -2216,7 +2225,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
               getOrganisation: vi.fn().mockResolvedValue({
                 id: 'org-abc',
                 name: 'Live Producer Ltd',
-                registrationType: 'DirectProducer'
+                registrations: directProducerRegistrations
               })
             })
             mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
@@ -2242,7 +2251,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
                 id: 'org-cs',
                 name: 'Scheme Operator Co',
                 tradingName: 'Trading Scheme Co',
-                registrationType: 'ComplianceScheme',
+                registrations: complianceSchemeRegistrations,
                 companiesHouseNumber: 'CHN-CS-1'
               })
             })
@@ -3016,7 +3025,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
               name: 'Scheme Operator Co',
               tradingName: 'GreenCircle Compliance Scheme',
               companiesHouseNumber: 'CHN-CS-1',
-              registrationType: 'ComplianceScheme'
+              registrations: complianceSchemeRegistrations
             }
           ])
           mockAccountApi.getOrganisationsByCompaniesHouseNumbers.mockResolvedValue(

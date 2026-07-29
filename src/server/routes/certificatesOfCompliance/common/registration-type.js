@@ -75,7 +75,7 @@ function resolveWasteOrganisationRegistrationType(
   )
 }
 
-function mapRegistrationTypeToOrganisationType(registrationType) {
+export function mapRegistrationTypeToOrganisationType(registrationType) {
   return displayOrNoData(
     organisationTypeDisplayNames[registrationType] ?? registrationType
   )
@@ -106,5 +106,3 @@ export function mapWasteOrganisationToDetailFields(
       mapCompaniesHouseNumberFromWasteOrganisation(organisation)
   }
 }
-
-export { mapRegistrationTypeToOrganisationType }
