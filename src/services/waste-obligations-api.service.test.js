@@ -391,6 +391,28 @@ describe('WasteObligationsApiService', () => {
 
       expect(result).toBeNull()
     })
+
+    test('rethrows non-404 API errors', async () => {
+      const fetchImpl = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        headers: { get: vi.fn().mockReturnValue('application/problem+json') },
+        json: vi.fn().mockResolvedValue({ title: 'Server Error', status: 500 })
+      })
+      const service = new WasteObligationsApiService({
+        baseUrl: 'http://localhost:8080',
+        clientId: 'Developer',
+        clientSecret: 'developer-pwd',
+        fetchImpl
+      })
+
+      await expect(
+        service.getComplianceObligationOrNull({
+          organisationId: 'org-abc',
+          obligationYear: 2026
+        })
+      ).rejects.toMatchObject({ status: 500 })
+    })
   })
 
   test('updateComplianceDeclaration calls the correct PATCH endpoint', async () => {

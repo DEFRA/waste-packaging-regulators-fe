@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { calculateObligationCoveragePercentage } from './obligation-coverage.js'
+import { calculateObligationCoveragePercentage } from './display.js'
 
 function makeObligation(accepted, obligated) {
   return { tonnages: { accepted, obligated } }
