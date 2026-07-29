@@ -1,4 +1,6 @@
 import { config } from '#config/config.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { ApiError } from './apiBaseClient/api-error.js'
 import { BaseApiService } from './apiBaseClient/base-api.service.js'
 
 export const mockAccountDetails = {
@@ -48,6 +50,24 @@ export class AccountApiService extends BaseApiService {
       this.getTracingHeader(traceId)
     )
     return Array.isArray(response) ? response : []
+  }
+
+  async getOrganisationWithPersons(organisationId, traceId) {
+    return this.getJson(
+      `/api/organisations/organisation-with-persons/${encodeURIComponent(organisationId)}`,
+      this.getTracingHeader(traceId)
+    )
+  }
+
+  async getOrganisationWithPersonsOrNull(organisationId, traceId) {
+    try {
+      return await this.getOrganisationWithPersons(organisationId, traceId)
+    } catch (err) {
+      if (err instanceof ApiError && err.status === statusCodes.notFound) {
+        return null
+      }
+      throw err
+    }
   }
 
   async getAccountDetailsById(userId, traceId) {
