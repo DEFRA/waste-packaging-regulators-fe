@@ -129,6 +129,7 @@ export const mockNotSubmittedItems = [
     organisationReferenceNumber: '518293',
     organisationName: MOCK_ORG_REDWOOD_NAME,
     recyclingObligationsMet: false,
+    obligationCoveragePercentage: 92,
     dateSubmitted: null
   },
   {
@@ -137,6 +138,7 @@ export const mockNotSubmittedItems = [
     organisationReferenceNumber: '627148',
     organisationName: MOCK_ORG_COASTAL_NAME,
     recyclingObligationsMet: false,
+    obligationCoveragePercentage: 0,
     dateSubmitted: null
   },
   {
@@ -145,6 +147,7 @@ export const mockNotSubmittedItems = [
     organisationReferenceNumber: MOCK_REF_STERLING,
     organisationName: MOCK_ORG_STERLING_NAME,
     recyclingObligationsMet: null,
+    obligationCoveragePercentage: null,
     dateSubmitted: null
   },
   {
@@ -153,6 +156,7 @@ export const mockNotSubmittedItems = [
     organisationReferenceNumber: MOCK_REF_PINNACLE,
     organisationName: MOCK_ORG_PINNACLE_NAME,
     recyclingObligationsMet: false,
+    obligationCoveragePercentage: 100,
     dateSubmitted: null
   },
   {
@@ -161,6 +165,7 @@ export const mockNotSubmittedItems = [
     organisationReferenceNumber: MOCK_REF_MERIDIAN,
     organisationName: MOCK_ORG_MERIDIAN_NAME,
     recyclingObligationsMet: false,
+    obligationCoveragePercentage: 54,
     dateSubmitted: null
   }
 ]

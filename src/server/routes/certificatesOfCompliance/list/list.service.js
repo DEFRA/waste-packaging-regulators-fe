@@ -18,6 +18,7 @@ import {
   COMPLIANCE_YEAR
 } from '../common/constants.js'
 import { mapOrganisationName } from '../common/organisation.js'
+import { calculateObligationCoveragePercentage } from '../common/obligation-coverage.js'
 
 function mapDeclarationToItem(declaration) {
   const {
@@ -191,6 +192,27 @@ async function getComplianceSummary(
   }
 }
 
+async function resolveNotSubmittedObligationCoveragePercentages(
+  obligationsApi,
+  items,
+  traceId
+) {
+  await Promise.all(
+    items.map(async (item) => {
+      const data = await obligationsApi.getComplianceObligationOrNull(
+        {
+          organisationId: item.organisationId,
+          obligationYear: COMPLIANCE_YEAR
+        },
+        traceId
+      )
+      item.obligationCoveragePercentage = calculateObligationCoveragePercentage(
+        data?.obligations ?? []
+      )
+    })
+  )
+}
+
 // Direct producers resolve by external id; compliance schemes by Companies
 // House number (their external id doesn't match the Account API).
 async function resolveNotSubmittedReferenceNumbers(
@@ -272,6 +294,14 @@ async function getComplianceList(
       traceId,
       organisationType
     )
+
+    if (organisationType !== COMPLIANCE_SCHEMES) {
+      await resolveNotSubmittedObligationCoveragePercentages(
+        obligationsApi,
+        items,
+        traceId
+      )
+    }
 
     return {
       items,

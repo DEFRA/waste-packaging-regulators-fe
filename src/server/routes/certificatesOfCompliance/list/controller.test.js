@@ -253,6 +253,18 @@ describe('#certificatesOfComplianceController', () => {
       expect(result).toEqual(expect.stringContaining('97%'))
     })
 
+    test('Should render Percentage met for direct-producer not-submitted items', async () => {
+      const item = mockNotSubmittedItems.find(
+        (entry) => entry.obligationCoveragePercentage === 92
+      )
+      const { result } = await inject(
+        '/certificates-of-compliance?type=direct-producers&tab=not-submitted'
+      )
+
+      expect(result).toEqual(expect.stringContaining(item.organisationName))
+      expect(result).toEqual(expect.stringContaining('92%'))
+    })
+
     test('Should render Compliant tag for items where regulation43Met is true', async () => {
       const trueItem = mockComplianceSchemeAcceptedItems.find(
         (item) => item.regulation43Met === true
