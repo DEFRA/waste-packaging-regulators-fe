@@ -59,7 +59,7 @@ const makeDeclaration = ({
   obligationStatus: 'Met',
   isRegulation43Compliant: true,
   created: '2027-01-15',
-  obligationCoveragePercentage: 105,
+  obligationCoveragePercentage: 84,
   ...rest
 })
 
@@ -620,7 +620,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           organisationName: 'Test Org',
           recyclingObligationsMet: true,
           regulation43Met: true,
-          obligationCoveragePercentage: 105,
+          obligationCoveragePercentage: 84,
           dateSubmitted: '2027-01-15'
         })
       })
@@ -1044,18 +1044,6 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
 
         expect(vm.items[0].obligationCoveragePercentage).toBe(84)
-      })
-
-      test('maps obligationCoveragePercentage for compliance-schemes pending items', async () => {
-        setupPendingTab([makeDeclaration({ obligationCoveragePercentage: 88 })])
-
-        const vm = await getCertificatesOfComplianceViewModel(
-          'compliance-schemes',
-          'pending',
-          1
-        )
-
-        expect(vm.items[0].obligationCoveragePercentage).toBe(88)
       })
 
       test('maps obligationStatus=Met to recyclingObligationsMet=true', async () => {

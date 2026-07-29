@@ -5,7 +5,7 @@
     <strong>{{ tabCount }}</strong> {{ tabSummaryText }}
   </p>
 
-  <a href="#todo" role="button" draggable="false" class="govuk-button govuk-button--secondary govuk-!-margin-bottom-4" data-module="govuk-button">
+  <a href="#" role="button" draggable="false" class="govuk-button govuk-button--secondary govuk-!-margin-bottom-4" data-module="govuk-button">
     Download list (CSV)
   </a>
 
@@ -18,8 +18,9 @@
         <th class="govuk-table__header" scope="col">Recycling obligations</th>
         {% if organisationType == 'compliance-schemes' %}
           <th class="govuk-table__header" scope="col">Regulation 43</th>
+        {% else %}
+          <th class="govuk-table__header" scope="col">Percentage met</th>
         {% endif %}
-        <th class="govuk-table__header" scope="col">Percentage met</th>
         {% if activeTab != 'not-submitted' %}
           <th class="govuk-table__header" scope="col">Date submitted</th>
         {% endif %}
@@ -29,13 +30,13 @@
       {% for item in items %}
         <tr class="govuk-table__row">
           {% if item.id == null %}
-            <th scope="row" class="govuk-table__header govuk-!-width-one-quarter">
+            <td class="govuk-table__cell">
               <a href="./{{ item.organisationId }}/certificates-of-compliance?obligationYear={{ complianceYear }}" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
-            </th>
+            </td>
           {% else %}
-            <th scope="row" class="govuk-table__header govuk-!-width-one-quarter">
+            <td class="govuk-table__cell">
               <a href="./{{ item.organisationId }}/certificates-of-compliance/{{ item.id }}" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
-            </th>
+            </td>
           {% endif %}
 
           <td class="govuk-table__cell">{{ item.organisationReferenceNumber }}</td>
@@ -46,8 +47,9 @@
             <td class="govuk-table__cell">
               {{ appStatusTag({ value: item.regulation43Met, trueText: 'Compliant', falseText: 'Not compliant' }) }}
             </td>
+          {% else %}
+            <td class="govuk-table__cell">{% if item.obligationCoveragePercentage != null %}{{ item.obligationCoveragePercentage }}%{% else %}—{% endif %}</td>
           {% endif %}
-          <td class="govuk-table__cell">{% if item.obligationCoveragePercentage !== null %}{{ item.obligationCoveragePercentage }}%{% else %}<span aria-hidden="true">—</span><span class="govuk-visually-hidden">No data</span>{% endif %}</td>
           {% if activeTab != 'not-submitted' %}
             <td class="govuk-table__cell">{{ item.dateSubmitted | formatDate('do MMMM yyyy') }}</td>
           {% endif %}
