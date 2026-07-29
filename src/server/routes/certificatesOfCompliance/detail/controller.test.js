@@ -169,7 +169,7 @@ describe('#certificatesOfComplianceDetailController', () => {
       '/923fa611-571c-4948-ab7d-fbb75e75ed65/certificates-of-compliance/decl-cs-001'
     )
     expect(response.payload).toContain('View on Companies House')
-    expect(response.payload).toContain('company/87654321')
+    expect(response.payload).toContain('company/CS_GENERATED_0923795')
   })
 
   it('should not render the Companies House link when company number is No data', async () => {

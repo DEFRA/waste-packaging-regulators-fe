@@ -10,11 +10,16 @@ const MOCK_ORG_REDWOOD_NAME = 'Redwood Retail Group'
 const MOCK_ORG_GREENCIRCLE_ID = 'f3a2b1c0-d9e8-47f6-a5b4-c3d2e1f0a9b8'
 const MOCK_ORG_GREENCIRCLE_NAME = 'GreenCircle Schemes'
 const MOCK_ORG_FUTUREPACK_ID = 'a9b8c7d6-e5f4-3210-abcd-ef9876543210'
-const MOCK_ORG_FUTUREPACK_NAME = 'FuturePack Operators'
+const MOCK_ORG_FUTUREPACK_NAME = 'FuturePack Compliance Scheme'
+const MOCK_ORG_FUTUREPACK_OPERATOR_NAME = 'FuturePack Operators'
 const MOCK_ORG_COASTAL_ID = 'e2f3a4b5-c6d7-8901-bcde-f23456789012'
 const MOCK_ORG_COASTAL_NAME = 'Coastal Bottling Co'
 const MOCK_ORG_METROLINE_ID = 'b8c7d6e5-f4a3-2109-abcd-ef8765432109'
-const MOCK_ORG_METROLINE_NAME = 'Metroline Waste Services'
+const MOCK_ORG_METROLINE_NAME = 'Metroline Compliance Scheme'
+const MOCK_ORG_METROLINE_OPERATOR_NAME = 'Metroline Waste Services'
+const MOCK_ORG_SOUTHGATE_ID = 'c7b6a5d4-e3f2-1098-abcd-ed7654321098'
+const MOCK_ORG_SOUTHGATE_NAME = 'Southgate Recycling Alliance'
+const MOCK_ORG_SOUTHGATE_OPERATOR_NAME = 'Southgate Environmental Group'
 const MOCK_ORG_ECOPACK_ID = '923fa611-571c-4948-ab7d-fbb75e75ed65'
 const MOCK_ORG_ECOPACK_NAME = 'EcoPack Compliance Ltd'
 const MOCK_ORG_ECOPACK_OPERATOR_NAME = 'EcoPack Group'
@@ -55,6 +60,38 @@ const MOCK_DECL_CS_ACCEPTED_ID = 'decl-cs-101'
 const MOCK_DECL_CS_ACCEPTED_SECONDARY_ID = 'decl-cs-102'
 const MOCK_REF_GREENFIELD = '204872'
 const MOCK_REF_CS_GREENCIRCLE = '110987'
+const MOCK_CHN_CS_ECOPACK = 'CS_GENERATED_0923795'
+const MOCK_CHN_CS_GREENCIRCLE = 'CS_GENERATED_1107789'
+const MOCK_CHN_CS_RIVERSIDE = 'CS_GENERATED_1729085'
+const MOCK_CHN_CS_METROLINE = 'CS_GENERATED_1946203'
+const MOCK_CHN_CS_SOUTHGATE = 'CS_GENERATED_2107748'
+const MOCK_ORG_ASHCROFT_ID = 'd41f7a2b-6c58-4e91-9f30-1a2b3c4d5e6f'
+const MOCK_ORG_ASHCROFT_NAME = 'Ashcroft Compliance Solutions'
+const MOCK_ORG_ASHCROFT_OPERATOR_NAME = 'Ashcroft Environmental Ltd'
+const MOCK_REF_CS_ASHCROFT = '131882'
+const MOCK_CHN_CS_ASHCROFT = 'CS_GENERATED_1318824'
+const MOCK_ORG_BRAMBLE_ID = 'e52a8b3c-7d69-4fa2-8041-2b3c4d5e6f70'
+const MOCK_ORG_BRAMBLE_NAME = 'Bramble Recycling Scheme'
+const MOCK_ORG_BRAMBLE_OPERATOR_NAME = 'Bramble Waste Group'
+const MOCK_REF_CS_BRAMBLE = '142995'
+const MOCK_CHN_CS_BRAMBLE = 'CS_GENERATED_1429953'
+const MOCK_ORG_CALDERA_ID = 'f63b9c4d-8e7a-40b3-9152-3c4d5e6f7081'
+const MOCK_ORG_CALDERA_NAME = 'Caldera Packaging Scheme'
+const MOCK_ORG_CALDERA_OPERATOR_NAME = 'Caldera Holdings Ltd'
+const MOCK_REF_CS_CALDERA = '158043'
+const MOCK_CHN_CS_CALDERA = 'CS_GENERATED_1580437'
+const MOCK_ORG_DOVETAIL_ID = 'a74c0d5e-9f8b-41c4-a263-4d5e6f708192'
+const MOCK_ORG_DOVETAIL_NAME = 'Dovetail Compliance Scheme'
+const MOCK_ORG_DOVETAIL_OPERATOR_NAME = 'Dovetail Services Ltd'
+const MOCK_REF_CS_DOVETAIL = '169226'
+const MOCK_CHN_CS_DOVETAIL = 'CS_GENERATED_1692268'
+const MOCK_DECL_CS_ACCEPTED_ASHCROFT_ID = 'decl-cs-103'
+const MOCK_DECL_CS_ACCEPTED_BRAMBLE_ID = 'decl-cs-104'
+const MOCK_DECL_CS_ACCEPTED_CALDERA_ID = 'decl-cs-105'
+const MOCK_DECL_CS_ACCEPTED_DOVETAIL_ID = 'decl-cs-106'
+const MOCK_REF_CS_FUTUREPACK = '183551'
+const MOCK_REF_CS_METROLINE = '194620'
+const MOCK_REF_CS_SOUTHGATE = '210774'
 const MOCK_REF_CS_NATIONWIDE = '164447'
 const MOCK_REF_CS_RIVERSIDE = '172908'
 const MOCK_REF_STERLING = '734921'
@@ -213,6 +250,46 @@ export const mockComplianceSchemeAcceptedItems = [
     regulation43Met: false,
     obligationCoveragePercentage: 92,
     dateSubmitted: '2027-01-08'
+  },
+  {
+    id: MOCK_DECL_CS_ACCEPTED_ASHCROFT_ID,
+    organisationId: MOCK_ORG_ASHCROFT_ID,
+    organisationReferenceNumber: MOCK_REF_CS_ASHCROFT,
+    organisationName: MOCK_ORG_ASHCROFT_OPERATOR_NAME,
+    recyclingObligationsMet: true,
+    regulation43Met: true,
+    obligationCoveragePercentage: 108,
+    dateSubmitted: '2027-01-06'
+  },
+  {
+    id: MOCK_DECL_CS_ACCEPTED_BRAMBLE_ID,
+    organisationId: MOCK_ORG_BRAMBLE_ID,
+    organisationReferenceNumber: MOCK_REF_CS_BRAMBLE,
+    organisationName: MOCK_ORG_BRAMBLE_OPERATOR_NAME,
+    recyclingObligationsMet: true,
+    regulation43Met: false,
+    obligationCoveragePercentage: 101,
+    dateSubmitted: '2027-01-05'
+  },
+  {
+    id: MOCK_DECL_CS_ACCEPTED_CALDERA_ID,
+    organisationId: MOCK_ORG_CALDERA_ID,
+    organisationReferenceNumber: MOCK_REF_CS_CALDERA,
+    organisationName: MOCK_ORG_CALDERA_OPERATOR_NAME,
+    recyclingObligationsMet: false,
+    regulation43Met: true,
+    obligationCoveragePercentage: 87,
+    dateSubmitted: '2027-01-04'
+  },
+  {
+    id: MOCK_DECL_CS_ACCEPTED_DOVETAIL_ID,
+    organisationId: MOCK_ORG_DOVETAIL_ID,
+    organisationReferenceNumber: MOCK_REF_CS_DOVETAIL,
+    organisationName: MOCK_ORG_DOVETAIL_OPERATOR_NAME,
+    recyclingObligationsMet: true,
+    regulation43Met: true,
+    obligationCoveragePercentage: 115,
+    dateSubmitted: '2027-01-02'
   }
 ]
 
@@ -220,8 +297,8 @@ export const mockComplianceSchemeNotSubmittedItems = [
   {
     id: null,
     organisationId: MOCK_ORG_FUTUREPACK_ID,
-    organisationReferenceNumber: '183551',
-    organisationName: MOCK_ORG_FUTUREPACK_NAME,
+    organisationReferenceNumber: MOCK_REF_CS_FUTUREPACK,
+    organisationName: MOCK_ORG_FUTUREPACK_OPERATOR_NAME,
     recyclingObligationsMet: false,
     regulation43Met: false,
     obligationCoveragePercentage: 0,
@@ -230,8 +307,8 @@ export const mockComplianceSchemeNotSubmittedItems = [
   {
     id: null,
     organisationId: MOCK_ORG_METROLINE_ID,
-    organisationReferenceNumber: '194620',
-    organisationName: MOCK_ORG_METROLINE_NAME,
+    organisationReferenceNumber: MOCK_REF_CS_METROLINE,
+    organisationName: MOCK_ORG_METROLINE_OPERATOR_NAME,
     recyclingObligationsMet: false,
     regulation43Met: false,
     obligationCoveragePercentage: 0,
@@ -239,9 +316,9 @@ export const mockComplianceSchemeNotSubmittedItems = [
   },
   {
     id: null,
-    organisationId: 'c7b6a5d4-e3f2-1098-abcd-ed7654321098',
-    organisationReferenceNumber: 'No data',
-    organisationName: 'No data',
+    organisationId: MOCK_ORG_SOUTHGATE_ID,
+    organisationReferenceNumber: MOCK_REF_CS_SOUTHGATE,
+    organisationName: MOCK_ORG_SOUTHGATE_OPERATOR_NAME,
     recyclingObligationsMet: false,
     regulation43Met: false,
     obligationCoveragePercentage: 0,
@@ -488,7 +565,61 @@ const mockRegulator = {
   email: 'mock-regulator-1@example.test'
 }
 
+function mockComplianceSchemeOrganisation(
+  id,
+  operatorName,
+  tradingName,
+  companiesHouseNumber,
+  addressLine1
+) {
+  return {
+    id,
+    name: operatorName,
+    tradingName,
+    businessCountry: MOCK_BUSINESS_COUNTRY,
+    companiesHouseNumber,
+    address: { addressLine1, postcode: 'SW1A 1AA', country: 'EN' },
+    registrations: [
+      {
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
+        type: 'COMPLIANCE_SCHEME',
+        registrationYear: 2026
+      }
+    ]
+  }
+}
+
 const mockOrganisationsById = {
+  [MOCK_ORG_ASHCROFT_ID]: mockComplianceSchemeOrganisation(
+    MOCK_ORG_ASHCROFT_ID,
+    MOCK_ORG_ASHCROFT_OPERATOR_NAME,
+    MOCK_ORG_ASHCROFT_NAME,
+    MOCK_CHN_CS_ASHCROFT,
+    'Ashcroft House'
+  ),
+  [MOCK_ORG_BRAMBLE_ID]: mockComplianceSchemeOrganisation(
+    MOCK_ORG_BRAMBLE_ID,
+    MOCK_ORG_BRAMBLE_OPERATOR_NAME,
+    MOCK_ORG_BRAMBLE_NAME,
+    MOCK_CHN_CS_BRAMBLE,
+    'Bramble House'
+  ),
+  [MOCK_ORG_CALDERA_ID]: mockComplianceSchemeOrganisation(
+    MOCK_ORG_CALDERA_ID,
+    MOCK_ORG_CALDERA_OPERATOR_NAME,
+    MOCK_ORG_CALDERA_NAME,
+    MOCK_CHN_CS_CALDERA,
+    'Caldera House'
+  ),
+  [MOCK_ORG_DOVETAIL_ID]: mockComplianceSchemeOrganisation(
+    MOCK_ORG_DOVETAIL_ID,
+    MOCK_ORG_DOVETAIL_OPERATOR_NAME,
+    MOCK_ORG_DOVETAIL_NAME,
+    MOCK_CHN_CS_DOVETAIL,
+    'Dovetail House'
+  ),
   [MOCK_ORG_HOWCO_ID]: {
     id: MOCK_ORG_HOWCO_ID,
     name: MOCK_ORG_HOWCO_NAME,
@@ -533,10 +664,10 @@ const mockOrganisationsById = {
   },
   [MOCK_ORG_FUTUREPACK_ID]: {
     id: MOCK_ORG_FUTUREPACK_ID,
-    name: 'FuturePack Operators Ltd',
-    tradingName: 'FuturePack Operators',
+    name: MOCK_ORG_FUTUREPACK_OPERATOR_NAME,
+    tradingName: MOCK_ORG_FUTUREPACK_NAME,
     businessCountry: MOCK_BUSINESS_COUNTRY,
-    companiesHouseNumber: '87654321',
+    companiesHouseNumber: MOCK_CHN_CS_ECOPACK,
     address: {
       addressLine1: 'Scheme House',
       postcode: 'SW1A 1AA',
@@ -617,10 +748,10 @@ const mockOrganisationsById = {
   },
   [MOCK_ORG_ECOPACK_ID]: {
     id: MOCK_ORG_ECOPACK_ID,
-    name: MOCK_ORG_ECOPACK_NAME,
-    tradingName: 'EcoPack Group',
+    name: MOCK_ORG_ECOPACK_OPERATOR_NAME,
+    tradingName: MOCK_ORG_ECOPACK_NAME,
     businessCountry: MOCK_BUSINESS_COUNTRY,
-    companiesHouseNumber: '87654321',
+    companiesHouseNumber: MOCK_CHN_CS_ECOPACK,
     address: {
       addressLine1: 'EcoPack House',
       postcode: 'SW1A 1AA',
@@ -638,10 +769,10 @@ const mockOrganisationsById = {
   },
   [MOCK_ORG_GREENCIRCLE_ID]: {
     id: MOCK_ORG_GREENCIRCLE_ID,
-    name: MOCK_ORG_GREENCIRCLE_NAME,
-    tradingName: MOCK_ORG_GREENCIRCLE_OPERATOR_NAME,
+    name: MOCK_ORG_GREENCIRCLE_OPERATOR_NAME,
+    tradingName: MOCK_ORG_GREENCIRCLE_NAME,
     businessCountry: MOCK_BUSINESS_COUNTRY,
-    companiesHouseNumber: '77889900',
+    companiesHouseNumber: MOCK_CHN_CS_GREENCIRCLE,
     address: {
       addressLine1: 'GreenCircle House',
       postcode: 'SW1A 1AA',
@@ -659,10 +790,10 @@ const mockOrganisationsById = {
   },
   [MOCK_ORG_NATIONWIDE_ID]: {
     id: MOCK_ORG_NATIONWIDE_ID,
-    name: MOCK_ORG_NATIONWIDE_NAME,
-    tradingName: MOCK_ORG_NATIONWIDE_OPERATOR_NAME,
+    name: MOCK_ORG_NATIONWIDE_OPERATOR_NAME,
+    tradingName: MOCK_ORG_NATIONWIDE_NAME,
     businessCountry: MOCK_BUSINESS_COUNTRY,
-    companiesHouseNumber: '87654321',
+    companiesHouseNumber: MOCK_CHN_CS_ECOPACK,
     address: {
       addressLine1: 'Nationwide House',
       postcode: 'SW1A 1AA',
@@ -680,10 +811,10 @@ const mockOrganisationsById = {
   },
   [MOCK_ORG_RIVERSIDE_ID]: {
     id: MOCK_ORG_RIVERSIDE_ID,
-    name: MOCK_ORG_RIVERSIDE_NAME,
-    tradingName: MOCK_ORG_RIVERSIDE_OPERATOR_NAME,
+    name: MOCK_ORG_RIVERSIDE_OPERATOR_NAME,
+    tradingName: MOCK_ORG_RIVERSIDE_NAME,
     businessCountry: MOCK_BUSINESS_COUNTRY,
-    companiesHouseNumber: '55221199',
+    companiesHouseNumber: MOCK_CHN_CS_RIVERSIDE,
     address: {
       addressLine1: 'Riverside House',
       postcode: 'SW1A 1AA',
@@ -698,44 +829,176 @@ const mockOrganisationsById = {
         registrationYear: 2026
       }
     ]
+  },
+  [MOCK_ORG_METROLINE_ID]: {
+    id: MOCK_ORG_METROLINE_ID,
+    name: MOCK_ORG_METROLINE_OPERATOR_NAME,
+    tradingName: MOCK_ORG_METROLINE_NAME,
+    businessCountry: MOCK_BUSINESS_COUNTRY,
+    companiesHouseNumber: MOCK_CHN_CS_METROLINE,
+    address: {
+      addressLine1: 'Metroline House',
+      postcode: 'M2 5BQ',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
+        type: 'COMPLIANCE_SCHEME',
+        registrationYear: 2026
+      }
+    ]
+  },
+  [MOCK_ORG_SOUTHGATE_ID]: {
+    id: MOCK_ORG_SOUTHGATE_ID,
+    name: MOCK_ORG_SOUTHGATE_OPERATOR_NAME,
+    tradingName: MOCK_ORG_SOUTHGATE_NAME,
+    businessCountry: MOCK_BUSINESS_COUNTRY,
+    companiesHouseNumber: MOCK_CHN_CS_SOUTHGATE,
+    address: {
+      addressLine1: 'Southgate House',
+      postcode: 'N14 6BS',
+      country: 'EN'
+    },
+    registrations: [
+      {
+        created: MOCK_REGISTRATION_TIMESTAMP,
+        updated: MOCK_REGISTRATION_TIMESTAMP,
+        status: MOCK_REGISTRATION_STATUS,
+        type: 'COMPLIANCE_SCHEME',
+        registrationYear: 2026
+      }
+    ]
   }
+}
+
+function mockApprovedPerson(firstName, lastName, email, telephoneNumber) {
+  return {
+    firstName,
+    lastName,
+    jobTitle: 'Compliance Manager',
+    email,
+    telephoneNumber,
+    serviceRole: 'Approved Person'
+  }
+}
+
+const mockBasicUserPerson = {
+  firstName: 'Sam',
+  lastName: 'Reed',
+  jobTitle: 'Analyst',
+  email: 'sam.reed@example.test',
+  telephoneNumber: '020 7946 1111',
+  serviceRole: 'Basic User'
 }
 
 export const mockAccountOrganisationsByExternalId = {
   [MOCK_ORG_REDWOOD_ID]: {
     externalId: MOCK_ORG_REDWOOD_ID,
     name: MOCK_ORG_REDWOOD_NAME,
-    referenceNumber: '518293'
+    referenceNumber: '518293',
+    persons: [
+      mockApprovedPerson(
+        'Olivia',
+        'Hart',
+        'olivia.hart@redwood.test',
+        '020 7946 0101'
+      )
+    ]
   },
   [MOCK_ORG_COASTAL_ID]: {
     externalId: MOCK_ORG_COASTAL_ID,
     name: MOCK_ORG_COASTAL_NAME,
-    referenceNumber: '627148'
+    referenceNumber: '627148',
+    persons: [
+      mockApprovedPerson(
+        'Tom',
+        'Baxter',
+        'tom.baxter@coastal.test',
+        '020 7946 0102'
+      )
+    ]
   },
   [MOCK_ORG_FUTUREPACK_ID]: {
     externalId: MOCK_ORG_FUTUREPACK_ID,
-    name: MOCK_ORG_FUTUREPACK_NAME,
-    referenceNumber: '183551'
+    name: MOCK_ORG_FUTUREPACK_OPERATOR_NAME,
+    referenceNumber: MOCK_REF_CS_FUTUREPACK,
+    persons: [
+      mockBasicUserPerson,
+      mockApprovedPerson(
+        'Nadia',
+        'Clarke',
+        'nadia.clarke@futurepack.test',
+        '020 7946 0103'
+      )
+    ]
   },
   [MOCK_ORG_METROLINE_ID]: {
     externalId: MOCK_ORG_METROLINE_ID,
-    name: MOCK_ORG_METROLINE_NAME,
-    referenceNumber: '194620'
+    name: MOCK_ORG_METROLINE_OPERATOR_NAME,
+    referenceNumber: MOCK_REF_CS_METROLINE,
+    persons: [
+      mockApprovedPerson(
+        'Priya',
+        'Rao',
+        'priya.rao@metroline.test',
+        '020 7946 0107'
+      )
+    ]
+  },
+  [MOCK_ORG_SOUTHGATE_ID]: {
+    externalId: MOCK_ORG_SOUTHGATE_ID,
+    name: MOCK_ORG_SOUTHGATE_OPERATOR_NAME,
+    referenceNumber: MOCK_REF_CS_SOUTHGATE,
+    persons: [
+      mockApprovedPerson(
+        'Daniel',
+        'Okafor',
+        'daniel.okafor@southgate.test',
+        '020 7946 0108'
+      )
+    ]
   },
   [MOCK_ORG_STERLING_ID]: {
     externalId: MOCK_ORG_STERLING_ID,
     name: MOCK_ORG_STERLING_NAME,
-    referenceNumber: MOCK_REF_STERLING
+    referenceNumber: MOCK_REF_STERLING,
+    persons: [
+      mockApprovedPerson(
+        'Ruth',
+        'Ellis',
+        'ruth.ellis@sterling.test',
+        '020 7946 0104'
+      )
+    ]
   },
   [MOCK_ORG_PINNACLE_ID]: {
     externalId: MOCK_ORG_PINNACLE_ID,
     name: MOCK_ORG_PINNACLE_NAME,
-    referenceNumber: MOCK_REF_PINNACLE
+    referenceNumber: MOCK_REF_PINNACLE,
+    persons: [
+      mockApprovedPerson(
+        'Iwan',
+        'Price',
+        'iwan.price@pinnacle.test',
+        '020 7946 0105'
+      )
+    ]
   },
   [MOCK_ORG_MERIDIAN_ID]: {
     externalId: MOCK_ORG_MERIDIAN_ID,
     name: MOCK_ORG_MERIDIAN_NAME,
-    referenceNumber: MOCK_REF_MERIDIAN
+    referenceNumber: MOCK_REF_MERIDIAN,
+    persons: [
+      mockApprovedPerson(
+        'Grace',
+        'Owusu',
+        'grace.owusu@meridian.test',
+        '020 7946 0106'
+      )
+    ]
   }
 }
 
@@ -789,7 +1052,7 @@ export const mockComplianceSchemeDetailData = {
     address: {},
     regulator: 'EA',
     regulatorEmail: 'ea@environment-agency.gov.uk',
-    companiesHouseNumber: '87654321'
+    companiesHouseNumber: MOCK_CHN_CS_ECOPACK
   },
   obligationYear: 2026,
   obligations: mockObligationsAllMet,
@@ -898,7 +1161,7 @@ export const mockComplianceSchemePendingCompliantDetailData = {
     complianceSchemeName: MOCK_ORG_GREENCIRCLE_NAME,
     schemeOperatorName: MOCK_ORG_GREENCIRCLE_OPERATOR_NAME,
     referenceNumber: MOCK_REF_CS_GREENCIRCLE,
-    companiesHouseNumber: '77889900'
+    companiesHouseNumber: MOCK_CHN_CS_GREENCIRCLE
   },
   obligations: mockObligationsAllMet,
   obligationStatus: 'Met',
@@ -918,7 +1181,7 @@ export const mockComplianceSchemeAcceptedNotMetDetailData = {
     complianceSchemeName: MOCK_ORG_RIVERSIDE_NAME,
     schemeOperatorName: MOCK_ORG_RIVERSIDE_OPERATOR_NAME,
     referenceNumber: MOCK_REF_CS_RIVERSIDE,
-    companiesHouseNumber: '55221199'
+    companiesHouseNumber: MOCK_CHN_CS_RIVERSIDE
   },
   obligations: mockObligationsMixed,
   obligationStatus: 'NotMet',
@@ -1154,7 +1417,96 @@ export function getMockDeclarationsByOrgYear(organisationId, obligationYear) {
   return mockDeclarationsByOrgYear[`${organisationId}:${obligationYear}`] ?? []
 }
 
+function mockComplianceSchemeAcceptedDetail(
+  id,
+  organisationId,
+  tradingName,
+  operatorName,
+  referenceNumber,
+  companiesHouseNumber,
+  timestamp,
+  { obligations, obligationStatus, isRegulation43Compliant }
+) {
+  return {
+    ...mockComplianceSchemeAcceptedDetailData,
+    id,
+    created: timestamp,
+    updated: timestamp,
+    organisation: {
+      ...mockComplianceSchemeDetailData.organisation,
+      id: organisationId,
+      complianceSchemeName: tradingName,
+      schemeOperatorName: operatorName,
+      referenceNumber,
+      companiesHouseNumber
+    },
+    obligations,
+    obligationStatus,
+    isRegulation43Compliant,
+    audit: [
+      mockComplianceSchemeSubmittedAuditEntry,
+      { action: MOCK_STATUS_ACCEPTED, timestamp, user: mockRegulator }
+    ]
+  }
+}
+
 const mockDetailById = {
+  [MOCK_DECL_CS_ACCEPTED_ASHCROFT_ID]: mockComplianceSchemeAcceptedDetail(
+    MOCK_DECL_CS_ACCEPTED_ASHCROFT_ID,
+    MOCK_ORG_ASHCROFT_ID,
+    MOCK_ORG_ASHCROFT_NAME,
+    MOCK_ORG_ASHCROFT_OPERATOR_NAME,
+    MOCK_REF_CS_ASHCROFT,
+    MOCK_CHN_CS_ASHCROFT,
+    '2027-01-06T10:15:00Z',
+    {
+      obligations: mockObligationsAllMet,
+      obligationStatus: 'Met',
+      isRegulation43Compliant: true
+    }
+  ),
+  [MOCK_DECL_CS_ACCEPTED_BRAMBLE_ID]: mockComplianceSchemeAcceptedDetail(
+    MOCK_DECL_CS_ACCEPTED_BRAMBLE_ID,
+    MOCK_ORG_BRAMBLE_ID,
+    MOCK_ORG_BRAMBLE_NAME,
+    MOCK_ORG_BRAMBLE_OPERATOR_NAME,
+    MOCK_REF_CS_BRAMBLE,
+    MOCK_CHN_CS_BRAMBLE,
+    '2027-01-05T09:40:00Z',
+    {
+      obligations: mockObligationsAllMet,
+      obligationStatus: 'Met',
+      isRegulation43Compliant: false
+    }
+  ),
+  [MOCK_DECL_CS_ACCEPTED_CALDERA_ID]: mockComplianceSchemeAcceptedDetail(
+    MOCK_DECL_CS_ACCEPTED_CALDERA_ID,
+    MOCK_ORG_CALDERA_ID,
+    MOCK_ORG_CALDERA_NAME,
+    MOCK_ORG_CALDERA_OPERATOR_NAME,
+    MOCK_REF_CS_CALDERA,
+    MOCK_CHN_CS_CALDERA,
+    '2027-01-04T15:20:00Z',
+    {
+      obligations: mockObligationsMixed,
+      obligationStatus: 'NotMet',
+      isRegulation43Compliant: true
+    }
+  ),
+  [MOCK_DECL_CS_ACCEPTED_DOVETAIL_ID]: mockComplianceSchemeAcceptedDetail(
+    MOCK_DECL_CS_ACCEPTED_DOVETAIL_ID,
+    MOCK_ORG_DOVETAIL_ID,
+    MOCK_ORG_DOVETAIL_NAME,
+    MOCK_ORG_DOVETAIL_OPERATOR_NAME,
+    MOCK_REF_CS_DOVETAIL,
+    MOCK_CHN_CS_DOVETAIL,
+    '2027-01-02T11:00:00Z',
+    {
+      obligations: mockObligationsAllMet,
+      obligationStatus: 'Met',
+      isRegulation43Compliant: true
+    }
+  ),
   [MOCK_DECL_HOWCO_ID]: mockDetailData,
   [MOCK_DECL_GREENFIELD_ID]: mockDirectProducerPendingNotMetDetailData,
   [MOCK_DECL_ACME_ID]: mockDirectProducerAcceptedDetailData,

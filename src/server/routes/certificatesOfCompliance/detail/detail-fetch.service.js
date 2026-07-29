@@ -14,6 +14,7 @@ import {
   getDeclarationSessionKey
 } from '../actions/session.service.js'
 import { findSubmittedAuditUser } from './audit.js'
+import { mapOrganisationContact } from './organisation-contact.js'
 import {
   mapDeclarationToDetail,
   mapObligationToDetail
@@ -40,24 +41,28 @@ async function fetchSubmitterPhoneNumber(accountApi, audit, traceId) {
   }
 }
 
+function mapAccountOrganisationDetails(organisation) {
+  return {
+    name: organisation?.name ?? null,
+    referenceNumber: organisation?.referenceNumber ?? null,
+    externalId: organisation?.externalId ?? null
+  }
+}
+
 async function fetchAccountOrganisationDetails(
   accountApi,
   organisationId,
   traceId
 ) {
   if (!organisationId) {
-    return { name: null, referenceNumber: null }
+    return mapAccountOrganisationDetails(null)
   }
 
   const { organisations = [] } = await accountApi.getOrganisationsByExternalIds(
     [organisationId],
     traceId
   )
-  const organisation = organisations[0]
-  return {
-    name: organisation?.name ?? null,
-    referenceNumber: organisation?.referenceNumber ?? null
-  }
+  return mapAccountOrganisationDetails(organisations[0])
 }
 
 async function fetchComplianceSchemeAccountDetailsByCompaniesHouseNumber(
@@ -66,7 +71,7 @@ async function fetchComplianceSchemeAccountDetailsByCompaniesHouseNumber(
   traceId
 ) {
   if (!companiesHouseNumber) {
-    return { name: null, referenceNumber: null }
+    return mapAccountOrganisationDetails(null)
   }
 
   const organisations =
@@ -77,11 +82,9 @@ async function fetchComplianceSchemeAccountDetailsByCompaniesHouseNumber(
   // A Companies House number can match more than one organisation (e.g. a
   // producer and the scheme operator); only the compliance-scheme operator
   // carries the reference number we want (matches the not-submitted list).
-  const organisation = organisations.find((org) => org.isComplianceScheme)
-  return {
-    name: organisation?.name ?? null,
-    referenceNumber: organisation?.referenceNumber ?? null
-  }
+  return mapAccountOrganisationDetails(
+    organisations.find((org) => org.isComplianceScheme)
+  )
 }
 
 // Direct producers resolve against the Account API by external id; compliance
@@ -111,8 +114,8 @@ async function fetchNotSubmittedAccountOrganisationDetails(
 function resolveMockAccountOrganisationDetails(organisationId) {
   const organisation = getMockAccountOrganisationByExternalId(organisationId)
   return {
-    name: organisation?.name ?? null,
-    referenceNumber: organisation?.referenceNumber ?? null
+    ...mapAccountOrganisationDetails(organisation),
+    contact: mapOrganisationContact(organisation)
   }
 }
 
@@ -133,7 +136,8 @@ async function getMockDeclarationDetail(
       obligationYear: resolvedObligationYear,
       organisation: getMockOrganisationById(organisationId),
       accountOrganisationName: accountOrganisation.name,
-      accountOrganisationReferenceNumber: accountOrganisation.referenceNumber
+      accountOrganisationReferenceNumber: accountOrganisation.referenceNumber,
+      accountOrganisationContact: accountOrganisation.contact
     })
   }
 
@@ -186,12 +190,17 @@ async function getNotSubmittedDeclarationDetail(
     obligationYear,
     traceId
   )
+  const { externalId } = accountOrganisation
+  const organisationWithPersons = externalId
+    ? await accountApi.getOrganisationWithPersonsOrNull(externalId, traceId)
+    : null
   return mapObligationToDetail(unsubmittedObligationData, {
     organisationId,
     obligationYear,
     organisation,
     accountOrganisationName: accountOrganisation.name,
-    accountOrganisationReferenceNumber: accountOrganisation.referenceNumber
+    accountOrganisationReferenceNumber: accountOrganisation.referenceNumber,
+    accountOrganisationContact: mapOrganisationContact(organisationWithPersons)
   })
 }
 

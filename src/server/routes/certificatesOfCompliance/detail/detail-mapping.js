@@ -253,8 +253,13 @@ function mapDeclarationMaterialGroups(obligations) {
   }
 }
 
-function resolveDeclarationCompanyName(organisation) {
-  return mapOrganisationName(organisation)
+function noDetailActions() {
+  return {
+    showAccept: false,
+    showCancel: false,
+    labels: certificateActionLabelsByRegistrationType.DirectProducer,
+    urls: { accept: '#', cancel: '#' }
+  }
 }
 
 function resolveDeclarationActions(
@@ -272,12 +277,7 @@ function resolveDeclarationActions(
     )
   }
 
-  return {
-    showAccept: false,
-    showCancel: false,
-    labels: certificateActionLabelsByRegistrationType.DirectProducer,
-    urls: { accept: '#', cancel: '#' }
-  }
+  return noDetailActions()
 }
 
 function mapDeclarationComplianceFields(
@@ -352,7 +352,7 @@ export function mapDeclarationToDetail(
   const reviewStatus = mapDeclarationStatusToReviewStatus(status)
   const resolvedOrganisationId = organisationId ?? organisation?.id ?? null
   const resolvedId = id ?? data.id ?? null
-  const companyName = resolveDeclarationCompanyName(organisation)
+  const companyName = mapOrganisationName(organisation)
   const submittedUser = findSubmittedAuditUser(data.audit)
   const historyDeclarations = buildCurrentYearDeclarations(
     declarationsForYear,
@@ -404,7 +404,8 @@ export function mapObligationToDetail(
     obligationYear,
     organisation,
     accountOrganisationName,
-    accountOrganisationReferenceNumber
+    accountOrganisationReferenceNumber,
+    accountOrganisationContact
   } = {}
 ) {
   const obligations = data?.obligations ?? []
@@ -449,16 +450,13 @@ export function mapObligationToDetail(
       accountOrganisationReferenceNumber ?? organisation?.referenceNumber
     ),
     nameOnAccount: NO_DATA,
-    declarationEmailAddress: NO_DATA,
-    companyPhoneNumber: NO_DATA,
+    declarationEmailAddress: displayOrNoData(accountOrganisationContact?.email),
+    companyPhoneNumber: displayOrNoData(
+      accountOrganisationContact?.telephoneNumber
+    ),
     declarationSignedBy: NO_DATA,
     ...materialGroups,
-    actions: {
-      showAccept: false,
-      showCancel: false,
-      labels: certificateActionLabelsByRegistrationType.DirectProducer,
-      urls: { accept: '#', cancel: '#' }
-    },
+    actions: noDetailActions(),
     showAcceptedOutcome: false,
     acceptedBy: null,
     acceptedDate: null,

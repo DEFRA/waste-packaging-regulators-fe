@@ -198,7 +198,11 @@ export function loadDetailPage(payload) {
       recyclingObligations: readSummaryRow($, 'Recycling obligations'),
       submissionStatus: readSummaryRow($, 'Submission status'),
       submittedOn: readSummaryRow($, 'Submitted on'),
-      nameOnAccount: readSummaryRow($, 'Name on account')
+      nameOnAccount: readSummaryRow($, 'Name on account'),
+      organisationType: readSummaryRow($, 'Organisation type'),
+      companyNumber: readSummaryRow($, 'Company number'),
+      emailAddress: readSummaryRow($, 'Email address'),
+      phoneNumber: readSummaryRow($, 'Phone number')
     },
     materials: readTable($, 'obligations-table'),
     glass: readTable($, 'glass-breakdown-table'),

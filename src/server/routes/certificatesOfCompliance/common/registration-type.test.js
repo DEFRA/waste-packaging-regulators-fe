@@ -155,13 +155,13 @@ describe('organisation and audit detail mapping', () => {
     })
   })
 
-  test('mapWasteOrganisationToDetailFields uses tradingName for compliance schemes', () => {
+  test('mapWasteOrganisationToDetailFields uses the scheme operator name, not the scheme trading name, for compliance schemes', () => {
     expect(
       mapWasteOrganisationToDetailFields(
         {
-          name: 'Legal Name',
+          name: 'Scheme Operator Co',
           tradingName: 'Trading Scheme Co',
-          companiesHouseNumber: '87654321',
+          companiesHouseNumber: 'CS_GENERATED_0923795',
           registrations: [
             {
               type: 'COMPLIANCE_SCHEME',
@@ -173,10 +173,10 @@ describe('organisation and audit detail mapping', () => {
         { obligationYear: 2026 }
       )
     ).toEqual({
-      companyName: 'Trading Scheme Co',
+      companyName: 'Scheme Operator Co',
       registrationType: 'ComplianceScheme',
       organisationType: 'Compliance scheme',
-      companiesHouseNumber: '87654321'
+      companiesHouseNumber: 'CS_GENERATED_0923795'
     })
   })
 })

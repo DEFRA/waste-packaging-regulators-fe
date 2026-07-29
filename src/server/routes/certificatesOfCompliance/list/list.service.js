@@ -13,7 +13,6 @@ import {
   PAGE_SIZE,
   DECLARATIONS_BATCH_SIZE,
   NO_DATA,
-  UNKNOWN_ORGANISATION,
   COMPLIANCE_SCHEMES,
   COMPLIANCE_YEAR
 } from '../common/constants.js'
@@ -40,20 +39,14 @@ function mapDeclarationToItem(declaration) {
   }
 }
 
-// Reference number is resolved from the Account API (default 'No data'); the
-// organisation name comes from the waste-organisations record via the
-// compliance-scheme-aware derivation below.
-function mapOrganisationToItem(organisation, organisationType) {
-  const organisationName =
-    organisationType === COMPLIANCE_SCHEMES
-      ? (organisation.tradingName ?? organisation.name ?? UNKNOWN_ORGANISATION)
-      : (organisation.name ?? UNKNOWN_ORGANISATION)
+// Reference number is resolved from the Account API (default 'No data').
+function mapOrganisationToItem(organisation) {
   return {
     id: null,
     organisationId: organisation.id,
     companiesHouseNumber: organisation.companiesHouseNumber ?? null,
     organisationReferenceNumber: NO_DATA,
-    organisationName
+    organisationName: mapOrganisationName(organisation)
   }
 }
 
@@ -259,7 +252,7 @@ async function getComplianceList(
 
     const allItems = orgsResult.organisations
       .filter((org) => !submittedIds.has(org.id))
-      .map((org) => mapOrganisationToItem(org, organisationType))
+      .map((org) => mapOrganisationToItem(org))
 
     const totalPages = Math.ceil(allItems.length / PAGE_SIZE) || 1
     const start = (page - 1) * PAGE_SIZE

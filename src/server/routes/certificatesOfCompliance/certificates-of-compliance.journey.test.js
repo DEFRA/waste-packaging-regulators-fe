@@ -709,6 +709,49 @@ describe('certificates of compliance — journey', () => {
     })
   })
 
+  describe('not-submitted compliance scheme detail', () => {
+    it('headings show the scheme operator, not the compliance scheme name', async () => {
+      const payload = (await inject(FUTUREPACK_UNSUBMITTED_URL)).payload
+      const { heading } = loadDetailPage(payload)
+
+      expect(heading).toBe('FuturePack Operators')
+      expect(payload).not.toContain('FuturePack Compliance Scheme')
+    })
+
+    it('shows the email address and phone number of the nominated contact', async () => {
+      const payload = (await inject(FUTUREPACK_UNSUBMITTED_URL)).payload
+      const { summaryRows } = loadDetailPage(payload)
+
+      expect(summaryRows.emailAddress.value).toBe('nadia.clarke@futurepack.test')
+      expect(summaryRows.phoneNumber.value).toBe('020 7946 0103')
+      expect(payload).not.toContain('sam.reed@example.test')
+    })
+
+    it('populates organisation type and company number for every scheme', async () => {
+      for (const item of mockComplianceSchemeNotSubmittedItems) {
+        const { heading, summaryRows } = loadDetailPage(
+          (
+            await inject(
+              `/${item.organisationId}/certificates-of-compliance?obligationYear=2026`
+            )
+          ).payload
+        )
+
+        expect(heading).toBe(item.organisationName)
+        expect(summaryRows.organisationType.value).toBe('Compliance scheme')
+        expect(summaryRows.companyNumber.value).not.toContain('No data')
+      }
+    })
+
+    it('keeps Name on account hidden — there is no submitter', async () => {
+      const { summaryRows } = loadDetailPage(
+        (await inject(FUTUREPACK_UNSUBMITTED_URL)).payload
+      )
+
+      expect(summaryRows.nameOnAccount.present).toBe(false)
+    })
+  })
+
   describe('Regulation 43 section', () => {
     const ECOPACK_COMPLIANT_URL =
       '/e1d2c3b4-a596-4878-9abc-def012345678/certificates-of-compliance/decl-cs-101'
