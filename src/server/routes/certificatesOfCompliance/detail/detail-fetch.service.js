@@ -14,7 +14,7 @@ import {
   getDeclarationSessionKey
 } from '../actions/session.service.js'
 import { findSubmittedAuditUser } from './audit.js'
-import { mapOrganisationContact } from './organisation-contact.js'
+import { mapOrganisationContact } from '../common/organisation-contact.js'
 import {
   mapDeclarationToDetail,
   mapObligationToDetail
