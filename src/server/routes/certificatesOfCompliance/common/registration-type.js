@@ -75,11 +75,14 @@ function resolveWasteOrganisationRegistrationType(
   )
 }
 
-function mapRegistrationTypeToOrganisationType(registrationType) {
+// An unmapped type falls back to the raw value rather than hiding it. The
+// own-property check keeps inherited Object keys (e.g. 'constructor') from
+// resolving to a function.
+export function mapRegistrationTypeToOrganisationType(registrationType) {
   return displayOrNoData(
-    registrationType
-      ? (organisationTypeDisplayNames[registrationType] ?? registrationType)
-      : null
+    Object.hasOwn(organisationTypeDisplayNames, registrationType)
+      ? organisationTypeDisplayNames[registrationType]
+      : registrationType
   )
 }
 
@@ -101,12 +104,10 @@ export function mapWasteOrganisationToDetailFields(
   )
 
   return {
-    companyName: mapOrganisationName({ ...organisation, registrationType }),
+    companyName: mapOrganisationName(organisation),
     registrationType,
     organisationType: mapRegistrationTypeToOrganisationType(registrationType),
     companiesHouseNumber:
       mapCompaniesHouseNumberFromWasteOrganisation(organisation)
   }
 }
-
-export { mapRegistrationTypeToOrganisationType }

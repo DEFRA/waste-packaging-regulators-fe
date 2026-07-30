@@ -147,6 +147,87 @@ describe('AccountApiService', () => {
     expect(result).toEqual([])
   })
 
+  test('getOrganisationWithPersons GETs the organisation by external id', async () => {
+    const responseBody = {
+      organisationName: 'Scheme Operator Co',
+      persons: [
+        {
+          firstName: 'Nadia',
+          lastName: 'Clarke',
+          email: 'nadia.clarke@example.test',
+          telephoneNumber: '020 7946 0103',
+          serviceRole: 'Approved Person'
+        }
+      ]
+    }
+    const fetchImpl = vi.fn().mockResolvedValue(mockOkResponse(responseBody))
+    const service = new AccountApiService({
+      baseUrl: 'http://localhost:3001',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    const result = await service.getOrganisationWithPersons(
+      externalIds[0],
+      'trace-2'
+    )
+
+    expect(result).toEqual(responseBody)
+    expect(fetchImpl).toHaveBeenCalledWith(
+      `http://localhost:3001/api/organisations/organisation-with-persons/${externalIds[0]}`,
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Accept: 'application/json',
+          Authorization: expect.stringMatching(/^Basic /),
+          'x-cdp-request-id': 'trace-2'
+        })
+      })
+    )
+  })
+
+  test('getOrganisationWithPersons propagates a not found failure', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      headers: {
+        get: vi.fn().mockReturnValue('application/problem+json')
+      },
+      json: vi.fn().mockResolvedValue({ title: 'Not Found', status: 404 })
+    })
+    const service = new AccountApiService({
+      baseUrl: 'http://localhost:3001',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    await expect(
+      service.getOrganisationWithPersons(externalIds[0])
+    ).rejects.toMatchObject({ name: 'ApiError', status: 404 })
+  })
+
+  test('getOrganisationWithPersonsOrNull returns null when the organisation is not found', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      headers: {
+        get: vi.fn().mockReturnValue('application/problem+json')
+      },
+      json: vi.fn().mockResolvedValue({ title: 'Not Found', status: 404 })
+    })
+    const service = new AccountApiService({
+      baseUrl: 'http://localhost:3001',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    await expect(
+      service.getOrganisationWithPersonsOrNull(externalIds[0])
+    ).resolves.toBeNull()
+  })
+
   test('throws when the Account API responds with a non-success status', async () => {
     const fetchImpl = vi.fn().mockResolvedValue({
       ok: false,

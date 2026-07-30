@@ -14,12 +14,14 @@ import {
   getDeclarationSessionKey
 } from '../actions/session.service.js'
 import { findSubmittedAuditUser } from './audit.js'
+import { mapOrganisationContact } from '../common/organisation-contact.js'
 import {
   mapDeclarationToDetail,
   mapObligationToDetail
 } from './detail-mapping.js'
 import { deriveRegistrationType } from '../common/registration-type.js'
 import { isComplianceSchemeRegistrationType } from '../common/display.js'
+import { resolveSchemeOperators } from '../common/scheme-operator.js'
 
 export { findSubmittedAuditUser } from './audit.js'
 
@@ -40,53 +42,49 @@ async function fetchSubmitterPhoneNumber(accountApi, audit, traceId) {
   }
 }
 
+function mapAccountOrganisationDetails(organisation) {
+  return {
+    name: organisation?.name ?? null,
+    referenceNumber: organisation?.referenceNumber ?? null,
+    externalId: organisation?.externalId ?? null
+  }
+}
+
 async function fetchAccountOrganisationDetails(
   accountApi,
   organisationId,
   traceId
 ) {
   if (!organisationId) {
-    return { name: null, referenceNumber: null }
+    return mapAccountOrganisationDetails(null)
   }
 
   const { organisations = [] } = await accountApi.getOrganisationsByExternalIds(
     [organisationId],
     traceId
   )
-  const organisation = organisations[0]
-  return {
-    name: organisation?.name ?? null,
-    referenceNumber: organisation?.referenceNumber ?? null
-  }
+  return mapAccountOrganisationDetails(organisations[0])
 }
 
-async function fetchComplianceSchemeAccountDetailsByCompaniesHouseNumber(
+async function fetchSchemeOperatorAccountDetails(
   accountApi,
   companiesHouseNumber,
   traceId
 ) {
-  if (!companiesHouseNumber) {
-    return { name: null, referenceNumber: null }
-  }
-
-  const organisations =
-    await accountApi.getOrganisationsByCompaniesHouseNumbers(
-      [companiesHouseNumber],
-      traceId
-    )
-  // A Companies House number can match more than one organisation (e.g. a
-  // producer and the scheme operator); only the compliance-scheme operator
-  // carries the reference number we want (matches the not-submitted list).
-  const organisation = organisations.find((org) => org.isComplianceScheme)
-  return {
-    name: organisation?.name ?? null,
-    referenceNumber: organisation?.referenceNumber ?? null
-  }
+  const schemeOperators = await resolveSchemeOperators(
+    accountApi,
+    [companiesHouseNumber],
+    traceId
+  )
+  return mapAccountOrganisationDetails(
+    schemeOperators.get(companiesHouseNumber)
+  )
 }
 
 // Direct producers resolve against the Account API by external id; compliance
-// schemes only by Companies House number (mirrors the not-submitted list).
-async function fetchNotSubmittedAccountOrganisationDetails(
+// schemes only by Companies House number (mirrors the not-submitted list). The
+// contact details then hang off whichever Account organisation was matched.
+async function fetchNotSubmittedAccountOrganisation(
   accountApi,
   organisation,
   organisationId,
@@ -97,22 +95,47 @@ async function fetchNotSubmittedAccountOrganisationDetails(
     organisation?.registrationType ??
     deriveRegistrationType(organisation?.registrations, obligationYear)
 
-  if (isComplianceSchemeRegistrationType(registrationType)) {
-    return fetchComplianceSchemeAccountDetailsByCompaniesHouseNumber(
+  const details = isComplianceSchemeRegistrationType(registrationType)
+    ? await fetchSchemeOperatorAccountDetails(
+        accountApi,
+        organisation?.companiesHouseNumber,
+        traceId
+      )
+    : await fetchAccountOrganisationDetails(accountApi, organisationId, traceId)
+
+  return {
+    ...details,
+    contact: await fetchOrganisationContact(
       accountApi,
-      organisation?.companiesHouseNumber,
+      details.externalId,
       traceId
     )
   }
-
-  return fetchAccountOrganisationDetails(accountApi, organisationId, traceId)
 }
 
-function resolveMockAccountOrganisationDetails(organisationId) {
+// Contact details are secondary and already render a "No data" empty state, so
+// a failed lookup must not take the whole page down with it.
+async function fetchOrganisationContact(accountApi, externalId, traceId) {
+  let organisationWithPersons = null
+
+  if (externalId) {
+    try {
+      organisationWithPersons =
+        await accountApi.getOrganisationWithPersonsOrNull(externalId, traceId)
+    } catch {
+      // The upstream failure is already logged by the API client; fall through
+      // to the "No data" state rather than failing the page.
+    }
+  }
+
+  return mapOrganisationContact(organisationWithPersons)
+}
+
+function resolveMockAccountOrganisation(organisationId) {
   const organisation = getMockAccountOrganisationByExternalId(organisationId)
   return {
-    name: organisation?.name ?? null,
-    referenceNumber: organisation?.referenceNumber ?? null
+    ...mapAccountOrganisationDetails(organisation),
+    contact: mapOrganisationContact(organisation)
   }
 }
 
@@ -126,14 +149,14 @@ async function getMockDeclarationDetail(
     obligationYear ?? Number(mockSummary.complianceYear)
 
   if (!id) {
-    const accountOrganisation =
-      resolveMockAccountOrganisationDetails(organisationId)
+    const accountOrganisation = resolveMockAccountOrganisation(organisationId)
     return mapObligationToDetail(getMockObligationData(organisationId), {
       organisationId,
       obligationYear: resolvedObligationYear,
       organisation: getMockOrganisationById(organisationId),
       accountOrganisationName: accountOrganisation.name,
-      accountOrganisationReferenceNumber: accountOrganisation.referenceNumber
+      accountOrganisationReferenceNumber: accountOrganisation.referenceNumber,
+      accountOrganisationContact: accountOrganisation.contact
     })
   }
 
@@ -179,7 +202,7 @@ async function getNotSubmittedDeclarationDetail(
     ),
     organisationsApi.getOrganisation({ organisationId }, traceId)
   ])
-  const accountOrganisation = await fetchNotSubmittedAccountOrganisationDetails(
+  const accountOrganisation = await fetchNotSubmittedAccountOrganisation(
     accountApi,
     organisation,
     organisationId,
@@ -191,7 +214,8 @@ async function getNotSubmittedDeclarationDetail(
     obligationYear,
     organisation,
     accountOrganisationName: accountOrganisation.name,
-    accountOrganisationReferenceNumber: accountOrganisation.referenceNumber
+    accountOrganisationReferenceNumber: accountOrganisation.referenceNumber,
+    accountOrganisationContact: accountOrganisation.contact
   })
 }
 

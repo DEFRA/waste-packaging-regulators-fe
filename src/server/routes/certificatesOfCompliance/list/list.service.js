@@ -13,11 +13,11 @@ import {
   PAGE_SIZE,
   DECLARATIONS_BATCH_SIZE,
   NO_DATA,
-  UNKNOWN_ORGANISATION,
   COMPLIANCE_SCHEMES,
   COMPLIANCE_YEAR
 } from '../common/constants.js'
 import { mapOrganisationName } from '../common/organisation.js'
+import { resolveSchemeOperators } from '../common/scheme-operator.js'
 import { calculateObligationCoveragePercentage } from '../common/display.js'
 
 function mapDeclarationToItem(declaration) {
@@ -42,20 +42,14 @@ function mapDeclarationToItem(declaration) {
   }
 }
 
-// Reference number is resolved from the Account API (default 'No data'); the
-// organisation name comes from the waste-organisations record via the
-// compliance-scheme-aware derivation below.
-function mapOrganisationToItem(organisation, organisationType) {
-  const organisationName =
-    organisationType === COMPLIANCE_SCHEMES
-      ? (organisation.tradingName ?? organisation.name ?? UNKNOWN_ORGANISATION)
-      : (organisation.name ?? UNKNOWN_ORGANISATION)
+// Reference number is resolved from the Account API (default 'No data').
+function mapOrganisationToItem(organisation) {
   return {
     id: null,
     organisationId: organisation.id,
     companiesHouseNumber: organisation.companiesHouseNumber ?? null,
     organisationReferenceNumber: NO_DATA,
-    organisationName
+    organisationName: mapOrganisationName(organisation)
   }
 }
 
@@ -87,41 +81,20 @@ async function resolveNotSubmittedOrganisationReferenceNumbers(
   }
 }
 
-// Compliance schemes do NOT share an external id with the Account API (the
-// scheme identity lives in a separate table). Their reference number lives on
-// the operator organisation and is matched by Companies House number instead.
 async function resolveNotSubmittedComplianceSchemeReferenceNumbers(
   accountApi,
   items,
   traceId
 ) {
-  const companiesHouseNumbers = items
-    .map((item) => item.companiesHouseNumber)
-    .filter(Boolean)
-
-  if (companiesHouseNumbers.length === 0) {
-    return
-  }
-
-  const organisations =
-    await accountApi.getOrganisationsByCompaniesHouseNumbers(
-      companiesHouseNumbers,
-      traceId
-    )
-
-  // A Companies House number can match more than one organisation (e.g. a
-  // producer and the scheme operator); keep the compliance-scheme operator.
-  const complianceSchemeByCompaniesHouseNumber = new Map(
-    organisations
-      .filter((org) => org.isComplianceScheme)
-      .map((org) => [org.companiesHouseNumber, org])
+  const schemeOperators = await resolveSchemeOperators(
+    accountApi,
+    items.map((item) => item.companiesHouseNumber),
+    traceId
   )
 
   for (const item of items) {
-    const details = complianceSchemeByCompaniesHouseNumber.get(
-      item.companiesHouseNumber
-    )
-    item.organisationReferenceNumber = details?.referenceNumber ?? NO_DATA
+    const operator = schemeOperators.get(item.companiesHouseNumber)
+    item.organisationReferenceNumber = operator?.referenceNumber ?? NO_DATA
   }
 }
 
@@ -270,7 +243,7 @@ async function getNotSubmittedComplianceList(
 
   const allItems = orgsResult.organisations
     .filter((org) => !submittedIds.has(org.id))
-    .map((org) => mapOrganisationToItem(org, organisationType))
+    .map(mapOrganisationToItem)
 
   const totalPages = Math.ceil(allItems.length / PAGE_SIZE) || 1
   const start = (page - 1) * PAGE_SIZE

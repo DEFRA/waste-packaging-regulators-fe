@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import {
   deriveRegistrationType,
   mapCompaniesHouseNumberFromWasteOrganisation,
+  mapRegistrationTypeToOrganisationType,
   mapWasteOrganisationToDetailFields
 } from './registration-type.js'
 import { findSubmittedAuditUser } from '../detail/audit.js'
@@ -82,6 +83,39 @@ describe('organisation and audit detail mapping', () => {
     ).toBe('DirectProducer')
   })
 
+  describe('mapRegistrationTypeToOrganisationType', () => {
+    test.each([
+      ['DirectProducer', 'Direct producer'],
+      ['ComplianceScheme', 'Compliance scheme']
+    ])('maps %s to its display name', (registrationType, expected) => {
+      expect(mapRegistrationTypeToOrganisationType(registrationType)).toBe(
+        expected
+      )
+    })
+
+    test.each([[null], [undefined], ['']])(
+      'returns No data for %s',
+      (registrationType) => {
+        expect(mapRegistrationTypeToOrganisationType(registrationType)).toBe(
+          'No data'
+        )
+      }
+    )
+
+    // An unmapped type falls back to the raw value rather than hiding it — a
+    // regulator seeing "Exporter" is better served than one seeing "No data".
+    test('falls back to the raw value for an unmapped registration type', () => {
+      expect(mapRegistrationTypeToOrganisationType('Exporter')).toBe('Exporter')
+    })
+
+    // Without an own-property check this resolves to Object's constructor.
+    test('falls back to the raw value for an inherited property name', () => {
+      expect(mapRegistrationTypeToOrganisationType('constructor')).toBe(
+        'constructor'
+      )
+    })
+  })
+
   test('mapWasteOrganisationToDetailFields returns No data organisationType when no registration type can be determined', () => {
     expect(
       mapWasteOrganisationToDetailFields({
@@ -155,13 +189,13 @@ describe('organisation and audit detail mapping', () => {
     })
   })
 
-  test('mapWasteOrganisationToDetailFields uses tradingName for compliance schemes', () => {
+  test('mapWasteOrganisationToDetailFields uses the scheme operator name, not the scheme trading name, for compliance schemes', () => {
     expect(
       mapWasteOrganisationToDetailFields(
         {
-          name: 'Legal Name',
+          name: 'Scheme Operator Co',
           tradingName: 'Trading Scheme Co',
-          companiesHouseNumber: '87654321',
+          companiesHouseNumber: 'CS_GENERATED_0923795',
           registrations: [
             {
               type: 'COMPLIANCE_SCHEME',
@@ -173,10 +207,10 @@ describe('organisation and audit detail mapping', () => {
         { obligationYear: 2026 }
       )
     ).toEqual({
-      companyName: 'Trading Scheme Co',
+      companyName: 'Scheme Operator Co',
       registrationType: 'ComplianceScheme',
       organisationType: 'Compliance scheme',
-      companiesHouseNumber: '87654321'
+      companiesHouseNumber: 'CS_GENERATED_0923795'
     })
   })
 })
