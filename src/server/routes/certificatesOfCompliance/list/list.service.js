@@ -284,7 +284,7 @@ async function getComplianceList(
     const listByTab = mockListByOrganisationType[organisationType] ?? {}
     return {
       items: listByTab[tab] ?? [],
-      totalPages: 6,
+      totalPages: 9,
       currentPage: page
     }
   }
