@@ -144,7 +144,7 @@ export const mockAcceptedItems = [
     organisationName: 'Acme Compliance Co',
     recyclingObligationsMet: true,
     regulation43Met: true,
-    obligationCoveragePercentage: 112,
+    obligationCoveragePercentage: 100,
     dateSubmitted: '2027-01-15'
   },
   {
@@ -166,7 +166,7 @@ export const mockNotSubmittedItems = [
     organisationReferenceNumber: '518293',
     organisationName: MOCK_ORG_REDWOOD_NAME,
     recyclingObligationsMet: false,
-    obligationCoveragePercentage: 0,
+    obligationCoveragePercentage: 92,
     dateSubmitted: null
   },
   {
@@ -193,7 +193,7 @@ export const mockNotSubmittedItems = [
     organisationReferenceNumber: MOCK_REF_PINNACLE,
     organisationName: MOCK_ORG_PINNACLE_NAME,
     recyclingObligationsMet: false,
-    obligationCoveragePercentage: 0,
+    obligationCoveragePercentage: 100,
     dateSubmitted: null
   },
   {
@@ -202,7 +202,7 @@ export const mockNotSubmittedItems = [
     organisationReferenceNumber: MOCK_REF_MERIDIAN,
     organisationName: MOCK_ORG_MERIDIAN_NAME,
     recyclingObligationsMet: false,
-    obligationCoveragePercentage: 0,
+    obligationCoveragePercentage: 54,
     dateSubmitted: null
   }
 ]
@@ -238,7 +238,7 @@ export const mockComplianceSchemeAcceptedItems = [
     organisationName: MOCK_ORG_NATIONWIDE_OPERATOR_NAME,
     recyclingObligationsMet: true,
     regulation43Met: true,
-    obligationCoveragePercentage: 105,
+    obligationCoveragePercentage: 100,
     dateSubmitted: '2027-01-12'
   },
   {
@@ -301,7 +301,6 @@ export const mockComplianceSchemeNotSubmittedItems = [
     organisationName: MOCK_ORG_FUTUREPACK_OPERATOR_NAME,
     recyclingObligationsMet: false,
     regulation43Met: false,
-    obligationCoveragePercentage: 0,
     dateSubmitted: null
   },
   {
@@ -311,7 +310,6 @@ export const mockComplianceSchemeNotSubmittedItems = [
     organisationName: MOCK_ORG_METROLINE_OPERATOR_NAME,
     recyclingObligationsMet: false,
     regulation43Met: false,
-    obligationCoveragePercentage: 0,
     dateSubmitted: null
   },
   {
@@ -321,7 +319,6 @@ export const mockComplianceSchemeNotSubmittedItems = [
     organisationName: MOCK_ORG_SOUTHGATE_OPERATOR_NAME,
     recyclingObligationsMet: false,
     regulation43Met: false,
-    obligationCoveragePercentage: 0,
     dateSubmitted: null
   }
 ]

@@ -218,36 +218,51 @@ describe('#certificatesOfComplianceController', () => {
 
   describe('Regulation 43 and Percentage met columns', () => {
     test.each(['accepted', 'pending', 'not-submitted'])(
-      'Should show Regulation 43 and Percentage met column headers on the %s tab for compliance-schemes',
+      'Should show Regulation 43 and not Percentage met on the %s tab for compliance-schemes',
       async (tab) => {
         const { result } = await inject(
           `/certificates-of-compliance?type=compliance-schemes&tab=${tab}`
         )
 
         expect(result).toEqual(expect.stringContaining('Regulation 43'))
-        expect(result).toEqual(expect.stringContaining('Percentage met'))
+        expect(result).not.toEqual(expect.stringContaining('Percentage met'))
       }
     )
 
-    test('Should show Percentage met column header for direct-producers', async () => {
-      const { result } = await inject(
-        '/certificates-of-compliance?type=direct-producers&tab=accepted'
-      )
+    test.each(['accepted', 'pending', 'not-submitted'])(
+      'Should show Percentage met and not Regulation 43 on the %s tab for direct-producers',
+      async (tab) => {
+        const { result } = await inject(
+          `/certificates-of-compliance?type=direct-producers&tab=${tab}`
+        )
 
-      expect(result).toEqual(expect.stringContaining('Percentage met'))
-      expect(result).not.toEqual(expect.stringContaining('Regulation 43'))
-    })
+        expect(result).toEqual(expect.stringContaining('Percentage met'))
+        expect(result).not.toEqual(expect.stringContaining('Regulation 43'))
+      }
+    )
 
-    test('Should render Percentage met for compliance-schemes items', async () => {
-      const item = mockComplianceSchemeAcceptedItems.find(
-        (entry) => entry.obligationCoveragePercentage === 105
+    test('Should render Percentage met for direct-producer pending items', async () => {
+      const item = mockPendingItems.find(
+        (entry) => entry.obligationCoveragePercentage === 97
       )
       const { result } = await inject(
-        '/certificates-of-compliance?type=compliance-schemes&tab=accepted'
+        '/certificates-of-compliance?type=direct-producers&tab=pending'
       )
 
       expect(result).toEqual(expect.stringContaining(item.organisationName))
-      expect(result).toEqual(expect.stringContaining('105%'))
+      expect(result).toEqual(expect.stringContaining('97%'))
+    })
+
+    test('Should render Percentage met for direct-producer not-submitted items', async () => {
+      const item = mockNotSubmittedItems.find(
+        (entry) => entry.obligationCoveragePercentage === 92
+      )
+      const { result } = await inject(
+        '/certificates-of-compliance?type=direct-producers&tab=not-submitted'
+      )
+
+      expect(result).toEqual(expect.stringContaining(item.organisationName))
+      expect(result).toEqual(expect.stringContaining('92%'))
     })
 
     test('Should render Compliant tag for items where regulation43Met is true', async () => {
@@ -274,15 +289,6 @@ describe('#certificatesOfComplianceController', () => {
         expect.stringContaining(falseItem.organisationName)
       )
       expect(result).toEqual(expect.stringContaining('Not compliant'))
-    })
-
-    test('Should show Percentage met column header on the not-submitted tab for direct-producers', async () => {
-      const { result } = await inject(
-        '/certificates-of-compliance?type=direct-producers&tab=not-submitted'
-      )
-
-      expect(result).toEqual(expect.stringContaining('Percentage met'))
-      expect(result).not.toEqual(expect.stringContaining('Regulation 43'))
     })
   })
 

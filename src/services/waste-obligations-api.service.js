@@ -112,6 +112,23 @@ export class WasteObligationsApiService extends BaseApiService {
       this.getTracingHeader(traceId)
     )
   }
+
+  async getComplianceObligationOrNull(
+    { organisationId, obligationYear } = {},
+    traceId
+  ) {
+    try {
+      return await this.getComplianceObligation(
+        { organisationId, obligationYear },
+        traceId
+      )
+    } catch (err) {
+      if (err instanceof ApiError && err.status === statusCodes.notFound) {
+        return null
+      }
+      throw err
+    }
+  }
 }
 
 export function createWasteObligationsApiService(options = {}) {
