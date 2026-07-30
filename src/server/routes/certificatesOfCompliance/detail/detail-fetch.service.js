@@ -113,10 +113,20 @@ async function fetchNotSubmittedAccountOrganisation(
   }
 }
 
+// Contact details are secondary and already render a "No data" empty state, so
+// a failed lookup must not take the whole page down with it.
 async function fetchOrganisationContact(accountApi, externalId, traceId) {
-  const organisationWithPersons = externalId
-    ? await accountApi.getOrganisationWithPersonsOrNull(externalId, traceId)
-    : null
+  let organisationWithPersons = null
+
+  if (externalId) {
+    try {
+      organisationWithPersons =
+        await accountApi.getOrganisationWithPersonsOrNull(externalId, traceId)
+    } catch {
+      // The upstream failure is already logged by the API client; fall through
+      // to the "No data" state rather than failing the page.
+    }
+  }
 
   return mapOrganisationContact(organisationWithPersons)
 }

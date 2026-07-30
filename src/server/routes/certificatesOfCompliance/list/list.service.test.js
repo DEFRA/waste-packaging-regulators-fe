@@ -2338,6 +2338,28 @@ describe('getCertificatesOfComplianceViewModel', () => {
             expect(vm.companyPhoneNumber).toBe('No data')
           })
 
+          test('renders the rest of the page when the contact lookup fails', async () => {
+            setupComplianceScheme()
+            mockAccountApi.getOrganisationWithPersonsOrNull.mockRejectedValue(
+              new ApiError({
+                status: 500,
+                message: 'account API request failed with status 500',
+                serviceName: 'account'
+              })
+            )
+
+            const vm = await getCertificateOfComplianceDetailViewModel(
+              'org-cs',
+              undefined,
+              { obligationYear: 2026 }
+            )
+
+            expect(vm.declarationEmailAddress).toBe('No data')
+            expect(vm.companyPhoneNumber).toBe('No data')
+            expect(vm.companyName).toBe('Scheme Operator Co')
+            expect(vm.organisationRef).toBe('530001')
+          })
+
           test('does not call the contact endpoint when no Account organisation matched', async () => {
             setupComplianceScheme()
             mockAccountApi.getOrganisationsByCompaniesHouseNumbers.mockResolvedValue(
