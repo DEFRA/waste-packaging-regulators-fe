@@ -106,9 +106,15 @@ describe('Pagination component', () => {
 
     expect(paginationItems.length).toBe(4)
     expect($('.govuk-pagination__list .govuk-pagination__link').length).toBe(3)
-    expect(paginationItems[0].attribs.class).toContain('govuk-pagination__item--current')
-    expect(paginationItems[1].attribs.class).not.toContain('govuk-pagination__item--ellipsis')
-    expect(paginationItems[paginationItems.length - 2].attribs.class).toContain('govuk-pagination__item--ellipsis')
+    expect(paginationItems[0].attribs.class).toContain(
+      'govuk-pagination__item--current'
+    )
+    expect(paginationItems[1].attribs.class).not.toContain(
+      'govuk-pagination__item--ellipsis'
+    )
+    expect(paginationItems[paginationItems.length - 2].attribs.class).toContain(
+      'govuk-pagination__item--ellipsis'
+    )
   })
 
   test('Should render first three page number links, an ellipsis, and last page number link where there are more than 6 total pages and current page is 2', () => {
@@ -122,9 +128,15 @@ describe('Pagination component', () => {
 
     expect(paginationItems.length).toBe(5)
     expect($('.govuk-pagination__list .govuk-pagination__link').length).toBe(4)
-    expect(paginationItems[1].attribs.class).toContain('govuk-pagination__item--current')
-    expect(paginationItems[1].attribs.class).not.toContain('govuk-pagination__item--ellipsis')
-    expect(paginationItems[paginationItems.length - 2].attribs.class).toContain('govuk-pagination__item--ellipsis')
+    expect(paginationItems[1].attribs.class).toContain(
+      'govuk-pagination__item--current'
+    )
+    expect(paginationItems[1].attribs.class).not.toContain(
+      'govuk-pagination__item--ellipsis'
+    )
+    expect(paginationItems[paginationItems.length - 2].attribs.class).toContain(
+      'govuk-pagination__item--ellipsis'
+    )
   })
 
   test('Should render first four page number links, an ellipsis, and last page number link where there are more than 6 total pages and current page is 3', () => {
@@ -138,9 +150,15 @@ describe('Pagination component', () => {
 
     expect(paginationItems.length).toBe(6)
     expect($('.govuk-pagination__list .govuk-pagination__link').length).toBe(5)
-    expect(paginationItems[2].attribs.class).toContain('govuk-pagination__item--current')
-    expect(paginationItems[1].attribs.class).not.toContain('govuk-pagination__item--ellipsis')
-    expect(paginationItems[paginationItems.length - 2].attribs.class).toContain('govuk-pagination__item--ellipsis')
+    expect(paginationItems[2].attribs.class).toContain(
+      'govuk-pagination__item--current'
+    )
+    expect(paginationItems[1].attribs.class).not.toContain(
+      'govuk-pagination__item--ellipsis'
+    )
+    expect(paginationItems[paginationItems.length - 2].attribs.class).toContain(
+      'govuk-pagination__item--ellipsis'
+    )
   })
 
   test('Should render first four page number links, no ellipses, and last four page number links where there are 7 total pages and current page is the middle', () => {
@@ -154,9 +172,15 @@ describe('Pagination component', () => {
 
     expect(paginationItems.length).toBe(7)
     expect($('.govuk-pagination__list .govuk-pagination__link').length).toBe(7)
-    expect(paginationItems[3].attribs.class).toContain('govuk-pagination__item--current')
-    expect(paginationItems[1].attribs.class).not.toContain('govuk-pagination__item--ellipsis')
-    expect(paginationItems[paginationItems.length - 2].attribs.class).not.toContain('govuk-pagination__item--ellipsis')
+    expect(paginationItems[3].attribs.class).toContain(
+      'govuk-pagination__item--current'
+    )
+    expect(paginationItems[1].attribs.class).not.toContain(
+      'govuk-pagination__item--ellipsis'
+    )
+    expect(
+      paginationItems[paginationItems.length - 2].attribs.class
+    ).not.toContain('govuk-pagination__item--ellipsis')
   })
 
   test('Should render first four page number links, an ellipsis, and last page number link where there are 8 total pages and current page is the middle', () => {
@@ -170,9 +194,15 @@ describe('Pagination component', () => {
 
     expect(paginationItems.length).toBe(7)
     expect($('.govuk-pagination__list .govuk-pagination__link').length).toBe(6)
-    expect(paginationItems[3].attribs.class).toContain('govuk-pagination__item--current')
-    expect(paginationItems[1].attribs.class).not.toContain('govuk-pagination__item--ellipsis')
-    expect(paginationItems[paginationItems.length - 2].attribs.class).toContain('govuk-pagination__item--ellipsis')
+    expect(paginationItems[3].attribs.class).toContain(
+      'govuk-pagination__item--current'
+    )
+    expect(paginationItems[1].attribs.class).not.toContain(
+      'govuk-pagination__item--ellipsis'
+    )
+    expect(paginationItems[paginationItems.length - 2].attribs.class).toContain(
+      'govuk-pagination__item--ellipsis'
+    )
   })
 
   test('Should render first page number link, an ellipsis, and last four page numbers link where there are at least 6 total pages and current page is 4 and not middle', () => {
@@ -186,9 +216,15 @@ describe('Pagination component', () => {
 
     expect(paginationItems.length).toBe(7)
     expect($('.govuk-pagination__list .govuk-pagination__link').length).toBe(6)
-    expect(paginationItems[3].attribs.class).toContain('govuk-pagination__item--current')
-    expect(paginationItems[1].attribs.class).not.toContain('govuk-pagination__item--ellipsis')
-    expect(paginationItems[paginationItems.length - 2].attribs.class).toContain('govuk-pagination__item--ellipsis')
+    expect(paginationItems[3].attribs.class).toContain(
+      'govuk-pagination__item--current'
+    )
+    expect(paginationItems[1].attribs.class).not.toContain(
+      'govuk-pagination__item--ellipsis'
+    )
+    expect(paginationItems[paginationItems.length - 2].attribs.class).toContain(
+      'govuk-pagination__item--ellipsis'
+    )
   })
 
   test('Should render first page number link, an ellipsis, current page with one either side, an ellipsis and last number link where there are more than 6 total pages and current page is more than 3 from either end', () => {
@@ -202,9 +238,15 @@ describe('Pagination component', () => {
 
     expect(paginationItems.length).toBe(7)
     expect($('.govuk-pagination__list .govuk-pagination__link').length).toBe(5)
-    expect(paginationItems[3].attribs.class).toContain('govuk-pagination__item--current')
-    expect(paginationItems[1].attribs.class).toContain('govuk-pagination__item--ellipsis')
-    expect(paginationItems[paginationItems.length - 2].attribs.class).toContain('govuk-pagination__item--ellipsis')
+    expect(paginationItems[3].attribs.class).toContain(
+      'govuk-pagination__item--current'
+    )
+    expect(paginationItems[1].attribs.class).toContain(
+      'govuk-pagination__item--ellipsis'
+    )
+    expect(paginationItems[paginationItems.length - 2].attribs.class).toContain(
+      'govuk-pagination__item--ellipsis'
+    )
   })
 
   test('Should render first page number link, an ellipsis, and last four page number links where there are more than 6 total pages and current page is 3 from the end', () => {
@@ -218,9 +260,15 @@ describe('Pagination component', () => {
 
     expect(paginationItems.length).toBe(7)
     expect($('.govuk-pagination__list .govuk-pagination__link').length).toBe(6)
-    expect(paginationItems[3].attribs.class).toContain('govuk-pagination__item--current')
-    expect(paginationItems[1].attribs.class).toContain('govuk-pagination__item--ellipsis')
-    expect(paginationItems[paginationItems.length - 2].attribs.class).not.toContain('govuk-pagination__item--ellipsis')
+    expect(paginationItems[3].attribs.class).toContain(
+      'govuk-pagination__item--current'
+    )
+    expect(paginationItems[1].attribs.class).toContain(
+      'govuk-pagination__item--ellipsis'
+    )
+    expect(
+      paginationItems[paginationItems.length - 2].attribs.class
+    ).not.toContain('govuk-pagination__item--ellipsis')
   })
 
   test('Should render first page number link, an ellipsis, and last three page number links where there are more than 6 total pages and current page is 2 from the end', () => {
@@ -234,9 +282,15 @@ describe('Pagination component', () => {
 
     expect(paginationItems.length).toBe(6)
     expect($('.govuk-pagination__list .govuk-pagination__link').length).toBe(5)
-    expect(paginationItems[3].attribs.class).toContain('govuk-pagination__item--current')
-    expect(paginationItems[1].attribs.class).toContain('govuk-pagination__item--ellipsis')
-    expect(paginationItems[paginationItems.length - 2].attribs.class).not.toContain('govuk-pagination__item--ellipsis')
+    expect(paginationItems[3].attribs.class).toContain(
+      'govuk-pagination__item--current'
+    )
+    expect(paginationItems[1].attribs.class).toContain(
+      'govuk-pagination__item--ellipsis'
+    )
+    expect(
+      paginationItems[paginationItems.length - 2].attribs.class
+    ).not.toContain('govuk-pagination__item--ellipsis')
   })
 
   test('Should render first page number link, an ellipsis, and last three page number links where there are more than 6 total pages and current page is 1 from the end', () => {
@@ -250,9 +304,15 @@ describe('Pagination component', () => {
 
     expect(paginationItems.length).toBe(5)
     expect($('.govuk-pagination__list .govuk-pagination__link').length).toBe(4)
-    expect(paginationItems[3].attribs.class).toContain('govuk-pagination__item--current')
-    expect(paginationItems[1].attribs.class).toContain('govuk-pagination__item--ellipsis')
-    expect(paginationItems[paginationItems.length - 2].attribs.class).not.toContain('govuk-pagination__item--ellipsis')
+    expect(paginationItems[3].attribs.class).toContain(
+      'govuk-pagination__item--current'
+    )
+    expect(paginationItems[1].attribs.class).toContain(
+      'govuk-pagination__item--ellipsis'
+    )
+    expect(
+      paginationItems[paginationItems.length - 2].attribs.class
+    ).not.toContain('govuk-pagination__item--ellipsis')
   })
 
   test('Should render first page number link, an ellipsis, and last two page number links where there are more than 6 total pages and current page is the last', () => {
@@ -266,9 +326,15 @@ describe('Pagination component', () => {
 
     expect(paginationItems.length).toBe(4)
     expect($('.govuk-pagination__list .govuk-pagination__link').length).toBe(3)
-    expect(paginationItems[3].attribs.class).toContain('govuk-pagination__item--current')
-    expect(paginationItems[1].attribs.class).toContain('govuk-pagination__item--ellipsis')
-    expect(paginationItems[paginationItems.length - 2].attribs.class).not.toContain('govuk-pagination__item--ellipsis')
+    expect(paginationItems[3].attribs.class).toContain(
+      'govuk-pagination__item--current'
+    )
+    expect(paginationItems[1].attribs.class).toContain(
+      'govuk-pagination__item--ellipsis'
+    )
+    expect(
+      paginationItems[paginationItems.length - 2].attribs.class
+    ).not.toContain('govuk-pagination__item--ellipsis')
   })
 
   test('Should mark the current page as active', () => {
