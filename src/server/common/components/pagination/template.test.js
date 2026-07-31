@@ -183,7 +183,7 @@ describe('Pagination component', () => {
     ).not.toContain('govuk-pagination__item--ellipsis')
   })
 
-  test('Should render first four page number links, an ellipsis, and last page number link where there are 8 total pages and current page is the middle', () => {
+  test('Should render first four page number links, an ellipsis, and last page number link where there are 8 total pages and current page is 4', () => {
     const $ = renderPagination({
       totalPages: 8,
       currentPage: 4,
@@ -205,7 +205,7 @@ describe('Pagination component', () => {
     )
   })
 
-  test('Should render first page number link, an ellipsis, and last four page numbers link where there are at least 6 total pages and current page is 4 and not middle', () => {
+  test('Should render first page number link, an ellipsis, and last four page numbers link where there are at least 9 total pages and current page is 4', () => {
     const $ = renderPagination({
       totalPages: 9,
       currentPage: 4,
