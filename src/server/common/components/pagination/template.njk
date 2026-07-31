@@ -42,16 +42,14 @@
             {{ pageLink(i) }}
           {% endif %}
         {% endfor %}
-        {% if pagination.totalPages > 2 and pagination.currentPage < pagination.totalPages - 2 %}
+        {% if pagination.currentPage < pagination.totalPages - 2 %}
           {% if pagination.currentPage == pagination.totalPages - 3 %}
             {{ pageLink(pagination.totalPages - 1) }}
           {% else %}
             {{ ellipsis() }}
           {% endif %}
         {% endif %}
-        {% if pagination.totalPages > 2 %}
-          {{ pageLink(pagination.totalPages) }}
-        {% endif %}
+        {{ pageLink(pagination.totalPages) }}
       {% endif %}
     </ul>
     {% if pagination.currentPage < pagination.totalPages %}
