@@ -8,6 +8,7 @@
 {% endmacro %}
 {% if pagination.totalPages > 1 %}
   <nav class="govuk-pagination" aria-label="Results pages">
+
     {% if pagination.currentPage > 1 %}
       <div class="govuk-pagination__prev">
         <a class="govuk-link govuk-pagination__link" href="{{ pagination.baseUrl }}&amp;page={{ pagination.currentPage - 1 }}" rel="prev">
@@ -18,6 +19,7 @@
         </a>
       </div>
     {% endif %}
+
     <ul class="govuk-pagination__list">
       {% if pagination.totalPages < 7 %}
         {% for i in range(1, pagination.totalPages + 1) %}
@@ -45,6 +47,7 @@
         {{ pageLink(pagination.totalPages) }}
       {% endif %}
     </ul>
+
     {% if pagination.currentPage < pagination.totalPages %}
       <div class="govuk-pagination__next">
         <a class="govuk-link govuk-pagination__link" href="{{ pagination.baseUrl }}&amp;page={{ pagination.currentPage + 1 }}" rel="next">
