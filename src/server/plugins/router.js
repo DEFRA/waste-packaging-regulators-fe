@@ -10,6 +10,7 @@ import { certificatesOfComplianceList } from '../routes/certificatesOfCompliance
 import { certificatesOfComplianceDetail } from '../routes/certificatesOfCompliance/detail/index.js'
 import { certificatesOfComplianceAccept } from '../routes/certificatesOfCompliance/accept/index.js'
 import { certificatesOfComplianceCancel } from '../routes/certificatesOfCompliance/cancel/index.js'
+import { errorExamples } from '../routes/error/examples/index.js'
 
 export const router = {
   plugin: {
@@ -32,6 +33,11 @@ export const router = {
         certificatesOfComplianceAccept,
         certificatesOfComplianceCancel
       ])
+
+      // Error page previews for design and QA — never exposed in production
+      if (!config.get('isProduction')) {
+        await server.register([errorExamples])
+      }
 
       // Static assets
       if (!config.get('isProduction') && !config.get('isTest')) {
