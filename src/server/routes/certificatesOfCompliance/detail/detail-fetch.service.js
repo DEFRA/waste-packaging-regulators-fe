@@ -22,6 +22,7 @@ import {
 import { deriveRegistrationType } from '../common/registration-type.js'
 import { isComplianceSchemeRegistrationType } from '../common/display.js'
 import { resolveSchemeOperators } from '../common/scheme-operator.js'
+import { throwIfMockErrorConfigured } from '#server/common/helpers/mock-api-error.js'
 
 export { findSubmittedAuditUser } from './audit.js'
 
@@ -271,6 +272,7 @@ export async function getDeclarationDetail(
   { traceId, session, obligationYear } = {}
 ) {
   if (config.get('useMockApi')) {
+    throwIfMockErrorConfigured('waste-obligations-api')
     return getMockDeclarationDetail(accountApi, organisationId, id, {
       traceId,
       session,

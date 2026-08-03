@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getCertificatesOfComplianceViewModel } from './list.service.js'
 
 export const certificatesOfComplianceController = {
@@ -21,7 +22,10 @@ export const certificatesOfComplianceController = {
       tab,
       Number.parseInt(page, 10),
       traceId
-    )
+    ).catch((error) => {
+      handleApiError(request, error)
+      throw error
+    })
 
     return h.view('certificatesOfCompliance/list/index', viewModel)
   }
