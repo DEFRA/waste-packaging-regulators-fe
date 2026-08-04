@@ -300,7 +300,7 @@ describe('#certificatesOfComplianceController', () => {
 
       expect(result).toEqual(
         expect.stringContaining(
-          '/certificates-of-compliance?type=direct-producers&amp;tab=pending&amp;page='
+          '/certificates-of-compliance?type=direct-producers&amp;tab=pending'
         )
       )
     })

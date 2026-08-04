@@ -11,7 +11,9 @@ export const certificatesOfComplianceController = {
     const {
       type = 'direct-producers',
       tab = 'pending',
-      page = '1'
+      page = '1',
+      sortColumn = 'name',
+      sortDirection = 'descending'
     } = request.query
 
     const traceId = request.headers[config.get('tracing.header')]
@@ -20,6 +22,8 @@ export const certificatesOfComplianceController = {
       type,
       tab,
       Number.parseInt(page, 10),
+      sortColumn,
+      sortDirection,
       traceId
     )
 

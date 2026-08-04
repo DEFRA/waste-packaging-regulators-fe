@@ -96,8 +96,15 @@ describe('getCertificatesOfComplianceViewModel', () => {
         activeTab: 'pending',
         pagination: {
           currentPage: 2,
+          totalPages: 9,
           baseUrl:
             '/certificates-of-compliance?type=compliance-schemes&tab=pending'
+        },
+        sort: {
+          column: undefined,
+          direction: undefined,
+          baseUrl:
+            '/certificates-of-compliance?type=compliance-schemes&tab=pending&currentPage=1'
         }
       })
     })
@@ -595,6 +602,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
           'direct-producers',
           'pending',
           1,
+          undefined,
+          undefined,
           'trace-xyz'
         )
 
@@ -2839,6 +2848,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
           'direct-producers',
           'not-submitted',
           1,
+          undefined,
+          undefined,
           'trace-acct'
         )
 
@@ -2939,6 +2950,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
             'compliance-schemes',
             'not-submitted',
             1,
+            undefined,
+            undefined,
             'trace-cs'
           )
 
@@ -3179,6 +3192,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
           'direct-producers',
           'not-submitted',
           1,
+          undefined,
+          undefined,
           'trace-obl'
         )
 

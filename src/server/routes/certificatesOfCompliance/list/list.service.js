@@ -277,6 +277,8 @@ async function getComplianceList(
   accountApi,
   organisationType,
   tab,
+  sortColumn,
+  sortDirection,
   page,
   traceId
 ) {
@@ -325,6 +327,8 @@ export async function getCertificatesOfComplianceViewModel(
   organisationType,
   tab,
   currentPage,
+  sortColumn,
+  sortDirection,
   traceId
 ) {
   const apiWasteObligation = createWasteObligationsApiService()
@@ -345,6 +349,8 @@ export async function getCertificatesOfComplianceViewModel(
       apiAccount,
       organisationType,
       tab,
+      sortColumn,
+      sortDirection,
       currentPage,
       traceId
     )
@@ -363,7 +369,12 @@ export async function getCertificatesOfComplianceViewModel(
     pagination: {
       currentPage,
       totalPages: list.totalPages,
-      baseUrl
+      baseUrl: `${baseUrl}${sortColumn ? `&sortColumn=${sortColumn}` : ''}${sortDirection ? `&sortDirection=${sortDirection}` : ''}`
+    },
+    sort: {
+      column: sortColumn,
+      direction: sortDirection,
+      baseUrl: `${baseUrl}&currentPage=1`
     }
   }
 }
