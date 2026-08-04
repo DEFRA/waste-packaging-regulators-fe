@@ -12,7 +12,7 @@ export const certificatesOfComplianceController = {
       type = 'direct-producers',
       tab = 'pending',
       page = '1',
-      sortColumn = 'name',
+      sortColumn = tab !== 'not-submitted' ? 'dateSubmitted' : type === 'direct-producers' ? 'obligationCoveragePercentage' : 'recyclingObligationsMet',
       sortDirection = 'descending'
     } = request.query
 

@@ -1,21 +1,15 @@
 {% extends 'layouts/page.njk' %}
-
 {% block content %}
-
-
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
       <span class="govuk-caption-l">{{ complianceYear }} compliance year</span>
       <h1 class="govuk-heading-xl govuk-!-margin-bottom-6">{{ heading }}</h1>
-
-
     </div>
   </div>
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="v3-search-panel govuk-!-margin-bottom-4">
         {%- from "moj/components/search/macro.njk" import mojSearch -%}
-
         {{ mojSearch({
           action: "/certificates-of-compliance",
           method: "get",
@@ -43,8 +37,9 @@
       <div class="govuk-service-navigation__container">
         <nav aria-label="Organisation type" class="govuk-service-navigation__wrapper">
           <ul class="govuk-service-navigation__list">
-            <li class="govuk-service-navigation__item{% if organisationType == 'direct-producers' %} govuk-service-navigation__item--active{% endif %}">
-              <a class="govuk-service-navigation__link" href="/certificates-of-compliance?type=direct-producers&tab={{ activeTab }}"{% if organisationType == 'direct-producers' %} aria-current="true"{% endif %}>
+            <li class="govuk-service-navigation__item{% if organisationType == 'direct-producers' %}
+                govuk-service-navigation__item--active{% endif %}">
+              <a class="govuk-service-navigation__link" href="/certificates-of-compliance?type=direct-producers&tab={{ activeTab }}" {% if organisationType == 'direct-producers' %} aria-current="true" {% endif %}>
                 {% if organisationType == 'direct-producers' %}
                   <strong class="govuk-service-navigation__active-fallback">Direct producers</strong>
                 {% else %}
@@ -52,8 +47,9 @@
                 {% endif %}
               </a>
             </li>
-            <li class="govuk-service-navigation__item{% if organisationType == 'compliance-schemes' %} govuk-service-navigation__item--active{% endif %}">
-              <a class="govuk-service-navigation__link" href="/certificates-of-compliance?type=compliance-schemes&tab={{ activeTab }}"{% if organisationType == 'compliance-schemes' %} aria-current="true"{% endif %}>
+            <li class="govuk-service-navigation__item{% if organisationType == 'compliance-schemes' %}
+                govuk-service-navigation__item--active{% endif %}">
+              <a class="govuk-service-navigation__link" href="/certificates-of-compliance?type=compliance-schemes&tab={{ activeTab }}" {% if organisationType == 'compliance-schemes' %} aria-current="true" {% endif %}>
                 {% if organisationType == 'compliance-schemes' %}
                   <strong class="govuk-service-navigation__active-fallback">Compliance schemes</strong>
                 {% else %}
@@ -65,39 +61,36 @@
         </nav>
       </div>
       <hr class="govuk-!-margin-bottom-6">
-
-      <div class="govuk-tabs">
-        <ul class="govuk-tabs__list">
-          <li class="govuk-tabs__list-item{% if activeTab == 'pending' %} govuk-tabs__list-item--selected{% endif %}">
-            <a class="govuk-tabs__tab" href="?type={{ organisationType }}&tab=pending"{% if activeTab == 'pending' %} aria-current="page"{% endif %}>
-              Pending ({{ totalPending }})
-            </a>
-          </li>
-          <li class="govuk-tabs__list-item{% if activeTab == 'accepted' %} govuk-tabs__list-item--selected{% endif %}">
-            <a class="govuk-tabs__tab" href="?type={{ organisationType }}&tab=accepted"{% if activeTab == 'accepted' %} aria-current="page"{% endif %}>
-              Accepted ({{ totalAccepted }})
-            </a>
-          </li>
-          <li class="govuk-tabs__list-item{% if activeTab == 'not-submitted' %} govuk-tabs__list-item--selected{% endif %}">
-            <a class="govuk-tabs__tab" href="?type={{ organisationType }}&tab=not-submitted"{% if activeTab == 'not-submitted' %} aria-current="page"{% endif %}>
-              Not submitted ({{ totalNotSubmitted }})
-            </a>
-          </li>
-        </ul>
-
-        {% if activeTab == 'pending' %}
-          {% set tabCount = totalPending %}
-          {% set tabSummaryText = 'pending submissions' %}
-        {% elif activeTab == 'accepted' %}
-          {% set tabCount = totalAccepted %}
-          {% set tabSummaryText = 'accepted submissions' %}
-        {% elif activeTab == 'not-submitted' %}
-          {% set tabCount = totalNotSubmitted %}
-          {% set tabSummaryText = 'not submitted' %}
-        {% endif %}
-        {% include "certificatesOfCompliance/partials/tab-panel.njk" %}
+        <div class="govuk-tabs">
+          <ul class="govuk-tabs__list">
+            <li class="govuk-tabs__list-item{% if activeTab == 'pending' %} govuk-tabs__list-item--selected{% endif %}">
+              <a class="govuk-tabs__tab" href="?type={{ organisationType }}&tab=pending" {% if activeTab == 'pending' %} aria-current="page" {% endif %}>
+                Pending ({{ totalPending }})
+              </a>
+            </li>
+            <li class="govuk-tabs__list-item{% if activeTab == 'accepted' %} govuk-tabs__list-item--selected{% endif %}">
+              <a class="govuk-tabs__tab" href="?type={{ organisationType }}&tab=accepted" {% if activeTab == 'accepted' %} aria-current="page" {% endif %}>
+                Accepted ({{ totalAccepted }})
+              </a>
+            </li>
+            <li class="govuk-tabs__list-item{% if activeTab == 'not-submitted' %} govuk-tabs__list-item--selected{% endif %}">
+              <a class="govuk-tabs__tab" href="?type={{ organisationType }}&tab=not-submitted" {% if activeTab == 'not-submitted' %} aria-current="page" {% endif %}>
+                Not submitted ({{ totalNotSubmitted }})
+              </a>
+            </li>
+          </ul>
+          {% if activeTab == 'pending' %}
+            {% set tabCount = totalPending %}
+            {% set tabSummaryText = 'pending submissions' %}
+          {% elif activeTab == 'accepted' %}
+            {% set tabCount = totalAccepted %}
+            {% set tabSummaryText = 'accepted submissions' %}
+          {% elif activeTab == 'not-submitted' %}
+            {% set tabCount = totalNotSubmitted %}
+            {% set tabSummaryText = 'not submitted' %}
+          {% endif %}
+          {% include "certificatesOfCompliance/partials/tab-panel.njk" %}
+        </div>
       </div>
     </div>
-  </div>
-
-{% endblock %}
+  {% endblock %}

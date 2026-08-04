@@ -3,15 +3,19 @@ import { load } from 'cheerio'
 
 describe('Sorting Column Header Component', () => {
   test.each([
-    [true, 'testColumnName', 'Test column name', 'ascending', 'testColumnName'],
-    [true, 'testColumnName', 'Test column name', 'descending', 'testColumnName'],
-    [false, 'testColumnName', 'Test column name', 'ascending', 'testColumnName'],
-    [false, 'testColumnName', 'Test column name', 'descending', 'testColumnName'],
-    [true, 'testColumnName', 'Test column name', 'ascending', 'column2Name'],
-    [true, 'testColumnName', 'Test column name', 'descending', 'column2Name'],
-    [false, 'testColumnName', 'Test column name', 'ascending', 'column2Name'],
-    [false, 'testColumnName', 'Test column name', 'descending', 'column2Name'],
-  ])('When first column = %s, column name = %s, column label = %s, sort direction = %s, sort column = %s', (firstColumn, columnName, columnLabel, sortDirection, sortColumn) => {
+    [true, 'testColumnName', 'Test column name', 'ascending', 'testColumnName', true],
+    [true, 'testColumnName', 'Test column name', 'descending', 'testColumnName', true],
+    [false, 'testColumnName', 'Test column name', 'ascending', 'testColumnName', true],
+    [false, 'testColumnName', 'Test column name', 'descending', 'testColumnName', true],
+    [true, 'testColumnName', 'Test column name', 'ascending', 'column2Name', true],
+    [true, 'testColumnName', 'Test column name', 'descending', 'column2Name', true],
+    [false, 'testColumnName', 'Test column name', 'ascending', 'column2Name', true],
+    [false, 'testColumnName', 'Test column name', 'descending', 'column2Name', true],
+    [true, 'testColumnName', 'Test column name', 'ascending', 'column2Name', false],
+    [true, 'testColumnName', 'Test column name', 'descending', 'column2Name', false],
+    [false, 'testColumnName', 'Test column name', 'ascending', 'column2Name', false],
+    [false, 'testColumnName', 'Test column name', 'descending', 'column2Name', false],
+  ])('When first column = %s, column name = %s, column label = %s, sort direction = %s, sort column = %s, is sortable = %s', (firstColumn, columnName, columnLabel, sortDirection, sortColumn, sortable) => {
     const params = {
       firstColumn,
       columnName,
@@ -20,7 +24,8 @@ describe('Sorting Column Header Component', () => {
         direction: sortDirection,
         column: sortColumn,
         baseUrl: '/test-base-url'
-      }
+      },
+      sortable
     }
 
     const html = nunjucksTestEnv.renderString(`
@@ -33,16 +38,24 @@ describe('Sorting Column Header Component', () => {
     expect($('th')).toHaveLength(1)
     expect($('th').hasClass('govuk-table__header')).toBe(true)
     expect($('th').hasClass(`govuk-!-width-one-quarter`)).toBe(firstColumn)
-    expect($('a').text()).toContain(columnLabel)
+    expect($('th').text()).toContain(columnLabel)
 
-    if (columnName === sortColumn) {
-      expect($('th').attr('aria-sort')).toBe(sortDirection)
-      expect($('path')).toHaveLength(1)
-      expect($('path').attr('desc')).toContain(columnLabel)
-      expect($('path').attr('desc')).toContain(sortDirection)
+    if (sortable) {
+      expect($('a')).toHaveLength(1)
+
+      if (columnName === sortColumn) {
+        expect($('th').attr('aria-sort')).toBe(sortDirection)
+        expect($('path')).toHaveLength(1)
+        expect($('path').attr('desc')).toContain(columnLabel)
+        expect($('path').attr('desc')).toContain(sortDirection)
+      } else {
+        expect($('th').attr('aria-sort')).toBe('none')
+        expect($('path')).toHaveLength(2)
+      }
     } else {
       expect($('th').attr('aria-sort')).toBe('none')
-      expect($('path')).toHaveLength(2)
+      expect($('a')).toHaveLength(0)
+      expect($('path')).toHaveLength(0)
     }
   })
 });
