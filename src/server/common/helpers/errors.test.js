@@ -29,16 +29,16 @@ describe('#errors', () => {
     )
     expect(result).toEqual(expect.stringContaining('Page not found'))
     expect(result).toEqual(
-      expect.stringContaining('If you typed the web address, check it is correct.')
+      expect.stringContaining(
+        'If you typed the web address, check it is correct.'
+      )
     )
     expect(result).toEqual(
       expect.stringContaining(
         'If the web address is correct or you selected a link or a button, email'
       )
     )
-    expect(result).toEqual(
-      expect.stringContaining(`mailto:${helpDeskEmail}`)
-    )
+    expect(result).toEqual(expect.stringContaining(`mailto:${helpDeskEmail}`))
     expect(statusCode).toBe(statusCodes.notFound)
   })
 })
