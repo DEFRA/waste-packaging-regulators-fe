@@ -11,7 +11,7 @@ describe('Status Tag Component', () => {
       value
     })
 
-    expect($('strong').hasClass(expectedClass))
+    expect($('strong').hasClass(expectedClass)).toBe(true)
     expect($('strong').text().trim()).toBe(expectedText)
   })
 })

@@ -21,7 +21,7 @@ import { ApiError } from '#services/apiBaseClient/api-error.js'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
 import { createAccountApiService } from '#services/account-api.service.js'
-import { getCertificatesOfComplianceViewModel } from './list.service.js'
+import { getCertificatesOfComplianceViewModel, compareValues, sortItems } from './list.service.js'
 import { getCertificateOfComplianceDetailViewModel } from '../detail/detail.service.js'
 import { setMockDeclarationStatusOverride } from '../actions/session.service.js'
 import {
@@ -3350,5 +3350,62 @@ describe('getCertificatesOfComplianceViewModel', () => {
         ).rejects.toMatchObject({ name: 'ApiError', status: 500 })
       })
     })
+  })
+})
+
+describe('compareValues', () => {
+  test('returns 0 when both are null', () => {
+    expect(compareValues(null, null)).toBe(0)
+  })
+
+  test('returns 1 when valA is null', () => {
+    expect(compareValues(null, 'test')).toBe(1)
+  })
+
+  test('returns -1 when valB is null', () => {
+    expect(compareValues('test', null)).toBe(-1)
+  })
+
+  test('compares booleans correctly', () => {
+    expect(compareValues(true, true)).toBe(0)
+    expect(compareValues(false, false)).toBe(0)
+    expect(compareValues(true, false)).toBe(-1)
+    expect(compareValues(false, true)).toBe(1)
+  })
+
+  test('compares numbers correctly', () => {
+    expect(compareValues(1, 1)).toBe(0)
+    expect(compareValues(1, 2)).toBe(-1)
+    expect(compareValues(2, 1)).toBe(1)
+  })
+
+  test('compares strings correctly', () => {
+    expect(compareValues('apple', 'apple')).toBe(0)
+    expect(compareValues('apple', 'banana')).toBe(-1)
+    expect(compareValues('banana', 'apple')).toBe(1)
+  })
+
+  test('returns 0 for unhandled types', () => {
+    expect(compareValues({}, {})).toBe(0)
+  })
+})
+
+describe('sortItems', () => {
+  const items = [
+    { id: 1, name: 'B', organisationName: 'Z Org' },
+    { id: 2, name: 'A', organisationName: 'M Org' },
+    { id: 3, name: 'A', organisationName: 'A Org' },
+    { id: 4, name: null, organisationName: 'Y Org' },
+    { id: 5, name: null, organisationName: 'B Org' }
+  ]
+
+  test('sorts by primary column ascending with secondary sort on organisationName', () => {
+    const result = sortItems([...items], 'name', 'asc')
+    expect(result.map(i => i.id)).toEqual([3, 2, 1, 5, 4])
+  })
+
+  test('sorts by primary column descending with secondary sort on organisationName ascending', () => {
+    const result = sortItems([...items], 'name', 'desc')
+    expect(result.map(i => i.id)).toEqual([5, 4, 1, 3, 2])
   })
 })

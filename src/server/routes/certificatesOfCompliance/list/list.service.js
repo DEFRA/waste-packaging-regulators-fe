@@ -213,13 +213,27 @@ async function resolveNotSubmittedReferenceNumbers(
   }
 }
 
-function compareValues(valA, valB) {
-  if (valA == null && valB == null) return 0
-  if (valA == null) return 1
-  if (valB == null) return -1
+export function compareValues(valA, valB) {
+  if (valA === null && valB === null) {
+    return 0
+  }
+  if (valA === null) {
+    return 1
+  }
+  if (valB === null) {
+    return -1
+  }
 
   if (typeof valA === 'boolean') {
-    return valA === valB ? 0 : valA ? -1 : 1
+    if (valA === valB) {
+      return 0
+    } else {
+      if (valA === true) {
+        return -1
+      } else {
+        return 1
+      }
+    }
   }
 
   if (typeof valA === 'number') {
@@ -233,13 +247,15 @@ function compareValues(valA, valB) {
   return 0
 }
 
-function sortItems(items, sortColumn, sortDirection) {
+export function sortItems(items, sortColumn, sortDirection) {
   const direction = sortDirection === 'asc' ? 1 : -1
 
   return items.sort((a, b) => {
     const primary = compareValues(a[sortColumn], b[sortColumn]) * direction
 
-    if (primary !== 0) return primary
+    if (primary !== 0) {
+      return primary
+    }
 
     // Secondary sort: organisation name ascending
     return compareValues(a.organisationName, b.organisationName)
@@ -401,6 +417,14 @@ export async function getCertificatesOfComplianceViewModel(
     )
   ])
 
+  let paginationBaseUrl = baseUrl
+  if (sortColumn) {
+    paginationBaseUrl += `&sortColumn=${sortColumn}`
+  }
+  if (sortDirection) {
+    paginationBaseUrl += `&sortDirection=${sortDirection}`
+  }
+
   return {
     heading: 'View certificates and statements of compliance',
     backlink: './',
@@ -414,7 +438,7 @@ export async function getCertificatesOfComplianceViewModel(
     pagination: {
       currentPage,
       totalPages: list.totalPages,
-      baseUrl: `${baseUrl}${sortColumn ? `&sortColumn=${sortColumn}` : ''}${sortDirection ? `&sortDirection=${sortDirection}` : ''}`
+      baseUrl: paginationBaseUrl
     },
     sort: {
       column: sortColumn,
