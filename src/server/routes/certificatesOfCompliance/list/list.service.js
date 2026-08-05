@@ -227,12 +227,10 @@ export function compareValues(valA, valB) {
   if (typeof valA === 'boolean') {
     if (valA === valB) {
       return 0
+    } else if (valA === true) {
+      return -1
     } else {
-      if (valA === true) {
-        return -1
-      } else {
-        return 1
-      }
+      return 1
     }
   }
 
