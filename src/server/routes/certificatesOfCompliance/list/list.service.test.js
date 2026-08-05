@@ -239,7 +239,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
     })
 
     test('getCertificateOfComplianceDetailViewModel returns not-submitted mock detail with organisation name', async () => {
-      const item = mockNotSubmittedItems[0]
+      const item = mockNotSubmittedItems[2]
       const vm = await getCertificateOfComplianceDetailViewModel(
         item.organisationId,
         undefined,
@@ -262,7 +262,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
     })
 
     test('getCertificateOfComplianceDetailViewModel returns not-submitted mock detail for org without waste-organisations mock', async () => {
-      const item = mockNotSubmittedItems[1]
+      const item = mockNotSubmittedItems[4]
       const vm = await getCertificateOfComplianceDetailViewModel(
         item.organisationId,
         undefined,
@@ -290,19 +290,19 @@ describe('getCertificatesOfComplianceViewModel', () => {
         // Redwood Retail — uses default mockObligationData
         {
           obligations: 'obligations',
-          item: mockNotSubmittedItems[0],
+          item: mockNotSubmittedItems[2],
           expected: true
         },
         // Pinnacle Containers Ltd — obligations: []
         {
           obligations: 'an empty obligations array',
-          item: mockNotSubmittedItems[3],
+          item: mockNotSubmittedItems[1],
           expected: false
         },
         // Sterling Packaging Ltd — obligations: null
         {
           obligations: 'null obligations',
-          item: mockNotSubmittedItems[2],
+          item: mockNotSubmittedItems[0],
           expected: false
         }
       ])(
@@ -2788,14 +2788,14 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
         expect(vm.items).toEqual([
           expect.objectContaining({
-            organisationId: 'org-guid-1',
-            organisationReferenceNumber: '518293',
-            organisationName: 'Redwood Retail Group'
-          }),
-          expect.objectContaining({
             organisationId: 'org-guid-2',
             organisationReferenceNumber: '600124',
             organisationName: 'Maple Manufacturing'
+          }),
+          expect.objectContaining({
+            organisationId: 'org-guid-1',
+            organisationReferenceNumber: '518293',
+            organisationName: 'Redwood Retail Group'
           })
         ])
       })
@@ -2831,13 +2831,13 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
 
         expect(vm.items[0]).toMatchObject({
-          organisationReferenceNumber: '518293',
-          organisationName: 'Redwood Retail Group'
-        })
-        expect(vm.items[1]).toMatchObject({
           organisationId: 'org-guid-2',
           organisationReferenceNumber: 'No data',
           organisationName: 'Maple Manufacturing'
+        })
+        expect(vm.items[1]).toMatchObject({
+          organisationReferenceNumber: '518293',
+          organisationName: 'Redwood Retail Group'
         })
       })
 

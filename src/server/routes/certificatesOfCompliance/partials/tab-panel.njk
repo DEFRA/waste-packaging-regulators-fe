@@ -17,8 +17,8 @@
     <caption class="govuk-table__caption govuk-visually-hidden">{{ tabSummaryText | capitalize }}</caption>
     <thead class="govuk-table__head">
       <tr class="govuk-table__row">
-        {{ appSortingColumnHeader({ sortable: false, sort: sort, firstColumn: true, columnName: 'name', columnLabel: 'Organisation name' }) }}
-        {{ appSortingColumnHeader({ sortable: false, sort: sort, columnName: 'id', columnLabel: 'Organisation ID' }) }}
+        {{ appSortingColumnHeader({ sortable: false, firstColumn: true, columnName: 'name', columnLabel: 'Organisation name' }) }}
+        {{ appSortingColumnHeader({ sortable: false, columnName: 'id', columnLabel: 'Organisation ID' }) }}
         {{ appSortingColumnHeader({ sort: sort, columnName: 'recyclingObligationsMet', columnLabel: 'Recycling obligations' }) }}
         {% if organisationType == 'compliance-schemes' %}
           {{ appSortingColumnHeader({ sort: sort, columnName: 'regulation43Met', columnLabel: 'Regulation 43' }) }}

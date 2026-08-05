@@ -1,6 +1,7 @@
 import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { sessionCookieFromResponse } from '#test-helpers/cookies.js'
+import { load } from 'cheerio'
 import {
   mockSummary,
   mockPendingItems,
@@ -290,6 +291,247 @@ describe('#certificatesOfComplianceController', () => {
       )
       expect(result).toEqual(expect.stringContaining('Not compliant'))
     })
+  })
+
+  describe('Sorting', () => {
+    test.each([
+      { type: 'direct-producers', tab: 'pending' },
+      {
+        type: 'direct-producers',
+        tab: 'pending',
+        column: 'obligationCoveragePercentage',
+        direction: 'asc'
+      },
+      {
+        type: 'direct-producers',
+        tab: 'pending',
+        column: 'recyclingObligationsMet',
+        direction: 'asc'
+      },
+      {
+        type: 'direct-producers',
+        tab: 'pending',
+        column: 'dateSubmitted',
+        direction: 'asc'
+      },
+      {
+        type: 'direct-producers',
+        tab: 'pending',
+        column: 'obligationCoveragePercentage',
+        direction: 'desc'
+      },
+      {
+        type: 'direct-producers',
+        tab: 'pending',
+        column: 'recyclingObligationsMet',
+        direction: 'desc'
+      },
+      {
+        type: 'direct-producers',
+        tab: 'pending',
+        column: 'dateSubmitted',
+        direction: 'desc'
+      },
+      { type: 'direct-producers', tab: 'accepted' },
+      {
+        type: 'direct-producers',
+        tab: 'accepted',
+        column: 'obligationCoveragePercentage',
+        direction: 'asc'
+      },
+      {
+        type: 'direct-producers',
+        tab: 'accepted',
+        column: 'recyclingObligationsMet',
+        direction: 'asc'
+      },
+      {
+        type: 'direct-producers',
+        tab: 'accepted',
+        column: 'dateSubmitted',
+        direction: 'asc'
+      },
+      {
+        type: 'direct-producers',
+        tab: 'accepted',
+        column: 'obligationCoveragePercentage',
+        direction: 'desc'
+      },
+      {
+        type: 'direct-producers',
+        tab: 'accepted',
+        column: 'recyclingObligationsMet',
+        direction: 'desc'
+      },
+      {
+        type: 'direct-producers',
+        tab: 'accepted',
+        column: 'dateSubmitted',
+        direction: 'desc'
+      },
+      { type: 'direct-producers', tab: 'not-submitted' },
+      {
+        type: 'direct-producers',
+        tab: 'not-submitted',
+        column: 'obligationCoveragePercentage',
+        direction: 'asc'
+      },
+      {
+        type: 'direct-producers',
+        tab: 'not-submitted',
+        column: 'recyclingObligationsMet',
+        direction: 'asc'
+      },
+      {
+        type: 'direct-producers',
+        tab: 'not-submitted',
+        column: 'obligationCoveragePercentage',
+        direction: 'desc'
+      },
+      {
+        type: 'direct-producers',
+        tab: 'not-submitted',
+        column: 'recyclingObligationsMet',
+        direction: 'desc'
+      },
+      { type: 'compliance-schemes', tab: 'pending' },
+      {
+        type: 'compliance-schemes',
+        tab: 'pending',
+        column: 'regulation43Met',
+        direction: 'asc'
+      },
+      {
+        type: 'compliance-schemes',
+        tab: 'pending',
+        column: 'recyclingObligationsMet',
+        direction: 'asc'
+      },
+      {
+        type: 'compliance-schemes',
+        tab: 'pending',
+        column: 'dateSubmitted',
+        direction: 'asc'
+      },
+      {
+        type: 'compliance-schemes',
+        tab: 'pending',
+        column: 'regulation43Met',
+        direction: 'desc'
+      },
+      {
+        type: 'compliance-schemes',
+        tab: 'pending',
+        column: 'recyclingObligationsMet',
+        direction: 'desc'
+      },
+      {
+        type: 'compliance-schemes',
+        tab: 'pending',
+        column: 'dateSubmitted',
+        direction: 'desc'
+      },
+      { type: 'compliance-schemes', tab: 'accepted' },
+      {
+        type: 'compliance-schemes',
+        tab: 'accepted',
+        column: 'regulation43Met',
+        direction: 'asc'
+      },
+      {
+        type: 'compliance-schemes',
+        tab: 'accepted',
+        column: 'recyclingObligationsMet',
+        direction: 'asc'
+      },
+      {
+        type: 'compliance-schemes',
+        tab: 'accepted',
+        column: 'dateSubmitted',
+        direction: 'asc'
+      },
+      {
+        type: 'compliance-schemes',
+        tab: 'accepted',
+        column: 'regulation43Met',
+        direction: 'desc'
+      },
+      {
+        type: 'compliance-schemes',
+        tab: 'accepted',
+        column: 'recyclingObligationsMet',
+        direction: 'desc'
+      },
+      {
+        type: 'compliance-schemes',
+        tab: 'accepted',
+        column: 'dateSubmitted',
+        direction: 'desc'
+      },
+      { type: 'compliance-schemes', tab: 'not-submitted' },
+      {
+        type: 'compliance-schemes',
+        tab: 'not-submitted',
+        column: 'regulation43Met',
+        direction: 'asc'
+      },
+      {
+        type: 'compliance-schemes',
+        tab: 'not-submitted',
+        column: 'recyclingObligationsMet',
+        direction: 'asc'
+      },
+      {
+        type: 'compliance-schemes',
+        tab: 'not-submitted',
+        column: 'regulation43Met',
+        direction: 'desc'
+      },
+      {
+        type: 'compliance-schemes',
+        tab: 'not-submitted',
+        column: 'recyclingObligationsMet',
+        direction: 'desc'
+      }
+    ])(
+      'Should display sort $direction on column $column on the $type $tab tab',
+      async ({ type, tab, column, direction }) => {
+        let page = `/certificates-of-compliance?type=${type}&tab=${tab}`
+        if (column) page += `&sortColumn=${column}&sortDirection=${direction}`
+
+        const { result } = await inject(page)
+
+        const curDirection = direction || 'asc'
+        const nextDirection = curDirection === 'asc' ? 'desc' : 'asc'
+
+        const $ = load(result)
+
+        const activeSortAnchor = $('th[aria-sort$="ending"] a')
+
+        expect(activeSortAnchor).toHaveLength(1)
+        expect(activeSortAnchor.find('path')).toHaveLength(1)
+
+        if (column) {
+          expect(activeSortAnchor.attr('href')).toContain(
+            `sortColumn=${column}&sortDirection=${nextDirection}`
+          )
+        } else if (tab === 'pending' || tab === 'accepted') {
+          expect(activeSortAnchor.attr('href')).toContain(
+            `sortColumn=dateSubmitted&sortDirection=asc`
+          )
+        } else if (tab === 'not-submitted') {
+          if (type === 'direct-producers') {
+            expect(activeSortAnchor.attr('href')).toContain(
+              `sortColumn=obligationCoveragePercentage&sortDirection=asc`
+            )
+          } else if (type === 'compliance-schemes') {
+            expect(activeSortAnchor.attr('href')).toContain(
+              `sortColumn=recyclingObligationsMet&sortDirection=asc`
+            )
+          }
+        }
+      }
+    )
   })
 
   describe('Pagination', () => {

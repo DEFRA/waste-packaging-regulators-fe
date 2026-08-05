@@ -165,25 +165,29 @@ async function getComplianceSummary(
   }
 }
 
+const RESOLVE_BATCH_SIZE = 50
+
 async function resolveNotSubmittedObligationCoveragePercentages(
   obligationsApi,
   items,
   traceId
 ) {
-  await Promise.all(
-    items.map(async (item) => {
-      const data = await obligationsApi.getComplianceObligationOrNull(
-        {
-          organisationId: item.organisationId,
-          obligationYear: COMPLIANCE_YEAR
-        },
-        traceId
-      )
-      item.obligationCoveragePercentage = calculateObligationCoveragePercentage(
-        data?.obligations ?? []
-      )
-    })
-  )
+  for (let i = 0; i < items.length; i += RESOLVE_BATCH_SIZE) {
+    const batch = items.slice(i, i + RESOLVE_BATCH_SIZE)
+    await Promise.all(
+      batch.map(async (item) => {
+        const data = await obligationsApi.getComplianceObligationOrNull(
+          {
+            organisationId: item.organisationId,
+            obligationYear: COMPLIANCE_YEAR
+          },
+          traceId
+        )
+        item.obligationCoveragePercentage =
+          calculateObligationCoveragePercentage(data?.obligations ?? [])
+      })
+    )
+  }
 }
 
 // Direct producers resolve by external id; compliance schemes by Companies
@@ -209,12 +213,47 @@ async function resolveNotSubmittedReferenceNumbers(
   }
 }
 
+function compareValues(valA, valB) {
+  if (valA == null && valB == null) return 0
+  if (valA == null) return 1
+  if (valB == null) return -1
+
+  if (typeof valA === 'boolean') {
+    return valA === valB ? 0 : valA ? -1 : 1
+  }
+
+  if (typeof valA === 'number') {
+    return valA - valB
+  }
+
+  if (typeof valA === 'string') {
+    return valA.localeCompare(valB)
+  }
+
+  return 0
+}
+
+function sortItems(items, sortColumn, sortDirection) {
+  const direction = sortDirection === 'asc' ? 1 : -1
+
+  return items.sort((a, b) => {
+    const primary = compareValues(a[sortColumn], b[sortColumn]) * direction
+
+    if (primary !== 0) return primary
+
+    // Secondary sort: organisation name ascending
+    return compareValues(a.organisationName, b.organisationName)
+  })
+}
+
 async function getNotSubmittedComplianceList(
   obligationsApi,
   organisationsApi,
   accountApi,
   organisationType,
   registrationType,
+  sortColumn,
+  sortDirection,
   page,
   traceId
 ) {
@@ -245,13 +284,10 @@ async function getNotSubmittedComplianceList(
     .filter((org) => !submittedIds.has(org.id))
     .map(mapOrganisationToItem)
 
-  const totalPages = Math.ceil(allItems.length / PAGE_SIZE) || 1
-  const start = (page - 1) * PAGE_SIZE
-  const items = allItems.slice(start, start + PAGE_SIZE)
-
+  // Resolve data for ALL items before sorting and pagination
   await resolveNotSubmittedReferenceNumbers(
     accountApi,
-    items,
+    allItems,
     traceId,
     organisationType
   )
@@ -259,10 +295,16 @@ async function getNotSubmittedComplianceList(
   if (organisationType !== COMPLIANCE_SCHEMES) {
     await resolveNotSubmittedObligationCoveragePercentages(
       obligationsApi,
-      items,
+      allItems,
       traceId
     )
   }
+
+  sortItems(allItems, sortColumn, sortDirection)
+
+  const totalPages = Math.ceil(allItems.length / PAGE_SIZE) || 1
+  const start = (page - 1) * PAGE_SIZE
+  const items = allItems.slice(start, start + PAGE_SIZE)
 
   return {
     items,
@@ -284,8 +326,9 @@ async function getComplianceList(
 ) {
   if (config.get('useMockApi')) {
     const listByTab = mockListByOrganisationType[organisationType] ?? {}
+    const items = [...(listByTab[tab] ?? [])]
     return {
-      items: listByTab[tab] ?? [],
+      items,
       totalPages: 9,
       currentPage: page
     }
@@ -300,6 +343,8 @@ async function getComplianceList(
       accountApi,
       organisationType,
       registrationType,
+      sortColumn,
+      sortDirection,
       page,
       traceId
     )
