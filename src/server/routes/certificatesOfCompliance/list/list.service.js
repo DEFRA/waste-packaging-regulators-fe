@@ -260,7 +260,7 @@ export function sortItems(items, sortColumn, sortDirection) {
   })
 }
 
-async function getNotSubmittedComplianceList(
+async function getNotSubmittedComplianceList({
   obligationsApi,
   organisationsApi,
   accountApi,
@@ -270,7 +270,7 @@ async function getNotSubmittedComplianceList(
   sortDirection,
   page,
   traceId
-) {
+}) {
   const [orgsResult, pendingDeclarations, acceptedDeclarations] =
     await Promise.all([
       organisationsApi.listComplianceOrganisations(
@@ -327,7 +327,7 @@ async function getNotSubmittedComplianceList(
   }
 }
 
-async function getComplianceList(
+async function getComplianceList({
   obligationsApi,
   organisationsApi,
   accountApi,
@@ -337,7 +337,7 @@ async function getComplianceList(
   sortDirection,
   page,
   traceId
-) {
+}) {
   if (config.get('useMockApi')) {
     const listByTab = mockListByOrganisationType[organisationType] ?? {}
     const items = [...(listByTab[tab] ?? [])]
@@ -351,7 +351,7 @@ async function getComplianceList(
   const registrationType = registrationTypeByOrganisationType[organisationType]
 
   if (tab === 'not-submitted') {
-    return getNotSubmittedComplianceList(
+    return getNotSubmittedComplianceList({
       obligationsApi,
       organisationsApi,
       accountApi,
@@ -361,7 +361,7 @@ async function getComplianceList(
       sortDirection,
       page,
       traceId
-    )
+    })
   }
 
   const status = statusByTab[tab]
@@ -402,17 +402,17 @@ export async function getCertificatesOfComplianceViewModel(
       organisationType,
       traceId
     ),
-    getComplianceList(
-      apiWasteObligation,
-      apiWasteOrganisation,
-      apiAccount,
+    getComplianceList({
+      obligationsApi: apiWasteObligation,
+      organisationsApi: apiWasteOrganisation,
+      accountApi: apiAccount,
       organisationType,
       tab,
       sortColumn,
       sortDirection,
-      currentPage,
+      page: currentPage,
       traceId
-    )
+    })
   ])
 
   let paginationBaseUrl = baseUrl
