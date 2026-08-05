@@ -131,7 +131,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
         'pending',
         1
       )
-      expect(vm.items).toEqual(mockPendingItems)
+      expect(vm.items).toEqual(
+        sortItems([...mockPendingItems], undefined, undefined)
+      )
     })
 
     test('returns mock accepted items for accepted tab', async () => {
@@ -140,7 +142,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
         'accepted',
         1
       )
-      expect(vm.items).toEqual(mockAcceptedItems)
+      expect(vm.items).toEqual(
+        sortItems([...mockAcceptedItems], undefined, undefined)
+      )
     })
 
     test('returns mock not-submitted items for not-submitted tab', async () => {
@@ -149,7 +153,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
         'not-submitted',
         1
       )
-      expect(vm.items).toEqual(mockNotSubmittedItems)
+      expect(vm.items).toEqual(
+        sortItems([...mockNotSubmittedItems], undefined, undefined)
+      )
     })
 
     test('returns compliance-schemes mock summary data', async () => {
@@ -172,9 +178,16 @@ describe('getCertificatesOfComplianceViewModel', () => {
         'pending',
         1
       )
-      expect(vm.items[0].organisationName).toBe('EcoPack Group')
-      expect(vm.items[0].regulation43Met).toBe(false)
-      expect(vm.items[0].obligationCoveragePercentage).toBe(100)
+      const sortedItems = sortItems(
+        [...mockComplianceSchemePendingItems],
+        undefined,
+        undefined
+      )
+      expect(vm.items[0].organisationName).toBe(sortedItems[0].organisationName)
+      expect(vm.items[0].regulation43Met).toBe(sortedItems[0].regulation43Met)
+      expect(vm.items[0].obligationCoveragePercentage).toBe(
+        sortedItems[0].obligationCoveragePercentage
+      )
     })
 
     test('returns empty array for unknown tab', async () => {

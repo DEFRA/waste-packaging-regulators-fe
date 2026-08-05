@@ -341,6 +341,9 @@ async function getComplianceList({
   if (config.get('useMockApi')) {
     const listByTab = mockListByOrganisationType[organisationType] ?? {}
     const items = [...(listByTab[tab] ?? [])]
+
+    sortItems(items, sortColumn, sortDirection)
+
     return {
       items,
       totalPages: 9,
