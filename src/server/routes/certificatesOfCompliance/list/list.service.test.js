@@ -108,7 +108,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           column: undefined,
           direction: undefined,
           baseUrl:
-            '/certificates-of-compliance?type=compliance-schemes&tab=pending&currentPage=1'
+            '/certificates-of-compliance?type=compliance-schemes&tab=pending&page=1'
         }
       })
     })
