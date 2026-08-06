@@ -4,7 +4,7 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <h1 class="govuk-heading-xl">Sorry, the service is unavailable</h1>
+      <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
       {# Planned maintenance states when the service is back; unplanned downtime has no return time to give. #}
       {% if availableFrom %}
         <p class="govuk-body">You will be able to use the service from {{ availableFrom }}.</p>

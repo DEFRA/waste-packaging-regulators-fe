@@ -6,6 +6,16 @@ import { statusCodes } from '../constants/status-codes.js'
 
 const helpDeskEmail = 'eprcustomerservice@defra.gov.uk'
 
+// The single place the user-facing headings are written down outside errors.js.
+// Deliberately literal: asserting against the mapping's own constants would
+// make these tests tautological. Other suites read the titles from the mapping.
+const pageTitles = {
+  notFound: 'Page not found',
+  accessDenied: 'You do not have permission to access this page',
+  serviceUnavailable: 'Sorry, the service is unavailable',
+  problemWithService: 'Sorry, there is a problem with the service'
+}
+
 describe('#errors', () => {
   let server
 
@@ -27,7 +37,7 @@ describe('#errors', () => {
     expect(result).toEqual(
       expect.stringContaining('Page not found | waste-packaging-regulators-fe')
     )
-    expect(result).toEqual(expect.stringContaining('Page not found'))
+    expect(result).toEqual(expect.stringContaining(pageTitles.notFound))
     expect(result).toEqual(
       expect.stringContaining(
         'If you typed the web address, check it is correct.'
@@ -45,16 +55,12 @@ describe('#errors', () => {
 
 describe('#errorPageFor', () => {
   test.each([
-    [statusCodes.notFound, 'error/not-found', 'Page not found'],
-    [
-      statusCodes.forbidden,
-      'error/access-denied',
-      'You do not have permission to access this page'
-    ],
+    [statusCodes.notFound, 'error/not-found', pageTitles.notFound],
+    [statusCodes.forbidden, 'error/access-denied', pageTitles.accessDenied],
     [
       statusCodes.serviceUnavailable,
       'error/service-unavailable',
-      'Sorry, the service is unavailable'
+      pageTitles.serviceUnavailable
     ]
   ])('Should map %i to its own page', (statusCode, view, pageTitle) => {
     expect(errorPageFor(statusCode)).toEqual({ view, pageTitle })
@@ -68,7 +74,7 @@ describe('#errorPageFor', () => {
   ])('Should map %i to the problem with the service page', (statusCode) => {
     expect(errorPageFor(statusCode)).toEqual({
       view: 'error/problem-with-service',
-      pageTitle: 'Sorry, there is a problem with the service'
+      pageTitle: pageTitles.problemWithService
     })
   })
 })
@@ -98,7 +104,7 @@ describe('#catchAll', () => {
     catchAll(mockRequest(statusCodes.notFound), mockToolkit)
 
     expect(mockToolkitView).toHaveBeenCalledWith('error/not-found', {
-      pageTitle: 'Page not found',
+      pageTitle: pageTitles.notFound,
       availableFrom: ''
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.notFound)
@@ -108,7 +114,7 @@ describe('#catchAll', () => {
     catchAll(mockRequest(statusCodes.forbidden), mockToolkit)
 
     expect(mockToolkitView).toHaveBeenCalledWith('error/access-denied', {
-      pageTitle: 'You do not have permission to access this page',
+      pageTitle: pageTitles.accessDenied,
       availableFrom: ''
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.forbidden)
@@ -118,7 +124,7 @@ describe('#catchAll', () => {
     catchAll(mockRequest(statusCodes.serviceUnavailable), mockToolkit)
 
     expect(mockToolkitView).toHaveBeenCalledWith('error/service-unavailable', {
-      pageTitle: 'Sorry, the service is unavailable',
+      pageTitle: pageTitles.serviceUnavailable,
       availableFrom: ''
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.serviceUnavailable)
@@ -137,7 +143,7 @@ describe('#catchAll', () => {
       expect(mockToolkitView).toHaveBeenCalledWith(
         'error/problem-with-service',
         {
-          pageTitle: 'Sorry, there is a problem with the service',
+          pageTitle: pageTitles.problemWithService,
           availableFrom: ''
         }
       )
