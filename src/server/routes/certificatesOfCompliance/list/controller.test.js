@@ -517,16 +517,16 @@ describe('#certificatesOfComplianceController', () => {
           )
         } else if (tab === 'pending' || tab === 'accepted') {
           expect(activeSortAnchor.attr('href')).toContain(
-            `sortColumn=dateSubmitted&sortDirection=${curDirection}`
+            `sortColumn=dateSubmitted&sortDirection=${nextDirection}`
           )
         } else if (tab === 'not-submitted') {
           if (type === 'direct-producers') {
             expect(activeSortAnchor.attr('href')).toContain(
-              `sortColumn=obligationCoveragePercentage&sortDirection=${curDirection}`
+              `sortColumn=obligationCoveragePercentage&sortDirection=${nextDirection}`
             )
           } else if (type === 'compliance-schemes') {
             expect(activeSortAnchor.attr('href')).toContain(
-              `sortColumn=recyclingObligationsMet&sortDirection=${curDirection}`
+              `sortColumn=recyclingObligationsMet&sortDirection=${nextDirection}`
             )
           }
         }

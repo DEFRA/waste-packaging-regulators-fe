@@ -21,7 +21,7 @@ export const certificatesOfComplianceController = {
       type = 'direct-producers',
       tab = 'pending',
       page = '1',
-      sortDirection = 'desc'
+      sortDirection = 'asc'
     } = request.query
     const sortColumn =
       request.query.sortColumn || getDefaultSortColumn(tab, type)

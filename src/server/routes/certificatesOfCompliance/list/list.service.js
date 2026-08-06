@@ -374,7 +374,14 @@ async function getComplianceList({
   }
 
   const data = await obligationsApi.listComplianceDeclarations(
-    { status, registrationType, page, pageSize: PAGE_SIZE },
+    {
+      status,
+      registrationType,
+      page,
+      pageSize: PAGE_SIZE,
+      sortColumn,
+      sortDirection
+    },
     traceId
   )
 
@@ -444,7 +451,7 @@ export async function getCertificatesOfComplianceViewModel(
     sort: {
       column: sortColumn,
       direction: sortDirection,
-      baseUrl: `${baseUrl}&currentPage=1`
+      baseUrl: `${baseUrl}&page=1`
     }
   }
 }

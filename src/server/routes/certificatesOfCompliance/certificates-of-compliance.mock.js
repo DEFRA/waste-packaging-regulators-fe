@@ -1009,7 +1009,7 @@ export function getMockOrganisationById(organisationId) {
 
 // Matches the raw API response shape from GET /organisations/{organisationId}/compliance-declarations/{id}
 export const mockDetailData = {
-  id: MOCK_DECL_HOWCO_ID,
+  id: MOCK_DECL_GREENFIELD_ID,
   created: '2027-01-31T00:00:00Z',
   updated: '2027-01-31T00:00:00Z',
   status: MOCK_STATUS_SUBMITTED,
