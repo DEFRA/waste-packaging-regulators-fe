@@ -228,9 +228,9 @@ export function compareValues(valA, valB) {
     if (valA === valB) {
       return 0
     } else if (valA === true) {
-      return -1
-    } else {
       return 1
+    } else {
+      return -1
     }
   }
 

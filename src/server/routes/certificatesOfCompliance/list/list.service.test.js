@@ -3386,8 +3386,8 @@ describe('compareValues', () => {
   test('compares booleans correctly', () => {
     expect(compareValues(true, true)).toBe(0)
     expect(compareValues(false, false)).toBe(0)
-    expect(compareValues(true, false)).toBe(-1)
-    expect(compareValues(false, true)).toBe(1)
+    expect(compareValues(true, false)).toBe(1)
+    expect(compareValues(false, true)).toBe(-1)
   })
 
   test('compares numbers correctly', () => {
