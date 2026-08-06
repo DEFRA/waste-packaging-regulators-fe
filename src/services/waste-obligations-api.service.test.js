@@ -56,13 +56,15 @@ describe('WasteObligationsApiService', () => {
         status: 'Submitted',
         registrationType: 'DirectProducer',
         page: 1,
-        pageSize: 20
+        pageSize: 20,
+        sortColumn: 'id',
+        sortDirection: 'desc'
       },
       'trace-1'
     )
 
     expect(fetchImpl).toHaveBeenCalledWith(
-      'http://localhost:8080/compliance-declarations?status=Submitted&registrationType=DirectProducer&page=1&pageSize=20',
+      'http://localhost:8080/compliance-declarations?status=Submitted&registrationType=DirectProducer&page=1&pageSize=20&sortColumn=id&sortDirection=desc',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({

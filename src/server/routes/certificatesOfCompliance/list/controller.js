@@ -1,6 +1,15 @@
 import { config } from '#config/config.js'
 import { getCertificatesOfComplianceViewModel } from './list.service.js'
 
+export const getDefaultSortColumn = (tab, type) => {
+  if (tab !== 'not-submitted') {
+    return 'dateSubmitted'
+  }
+  return type === 'direct-producers'
+    ? 'obligationCoveragePercentage'
+    : 'recyclingObligationsMet'
+}
+
 export const certificatesOfComplianceController = {
   async handler(request, h) {
     if (!request.yar.get('user')) {
@@ -11,8 +20,11 @@ export const certificatesOfComplianceController = {
     const {
       type = 'direct-producers',
       tab = 'pending',
-      page = '1'
+      page = '1',
+      sortDirection = 'asc'
     } = request.query
+    const sortColumn =
+      request.query.sortColumn || getDefaultSortColumn(tab, type)
 
     const traceId = request.headers[config.get('tracing.header')]
 
@@ -20,6 +32,8 @@ export const certificatesOfComplianceController = {
       type,
       tab,
       Number.parseInt(page, 10),
+      sortColumn,
+      sortDirection,
       traceId
     )
 

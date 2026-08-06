@@ -19,7 +19,15 @@ export class WasteObligationsApiService extends BaseApiService {
   }
 
   async listComplianceDeclarations(
-    { status, registrationType, obligationYear, page, pageSize } = {},
+    {
+      status,
+      registrationType,
+      obligationYear,
+      page,
+      pageSize,
+      sortColumn,
+      sortDirection
+    } = {},
     traceId
   ) {
     const params = new URLSearchParams()
@@ -38,7 +46,12 @@ export class WasteObligationsApiService extends BaseApiService {
     if (pageSize != null) {
       params.set('pageSize', String(pageSize))
     }
-
+    if (sortColumn != null) {
+      params.set('sortColumn', sortColumn)
+    }
+    if (sortDirection != null) {
+      params.set('sortDirection', sortDirection)
+    }
     const qs = params.toString()
     return this.getJson(
       buildPathWithQuery('/compliance-declarations', qs),

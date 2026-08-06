@@ -165,25 +165,29 @@ async function getComplianceSummary(
   }
 }
 
+const RESOLVE_BATCH_SIZE = 50
+
 async function resolveNotSubmittedObligationCoveragePercentages(
   obligationsApi,
   items,
   traceId
 ) {
-  await Promise.all(
-    items.map(async (item) => {
-      const data = await obligationsApi.getComplianceObligationOrNull(
-        {
-          organisationId: item.organisationId,
-          obligationYear: COMPLIANCE_YEAR
-        },
-        traceId
-      )
-      item.obligationCoveragePercentage = calculateObligationCoveragePercentage(
-        data?.obligations ?? []
-      )
-    })
-  )
+  for (let i = 0; i < items.length; i += RESOLVE_BATCH_SIZE) {
+    const batch = items.slice(i, i + RESOLVE_BATCH_SIZE)
+    await Promise.all(
+      batch.map(async (item) => {
+        const data = await obligationsApi.getComplianceObligationOrNull(
+          {
+            organisationId: item.organisationId,
+            obligationYear: COMPLIANCE_YEAR
+          },
+          traceId
+        )
+        item.obligationCoveragePercentage =
+          calculateObligationCoveragePercentage(data?.obligations ?? [])
+      })
+    )
+  }
 }
 
 // Direct producers resolve by external id; compliance schemes by Companies
@@ -209,15 +213,64 @@ async function resolveNotSubmittedReferenceNumbers(
   }
 }
 
-async function getNotSubmittedComplianceList(
+export function compareValues(valA, valB) {
+  if (valA === null && valB === null) {
+    return 0
+  }
+  if (valA === null) {
+    return 1
+  }
+  if (valB === null) {
+    return -1
+  }
+
+  if (typeof valA === 'boolean') {
+    if (valA === valB) {
+      return 0
+    } else if (valA === true) {
+      return 1
+    } else {
+      return -1
+    }
+  }
+
+  if (typeof valA === 'number') {
+    return valA - valB
+  }
+
+  if (typeof valA === 'string') {
+    return valA.localeCompare(valB)
+  }
+
+  return 0
+}
+
+export function sortItems(items, sortColumn, sortDirection) {
+  const direction = sortDirection === 'asc' ? 1 : -1
+
+  return items.sort((a, b) => {
+    const primary = compareValues(a[sortColumn], b[sortColumn]) * direction
+
+    if (primary !== 0) {
+      return primary
+    }
+
+    // Secondary sort: organisation name ascending
+    return compareValues(a.organisationName, b.organisationName)
+  })
+}
+
+async function getNotSubmittedComplianceList({
   obligationsApi,
   organisationsApi,
   accountApi,
   organisationType,
   registrationType,
+  sortColumn,
+  sortDirection,
   page,
   traceId
-) {
+}) {
   const [orgsResult, pendingDeclarations, acceptedDeclarations] =
     await Promise.all([
       organisationsApi.listComplianceOrganisations(
@@ -245,13 +298,10 @@ async function getNotSubmittedComplianceList(
     .filter((org) => !submittedIds.has(org.id))
     .map(mapOrganisationToItem)
 
-  const totalPages = Math.ceil(allItems.length / PAGE_SIZE) || 1
-  const start = (page - 1) * PAGE_SIZE
-  const items = allItems.slice(start, start + PAGE_SIZE)
-
+  // Resolve data for ALL items before sorting and pagination
   await resolveNotSubmittedReferenceNumbers(
     accountApi,
-    items,
+    allItems,
     traceId,
     organisationType
   )
@@ -259,10 +309,16 @@ async function getNotSubmittedComplianceList(
   if (organisationType !== COMPLIANCE_SCHEMES) {
     await resolveNotSubmittedObligationCoveragePercentages(
       obligationsApi,
-      items,
+      allItems,
       traceId
     )
   }
+
+  sortItems(allItems, sortColumn, sortDirection)
+
+  const totalPages = Math.ceil(allItems.length / PAGE_SIZE) || 1
+  const start = (page - 1) * PAGE_SIZE
+  const items = allItems.slice(start, start + PAGE_SIZE)
 
   return {
     items,
@@ -271,19 +327,25 @@ async function getNotSubmittedComplianceList(
   }
 }
 
-async function getComplianceList(
+async function getComplianceList({
   obligationsApi,
   organisationsApi,
   accountApi,
   organisationType,
   tab,
+  sortColumn,
+  sortDirection,
   page,
   traceId
-) {
+}) {
   if (config.get('useMockApi')) {
     const listByTab = mockListByOrganisationType[organisationType] ?? {}
+    const items = [...(listByTab[tab] ?? [])]
+
+    sortItems(items, sortColumn, sortDirection)
+
     return {
-      items: listByTab[tab] ?? [],
+      items,
       totalPages: 9,
       currentPage: page
     }
@@ -292,15 +354,17 @@ async function getComplianceList(
   const registrationType = registrationTypeByOrganisationType[organisationType]
 
   if (tab === 'not-submitted') {
-    return getNotSubmittedComplianceList(
+    return getNotSubmittedComplianceList({
       obligationsApi,
       organisationsApi,
       accountApi,
       organisationType,
       registrationType,
+      sortColumn,
+      sortDirection,
       page,
       traceId
-    )
+    })
   }
 
   const status = statusByTab[tab]
@@ -310,7 +374,14 @@ async function getComplianceList(
   }
 
   const data = await obligationsApi.listComplianceDeclarations(
-    { status, registrationType, page, pageSize: PAGE_SIZE },
+    {
+      status,
+      registrationType,
+      page,
+      pageSize: PAGE_SIZE,
+      sortColumn,
+      sortDirection
+    },
     traceId
   )
 
@@ -325,6 +396,8 @@ export async function getCertificatesOfComplianceViewModel(
   organisationType,
   tab,
   currentPage,
+  sortColumn,
+  sortDirection,
   traceId
 ) {
   const apiWasteObligation = createWasteObligationsApiService()
@@ -339,16 +412,26 @@ export async function getCertificatesOfComplianceViewModel(
       organisationType,
       traceId
     ),
-    getComplianceList(
-      apiWasteObligation,
-      apiWasteOrganisation,
-      apiAccount,
+    getComplianceList({
+      obligationsApi: apiWasteObligation,
+      organisationsApi: apiWasteOrganisation,
+      accountApi: apiAccount,
       organisationType,
       tab,
-      currentPage,
+      sortColumn,
+      sortDirection,
+      page: currentPage,
       traceId
-    )
+    })
   ])
+
+  let paginationBaseUrl = baseUrl
+  if (sortColumn) {
+    paginationBaseUrl += `&sortColumn=${sortColumn}`
+  }
+  if (sortDirection) {
+    paginationBaseUrl += `&sortDirection=${sortDirection}`
+  }
 
   return {
     heading: 'View certificates and statements of compliance',
@@ -363,7 +446,12 @@ export async function getCertificatesOfComplianceViewModel(
     pagination: {
       currentPage,
       totalPages: list.totalPages,
-      baseUrl
+      baseUrl: paginationBaseUrl
+    },
+    sort: {
+      column: sortColumn,
+      direction: sortDirection,
+      baseUrl: `${baseUrl}&page=1`
     }
   }
 }

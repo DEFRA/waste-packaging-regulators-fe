@@ -8,7 +8,7 @@ import * as filters from '#config/nunjucks/filters/filters.js'
 import * as globals from '#config/nunjucks/globals/globals.js'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
-const nunjucksTestEnv = nunjucks.configure(
+export const nunjucksTestEnv = nunjucks.configure(
   [
     '../node_modules/govuk-frontend/dist/',
     path.normalize(path.resolve(dirname, '../src/server/common/templates')),

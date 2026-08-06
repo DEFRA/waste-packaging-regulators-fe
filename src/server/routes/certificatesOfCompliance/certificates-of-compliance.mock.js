@@ -162,24 +162,6 @@ export const mockAcceptedItems = [
 export const mockNotSubmittedItems = [
   {
     id: null,
-    organisationId: MOCK_ORG_REDWOOD_ID,
-    organisationReferenceNumber: '518293',
-    organisationName: MOCK_ORG_REDWOOD_NAME,
-    recyclingObligationsMet: false,
-    obligationCoveragePercentage: 92,
-    dateSubmitted: null
-  },
-  {
-    id: null,
-    organisationId: MOCK_ORG_COASTAL_ID,
-    organisationReferenceNumber: '627148',
-    organisationName: MOCK_ORG_COASTAL_NAME,
-    recyclingObligationsMet: false,
-    obligationCoveragePercentage: 0,
-    dateSubmitted: null
-  },
-  {
-    id: null,
     organisationId: MOCK_ORG_STERLING_ID,
     organisationReferenceNumber: MOCK_REF_STERLING,
     organisationName: MOCK_ORG_STERLING_NAME,
@@ -198,11 +180,29 @@ export const mockNotSubmittedItems = [
   },
   {
     id: null,
+    organisationId: MOCK_ORG_REDWOOD_ID,
+    organisationReferenceNumber: '518293',
+    organisationName: MOCK_ORG_REDWOOD_NAME,
+    recyclingObligationsMet: false,
+    obligationCoveragePercentage: 92,
+    dateSubmitted: null
+  },
+  {
+    id: null,
     organisationId: MOCK_ORG_MERIDIAN_ID,
     organisationReferenceNumber: MOCK_REF_MERIDIAN,
     organisationName: MOCK_ORG_MERIDIAN_NAME,
     recyclingObligationsMet: false,
     obligationCoveragePercentage: 54,
+    dateSubmitted: null
+  },
+  {
+    id: null,
+    organisationId: MOCK_ORG_COASTAL_ID,
+    organisationReferenceNumber: '627148',
+    organisationName: MOCK_ORG_COASTAL_NAME,
+    recyclingObligationsMet: false,
+    obligationCoveragePercentage: 0,
     dateSubmitted: null
   }
 ]
@@ -1009,7 +1009,7 @@ export function getMockOrganisationById(organisationId) {
 
 // Matches the raw API response shape from GET /organisations/{organisationId}/compliance-declarations/{id}
 export const mockDetailData = {
-  id: MOCK_DECL_HOWCO_ID,
+  id: MOCK_DECL_GREENFIELD_ID,
   created: '2027-01-31T00:00:00Z',
   updated: '2027-01-31T00:00:00Z',
   status: MOCK_STATUS_SUBMITTED,

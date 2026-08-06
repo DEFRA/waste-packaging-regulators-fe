@@ -199,7 +199,9 @@ describe('certificates of compliance — journey', () => {
       )
 
       const match = listResponse.payload.match(
-        /href="(\.\/[^"]+\/certificates-of-compliance\/[^"]+)"/
+        new RegExp(
+          `href="(\\.\\/[^"]+\\/certificates-of-compliance\\/${mockPendingItems[0].id})"`
+        )
       )
       expect(match, 'Should extract detail link').not.toBeNull()
 
@@ -212,7 +214,7 @@ describe('certificates of compliance — journey', () => {
       ).toBe(statusCodes.ok)
       const { heading } = loadDetailPage(detailResponse.payload)
       expect(heading, 'Should show organisation name on detail page').toContain(
-        mockDetailData.organisation.name
+        mockPendingItems[0].organisationName
       )
     })
 
@@ -229,7 +231,9 @@ describe('certificates of compliance — journey', () => {
       ).toContain(mockAcceptedItems[0].organisationName)
 
       const match = listResponse.payload.match(
-        /href="(\.\/[^"]+\/certificates-of-compliance\/[^"]+)"/
+        new RegExp(
+          `href="(\\.\\/[^"]+\\/certificates-of-compliance\\/${mockAcceptedItems[0].id})"`
+        )
       )
       expect(match).not.toBeNull()
 
