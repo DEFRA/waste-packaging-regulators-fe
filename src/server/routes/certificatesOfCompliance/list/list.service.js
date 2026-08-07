@@ -14,7 +14,8 @@ import {
   DECLARATIONS_BATCH_SIZE,
   NO_DATA,
   COMPLIANCE_SCHEMES,
-  COMPLIANCE_YEAR
+  COMPLIANCE_YEAR,
+  emptyTabMessages
 } from '../common/constants.js'
 import { mapOrganisationName } from '../common/organisation.js'
 import { resolveSchemeOperators } from '../common/scheme-operator.js'
@@ -37,7 +38,7 @@ function mapDeclarationToItem(declaration) {
     organisationName: mapOrganisationName(organisation),
     recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
     regulation43Met: isRegulation43Compliant,
-    // Whole number from the obligations API — display as-is (no frontend rounding).
+    // Whole number from the obligations API ÔÇö display as-is (no frontend rounding).
     obligationCoveragePercentage: obligationCoveragePercentage ?? null,
     dateSubmitted: created
   }
@@ -446,6 +447,7 @@ export async function getCertificatesOfComplianceViewModel(
     organisationType,
     activeTab: tab,
     items: list.items,
+    emptyTabMessage: emptyTabMessages[tab] ?? '',
     pagination: {
       currentPage,
       totalPages: list.totalPages,
