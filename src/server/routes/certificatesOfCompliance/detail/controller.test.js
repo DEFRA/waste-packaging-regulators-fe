@@ -413,7 +413,9 @@ describe('#certificatesOfComplianceDetailController', () => {
     const response = await inject('/org-123/certificates-of-compliance/101411')
 
     expect(response.statusCode).toBe(statusCodes.internalServerError)
-    expect(response.payload).toContain('Something went wrong')
+    expect(response.payload).toContain(
+      'Sorry, there is a problem with the service'
+    )
     vi.restoreAllMocks()
   })
 })

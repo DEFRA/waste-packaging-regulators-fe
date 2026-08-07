@@ -19,6 +19,7 @@ import {
 import { mapOrganisationName } from '../common/organisation.js'
 import { resolveSchemeOperators } from '../common/scheme-operator.js'
 import { calculateObligationCoveragePercentage } from '../common/display.js'
+import { throwIfMockErrorConfigured } from '#server/common/helpers/mock-api-error.js'
 
 function mapDeclarationToItem(declaration) {
   const {
@@ -131,6 +132,7 @@ async function getComplianceSummary(
   traceId
 ) {
   if (config.get('useMockApi')) {
+    throwIfMockErrorConfigured('waste-obligations-api')
     return mockSummaryByOrganisationType[organisationType] ?? mockSummary
   }
 
@@ -339,6 +341,7 @@ async function getComplianceList({
   traceId
 }) {
   if (config.get('useMockApi')) {
+    throwIfMockErrorConfigured('waste-obligations-api')
     const listByTab = mockListByOrganisationType[organisationType] ?? {}
     const items = [...(listByTab[tab] ?? [])]
 

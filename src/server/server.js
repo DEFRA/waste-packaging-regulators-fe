@@ -15,6 +15,7 @@ import { requestLogger } from './plugins/request-logger.js'
 import { boomErrorLogger } from './plugins/boom-error-logger.js'
 import { sessionCache } from './plugins/session-cache.js'
 import { crumb } from './plugins/crumb.js'
+import { maintenance } from './plugins/maintenance.js'
 import { getCacheEngine } from './common/helpers/session-cache/cache-engine.js'
 import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './plugins/content-security-policy.js'
@@ -164,6 +165,7 @@ export async function createServer() {
     pulse,
     sessionCache,
     nunjucksConfig,
+    maintenance,
     crumb,
     Scooter,
     contentSecurityPolicy

@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getCertificatesOfComplianceViewModel } from './list.service.js'
 
 export const getDefaultSortColumn = (tab, type) => {
@@ -35,7 +36,10 @@ export const certificatesOfComplianceController = {
       sortColumn,
       sortDirection,
       traceId
-    )
+    ).catch((error) => {
+      handleApiError(request, error)
+      throw error
+    })
 
     return h.view('certificatesOfCompliance/list/index', viewModel)
   }
