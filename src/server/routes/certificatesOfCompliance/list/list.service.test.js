@@ -190,6 +190,19 @@ describe('getCertificatesOfComplianceViewModel', () => {
       )
     })
 
+    test('returns emptyTabMessage for the active tab', async () => {
+      const vm = await getCertificatesOfComplianceViewModel(
+        'direct-producers',
+        'accepted',
+        1,
+        'dateSubmitted',
+        'asc'
+      )
+      expect(vm.emptyTabMessage).toBe(
+        'No accepted submissions yet. Submissions you accept will be listed here.'
+      )
+    })
+
     test('returns empty array for unknown tab', async () => {
       const vm = await getCertificatesOfComplianceViewModel(
         'direct-producers',

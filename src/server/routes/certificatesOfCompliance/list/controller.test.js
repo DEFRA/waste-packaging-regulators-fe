@@ -2,6 +2,8 @@ import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { sessionCookieFromResponse } from '#test-helpers/cookies.js'
 import { load } from 'cheerio'
+import { vi } from 'vitest'
+import * as listService from './list.service.js'
 import {
   mockSummary,
   mockPendingItems,
@@ -10,6 +12,7 @@ import {
   mockComplianceSchemeAcceptedItems,
   mockComplianceSchemePendingItems
 } from '../certificates-of-compliance.mock.js'
+import { emptyTabMessages } from '../common/constants.js'
 
 describe('#certificatesOfComplianceController', () => {
   let server
@@ -545,6 +548,50 @@ describe('#certificatesOfComplianceController', () => {
           '/certificates-of-compliance?type=direct-producers&amp;tab=pending'
         )
       )
+    })
+  })
+
+  describe('Empty tab state', () => {
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    test('Should show the empty message and hide the table when a tab has no items', async () => {
+      vi.spyOn(
+        listService,
+        'getCertificatesOfComplianceViewModel'
+      ).mockResolvedValue({
+        heading: 'View certificates and statements of compliance',
+        backlink: './',
+        complianceYear: '2026',
+        totalPending: 0,
+        totalAccepted: 0,
+        totalNotSubmitted: 0,
+        organisationType: 'direct-producers',
+        activeTab: 'pending',
+        items: [],
+        emptyTabMessage: emptyTabMessages.pending,
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          baseUrl:
+            '/certificates-of-compliance?type=direct-producers&tab=pending'
+        },
+        sort: {
+          column: 'dateSubmitted',
+          direction: 'asc',
+          baseUrl:
+            '/certificates-of-compliance?type=direct-producers&tab=pending&page=1'
+        }
+      })
+
+      const { result } = await inject('/certificates-of-compliance?tab=pending')
+      const $ = load(result)
+
+      expect(result).toContain(emptyTabMessages.pending)
+      expect($('table').length).toBe(0)
+      expect(result).not.toContain('Download list (CSV)')
+      expect(result).toContain('<strong>0</strong>')
     })
   })
 })
