@@ -5,65 +5,69 @@
     <strong>{{ tabCount }}</strong>
     {{ tabSummaryText }}
   </p>
-  <a
-    href="#"
-    role="button"
-    draggable="false"
-    class="govuk-button govuk-button--secondary govuk-!-margin-bottom-4"
-    data-module="govuk-button">
-    Download list (CSV)
-  </a>
-  <table class="govuk-table v3-compact-table">
-    <caption class="govuk-table__caption govuk-visually-hidden">{{ tabSummaryText | capitalize }}</caption>
-    <thead class="govuk-table__head">
-      <tr class="govuk-table__row">
-        {{ appSortingColumnHeader({ sortable: false, firstColumn: true, columnName: 'name', columnLabel: 'Organisation name' }) }}
-        {{ appSortingColumnHeader({ sortable: false, columnName: 'id', columnLabel: 'Organisation ID' }) }}
-        {{ appSortingColumnHeader({ sort: sort, columnName: 'recyclingObligationsMet', columnLabel: 'Recycling obligations' }) }}
-        {% if organisationType == 'compliance-schemes' %}
-          {{ appSortingColumnHeader({ sort: sort, columnName: 'regulation43Met', columnLabel: 'Regulation 43' }) }}
-        {% else %}
-          {{ appSortingColumnHeader({ sort: sort, columnName: 'obligationCoveragePercentage', columnLabel: 'Percentage met' }) }}
-        {% endif %}
-        {% if activeTab != 'not-submitted' %}
-          {{ appSortingColumnHeader({ sort: sort, columnName: 'dateSubmitted', columnLabel: 'Date submitted' }) }}
-        {% endif %}
-      </tr>
-    </thead>
-    <tbody class="govuk-table__body">
-      {% for item in items %}
+  {% if items.length > 0 %}
+    <a
+      href="#"
+      role="button"
+      draggable="false"
+      class="govuk-button govuk-button--secondary govuk-!-margin-bottom-4"
+      data-module="govuk-button">
+      Download list (CSV)
+    </a>
+    <table class="govuk-table v3-compact-table">
+      <caption class="govuk-table__caption govuk-visually-hidden">{{ tabSummaryText | capitalize }}</caption>
+      <thead class="govuk-table__head">
         <tr class="govuk-table__row">
-          <th scope="row" class="govuk-table__header govuk-!-width-one-quarter">
-            {% if item.id == null %}
-              <a
-                href="./{{ item.organisationId }}/certificates-of-compliance?obligationYear={{ complianceYear }}"
-                class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
-            {% else %}
-              <a
-                href="./{{ item.organisationId }}/certificates-of-compliance/{{ item.id }}"
-                class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
-            {% endif %}
-          </th>
-          <td class="govuk-table__cell">{{ item.organisationReferenceNumber }}</td>
-          <td class="govuk-table__cell">
-            {{ appStatusTag({ value: item.recyclingObligationsMet, trueText: 'Met', falseText: 'Not met' }) }}
-          </td>
+          {{ appSortingColumnHeader({ sortable: false, firstColumn: true, columnName: 'name', columnLabel: 'Organisation name' }) }}
+          {{ appSortingColumnHeader({ sortable: false, columnName: 'id', columnLabel: 'Organisation ID' }) }}
+          {{ appSortingColumnHeader({ sort: sort, columnName: 'recyclingObligationsMet', columnLabel: 'Recycling obligations' }) }}
           {% if organisationType == 'compliance-schemes' %}
-            <td class="govuk-table__cell">
-              {{ appStatusTag({ value: item.regulation43Met, trueText: 'Compliant', falseText: 'Not compliant' }) }}
-            </td>
+            {{ appSortingColumnHeader({ sort: sort, columnName: 'regulation43Met', columnLabel: 'Regulation 43' }) }}
           {% else %}
-            <td class="govuk-table__cell">
-              {% if item.obligationCoveragePercentage != null %}
-                {{ item.obligationCoveragePercentage }}%{% else %}—{% endif %}
-            </td>
+            {{ appSortingColumnHeader({ sort: sort, columnName: 'obligationCoveragePercentage', columnLabel: 'Percentage met' }) }}
           {% endif %}
           {% if activeTab != 'not-submitted' %}
-            <td class="govuk-table__cell">{{ item.dateSubmitted | formatDate('do MMMM yyyy') }}</td>
+            {{ appSortingColumnHeader({ sort: sort, columnName: 'dateSubmitted', columnLabel: 'Date submitted' }) }}
           {% endif %}
         </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% include "pagination/template.njk" %}
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for item in items %}
+          <tr class="govuk-table__row">
+            <th scope="row" class="govuk-table__header govuk-!-width-one-quarter">
+              {% if item.id == null %}
+                <a
+                  href="./{{ item.organisationId }}/certificates-of-compliance?obligationYear={{ complianceYear }}"
+                  class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
+              {% else %}
+                <a
+                  href="./{{ item.organisationId }}/certificates-of-compliance/{{ item.id }}"
+                  class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
+              {% endif %}
+            </th>
+            <td class="govuk-table__cell">{{ item.organisationReferenceNumber }}</td>
+            <td class="govuk-table__cell">
+              {{ appStatusTag({ value: item.recyclingObligationsMet, trueText: 'Met', falseText: 'Not met' }) }}
+            </td>
+            {% if organisationType == 'compliance-schemes' %}
+              <td class="govuk-table__cell">
+                {{ appStatusTag({ value: item.regulation43Met, trueText: 'Compliant', falseText: 'Not compliant' }) }}
+              </td>
+            {% else %}
+              <td class="govuk-table__cell">
+                {% if item.obligationCoveragePercentage != null %}
+                  {{ item.obligationCoveragePercentage }}%{% else %}—{% endif %}
+              </td>
+            {% endif %}
+            {% if activeTab != 'not-submitted' %}
+              <td class="govuk-table__cell">{{ item.dateSubmitted | formatDate('do MMMM yyyy') }}</td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% include "pagination/template.njk" %}
+  {% else %}
+    <p class="govuk-body">{{ emptyTabMessage }}</p>
+  {% endif %}
 </div>
