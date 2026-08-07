@@ -47,6 +47,7 @@ import {
   mockSubmittedAuditEntry,
   mockDirectProducerPendingNotMetDetailData
 } from '../certificates-of-compliance.mock.js'
+import { PAGE_SIZE, DECLARATIONS_BATCH_SIZE } from '../common/constants.js'
 
 // waste-organisations records carry no registrationType — it is derived from
 // the registrations they do carry, so fixtures must supply those instead.
@@ -100,7 +101,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         activeTab: 'pending',
         pagination: {
           currentPage: 2,
-          totalPages: 9,
+          totalPages: 1,
           baseUrl:
             '/certificates-of-compliance?type=compliance-schemes&tab=pending'
         },
@@ -522,7 +523,6 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
     describe('getComplianceSummary', () => {
       test('builds summary from API results', async () => {
-        // pending=10, accepted=5, orgs=20 → notSubmitted=5
         mockObligationsApi.listComplianceDeclarations.mockImplementation(
           ({ status, pageSize }) => {
             if (pageSize === 1 && status === 'Submitted') {
@@ -548,6 +548,72 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.totalPending).toBe(10)
         expect(vm.totalAccepted).toBe(5)
         expect(vm.totalNotSubmitted).toBe(5)
+      })
+
+      test('cancelled-only org appears on not-submitted tab only', async () => {
+        const cancelledOrgId = 'org-cancelled-only'
+        mockObligationsApi.listComplianceDeclarations.mockImplementation(
+          ({ pageSize }) => {
+            if (pageSize === 1) {
+              return Promise.resolve({ total: 0, complianceDeclarations: [] })
+            }
+            return Promise.resolve({ total: 0, complianceDeclarations: [] })
+          }
+        )
+        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
+          organisations: [
+            {
+              id: cancelledOrgId,
+              name: 'Cancelled Only Org',
+              companiesHouseNumber: 'CH999',
+              registrationType: 'DirectProducer'
+            }
+          ]
+        })
+
+        const vm = await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'not-submitted',
+          1
+        )
+
+        expect(vm.items).toHaveLength(1)
+        expect(vm.items[0].organisationId).toBe(cancelledOrgId)
+      })
+
+      test('accepted declaration is exclusive to accepted tab', async () => {
+        const acceptedDeclaration = makeDeclaration({
+          organisation: { id: 'org-accepted-only' }
+        })
+        mockObligationsApi.listComplianceDeclarations.mockImplementation(
+          ({ status, pageSize, page }) => {
+            if (pageSize === 1 && status === 'Accepted') {
+              return Promise.resolve({ total: 1, complianceDeclarations: [] })
+            }
+            if (pageSize === 1) {
+              return Promise.resolve({ total: 0, complianceDeclarations: [] })
+            }
+            if (pageSize === PAGE_SIZE && status === 'Accepted') {
+              return Promise.resolve({
+                total: 1,
+                complianceDeclarations: [acceptedDeclaration]
+              })
+            }
+            return Promise.resolve({ total: 0, complianceDeclarations: [] })
+          }
+        )
+        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
+          organisations: [{ id: 'org-accepted-only' }]
+        })
+
+        const vm = await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'accepted',
+          1
+        )
+
+        expect(vm.items).toHaveLength(1)
+        expect(vm.items[0].organisationId).toBe('org-accepted-only')
       })
 
       test('maps compliance-schemes to ComplianceScheme registrationType', async () => {
@@ -650,14 +716,17 @@ describe('getCertificatesOfComplianceViewModel', () => {
       test('fetches and maps declarations from the API', async () => {
         const declaration = makeDeclaration()
         mockObligationsApi.listComplianceDeclarations.mockImplementation(
-          ({ pageSize }) => {
+          ({ pageSize, status }) => {
             if (pageSize === 1) {
               return Promise.resolve({ total: 1, complianceDeclarations: [] })
             }
-            return Promise.resolve({
-              total: 1,
-              complianceDeclarations: [declaration]
-            })
+            if (pageSize === PAGE_SIZE && status === 'Submitted') {
+              return Promise.resolve({
+                total: 1,
+                complianceDeclarations: [declaration]
+              })
+            }
+            return Promise.resolve({ total: 0, complianceDeclarations: [] })
           }
         )
         mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
@@ -682,11 +751,17 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
       test('calculates totalPages correctly from total count', async () => {
         mockObligationsApi.listComplianceDeclarations.mockImplementation(
-          ({ pageSize }) => {
+          ({ pageSize, status }) => {
+            if (pageSize === 1 && status === 'Submitted') {
+              return Promise.resolve({ total: 45, complianceDeclarations: [] })
+            }
             if (pageSize === 1) {
               return Promise.resolve({ total: 0, complianceDeclarations: [] })
             }
-            return Promise.resolve({ total: 45, complianceDeclarations: [] })
+            if (pageSize === PAGE_SIZE && status === 'Submitted') {
+              return Promise.resolve({ total: 45, complianceDeclarations: [] })
+            }
+            return Promise.resolve({ total: 0, complianceDeclarations: [] })
           }
         )
         mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
@@ -792,9 +867,12 @@ describe('getCertificatesOfComplianceViewModel', () => {
         mockObligationsApi.listComplianceDeclarations.mockImplementation(
           ({ pageSize, status }) => {
             if (pageSize === 1) {
-              return Promise.resolve({ total: 1, complianceDeclarations: [] })
+              return Promise.resolve({ total: 0, complianceDeclarations: [] })
             }
-            if (status === 'Submitted') {
+            if (
+              pageSize === DECLARATIONS_BATCH_SIZE &&
+              status === 'Submitted'
+            ) {
               return Promise.resolve({
                 total: 1,
                 complianceDeclarations: [{ organisation: { id: 'org-1' } }]
@@ -837,9 +915,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
         mockObligationsApi.listComplianceDeclarations.mockImplementation(
           ({ pageSize, status }) => {
             if (pageSize === 1) {
-              return Promise.resolve({ total: 1, complianceDeclarations: [] })
+              return Promise.resolve({ total: 0, complianceDeclarations: [] })
             }
-            if (status === 'Accepted') {
+            if (pageSize === DECLARATIONS_BATCH_SIZE && status === 'Accepted') {
               return Promise.resolve({
                 total: 1,
                 complianceDeclarations: [{ organisation: { id: 'org-1' } }]
@@ -890,6 +968,36 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.pagination.currentPage).toBe(2)
       })
 
+      test('enriches only the current page of not-submitted items', async () => {
+        const orgs = Array.from({ length: 25 }, (_, i) => ({
+          id: `org-${i}`,
+          name: `Org ${i}`,
+          companiesHouseNumber: `CH${String(i).padStart(3, '0')}`,
+          registrationType: 'DirectProducer'
+        }))
+        mockObligationsApi.listComplianceDeclarations.mockImplementation(
+          ({ pageSize }) => {
+            if (pageSize === 1) {
+              return Promise.resolve({ total: 0, complianceDeclarations: [] })
+            }
+            return Promise.resolve({ total: 0, complianceDeclarations: [] })
+          }
+        )
+        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
+          organisations: orgs
+        })
+
+        await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'not-submitted',
+          1
+        )
+
+        expect(
+          mockObligationsApi.getComplianceObligationOrNull
+        ).toHaveBeenCalledTimes(PAGE_SIZE)
+      })
+
       test('returns totalPages=1 when there are no not-submitted organisations', async () => {
         mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
           total: 0,
@@ -909,15 +1017,11 @@ describe('getCertificatesOfComplianceViewModel', () => {
     })
 
     describe('getComplianceList — unknown tab', () => {
-      test('returns empty items and totalPages=1 without calling the list API', async () => {
-        mockObligationsApi.listComplianceDeclarations.mockImplementation(
-          ({ pageSize }) => {
-            if (pageSize === 1) {
-              return Promise.resolve({ total: 0, complianceDeclarations: [] })
-            }
-            throw new Error('list API should not be called for unknown tab')
-          }
-        )
+      test('returns empty items and totalPages=1 for unknown tab', async () => {
+        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
+          total: 0,
+          complianceDeclarations: []
+        })
         mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
           organisations: []
         })
@@ -940,7 +1044,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
             if (pageSize === 1) {
               return Promise.resolve({ total: 0, complianceDeclarations: [] })
             }
-            if (pageSize === 100 && status === 'Submitted') {
+            if (
+              pageSize === DECLARATIONS_BATCH_SIZE &&
+              status === 'Submitted'
+            ) {
               if (page === 1) {
                 return Promise.resolve({
                   total: 150,
@@ -993,17 +1100,20 @@ describe('getCertificatesOfComplianceViewModel', () => {
     describe('mapDeclarationToItem', () => {
       const setupPendingTab = (declarations) => {
         mockObligationsApi.listComplianceDeclarations.mockImplementation(
-          ({ pageSize }) => {
+          ({ status, pageSize }) => {
             if (pageSize === 1) {
               return Promise.resolve({
                 total: declarations.length,
                 complianceDeclarations: []
               })
             }
-            return Promise.resolve({
-              total: declarations.length,
-              complianceDeclarations: declarations
-            })
+            if (pageSize === PAGE_SIZE && status === 'Submitted') {
+              return Promise.resolve({
+                total: declarations.length,
+                complianceDeclarations: declarations
+              })
+            }
+            return Promise.resolve({ total: 0, complianceDeclarations: [] })
           }
         )
         mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
