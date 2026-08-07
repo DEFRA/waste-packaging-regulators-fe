@@ -1,6 +1,9 @@
 import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { sessionCookieFromResponse } from '#test-helpers/cookies.js'
+import {
+  sessionCookieFromResponse,
+  mergeCookiesFromResponse
+} from '#test-helpers/cookies.js'
 import { load } from 'cheerio'
 import { vi } from 'vitest'
 import * as listService from './list.service.js'
@@ -592,6 +595,45 @@ describe('#certificatesOfComplianceController', () => {
       expect($('table').length).toBe(0)
       expect(result).not.toContain('Download list (CSV)')
       expect(result).toContain('<strong>0</strong>')
+    })
+  })
+
+  describe('Per-tab sort retention', () => {
+    let sortSessionCookie
+
+    beforeAll(async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/signin-oidc'
+      })
+      sortSessionCookie = sessionCookieFromResponse(response)
+    })
+
+    test('Should include restored sort in pagination links after returning to a tab', async () => {
+      let cookie = sortSessionCookie
+
+      let response = await server.inject({
+        method: 'GET',
+        url: '/certificates-of-compliance?tab=pending&sortColumn=dateSubmitted&sortDirection=desc',
+        headers: { cookie }
+      })
+      cookie = mergeCookiesFromResponse(cookie, response)
+
+      response = await server.inject({
+        method: 'GET',
+        url: '/certificates-of-compliance?tab=accepted',
+        headers: { cookie }
+      })
+      cookie = mergeCookiesFromResponse(cookie, response)
+
+      response = await server.inject({
+        method: 'GET',
+        url: '/certificates-of-compliance?tab=pending',
+        headers: { cookie }
+      })
+
+      expect(response.result).toContain('sortColumn=dateSubmitted')
+      expect(response.result).toContain('aria-sort="descending"')
     })
   })
 })
