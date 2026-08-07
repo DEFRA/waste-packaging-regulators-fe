@@ -38,7 +38,7 @@ function mapDeclarationToItem(declaration) {
     organisationName: mapOrganisationName(organisation),
     recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
     regulation43Met: isRegulation43Compliant,
-    // Whole number from the obligations API ÔÇö display as-is (no frontend rounding).
+    // Whole number from the obligations API — display as-is (no frontend rounding).
     obligationCoveragePercentage: obligationCoveragePercentage ?? null,
     dateSubmitted: created
   }
@@ -51,7 +51,11 @@ function mapOrganisationToItem(organisation) {
     organisationId: organisation.id,
     companiesHouseNumber: organisation.companiesHouseNumber ?? null,
     organisationReferenceNumber: NO_DATA,
-    organisationName: mapOrganisationName(organisation)
+    organisationName: mapOrganisationName(organisation),
+    recyclingObligationsMet: null,
+    regulation43Met: null,
+    obligationCoveragePercentage: null,
+    dateSubmitted: null
   }
 }
 
@@ -126,71 +130,25 @@ async function fetchAllDeclarations(api, params, traceId) {
   ]
 }
 
-async function getComplianceSummary(
-  obligationsApi,
-  organisationsApi,
-  organisationType,
-  traceId
-) {
-  if (config.get('useMockApi')) {
-    throwIfMockErrorConfigured('waste-obligations-api')
-    return mockSummaryByOrganisationType[organisationType] ?? mockSummary
-  }
-
-  const registrationType = registrationTypeByOrganisationType[organisationType]
-
-  const [pendingResult, acceptedResult, notSubmittedResult] = await Promise.all(
-    [
-      obligationsApi.listComplianceDeclarations(
-        { status: 'Submitted', registrationType, pageSize: 1 },
-        traceId
-      ),
-      obligationsApi.listComplianceDeclarations(
-        { status: 'Accepted', registrationType, pageSize: 1 },
-        traceId
-      ),
-      organisationsApi.listComplianceOrganisations(
-        { registrationType, registrationYears: COMPLIANCE_YEAR },
-        traceId
-      )
-    ]
-  )
-
-  return {
-    // Real API does not yet expose compliance year; use configured registration year
-    complianceYear: String(COMPLIANCE_YEAR),
-    totalPending: pendingResult.total,
-    totalAccepted: acceptedResult.total,
-    totalNotSubmitted:
-      notSubmittedResult.organisations.length -
-      pendingResult.total -
-      acceptedResult.total
-  }
-}
-
-const RESOLVE_BATCH_SIZE = 50
-
 async function resolveNotSubmittedObligationCoveragePercentages(
   obligationsApi,
   items,
   traceId
 ) {
-  for (let i = 0; i < items.length; i += RESOLVE_BATCH_SIZE) {
-    const batch = items.slice(i, i + RESOLVE_BATCH_SIZE)
-    await Promise.all(
-      batch.map(async (item) => {
-        const data = await obligationsApi.getComplianceObligationOrNull(
-          {
-            organisationId: item.organisationId,
-            obligationYear: COMPLIANCE_YEAR
-          },
-          traceId
-        )
-        item.obligationCoveragePercentage =
-          calculateObligationCoveragePercentage(data?.obligations ?? [])
-      })
-    )
-  }
+  await Promise.all(
+    items.map(async (item) => {
+      const data = await obligationsApi.getComplianceObligationOrNull(
+        {
+          organisationId: item.organisationId,
+          obligationYear: COMPLIANCE_YEAR
+        },
+        traceId
+      )
+      item.obligationCoveragePercentage = calculateObligationCoveragePercentage(
+        data?.obligations ?? []
+      )
+    })
+  )
 }
 
 // Direct producers resolve by external id; compliance schemes by Companies
@@ -263,6 +221,48 @@ export function sortItems(items, sortColumn, sortDirection) {
   })
 }
 
+async function getComplianceSummary(
+  obligationsApi,
+  organisationsApi,
+  organisationType,
+  traceId
+) {
+  if (config.get('useMockApi')) {
+    throwIfMockErrorConfigured('waste-obligations-api')
+    return mockSummaryByOrganisationType[organisationType] ?? mockSummary
+  }
+
+  const registrationType = registrationTypeByOrganisationType[organisationType]
+
+  const [pendingResult, acceptedResult, notSubmittedResult] = await Promise.all(
+    [
+      obligationsApi.listComplianceDeclarations(
+        { status: 'Submitted', registrationType, pageSize: 1 },
+        traceId
+      ),
+      obligationsApi.listComplianceDeclarations(
+        { status: 'Accepted', registrationType, pageSize: 1 },
+        traceId
+      ),
+      organisationsApi.listComplianceOrganisations(
+        { registrationType, registrationYears: COMPLIANCE_YEAR },
+        traceId
+      )
+    ]
+  )
+
+  return {
+    // Real API does not yet expose compliance year; use configured registration year
+    complianceYear: String(COMPLIANCE_YEAR),
+    totalPending: pendingResult.total,
+    totalAccepted: acceptedResult.total,
+    totalNotSubmitted:
+      notSubmittedResult.organisations.length -
+      pendingResult.total -
+      acceptedResult.total
+  }
+}
+
 async function getNotSubmittedComplianceList({
   obligationsApi,
   organisationsApi,
@@ -301,10 +301,15 @@ async function getNotSubmittedComplianceList({
     .filter((org) => !submittedIds.has(org.id))
     .map(mapOrganisationToItem)
 
-  // Resolve data for ALL items before sorting and pagination
+  sortItems(allItems, sortColumn, sortDirection)
+
+  const totalPages = Math.ceil(allItems.length / PAGE_SIZE) || 1
+  const start = (page - 1) * PAGE_SIZE
+  const items = allItems.slice(start, start + PAGE_SIZE)
+
   await resolveNotSubmittedReferenceNumbers(
     accountApi,
-    allItems,
+    items,
     traceId,
     organisationType
   )
@@ -312,16 +317,10 @@ async function getNotSubmittedComplianceList({
   if (organisationType !== COMPLIANCE_SCHEMES) {
     await resolveNotSubmittedObligationCoveragePercentages(
       obligationsApi,
-      allItems,
+      items,
       traceId
     )
   }
-
-  sortItems(allItems, sortColumn, sortDirection)
-
-  const totalPages = Math.ceil(allItems.length / PAGE_SIZE) || 1
-  const start = (page - 1) * PAGE_SIZE
-  const items = allItems.slice(start, start + PAGE_SIZE)
 
   return {
     items,
@@ -348,9 +347,12 @@ async function getComplianceList({
 
     sortItems(items, sortColumn, sortDirection)
 
+    const totalPages = Math.ceil(items.length / PAGE_SIZE) || 1
+    const start = (page - 1) * PAGE_SIZE
+
     return {
-      items,
-      totalPages: 9,
+      items: items.slice(start, start + PAGE_SIZE),
+      totalPages,
       currentPage: page
     }
   }
