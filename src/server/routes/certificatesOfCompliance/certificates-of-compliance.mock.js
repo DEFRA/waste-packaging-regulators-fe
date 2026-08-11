@@ -51,6 +51,11 @@ const MOCK_ACCEPTED_ONLY_TIMESTAMP = '2026-04-15T11:20:00Z'
 const MOCK_CANCELLED_ONLY_TIMESTAMP = '2026-04-08T10:00:00Z'
 const MOCK_CS_SUBMITTED_TIMESTAMP = '2027-01-20T00:00:00Z'
 const MOCK_DECL_HOWCO_ID = 'decl-101411'
+/** Prior-year history declarations — 24-char hex ids (MongoDB ObjectId shape) for link/detail testing */
+export const MOCK_DECL_HOWCO_PREV_ACCEPTED_ID = '6a3d04ae8c0a98574648b001'
+export const MOCK_DECL_HOWCO_PREV_CANCELLED_ID = '6a3d04ae8c0a98574648b002'
+export const MOCK_DECL_CS_PREV_ACCEPTED_ID = '7c5e16bf9d2c09785759d001'
+export const MOCK_DECL_CS_PREV_CANCELLED_ID = '7c5e16bf9d2c09785759d002'
 const MOCK_DECL_GREENFIELD_ID = 'decl-204872'
 const MOCK_DECL_ACME_ID = 'decl-309145'
 const MOCK_DECL_BLUESKY_ID = 'decl-412067'
@@ -1283,7 +1288,7 @@ export const mockComplianceSchemeCancelledDetailData = {
 
 const mockCurrentYearAcceptedDeclaration = {
   ...mockDetailData,
-  id: 'decl-101411-prev-accepted',
+  id: MOCK_DECL_HOWCO_PREV_ACCEPTED_ID,
   created: MOCK_CURRENT_YEAR_ACCEPTED_TIMESTAMP,
   updated: MOCK_CURRENT_YEAR_ACCEPTED_TIMESTAMP,
   status: MOCK_STATUS_ACCEPTED,
@@ -1299,7 +1304,7 @@ const mockCurrentYearAcceptedDeclaration = {
 
 const mockCurrentYearCancelledDeclaration = {
   ...mockDetailData,
-  id: 'decl-101411-prev-cancelled',
+  id: MOCK_DECL_HOWCO_PREV_CANCELLED_ID,
   created: MOCK_CURRENT_YEAR_CANCELLED_TIMESTAMP,
   updated: MOCK_CURRENT_YEAR_CANCELLED_TIMESTAMP,
   status: MOCK_STATUS_CANCELLED,
@@ -1316,7 +1321,7 @@ const mockCurrentYearCancelledDeclaration = {
 
 const mockComplianceSchemeCurrentYearAcceptedDeclaration = {
   ...mockComplianceSchemeDetailData,
-  id: 'decl-cs-001-prev-accepted',
+  id: MOCK_DECL_CS_PREV_ACCEPTED_ID,
   created: MOCK_CS_CURRENT_YEAR_ACCEPTED_TIMESTAMP,
   updated: MOCK_CS_CURRENT_YEAR_ACCEPTED_TIMESTAMP,
   status: MOCK_STATUS_ACCEPTED,
@@ -1332,7 +1337,7 @@ const mockComplianceSchemeCurrentYearAcceptedDeclaration = {
 
 const mockComplianceSchemeCurrentYearCancelledDeclaration = {
   ...mockComplianceSchemeDetailData,
-  id: 'decl-cs-001-prev-cancelled',
+  id: MOCK_DECL_CS_PREV_CANCELLED_ID,
   created: MOCK_CS_CURRENT_YEAR_CANCELLED_TIMESTAMP,
   updated: MOCK_CS_CURRENT_YEAR_CANCELLED_TIMESTAMP,
   status: MOCK_STATUS_CANCELLED,
@@ -1516,7 +1521,13 @@ const mockDetailById = {
   'decl-accepted-only': mockAcceptedOnlyDeclaration,
   'decl-cancelled-only': mockCancelledOnlyDeclaration,
   'decl-no-obligations': mockNoObligationsDetailData,
-  'decl-empty-obligations': mockEmptyObligationsDetailData
+  'decl-empty-obligations': mockEmptyObligationsDetailData,
+  [MOCK_DECL_HOWCO_PREV_ACCEPTED_ID]: mockCurrentYearAcceptedDeclaration,
+  [MOCK_DECL_HOWCO_PREV_CANCELLED_ID]: mockCurrentYearCancelledDeclaration,
+  [MOCK_DECL_CS_PREV_ACCEPTED_ID]:
+    mockComplianceSchemeCurrentYearAcceptedDeclaration,
+  [MOCK_DECL_CS_PREV_CANCELLED_ID]:
+    mockComplianceSchemeCurrentYearCancelledDeclaration
 }
 
 export function getMockDetailDataById(id) {
