@@ -7,6 +7,7 @@ import {
 import { load } from 'cheerio'
 import { vi } from 'vitest'
 import * as listService from './list.service.js'
+import { getDefaultSortColumn } from './controller.js'
 import {
   mockSummary,
   mockPendingItems,
@@ -376,30 +377,6 @@ describe('#certificatesOfComplianceController', () => {
         direction: 'desc'
       },
       { type: 'direct-producers', tab: 'not-submitted' },
-      {
-        type: 'direct-producers',
-        tab: 'not-submitted',
-        column: 'obligationCoveragePercentage',
-        direction: 'asc'
-      },
-      {
-        type: 'direct-producers',
-        tab: 'not-submitted',
-        column: 'recyclingObligationsMet',
-        direction: 'asc'
-      },
-      {
-        type: 'direct-producers',
-        tab: 'not-submitted',
-        column: 'obligationCoveragePercentage',
-        direction: 'desc'
-      },
-      {
-        type: 'direct-producers',
-        tab: 'not-submitted',
-        column: 'recyclingObligationsMet',
-        direction: 'desc'
-      },
       { type: 'compliance-schemes', tab: 'pending' },
       {
         type: 'compliance-schemes',
@@ -474,31 +451,7 @@ describe('#certificatesOfComplianceController', () => {
         column: 'dateSubmitted',
         direction: 'desc'
       },
-      { type: 'compliance-schemes', tab: 'not-submitted' },
-      {
-        type: 'compliance-schemes',
-        tab: 'not-submitted',
-        column: 'regulation43Met',
-        direction: 'asc'
-      },
-      {
-        type: 'compliance-schemes',
-        tab: 'not-submitted',
-        column: 'recyclingObligationsMet',
-        direction: 'asc'
-      },
-      {
-        type: 'compliance-schemes',
-        tab: 'not-submitted',
-        column: 'regulation43Met',
-        direction: 'desc'
-      },
-      {
-        type: 'compliance-schemes',
-        tab: 'not-submitted',
-        column: 'recyclingObligationsMet',
-        direction: 'desc'
-      }
+      { type: 'compliance-schemes', tab: 'not-submitted' }
     ])(
       'Should display sort $direction on column $column on the $type $tab tab',
       async ({ type, tab, column, direction }) => {
@@ -514,6 +467,11 @@ describe('#certificatesOfComplianceController', () => {
 
         const activeSortAnchor = $('th[aria-sort$="ending"] a')
 
+        if (tab === 'not-submitted') {
+          expect(activeSortAnchor).toHaveLength(0)
+          return
+        }
+
         expect(activeSortAnchor).toHaveLength(1)
         expect(activeSortAnchor.find('path')).toHaveLength(1)
 
@@ -525,16 +483,6 @@ describe('#certificatesOfComplianceController', () => {
           expect(activeSortAnchor.attr('href')).toContain(
             `sortColumn=dateSubmitted&sortDirection=${nextDirection}`
           )
-        } else if (tab === 'not-submitted') {
-          if (type === 'direct-producers') {
-            expect(activeSortAnchor.attr('href')).toContain(
-              `sortColumn=obligationCoveragePercentage&sortDirection=${nextDirection}`
-            )
-          } else if (type === 'compliance-schemes') {
-            expect(activeSortAnchor.attr('href')).toContain(
-              `sortColumn=recyclingObligationsMet&sortDirection=${nextDirection}`
-            )
-          }
         }
       }
     )
@@ -559,43 +507,49 @@ describe('#certificatesOfComplianceController', () => {
       vi.restoreAllMocks()
     })
 
-    test('Should show the empty message and hide the table when a tab has no items', async () => {
-      vi.spyOn(
-        listService,
-        'getCertificatesOfComplianceViewModel'
-      ).mockResolvedValue({
-        heading: 'View certificates and statements of compliance',
-        backlink: './',
-        complianceYear: '2026',
-        totalPending: 0,
-        totalAccepted: 0,
-        totalNotSubmitted: 0,
-        organisationType: 'direct-producers',
-        activeTab: 'pending',
-        items: [],
-        emptyTabMessage: emptyTabMessages.pending,
-        pagination: {
-          currentPage: 1,
-          totalPages: 1,
-          baseUrl:
-            '/certificates-of-compliance?type=direct-producers&tab=pending'
-        },
-        sort: {
-          column: 'dateSubmitted',
-          direction: 'asc',
-          baseUrl:
-            '/certificates-of-compliance?type=direct-producers&tab=pending&page=1'
-        }
-      })
+    test.each(['pending', 'accepted', 'not-submitted'])(
+      'Should show the empty message and hide the table when the %s tab has no items',
+      async (tab) => {
+        const organisationType = 'direct-producers'
+        const sortColumn = getDefaultSortColumn(tab, organisationType)
 
-      const { result } = await inject('/certificates-of-compliance?tab=pending')
-      const $ = load(result)
+        vi.spyOn(
+          listService,
+          'getCertificatesOfComplianceViewModel'
+        ).mockResolvedValue({
+          heading: 'View certificates and statements of compliance',
+          backlink: './',
+          complianceYear: '2026',
+          totalPending: 0,
+          totalAccepted: 0,
+          totalNotSubmitted: 0,
+          organisationType,
+          activeTab: tab,
+          items: [],
+          emptyTabMessage: emptyTabMessages[tab],
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            baseUrl: `/certificates-of-compliance?type=${organisationType}&tab=${tab}`
+          },
+          sort: {
+            column: sortColumn,
+            direction: 'asc',
+            baseUrl: `/certificates-of-compliance?type=${organisationType}&tab=${tab}&page=1`
+          }
+        })
 
-      expect(result).toContain(emptyTabMessages.pending)
-      expect($('table').length).toBe(0)
-      expect(result).not.toContain('Download list (CSV)')
-      expect(result).toContain('<strong>0</strong>')
-    })
+        const { result } = await inject(
+          `/certificates-of-compliance?type=${organisationType}&tab=${tab}`
+        )
+        const $ = load(result)
+
+        expect(result).toContain(emptyTabMessages[tab])
+        expect($('table').length).toBe(0)
+        expect(result).not.toContain('Download list (CSV)')
+        expect(result).toContain('<strong>0</strong>')
+      }
+    )
   })
 
   describe('Per-tab sort retention', () => {
