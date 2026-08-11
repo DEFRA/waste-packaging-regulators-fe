@@ -175,30 +175,57 @@ function mapHistoryReason(status, transitionAudit) {
   }
 }
 
-function mapCurrentYearHistory(declarations = [], fallbackOrganisationId) {
+function buildCurrentYearViewSubmissionUrl(
+  declaration,
+  fallbackOrganisationId
+) {
+  const organisationId = declaration.organisation?.id ?? fallbackOrganisationId
+  return buildCertificateDetailPath(organisationId, declaration.id)
+}
+
+function getCurrentYearTransitionAudits(declaration) {
+  return (declaration.audit ?? []).filter(
+    (entry) => entry.action === 'Accepted' || entry.action === 'Cancelled'
+  )
+}
+
+function buildCurrentYearHistoryRow(declaration, entry, viewSubmissionUrl) {
+  return {
+    sortTimestamp: entry.timestamp ?? declaration.updated,
+    date: formatHistoryDate(entry.timestamp ?? declaration.updated),
+    action: entry.action,
+    by: entry.user?.name ?? '',
+    reason: mapHistoryReason(entry.action, entry),
+    viewSubmissionUrl
+  }
+}
+
+function buildCurrentYearHistoryRowFromStatus(declaration, viewSubmissionUrl) {
+  return {
+    sortTimestamp: declaration.updated,
+    date: formatHistoryDate(declaration.updated),
+    action: declaration.status,
+    by: '',
+    reason: mapHistoryReason(declaration.status, null),
+    viewSubmissionUrl
+  }
+}
+
+function mapCurrentYearHistory(fallbackOrganisationId, declarations = []) {
   const rows = []
 
   for (const declaration of declarations) {
-    const organisationId =
-      declaration.organisation?.id ?? fallbackOrganisationId
-    const viewSubmissionUrl = buildCertificateDetailPath(
-      organisationId,
-      declaration.id
+    const viewSubmissionUrl = buildCurrentYearViewSubmissionUrl(
+      declaration,
+      fallbackOrganisationId
     )
-    const transitionAudits = (declaration.audit ?? []).filter(
-      (entry) => entry.action === 'Accepted' || entry.action === 'Cancelled'
-    )
+    const transitionAudits = getCurrentYearTransitionAudits(declaration)
 
     if (transitionAudits.length > 0) {
       for (const entry of transitionAudits) {
-        rows.push({
-          sortTimestamp: entry.timestamp ?? declaration.updated,
-          date: formatHistoryDate(entry.timestamp ?? declaration.updated),
-          action: entry.action,
-          by: entry.user?.name ?? '',
-          reason: mapHistoryReason(entry.action, entry),
-          viewSubmissionUrl
-        })
+        rows.push(
+          buildCurrentYearHistoryRow(declaration, entry, viewSubmissionUrl)
+        )
       }
       continue
     }
@@ -207,14 +234,9 @@ function mapCurrentYearHistory(declarations = [], fallbackOrganisationId) {
       declaration.status === 'Accepted' ||
       declaration.status === 'Cancelled'
     ) {
-      rows.push({
-        sortTimestamp: declaration.updated,
-        date: formatHistoryDate(declaration.updated),
-        action: declaration.status,
-        by: '',
-        reason: mapHistoryReason(declaration.status, null),
-        viewSubmissionUrl
-      })
+      rows.push(
+        buildCurrentYearHistoryRowFromStatus(declaration, viewSubmissionUrl)
+      )
     }
   }
 
@@ -405,8 +427,8 @@ export function mapDeclarationToDetail(
     ),
     queryDetails: mapQueriedOutcome(data),
     currentYearActions: mapCurrentYearHistory(
-      historyDeclarations,
-      resolvedOrganisationId
+      resolvedOrganisationId,
+      historyDeclarations
     ),
     showObligations: (obligations ?? []).length !== 0
   }
