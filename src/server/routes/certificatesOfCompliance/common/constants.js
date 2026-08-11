@@ -15,6 +15,14 @@ export const UNKNOWN_ORGANISATION = 'Unknown organisation'
 export const COMPLIANCE_SCHEMES = 'compliance-schemes'
 export const COMPLIANCE_YEAR = 2026
 
+export const emptyTabMessages = {
+  pending:
+    'No submissions waiting for review. New submissions will appear here as they arrive.',
+  accepted:
+    'No accepted submissions yet. Submissions you accept will be listed here.',
+  'not-submitted': 'There are no outstanding submissions'
+}
+
 export const organisationTypeDisplayNames = {
   DirectProducer: 'Direct producer',
   ComplianceScheme: 'Compliance scheme'

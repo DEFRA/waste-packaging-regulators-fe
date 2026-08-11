@@ -1,7 +1,13 @@
 import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { sessionCookieFromResponse } from '#test-helpers/cookies.js'
+import {
+  sessionCookieFromResponse,
+  mergeCookiesFromResponse
+} from '#test-helpers/cookies.js'
 import { load } from 'cheerio'
+import { vi } from 'vitest'
+import * as listService from './list.service.js'
+import { getDefaultSortColumn } from './controller.js'
 import {
   mockSummary,
   mockPendingItems,
@@ -10,6 +16,7 @@ import {
   mockComplianceSchemeAcceptedItems,
   mockComplianceSchemePendingItems
 } from '../certificates-of-compliance.mock.js'
+import { emptyTabMessages } from '../common/constants.js'
 
 describe('#certificatesOfComplianceController', () => {
   let server
@@ -370,30 +377,6 @@ describe('#certificatesOfComplianceController', () => {
         direction: 'desc'
       },
       { type: 'direct-producers', tab: 'not-submitted' },
-      {
-        type: 'direct-producers',
-        tab: 'not-submitted',
-        column: 'obligationCoveragePercentage',
-        direction: 'asc'
-      },
-      {
-        type: 'direct-producers',
-        tab: 'not-submitted',
-        column: 'recyclingObligationsMet',
-        direction: 'asc'
-      },
-      {
-        type: 'direct-producers',
-        tab: 'not-submitted',
-        column: 'obligationCoveragePercentage',
-        direction: 'desc'
-      },
-      {
-        type: 'direct-producers',
-        tab: 'not-submitted',
-        column: 'recyclingObligationsMet',
-        direction: 'desc'
-      },
       { type: 'compliance-schemes', tab: 'pending' },
       {
         type: 'compliance-schemes',
@@ -468,31 +451,7 @@ describe('#certificatesOfComplianceController', () => {
         column: 'dateSubmitted',
         direction: 'desc'
       },
-      { type: 'compliance-schemes', tab: 'not-submitted' },
-      {
-        type: 'compliance-schemes',
-        tab: 'not-submitted',
-        column: 'regulation43Met',
-        direction: 'asc'
-      },
-      {
-        type: 'compliance-schemes',
-        tab: 'not-submitted',
-        column: 'recyclingObligationsMet',
-        direction: 'asc'
-      },
-      {
-        type: 'compliance-schemes',
-        tab: 'not-submitted',
-        column: 'regulation43Met',
-        direction: 'desc'
-      },
-      {
-        type: 'compliance-schemes',
-        tab: 'not-submitted',
-        column: 'recyclingObligationsMet',
-        direction: 'desc'
-      }
+      { type: 'compliance-schemes', tab: 'not-submitted' }
     ])(
       'Should display sort $direction on column $column on the $type $tab tab',
       async ({ type, tab, column, direction }) => {
@@ -508,6 +467,11 @@ describe('#certificatesOfComplianceController', () => {
 
         const activeSortAnchor = $('th[aria-sort$="ending"] a')
 
+        if (tab === 'not-submitted') {
+          expect(activeSortAnchor).toHaveLength(0)
+          return
+        }
+
         expect(activeSortAnchor).toHaveLength(1)
         expect(activeSortAnchor.find('path')).toHaveLength(1)
 
@@ -519,16 +483,6 @@ describe('#certificatesOfComplianceController', () => {
           expect(activeSortAnchor.attr('href')).toContain(
             `sortColumn=dateSubmitted&sortDirection=${nextDirection}`
           )
-        } else if (tab === 'not-submitted') {
-          if (type === 'direct-producers') {
-            expect(activeSortAnchor.attr('href')).toContain(
-              `sortColumn=obligationCoveragePercentage&sortDirection=${nextDirection}`
-            )
-          } else if (type === 'compliance-schemes') {
-            expect(activeSortAnchor.attr('href')).toContain(
-              `sortColumn=recyclingObligationsMet&sortDirection=${nextDirection}`
-            )
-          }
         }
       }
     )
@@ -545,6 +499,95 @@ describe('#certificatesOfComplianceController', () => {
           '/certificates-of-compliance?type=direct-producers&amp;tab=pending'
         )
       )
+    })
+  })
+
+  describe('Empty tab state', () => {
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    test.each(['pending', 'accepted', 'not-submitted'])(
+      'Should show the empty message and hide the table when the %s tab has no items',
+      async (tab) => {
+        const organisationType = 'direct-producers'
+        const sortColumn = getDefaultSortColumn(tab)
+
+        vi.spyOn(
+          listService,
+          'getCertificatesOfComplianceViewModel'
+        ).mockResolvedValue({
+          heading: 'View certificates and statements of compliance',
+          backlink: './',
+          complianceYear: '2026',
+          totalPending: 0,
+          totalAccepted: 0,
+          totalNotSubmitted: 0,
+          organisationType,
+          activeTab: tab,
+          items: [],
+          emptyTabMessage: emptyTabMessages[tab],
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            baseUrl: `/certificates-of-compliance?type=${organisationType}&tab=${tab}`
+          },
+          sort: {
+            column: sortColumn,
+            direction: 'asc',
+            baseUrl: `/certificates-of-compliance?type=${organisationType}&tab=${tab}&page=1`
+          }
+        })
+
+        const { result } = await inject(
+          `/certificates-of-compliance?type=${organisationType}&tab=${tab}`
+        )
+        const $ = load(result)
+
+        expect(result).toContain(emptyTabMessages[tab])
+        expect($('table')).toHaveLength(0)
+        expect(result).not.toContain('Download list (CSV)')
+        expect(result).toContain('<strong>0</strong>')
+      }
+    )
+  })
+
+  describe('Per-tab sort retention', () => {
+    let sortSessionCookie
+
+    beforeAll(async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/signin-oidc'
+      })
+      sortSessionCookie = sessionCookieFromResponse(response)
+    })
+
+    test('Should include restored sort in pagination links after returning to a tab', async () => {
+      let cookie = sortSessionCookie
+
+      let response = await server.inject({
+        method: 'GET',
+        url: '/certificates-of-compliance?tab=pending&sortColumn=dateSubmitted&sortDirection=desc',
+        headers: { cookie }
+      })
+      cookie = mergeCookiesFromResponse(cookie, response)
+
+      response = await server.inject({
+        method: 'GET',
+        url: '/certificates-of-compliance?tab=accepted',
+        headers: { cookie }
+      })
+      cookie = mergeCookiesFromResponse(cookie, response)
+
+      response = await server.inject({
+        method: 'GET',
+        url: '/certificates-of-compliance?tab=pending',
+        headers: { cookie }
+      })
+
+      expect(response.result).toContain('sortColumn=dateSubmitted')
+      expect(response.result).toContain('aria-sort="descending"')
     })
   })
 })

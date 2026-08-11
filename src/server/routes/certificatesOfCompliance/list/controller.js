@@ -2,13 +2,42 @@ import { config } from '#config/config.js'
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getCertificatesOfComplianceViewModel } from './list.service.js'
 
-export const getDefaultSortColumn = (tab, type) => {
+const complianceListSortKey = (organisationType) =>
+  `complianceListSort:${organisationType}`
+
+export const getDefaultSortColumn = (tab) => {
   if (tab !== 'not-submitted') {
     return 'dateSubmitted'
   }
-  return type === 'direct-producers'
-    ? 'obligationCoveragePercentage'
-    : 'recyclingObligationsMet'
+  return 'organisationName'
+}
+
+export function resolveSortForTab(request, tab, type) {
+  const sortStorageKey = complianceListSortKey(type)
+  const storedSorts = request.yar.get(sortStorageKey) ?? {}
+
+  if (request.query.sortColumn) {
+    const sortColumn = request.query.sortColumn
+    const sortDirection = request.query.sortDirection ?? 'asc'
+    request.yar.set(sortStorageKey, {
+      ...storedSorts,
+      [tab]: { column: sortColumn, direction: sortDirection }
+    })
+    return { sortColumn, sortDirection }
+  }
+
+  const stored = storedSorts[tab]
+  if (stored) {
+    return {
+      sortColumn: stored.column,
+      sortDirection: stored.direction
+    }
+  }
+
+  return {
+    sortColumn: getDefaultSortColumn(tab),
+    sortDirection: request.query.sortDirection ?? 'asc'
+  }
 }
 
 export const certificatesOfComplianceController = {
@@ -21,11 +50,9 @@ export const certificatesOfComplianceController = {
     const {
       type = 'direct-producers',
       tab = 'pending',
-      page = '1',
-      sortDirection = 'asc'
+      page = '1'
     } = request.query
-    const sortColumn =
-      request.query.sortColumn || getDefaultSortColumn(tab, type)
+    const { sortColumn, sortDirection } = resolveSortForTab(request, tab, type)
 
     const traceId = request.headers[config.get('tracing.header')]
 
