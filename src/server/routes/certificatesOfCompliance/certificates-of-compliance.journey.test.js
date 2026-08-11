@@ -576,6 +576,19 @@ describe('certificates of compliance — journey', () => {
       expect(rowActions).toContain('Accepted')
       expect(rowActions).toContain('Cancelled')
       expect(currentYear.rows.some((row) => row.by === 'John Doe')).toBe(true)
+      expect(currentYear.rows.every((row) => row.viewSubmissionUrl)).toBe(true)
+      expect(
+        currentYear.rows.every(
+          (row) => row.viewSubmissionUrl === detailPathFor(item)
+        )
+      ).toBe(true)
+
+      const linkedResponse = await server.inject({
+        method: 'GET',
+        url: currentYear.rows[0].viewSubmissionUrl,
+        headers: { cookie }
+      })
+      expect(linkedResponse.statusCode).toBe(200)
     })
   })
 

@@ -465,6 +465,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
       ])
       expect(vm.currentYearActions[0].by).toBe('Jane Regulator')
       expect(vm.currentYearActions[1].by).toBe('Jane Regulator')
+      const expectedUrl = `/b1e2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/${mockDirectProducerPendingNotMetDetailData.id}`
+      expect(vm.currentYearActions[0].viewSubmissionUrl).toBe(expectedUrl)
+      expect(vm.currentYearActions[1].viewSubmissionUrl).toBe(expectedUrl)
     })
 
     test('getCertificateOfComplianceDetailViewModel applies mock status override from session', async () => {
@@ -1982,6 +1985,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
           const vm = await runDetailVm(mockDetailData, [cancelled])
 
           expect(vm.currentYearActions[0].reason).toBeNull()
+          expect(vm.currentYearActions[0].viewSubmissionUrl).toBe(
+            '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-cancelled-no-reason'
+          )
         })
 
         test('maps by from the audit user who performed the accept action', async () => {
@@ -2008,6 +2014,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.currentYearActions[0].by).toBe('Jane Regulator')
           expect(vm.currentYearActions[0].action).toBe('Accepted')
           expect(vm.currentYearActions[0].reason).toBe('')
+          expect(vm.currentYearActions[0].viewSubmissionUrl).toBe(
+            '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-accepted-history'
+          )
         })
 
         test('includes the current Accepted declaration when the year list still has it as Submitted', async () => {

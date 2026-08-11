@@ -22,7 +22,10 @@ import {
   mapRegistrationTypeToOrganisationType
 } from '../common/registration-type.js'
 import { mapDeclarationStatusToReviewStatus } from '../actions/status.js'
-import { buildCertificateDetailActions } from '../actions/detail-actions.js'
+import {
+  buildCertificateDetailActions,
+  buildCertificateDetailPath
+} from '../actions/detail-actions.js'
 import {
   findSubmittedAuditUser,
   findAuditEntryByAction,
@@ -172,10 +175,16 @@ function mapHistoryReason(status, transitionAudit) {
   }
 }
 
-function mapCurrentYearHistory(declarations = []) {
+function mapCurrentYearHistory(declarations = [], fallbackOrganisationId) {
   const rows = []
 
   for (const declaration of declarations) {
+    const organisationId =
+      declaration.organisation?.id ?? fallbackOrganisationId
+    const viewSubmissionUrl = buildCertificateDetailPath(
+      organisationId,
+      declaration.id
+    )
     const transitionAudits = (declaration.audit ?? []).filter(
       (entry) => entry.action === 'Accepted' || entry.action === 'Cancelled'
     )
@@ -187,7 +196,8 @@ function mapCurrentYearHistory(declarations = []) {
           date: formatHistoryDate(entry.timestamp ?? declaration.updated),
           action: entry.action,
           by: entry.user?.name ?? '',
-          reason: mapHistoryReason(entry.action, entry)
+          reason: mapHistoryReason(entry.action, entry),
+          viewSubmissionUrl
         })
       }
       continue
@@ -202,7 +212,8 @@ function mapCurrentYearHistory(declarations = []) {
         date: formatHistoryDate(declaration.updated),
         action: declaration.status,
         by: '',
-        reason: mapHistoryReason(declaration.status, null)
+        reason: mapHistoryReason(declaration.status, null),
+        viewSubmissionUrl
       })
     }
   }
@@ -393,7 +404,10 @@ export function mapDeclarationToDetail(
       organisation.registrationType
     ),
     queryDetails: mapQueriedOutcome(data),
-    currentYearActions: mapCurrentYearHistory(historyDeclarations),
+    currentYearActions: mapCurrentYearHistory(
+      historyDeclarations,
+      resolvedOrganisationId
+    ),
     showObligations: (obligations ?? []).length !== 0
   }
 }

@@ -13,7 +13,8 @@ const CURRENT_YEAR_COLUMN = {
   DATE: 0,
   ACTION: 1,
   BY: 2,
-  REASON: 3
+  REASON: 3,
+  LINK: 4
 }
 
 const SUMMARY_ROW = '.govuk-summary-list__row'
@@ -185,7 +186,11 @@ function readCurrentYear($) {
           .text()
           .trim(),
         by: cells.eq(CURRENT_YEAR_COLUMN.BY).text().trim(),
-        reason: cells.eq(CURRENT_YEAR_COLUMN.REASON).text().trim()
+        reason: cells.eq(CURRENT_YEAR_COLUMN.REASON).text().trim(),
+        viewSubmissionUrl: cells
+          .eq(CURRENT_YEAR_COLUMN.LINK)
+          .find('a')
+          .attr('href')
       }
     })
   return { rows }

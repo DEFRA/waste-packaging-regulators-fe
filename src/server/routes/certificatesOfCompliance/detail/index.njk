@@ -307,6 +307,7 @@
               <th scope="col" class="govuk-table__header">Action</th>
               <th scope="col" class="govuk-table__header">By</th>
               <th scope="col" class="govuk-table__header">Reason</th>
+              <th scope="col" class="govuk-table__header"><span class="govuk-visually-hidden">View submission</span></th>
             </tr>
           </thead>
           <tbody class="govuk-table__body">
@@ -322,6 +323,9 @@
                 </td>
                 <td class="govuk-table__cell">{{ row.by }}</td>
                 <td class="govuk-table__cell">{{ row.reason if row.reason else '' }}</td>
+                <td class="govuk-table__cell">
+                  <a href="{{ row.viewSubmissionUrl }}" class="govuk-link">View submission</a>
+                </td>
               </tr>
             {% endfor %}
           </tbody>

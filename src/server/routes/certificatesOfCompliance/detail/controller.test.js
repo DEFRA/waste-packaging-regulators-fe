@@ -396,6 +396,54 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(acceptedIdx).toBeGreaterThan(-1)
       expect(cancelledIdx).toBeLessThan(acceptedIdx)
     })
+
+    it('renders a View submission link on each current year row', async () => {
+      const response = await inject(bothUrl)
+      const { currentYear } = loadDetailPage(response.payload)
+
+      expect(currentYear.rows).toHaveLength(2)
+      for (const row of currentYear.rows) {
+        expect(row.viewSubmissionUrl).toBeTruthy()
+      }
+    })
+
+    it('links each current year row to the declaration that action was taken on', async () => {
+      const response = await inject(bothUrl)
+      const { currentYear } = loadDetailPage(response.payload)
+      const howcoOrgId = '497f6eca-6276-4993-bfeb-53cbbbba6f08'
+
+      expect(currentYear.rows[0].viewSubmissionUrl).toBe(
+        `/${howcoOrgId}/certificates-of-compliance/decl-101411-prev-cancelled`
+      )
+      expect(currentYear.rows[1].viewSubmissionUrl).toBe(
+        `/${howcoOrgId}/certificates-of-compliance/decl-101411-prev-accepted`
+      )
+    })
+
+    it('links an Accepted-only current year row to that accepted submission', async () => {
+      const response = await inject(acceptedOnlyUrl)
+      const { currentYear } = loadDetailPage(response.payload)
+
+      expect(currentYear.rows).toHaveLength(1)
+      expect(currentYear.rows[0].viewSubmissionUrl).toBe(
+        '/b0b1b2b3-b4b5-b6b7-b8b9-babbbcbdbebf/certificates-of-compliance/decl-accepted-only'
+      )
+    })
+
+    it('links a Cancelled-only current year row to that cancelled submission', async () => {
+      const response = await inject(cancelledOnlyUrl)
+      const { currentYear } = loadDetailPage(response.payload)
+
+      expect(currentYear.rows).toHaveLength(1)
+      expect(currentYear.rows[0].viewSubmissionUrl).toBe(
+        '/c0c1c2c3-c4c5-c6c7-c8c9-cacbcccdcecf/certificates-of-compliance/decl-cancelled-only'
+      )
+    })
+
+    it('does not render View submission links when the current year table is empty', async () => {
+      const response = await inject(emptyUrl)
+      expect(response.payload).not.toContain('View submission')
+    })
   })
 
   it('should render an error page when the obligations API returns 500', async () => {
