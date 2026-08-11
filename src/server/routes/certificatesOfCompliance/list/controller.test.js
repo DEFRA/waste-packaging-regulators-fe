@@ -511,7 +511,7 @@ describe('#certificatesOfComplianceController', () => {
       'Should show the empty message and hide the table when the %s tab has no items',
       async (tab) => {
         const organisationType = 'direct-producers'
-        const sortColumn = getDefaultSortColumn(tab, organisationType)
+        const sortColumn = getDefaultSortColumn(tab)
 
         vi.spyOn(
           listService,
@@ -545,7 +545,7 @@ describe('#certificatesOfComplianceController', () => {
         const $ = load(result)
 
         expect(result).toContain(emptyTabMessages[tab])
-        expect($('table').length).toBe(0)
+        expect($('table')).toHaveLength(0)
         expect(result).not.toContain('Download list (CSV)')
         expect(result).toContain('<strong>0</strong>')
       }

@@ -5,7 +5,7 @@ import { getCertificatesOfComplianceViewModel } from './list.service.js'
 const complianceListSortKey = (organisationType) =>
   `complianceListSort:${organisationType}`
 
-export const getDefaultSortColumn = (tab, type) => {
+export const getDefaultSortColumn = (tab) => {
   if (tab !== 'not-submitted') {
     return 'dateSubmitted'
   }
@@ -35,7 +35,7 @@ export function resolveSortForTab(request, tab, type) {
   }
 
   return {
-    sortColumn: getDefaultSortColumn(tab, type),
+    sortColumn: getDefaultSortColumn(tab),
     sortDirection: request.query.sortDirection ?? 'asc'
   }
 }
