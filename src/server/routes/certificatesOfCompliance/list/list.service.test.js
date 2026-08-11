@@ -531,6 +531,25 @@ describe('getCertificatesOfComplianceViewModel', () => {
             if (pageSize === 1 && status === 'Accepted') {
               return Promise.resolve({ total: 5, complianceDeclarations: [] })
             }
+            if (
+              pageSize === DECLARATIONS_BATCH_SIZE &&
+              status === 'Submitted'
+            ) {
+              return Promise.resolve({
+                total: 10,
+                complianceDeclarations: Array.from({ length: 10 }, (_, i) => ({
+                  organisation: { id: `org-${i}` }
+                }))
+              })
+            }
+            if (pageSize === DECLARATIONS_BATCH_SIZE && status === 'Accepted') {
+              return Promise.resolve({
+                total: 5,
+                complianceDeclarations: Array.from({ length: 5 }, (_, i) => ({
+                  organisation: { id: `org-${i + 10}` }
+                }))
+              })
+            }
             return Promise.resolve({ total: 0, complianceDeclarations: [] })
           }
         )
@@ -548,6 +567,116 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.totalPending).toBe(10)
         expect(vm.totalAccepted).toBe(5)
         expect(vm.totalNotSubmitted).toBe(5)
+      })
+
+      test('totalNotSubmitted uses org-level dedup when one org has pending and accepted declarations', async () => {
+        const sharedOrgId = 'org-both'
+        mockObligationsApi.listComplianceDeclarations.mockImplementation(
+          ({ status, pageSize }) => {
+            if (pageSize === 1 && status === 'Submitted') {
+              return Promise.resolve({ total: 1, complianceDeclarations: [] })
+            }
+            if (pageSize === 1 && status === 'Accepted') {
+              return Promise.resolve({ total: 1, complianceDeclarations: [] })
+            }
+            if (
+              pageSize === DECLARATIONS_BATCH_SIZE &&
+              status === 'Submitted'
+            ) {
+              return Promise.resolve({
+                total: 1,
+                complianceDeclarations: [{ organisation: { id: sharedOrgId } }]
+              })
+            }
+            if (pageSize === DECLARATIONS_BATCH_SIZE && status === 'Accepted') {
+              return Promise.resolve({
+                total: 1,
+                complianceDeclarations: [{ organisation: { id: sharedOrgId } }]
+              })
+            }
+            return Promise.resolve({ total: 0, complianceDeclarations: [] })
+          }
+        )
+        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
+          organisations: [
+            {
+              id: sharedOrgId,
+              name: 'Both statuses',
+              companiesHouseNumber: 'CH001',
+              registrationType: 'DirectProducer'
+            },
+            {
+              id: 'org-not-submitted',
+              name: 'Not Submitted',
+              companiesHouseNumber: 'CH002',
+              registrationType: 'DirectProducer'
+            }
+          ]
+        })
+
+        const vm = await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'pending',
+          1
+        )
+
+        expect(vm.totalNotSubmitted).toBe(1)
+      })
+
+      test('pending badge count equals total rows across all pages', async () => {
+        const total = 45
+        const allDeclarations = Array.from({ length: total }, (_, i) =>
+          makeDeclaration({
+            id: `decl-${i}`,
+            organisation: { id: `org-${i}` }
+          })
+        )
+        mockObligationsApi.listComplianceDeclarations.mockImplementation(
+          ({ status, pageSize, page }) => {
+            if (pageSize === 1 && status === 'Submitted') {
+              return Promise.resolve({ total, complianceDeclarations: [] })
+            }
+            if (pageSize === 1) {
+              return Promise.resolve({ total: 0, complianceDeclarations: [] })
+            }
+            if (pageSize === DECLARATIONS_BATCH_SIZE) {
+              return Promise.resolve({ total: 0, complianceDeclarations: [] })
+            }
+            if (pageSize === PAGE_SIZE && status === 'Submitted') {
+              const start = (page - 1) * PAGE_SIZE
+              return Promise.resolve({
+                total,
+                complianceDeclarations: allDeclarations.slice(
+                  start,
+                  start + PAGE_SIZE
+                )
+              })
+            }
+            return Promise.resolve({ total: 0, complianceDeclarations: [] })
+          }
+        )
+        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
+          organisations: []
+        })
+
+        const firstPage = await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'pending',
+          1
+        )
+        expect(firstPage.totalPending).toBe(total)
+
+        let rowCount = firstPage.items.length
+        for (let page = 2; page <= firstPage.pagination.totalPages; page += 1) {
+          const vm = await getCertificatesOfComplianceViewModel(
+            'direct-producers',
+            'pending',
+            page
+          )
+          rowCount += vm.items.length
+        }
+
+        expect(rowCount).toBe(firstPage.totalPending)
       })
 
       test('cancelled-only org appears on not-submitted tab only', async () => {

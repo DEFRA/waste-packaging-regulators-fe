@@ -221,6 +221,19 @@ export function sortItems(items, sortColumn, sortDirection) {
   })
 }
 
+function countNotSubmittedOrganisations(
+  organisations,
+  pendingDeclarations,
+  acceptedDeclarations
+) {
+  const submittedIds = new Set([
+    ...pendingDeclarations.map((d) => d.organisation.id),
+    ...acceptedDeclarations.map((d) => d.organisation.id)
+  ])
+
+  return organisations.filter((org) => !submittedIds.has(org.id)).length
+}
+
 async function getComplianceSummary(
   obligationsApi,
   organisationsApi,
@@ -234,32 +247,47 @@ async function getComplianceSummary(
 
   const registrationType = registrationTypeByOrganisationType[organisationType]
 
-  const [pendingResult, acceptedResult, notSubmittedResult] = await Promise.all(
-    [
-      obligationsApi.listComplianceDeclarations(
-        { status: 'Submitted', registrationType, pageSize: 1 },
-        traceId
-      ),
-      obligationsApi.listComplianceDeclarations(
-        { status: 'Accepted', registrationType, pageSize: 1 },
-        traceId
-      ),
-      organisationsApi.listComplianceOrganisations(
-        { registrationType, registrationYears: COMPLIANCE_YEAR },
-        traceId
-      )
-    ]
-  )
+  const [
+    pendingResult,
+    acceptedResult,
+    orgsResult,
+    pendingDeclarations,
+    acceptedDeclarations
+  ] = await Promise.all([
+    obligationsApi.listComplianceDeclarations(
+      { status: 'Submitted', registrationType, pageSize: 1 },
+      traceId
+    ),
+    obligationsApi.listComplianceDeclarations(
+      { status: 'Accepted', registrationType, pageSize: 1 },
+      traceId
+    ),
+    organisationsApi.listComplianceOrganisations(
+      { registrationType, registrationYears: COMPLIANCE_YEAR },
+      traceId
+    ),
+    fetchAllDeclarations(
+      obligationsApi,
+      { status: 'Submitted', registrationType },
+      traceId
+    ),
+    fetchAllDeclarations(
+      obligationsApi,
+      { status: 'Accepted', registrationType },
+      traceId
+    )
+  ])
 
   return {
     // Real API does not yet expose compliance year; use configured registration year
     complianceYear: String(COMPLIANCE_YEAR),
     totalPending: pendingResult.total,
     totalAccepted: acceptedResult.total,
-    totalNotSubmitted:
-      notSubmittedResult.organisations.length -
-      pendingResult.total -
-      acceptedResult.total
+    totalNotSubmitted: countNotSubmittedOrganisations(
+      orgsResult.organisations,
+      pendingDeclarations,
+      acceptedDeclarations
+    )
   }
 }
 
