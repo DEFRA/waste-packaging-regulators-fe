@@ -64,7 +64,7 @@ describe('resolveSortForTab', () => {
     )
 
     expect(result).toEqual({
-      sortColumn: 'obligationCoveragePercentage',
+      sortColumn: 'organisationName',
       sortDirection: 'asc'
     })
   })

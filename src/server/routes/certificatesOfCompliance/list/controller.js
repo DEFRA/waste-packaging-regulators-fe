@@ -9,9 +9,7 @@ export const getDefaultSortColumn = (tab, type) => {
   if (tab !== 'not-submitted') {
     return 'dateSubmitted'
   }
-  return type === 'direct-producers'
-    ? 'obligationCoveragePercentage'
-    : 'recyclingObligationsMet'
+  return 'organisationName'
 }
 
 export function resolveSortForTab(request, tab, type) {

@@ -20,11 +20,11 @@
         <tr class="govuk-table__row">
           {{ appSortingColumnHeader({ sortable: false, firstColumn: true, columnName: 'name', columnLabel: 'Organisation name' }) }}
           {{ appSortingColumnHeader({ sortable: false, columnName: 'id', columnLabel: 'Organisation ID' }) }}
-          {{ appSortingColumnHeader({ sort: sort, columnName: 'recyclingObligationsMet', columnLabel: 'Recycling obligations' }) }}
+          {{ appSortingColumnHeader({ sort: sort, columnName: 'recyclingObligationsMet', columnLabel: 'Recycling obligations', sortable: activeTab != 'not-submitted' }) }}
           {% if organisationType == 'compliance-schemes' %}
-            {{ appSortingColumnHeader({ sort: sort, columnName: 'regulation43Met', columnLabel: 'Regulation 43' }) }}
+            {{ appSortingColumnHeader({ sort: sort, columnName: 'regulation43Met', columnLabel: 'Regulation 43', sortable: activeTab != 'not-submitted' }) }}
           {% else %}
-            {{ appSortingColumnHeader({ sort: sort, columnName: 'obligationCoveragePercentage', columnLabel: 'Percentage met' }) }}
+            {{ appSortingColumnHeader({ sort: sort, columnName: 'obligationCoveragePercentage', columnLabel: 'Percentage met', sortable: activeTab != 'not-submitted' }) }}
           {% endif %}
           {% if activeTab != 'not-submitted' %}
             {{ appSortingColumnHeader({ sort: sort, columnName: 'dateSubmitted', columnLabel: 'Date submitted' }) }}
