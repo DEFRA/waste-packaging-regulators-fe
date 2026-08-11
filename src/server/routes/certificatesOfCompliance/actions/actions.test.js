@@ -22,6 +22,7 @@ import {
 } from './status.js'
 import {
   buildCertificateDetailActions,
+  buildCertificateDetailPath,
   buildCertificateSuccessBanner
 } from './detail-actions.js'
 import {
@@ -73,6 +74,12 @@ describe('certificate detail action helpers', () => {
     expect(mapDeclarationStatusToReviewStatus('Queried')).toBe('Queried')
     expect(mapDeclarationStatusToReviewStatus('Cancelled')).toBe('Cancelled')
     expect(mapDeclarationStatusToReviewStatus('Unknown')).toBe('Pending')
+  })
+
+  test('buildCertificateDetailPath builds the detail page URL', () => {
+    expect(buildCertificateDetailPath('org-1', 'decl-1')).toBe(
+      '/org-1/certificates-of-compliance/decl-1'
+    )
   })
 
   test('buildCertificateDetailActions shows buttons by review status', () => {
