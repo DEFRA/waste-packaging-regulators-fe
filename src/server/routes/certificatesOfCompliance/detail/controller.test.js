@@ -5,7 +5,11 @@ import { ApiError } from '#services/apiBaseClient/api-error.js'
 import * as detailService from './detail.service.js'
 import {
   mockComplianceSchemeDetailData,
-  mockDetailData
+  mockDetailData,
+  MOCK_DECL_CS_PREV_ACCEPTED_ID,
+  MOCK_DECL_CS_PREV_CANCELLED_ID,
+  MOCK_DECL_HOWCO_PREV_ACCEPTED_ID,
+  MOCK_DECL_HOWCO_PREV_CANCELLED_ID
 } from '../certificates-of-compliance.mock.js'
 import { sessionCookieFromResponse } from '#test-helpers/cookies.js'
 import { loadDetailPage } from './detail.page-object.js'
@@ -344,6 +348,10 @@ describe('#certificatesOfComplianceDetailController', () => {
     const cancelledOnlyUrl =
       '/c0c1c2c3-c4c5-c6c7-c8c9-cacbcccdcecf/certificates-of-compliance/decl-cancelled-only'
     const bothUrl = '/org-123/certificates-of-compliance/101411'
+    const csBothUrl =
+      '/923fa611-571c-4948-ab7d-fbb75e75ed65/certificates-of-compliance/decl-cs-001'
+    const howcoOrgId = '497f6eca-6276-4993-bfeb-53cbbbba6f08'
+    const ecopackOrgId = '923fa611-571c-4948-ab7d-fbb75e75ed65'
     const emptyUrl =
       '/b1e2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-204872'
 
@@ -395,6 +403,98 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(cancelledIdx).toBeGreaterThan(-1)
       expect(acceptedIdx).toBeGreaterThan(-1)
       expect(cancelledIdx).toBeLessThan(acceptedIdx)
+    })
+
+    it('renders a View submission link on each current year row', async () => {
+      const response = await inject(bothUrl)
+      const { currentYear } = loadDetailPage(response.payload)
+
+      expect(currentYear.rows).toHaveLength(2)
+      for (const row of currentYear.rows) {
+        expect(row.viewSubmissionUrl).toBeTruthy()
+      }
+    })
+
+    it('links each current year row to the declaration that action was taken on', async () => {
+      const response = await inject(bothUrl)
+      const { currentYear } = loadDetailPage(response.payload)
+
+      expect(currentYear.rows[0].viewSubmissionUrl).toBe(
+        `/${howcoOrgId}/certificates-of-compliance/${MOCK_DECL_HOWCO_PREV_CANCELLED_ID}`
+      )
+      expect(currentYear.rows[1].viewSubmissionUrl).toBe(
+        `/${howcoOrgId}/certificates-of-compliance/${MOCK_DECL_HOWCO_PREV_ACCEPTED_ID}`
+      )
+    })
+
+    it('links compliance scheme current year rows to prior accepted and cancelled declarations', async () => {
+      const response = await inject(csBothUrl)
+      const { currentYear } = loadDetailPage(response.payload)
+
+      expect(currentYear.rows).toHaveLength(2)
+      expect(currentYear.rows[0].viewSubmissionUrl).toBe(
+        `/${ecopackOrgId}/certificates-of-compliance/${MOCK_DECL_CS_PREV_CANCELLED_ID}`
+      )
+      expect(currentYear.rows[1].viewSubmissionUrl).toBe(
+        `/${ecopackOrgId}/certificates-of-compliance/${MOCK_DECL_CS_PREV_ACCEPTED_ID}`
+      )
+    })
+
+    it('loads the accepted submission when following a current year View submission link', async () => {
+      const listResponse = await inject(bothUrl)
+      const { currentYear } = loadDetailPage(listResponse.payload)
+      const acceptedLink = currentYear.rows.find(
+        (row) => row.action === 'Accepted'
+      )?.viewSubmissionUrl
+
+      const detailResponse = await inject(acceptedLink)
+      const acceptedPage = loadDetailPage(detailResponse.payload)
+
+      expect(detailResponse.statusCode).toBe(statusCodes.ok)
+      expect(acceptedPage.summaryRows.submissionStatus?.tag?.text).toBe(
+        'Accepted'
+      )
+    })
+
+    it('loads the cancelled submission when following a current year View submission link', async () => {
+      const listResponse = await inject(bothUrl)
+      const { currentYear } = loadDetailPage(listResponse.payload)
+      const cancelledLink = currentYear.rows.find(
+        (row) => row.action === 'Cancelled'
+      )?.viewSubmissionUrl
+
+      const detailResponse = await inject(cancelledLink)
+      const cancelledPage = loadDetailPage(detailResponse.payload)
+
+      expect(detailResponse.statusCode).toBe(statusCodes.ok)
+      expect(cancelledPage.summaryRows.submissionStatus?.tag?.text).toBe(
+        'Cancelled'
+      )
+    })
+
+    it('links an Accepted-only current year row to that accepted submission', async () => {
+      const response = await inject(acceptedOnlyUrl)
+      const { currentYear } = loadDetailPage(response.payload)
+
+      expect(currentYear.rows).toHaveLength(1)
+      expect(currentYear.rows[0].viewSubmissionUrl).toBe(
+        '/b0b1b2b3-b4b5-b6b7-b8b9-babbbcbdbebf/certificates-of-compliance/decl-accepted-only'
+      )
+    })
+
+    it('links a Cancelled-only current year row to that cancelled submission', async () => {
+      const response = await inject(cancelledOnlyUrl)
+      const { currentYear } = loadDetailPage(response.payload)
+
+      expect(currentYear.rows).toHaveLength(1)
+      expect(currentYear.rows[0].viewSubmissionUrl).toBe(
+        '/c0c1c2c3-c4c5-c6c7-c8c9-cacbcccdcecf/certificates-of-compliance/decl-cancelled-only'
+      )
+    })
+
+    it('does not render View submission links when the current year table is empty', async () => {
+      const response = await inject(emptyUrl)
+      expect(response.payload).not.toContain('View submission')
     })
   })
 

@@ -3,8 +3,12 @@ import {
   certificateSuccessBannerCopyByRegistrationType
 } from '../common/constants.js'
 
+export function buildCertificateDetailPath(organisationId, id) {
+  return `/${organisationId}/certificates-of-compliance/${id}`
+}
+
 export function buildCertificateDetailActionUrls(organisationId, id) {
-  const base = `/${organisationId}/certificates-of-compliance/${id}`
+  const base = buildCertificateDetailPath(organisationId, id)
   return {
     accept: `${base}/accept`,
     query: `${base}/query`,
