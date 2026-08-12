@@ -8,8 +8,6 @@
 {# Import custom components globally #}
 {% from "heading/macro.njk" import appHeading %}
 
-{% set mainClasses = "app-main-wrapper" %}
-
 {% block headIcons %}
   <link rel="icon" sizes="48x48" href="{{ getAssetPath("node_modules/govuk-frontend/dist/govuk/assets/images/favicon.ico") }}">
   <link rel="icon" sizes="any" href="{{ getAssetPath("node_modules/govuk-frontend/dist/govuk/assets/images/favicon.svg") }}" type="image/svg+xml" >
@@ -50,12 +48,10 @@
       items: breadcrumbs
     }) }}
   {% elseif backlink.length >1 %}
-    <nav aria-label="Back">
-      {{ govukBackLink({
-        text: backlinkText | default("Back"),
-        href: backlink
-      }) }}
-    </nav>
+    {{ govukBackLink({
+      text: backlinkText | default("Back"),
+      href: backlink
+    }) }}
   {% endif %}
 {% endblock %}
 

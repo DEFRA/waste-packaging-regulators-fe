@@ -58,45 +58,42 @@ describe('#certificatesOfComplianceController', () => {
     const { result } = await inject('/certificates-of-compliance')
 
     expect(result).toEqual(
-      expect.stringContaining(`${mockSummary.complianceYear} compliance year`)
+      expect.stringContaining(`${mockSummary.complianceYear} relevant year`)
     )
   })
 
   describe('Organisation type navigation', () => {
     test('Should default to direct-producers as the active nav item', async () => {
       const { result } = await inject('/certificates-of-compliance')
+      const $ = load(result)
 
-      expect(result).toEqual(
-        expect.stringContaining(
-          '<strong class="govuk-service-navigation__active-fallback">Direct producers</strong>'
-        )
-      )
+      const activeLink = $('.moj-sub-navigation__link[aria-current="page"]')
+      expect(activeLink).toHaveLength(1)
+      expect(activeLink.text().trim()).toBe('Direct producers')
     })
 
     test('Should set direct-producers as the active nav item when type=direct-producers', async () => {
       const { result, statusCode } = await inject(
         '/certificates-of-compliance?type=direct-producers'
       )
+      const $ = load(result)
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toEqual(
-        expect.stringContaining(
-          '<strong class="govuk-service-navigation__active-fallback">Direct producers</strong>'
-        )
-      )
+      const activeLink = $('.moj-sub-navigation__link[aria-current="page"]')
+      expect(activeLink).toHaveLength(1)
+      expect(activeLink.text().trim()).toBe('Direct producers')
     })
 
     test('Should set compliance-schemes as the active nav item when type=compliance-schemes', async () => {
       const { result, statusCode } = await inject(
         '/certificates-of-compliance?type=compliance-schemes'
       )
+      const $ = load(result)
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toEqual(
-        expect.stringContaining(
-          '<strong class="govuk-service-navigation__active-fallback">Compliance schemes</strong>'
-        )
-      )
+      const activeLink = $('.moj-sub-navigation__link[aria-current="page"]')
+      expect(activeLink).toHaveLength(1)
+      expect(activeLink.text().trim()).toBe('Compliance schemes')
     })
 
     test('Should preserve the active tab when switching organisation type', async () => {
@@ -496,7 +493,7 @@ describe('#certificatesOfComplianceController', () => {
 
       expect(result).toEqual(
         expect.stringContaining(
-          '/certificates-of-compliance?type=direct-producers&amp;tab=pending'
+          '/certificates-of-compliance?type=direct-producers&tab=pending'
         )
       )
     })

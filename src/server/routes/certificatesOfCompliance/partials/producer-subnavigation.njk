@@ -1,0 +1,10 @@
+<nav class="moj-sub-navigation govuk-!-margin-bottom-5 govuk-!-margin-top-6" aria-label="Filter by producer type">
+  <ul class="moj-sub-navigation__list">
+    <li class="moj-sub-navigation__item">
+      <a class="moj-sub-navigation__link" {% if organisationType == 'direct-producers' %} aria-current="page" {% endif %} href="/certificates-of-compliance?type=direct-producers&tab={{ activeTab }}">Direct producers</a>
+    </li>
+    <li class="moj-sub-navigation__item">
+      <a class="moj-sub-navigation__link" {% if organisationType == 'compliance-schemes' %} aria-current="page" {% endif %} href="/certificates-of-compliance?type=compliance-schemes&tab={{ activeTab }}">Compliance schemes</a>
+    </li>
+  </ul>
+</nav>
