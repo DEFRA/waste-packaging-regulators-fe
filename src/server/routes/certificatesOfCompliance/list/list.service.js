@@ -45,7 +45,7 @@ export function mapDeclarationToItem(declaration) {
 }
 
 // Reference number is resolved from the Account API (default 'No data').
-export function mapOrganisationToItem(organisation) {
+function mapOrganisationToItem(organisation) {
   return {
     id: null,
     organisationId: organisation.id,
@@ -291,15 +291,14 @@ async function getComplianceSummary(
   }
 }
 
-async function getNotSubmittedComplianceList({
+// Builds the full, unsorted not-submitted item list: every organisation with no
+// Submitted or Accepted declaration for the year, mapped to items. Reference
+// numbers and obligation percentages are resolved separately by the caller — the
+// list resolves only the visible page, the CSV export resolves every row.
+export async function buildAllNotSubmittedItems({
   obligationsApi,
   organisationsApi,
-  accountApi,
-  organisationType,
   registrationType,
-  sortColumn,
-  sortDirection,
-  page,
   traceId
 }) {
   const [orgsResult, pendingDeclarations, acceptedDeclarations] =
@@ -325,9 +324,28 @@ async function getNotSubmittedComplianceList({
     ...acceptedDeclarations.map((d) => d.organisation.id)
   ])
 
-  const allItems = orgsResult.organisations
+  return orgsResult.organisations
     .filter((org) => !submittedIds.has(org.id))
     .map(mapOrganisationToItem)
+}
+
+async function getNotSubmittedComplianceList({
+  obligationsApi,
+  organisationsApi,
+  accountApi,
+  organisationType,
+  registrationType,
+  sortColumn,
+  sortDirection,
+  page,
+  traceId
+}) {
+  const allItems = await buildAllNotSubmittedItems({
+    obligationsApi,
+    organisationsApi,
+    registrationType,
+    traceId
+  })
 
   sortItems(allItems, sortColumn, sortDirection)
 

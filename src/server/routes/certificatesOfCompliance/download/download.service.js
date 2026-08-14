@@ -6,13 +6,12 @@ import { mockListByOrganisationType } from '../certificates-of-compliance.mock.j
 import {
   registrationTypeByOrganisationType,
   statusBySubmissionStatus,
-  COMPLIANCE_YEAR,
   COMPLIANCE_SCHEMES
 } from '../common/constants.js'
 import {
+  buildAllNotSubmittedItems,
   fetchAllDeclarations,
   mapDeclarationToItem,
-  mapOrganisationToItem,
   resolveNotSubmittedReferenceNumbers,
   resolveNotSubmittedObligationCoveragePercentages
 } from '../list/list.service.js'
@@ -28,32 +27,12 @@ async function getAllNotSubmittedItems({
   registrationType,
   traceId
 }) {
-  const [orgsResult, pendingDeclarations, acceptedDeclarations] =
-    await Promise.all([
-      organisationsApi.listComplianceOrganisations(
-        { registrationType, registrationYears: COMPLIANCE_YEAR },
-        traceId
-      ),
-      fetchAllDeclarations(
-        obligationsApi,
-        { status: 'Submitted', registrationType },
-        traceId
-      ),
-      fetchAllDeclarations(
-        obligationsApi,
-        { status: 'Accepted', registrationType },
-        traceId
-      )
-    ])
-
-  const submittedIds = new Set([
-    ...pendingDeclarations.map((d) => d.organisation.id),
-    ...acceptedDeclarations.map((d) => d.organisation.id)
-  ])
-
-  const allItems = orgsResult.organisations
-    .filter((org) => !submittedIds.has(org.id))
-    .map(mapOrganisationToItem)
+  const allItems = await buildAllNotSubmittedItems({
+    obligationsApi,
+    organisationsApi,
+    registrationType,
+    traceId
+  })
 
   await resolveNotSubmittedReferenceNumbers(
     accountApi,
