@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { resolveSortForTab } from './controller.js'
+import { resolveSortForSubmissionStatus } from './controller.js'
 
 function createMockRequest(query = {}, yarData = {}) {
   const store = { ...yarData }
@@ -17,14 +17,18 @@ function createMockRequest(query = {}, yarData = {}) {
   }
 }
 
-describe('resolveSortForTab', () => {
+describe('resolveSortForSubmissionStatus', () => {
   test('persists sort from query params for the active tab', () => {
     const request = createMockRequest({
       sortColumn: 'dateSubmitted',
       sortDirection: 'desc'
     })
 
-    const result = resolveSortForTab(request, 'pending', 'direct-producers')
+    const result = resolveSortForSubmissionStatus(
+      request,
+      'pending',
+      'direct-producers'
+    )
 
     expect(result).toEqual({
       sortColumn: 'dateSubmitted',
@@ -46,7 +50,11 @@ describe('resolveSortForTab', () => {
       }
     )
 
-    const result = resolveSortForTab(request, 'pending', 'direct-producers')
+    const result = resolveSortForSubmissionStatus(
+      request,
+      'pending',
+      'direct-producers'
+    )
 
     expect(result).toEqual({
       sortColumn: 'dateSubmitted',
@@ -57,7 +65,7 @@ describe('resolveSortForTab', () => {
   test('uses tab defaults when no stored sort exists', () => {
     const request = createMockRequest({ tab: 'not-submitted' })
 
-    const result = resolveSortForTab(
+    const result = resolveSortForSubmissionStatus(
       request,
       'not-submitted',
       'direct-producers'

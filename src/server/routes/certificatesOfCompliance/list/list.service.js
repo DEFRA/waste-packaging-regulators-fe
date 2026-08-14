@@ -9,7 +9,7 @@ import {
 } from '../certificates-of-compliance.mock.js'
 import {
   registrationTypeByOrganisationType,
-  statusByTab,
+  statusBySubmissionStatus,
   PAGE_SIZE,
   DECLARATIONS_BATCH_SIZE,
   NO_DATA,
@@ -401,7 +401,7 @@ async function getComplianceList({
     })
   }
 
-  const status = statusByTab[tab]
+  const status = statusBySubmissionStatus[tab]
 
   if (!status) {
     return { items: [], totalPages: 1, currentPage: page }
