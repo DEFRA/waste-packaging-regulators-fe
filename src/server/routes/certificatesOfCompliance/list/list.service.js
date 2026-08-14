@@ -22,7 +22,7 @@ import { resolveSchemeOperators } from '../common/scheme-operator.js'
 import { calculateObligationCoveragePercentage } from '../common/display.js'
 import { throwIfMockErrorConfigured } from '#server/common/helpers/mock-api-error.js'
 
-function mapDeclarationToItem(declaration) {
+export function mapDeclarationToItem(declaration) {
   const {
     id,
     organisation,
@@ -45,7 +45,7 @@ function mapDeclarationToItem(declaration) {
 }
 
 // Reference number is resolved from the Account API (default 'No data').
-function mapOrganisationToItem(organisation) {
+export function mapOrganisationToItem(organisation) {
   return {
     id: null,
     organisationId: organisation.id,
@@ -104,7 +104,7 @@ async function resolveNotSubmittedComplianceSchemeReferenceNumbers(
   }
 }
 
-async function fetchAllDeclarations(api, params, traceId) {
+export async function fetchAllDeclarations(api, params, traceId) {
   const first = await api.listComplianceDeclarations(
     { ...params, page: 1, pageSize: DECLARATIONS_BATCH_SIZE },
     traceId
@@ -130,7 +130,7 @@ async function fetchAllDeclarations(api, params, traceId) {
   ]
 }
 
-async function resolveNotSubmittedObligationCoveragePercentages(
+export async function resolveNotSubmittedObligationCoveragePercentages(
   obligationsApi,
   items,
   traceId
@@ -153,7 +153,7 @@ async function resolveNotSubmittedObligationCoveragePercentages(
 
 // Direct producers resolve by external id; compliance schemes by Companies
 // House number (their external id doesn't match the Account API).
-async function resolveNotSubmittedReferenceNumbers(
+export async function resolveNotSubmittedReferenceNumbers(
   accountApi,
   items,
   traceId,

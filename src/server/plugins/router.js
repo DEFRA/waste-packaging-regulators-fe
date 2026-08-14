@@ -7,6 +7,7 @@ import { auth } from '../routes/auth/index.js'
 import { serveStaticFiles } from './serve-static-files.js'
 import { config } from '#config/config.js'
 import { certificatesOfComplianceList } from '../routes/certificatesOfCompliance/list/index.js'
+import { certificatesOfComplianceDownload } from '../routes/certificatesOfCompliance/download/index.js'
 import { certificatesOfComplianceDetail } from '../routes/certificatesOfCompliance/detail/index.js'
 import { certificatesOfComplianceAccept } from '../routes/certificatesOfCompliance/accept/index.js'
 import { certificatesOfComplianceCancel } from '../routes/certificatesOfCompliance/cancel/index.js'
@@ -29,6 +30,7 @@ export const router = {
         home,
         about,
         certificatesOfComplianceList,
+        certificatesOfComplianceDownload,
         certificatesOfComplianceDetail,
         certificatesOfComplianceAccept,
         certificatesOfComplianceCancel

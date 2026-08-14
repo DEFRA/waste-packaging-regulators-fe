@@ -7,6 +7,7 @@ import { auth } from '../routes/auth/index.js'
 import { home } from '../routes/home/index.js'
 import { about } from '../routes/about/index.js'
 import { certificatesOfComplianceList } from '../routes/certificatesOfCompliance/list/index.js'
+import { certificatesOfComplianceDownload } from '../routes/certificatesOfCompliance/download/index.js'
 import { certificatesOfComplianceDetail } from '../routes/certificatesOfCompliance/detail/index.js'
 import { certificatesOfComplianceAccept } from '../routes/certificatesOfCompliance/accept/index.js'
 import { certificatesOfComplianceCancel } from '../routes/certificatesOfCompliance/cancel/index.js'
@@ -78,6 +79,7 @@ describe('router plugin', () => {
       home,
       about,
       certificatesOfComplianceList,
+      certificatesOfComplianceDownload,
       certificatesOfComplianceDetail,
       certificatesOfComplianceAccept,
       certificatesOfComplianceCancel
