@@ -1,3 +1,4 @@
+import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getCertificatesOfComplianceViewModel } from './list.service.js'
@@ -56,6 +57,14 @@ export const certificatesOfComplianceController = {
       tab: submissionStatus = 'pending',
       page = '1'
     } = request.query
+
+    if (!['direct-producers', 'compliance-schemes'].includes(type)) {
+      throw Boom.badRequest(`Invalid organisation type: ${type}`)
+    }
+
+    if (!['pending', 'accepted', 'not-submitted'].includes(submissionStatus)) {
+      throw Boom.badRequest(`Invalid submission status: ${submissionStatus}`)
+    }
     const { sortColumn, sortDirection } = resolveSortForSubmissionStatus(
       request,
       submissionStatus,
