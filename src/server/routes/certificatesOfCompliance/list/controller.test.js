@@ -543,7 +543,8 @@ describe('#certificatesOfComplianceController', () => {
 
         expect(result).toContain(emptyTabMessages[tab])
         expect($('table')).toHaveLength(0)
-        expect(result).not.toContain('Download list (CSV)')
+        // Scenario 6: the download stays available on an empty tab (header-only CSV).
+        expect(result).toContain('Download list (CSV)')
         expect(result).toContain('<strong>0</strong>')
       }
     )
@@ -586,5 +587,45 @@ describe('#certificatesOfComplianceController', () => {
       expect(response.result).toContain('sortColumn=dateSubmitted')
       expect(response.result).toContain('aria-sort="descending"')
     })
+  })
+
+  describe('Query parameter validation', () => {
+    test('Should return 400 for an unknown organisation type', async () => {
+      const { statusCode } = await inject(
+        '/certificates-of-compliance?type=banana'
+      )
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
+    test('Should return 400 for an unknown submission status', async () => {
+      const { statusCode } = await inject(
+        '/certificates-of-compliance?tab=banana'
+      )
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
+    test.each(['direct-producers', 'compliance-schemes'])(
+      'Should accept the valid organisation type %s',
+      async (type) => {
+        const { statusCode } = await inject(
+          `/certificates-of-compliance?type=${type}`
+        )
+
+        expect(statusCode).toBe(statusCodes.ok)
+      }
+    )
+
+    test.each(['pending', 'accepted', 'not-submitted'])(
+      'Should accept the valid submission status %s',
+      async (tab) => {
+        const { statusCode } = await inject(
+          `/certificates-of-compliance?tab=${tab}`
+        )
+
+        expect(statusCode).toBe(statusCodes.ok)
+      }
+    )
   })
 })

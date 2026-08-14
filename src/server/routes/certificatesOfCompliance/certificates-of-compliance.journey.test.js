@@ -1,4 +1,5 @@
 import { createServer } from '#server/server.js'
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
   mockPendingItems,
@@ -1026,6 +1027,154 @@ describe('certificates of compliance — journey', () => {
         expect(obligations.tablePresent).toBe(false)
         expect(obligations.noData).toBe(true)
       })
+    })
+  })
+
+  describe('CSV download', () => {
+    const pendingDownloadUrl =
+      '/certificates-of-compliance/download?organisation_type=direct-producers&submission_status=pending'
+
+    it('renders the download link on the list page pointing at download', async () => {
+      const response = await inject(
+        '/certificates-of-compliance?type=direct-producers&tab=pending'
+      )
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.payload).toContain(
+        '/certificates-of-compliance/download?organisation_type=direct-producers&submission_status=pending'
+      )
+      expect(response.payload).toContain('Download list (CSV)')
+    })
+
+    it('redirects to /signin-oidc when unauthenticated', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: pendingDownloadUrl
+      })
+
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe('/signin-oidc')
+    })
+
+    it('returns a bad request for an invalid organisation type', async () => {
+      const response = await inject(
+        '/certificates-of-compliance/download?organisation_type=invalid&submission_status=pending'
+      )
+      expect(response.statusCode).toBe(statusCodes.badRequest)
+    })
+
+    it('returns a bad request for an invalid submission status', async () => {
+      const response = await inject(
+        '/certificates-of-compliance/download?organisation_type=direct-producers&submission_status=invalid'
+      )
+      expect(response.statusCode).toBe(statusCodes.badRequest)
+    })
+
+    it('surfaces a downstream failure as an error response', async () => {
+      config.set('mockErrorStatus', statusCodes.internalServerError)
+      try {
+        const response = await inject(pendingDownloadUrl)
+        expect(response.statusCode).toBe(statusCodes.internalServerError)
+      } finally {
+        config.set('mockErrorStatus', null)
+      }
+    })
+
+    describe('generates CSV downloads for all combinations', () => {
+      it.each([
+        ['direct-producers', 'pending', mockPendingItems.length],
+        ['direct-producers', 'accepted', mockAcceptedItems.length],
+        ['direct-producers', 'not-submitted', mockNotSubmittedItems.length],
+        [
+          'compliance-schemes',
+          'pending',
+          mockComplianceSchemePendingItems.length
+        ],
+        [
+          'compliance-schemes',
+          'accepted',
+          mockComplianceSchemeAcceptedItems.length
+        ],
+        [
+          'compliance-schemes',
+          'not-submitted',
+          mockComplianceSchemeNotSubmittedItems.length
+        ]
+      ])(
+        'for %s %s',
+        async (organisationType, submissionStatus, expectedCount) => {
+          const response = await inject(
+            `/certificates-of-compliance/download?organisation_type=${organisationType}&submission_status=${submissionStatus}`
+          )
+
+          expect(response.statusCode).toBe(statusCodes.ok)
+          expect(response.headers['content-type']).toContain('text/csv')
+          expect(response.headers['content-disposition']).toMatch(
+            new RegExp(
+              `^attachment; filename="2026-(certificates|statements)-of-compliance-${submissionStatus}-\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{2}\\.csv"$`
+            )
+          )
+
+          const { loadCsv } = await import('./download/download.page-object.js')
+          const { headers, rows, title } = loadCsv(response.payload)
+
+          expect(rows).toHaveLength(expectedCount)
+
+          // Title: "<Status> <noun> of compliance submissions, <weekday> <day>
+          // <month> <year>, HH:MM:SS".
+          if (submissionStatus === 'pending') {
+            expect(title).toMatch(/^Pending /)
+          } else if (submissionStatus === 'accepted') {
+            expect(title).toMatch(/^Accepted /)
+          } else {
+            expect(title).toMatch(/^Not submitted /)
+          }
+
+          if (organisationType === 'compliance-schemes') {
+            expect(title).toContain('statement of compliance submissions')
+          } else {
+            expect(title).toContain('certificate of compliance submissions')
+          }
+
+          expect(title).toMatch(/, \w+ \d{1,2} \w+ \d{4}, \d{2}:\d{2}:\d{2}$/)
+
+          // Exact ordered header row.
+          if (
+            organisationType === 'compliance-schemes' &&
+            submissionStatus === 'not-submitted'
+          ) {
+            expect(headers).toEqual([
+              'Organisation name',
+              'Organisation ID',
+              'Recycling obligations',
+              'Regulation 43'
+            ])
+          } else if (organisationType === 'compliance-schemes') {
+            expect(headers).toEqual([
+              'Organisation name',
+              'Organisation ID',
+              'Recycling obligations',
+              'Regulation 43',
+              'Date submitted'
+            ])
+          } else if (submissionStatus === 'not-submitted') {
+            expect(headers).toEqual([
+              'Organisation name',
+              'Organisation ID',
+              'Recycling obligations',
+              'Percentage met'
+            ])
+          } else {
+            expect(headers).toEqual([
+              'Organisation name',
+              'Organisation ID',
+              'Recycling obligations',
+              'Percentage met',
+              'Date submitted'
+            ])
+          }
+        }
+      )
     })
   })
 })

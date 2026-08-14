@@ -3,7 +3,7 @@ export const registrationTypeByOrganisationType = {
   'direct-producers': 'DirectProducer'
 }
 
-export const statusByTab = {
+export const statusBySubmissionStatus = {
   pending: 'Submitted',
   accepted: 'Accepted'
 }

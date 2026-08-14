@@ -9,7 +9,7 @@ import {
 } from '../certificates-of-compliance.mock.js'
 import {
   registrationTypeByOrganisationType,
-  statusByTab,
+  statusBySubmissionStatus,
   PAGE_SIZE,
   DECLARATIONS_BATCH_SIZE,
   NO_DATA,
@@ -22,7 +22,7 @@ import { resolveSchemeOperators } from '../common/scheme-operator.js'
 import { calculateObligationCoveragePercentage } from '../common/display.js'
 import { throwIfMockErrorConfigured } from '#server/common/helpers/mock-api-error.js'
 
-function mapDeclarationToItem(declaration) {
+export function mapDeclarationToItem(declaration) {
   const {
     id,
     organisation,
@@ -104,7 +104,7 @@ async function resolveNotSubmittedComplianceSchemeReferenceNumbers(
   }
 }
 
-async function fetchAllDeclarations(api, params, traceId) {
+export async function fetchAllDeclarations(api, params, traceId) {
   const first = await api.listComplianceDeclarations(
     { ...params, page: 1, pageSize: DECLARATIONS_BATCH_SIZE },
     traceId
@@ -130,7 +130,7 @@ async function fetchAllDeclarations(api, params, traceId) {
   ]
 }
 
-async function resolveNotSubmittedObligationCoveragePercentages(
+export async function resolveNotSubmittedObligationCoveragePercentages(
   obligationsApi,
   items,
   traceId
@@ -153,7 +153,7 @@ async function resolveNotSubmittedObligationCoveragePercentages(
 
 // Direct producers resolve by external id; compliance schemes by Companies
 // House number (their external id doesn't match the Account API).
-async function resolveNotSubmittedReferenceNumbers(
+export async function resolveNotSubmittedReferenceNumbers(
   accountApi,
   items,
   traceId,
@@ -291,15 +291,14 @@ async function getComplianceSummary(
   }
 }
 
-async function getNotSubmittedComplianceList({
+// Builds the full, unsorted not-submitted item list: every organisation with no
+// Submitted or Accepted declaration for the year, mapped to items. Reference
+// numbers and obligation percentages are resolved separately by the caller — the
+// list resolves only the visible page, the CSV export resolves every row.
+export async function buildAllNotSubmittedItems({
   obligationsApi,
   organisationsApi,
-  accountApi,
-  organisationType,
   registrationType,
-  sortColumn,
-  sortDirection,
-  page,
   traceId
 }) {
   const [orgsResult, pendingDeclarations, acceptedDeclarations] =
@@ -325,9 +324,28 @@ async function getNotSubmittedComplianceList({
     ...acceptedDeclarations.map((d) => d.organisation.id)
   ])
 
-  const allItems = orgsResult.organisations
+  return orgsResult.organisations
     .filter((org) => !submittedIds.has(org.id))
     .map(mapOrganisationToItem)
+}
+
+async function getNotSubmittedComplianceList({
+  obligationsApi,
+  organisationsApi,
+  accountApi,
+  organisationType,
+  registrationType,
+  sortColumn,
+  sortDirection,
+  page,
+  traceId
+}) {
+  const allItems = await buildAllNotSubmittedItems({
+    obligationsApi,
+    organisationsApi,
+    registrationType,
+    traceId
+  })
 
   sortItems(allItems, sortColumn, sortDirection)
 
@@ -401,7 +419,7 @@ async function getComplianceList({
     })
   }
 
-  const status = statusByTab[tab]
+  const status = statusBySubmissionStatus[tab]
 
   if (!status) {
     return { items: [], totalPages: 1, currentPage: page }
