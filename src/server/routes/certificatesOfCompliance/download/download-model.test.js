@@ -84,6 +84,50 @@ describe('#buildComplianceCsv', () => {
     expect(rows).toHaveLength(0)
   })
 
+  test('renders a blank date submitted cell when the declaration has no date', async () => {
+    const { csv } = buildComplianceCsv({
+      organisationType: 'direct-producers',
+      submissionStatus: 'pending',
+      items: [
+        {
+          organisationName: 'No Date Ltd',
+          organisationReferenceNumber: '999',
+          recyclingObligationsMet: true,
+          obligationCoveragePercentage: 50
+        }
+      ],
+      now: NOW
+    })
+
+    const { loadCsv } = await import('./download.page-object.js')
+    const { rows } = loadCsv(csv)
+
+    expect(rows[0]['Date submitted']).toBe('')
+  })
+
+  test('blanks missing organisation fields and accepts a Date object', async () => {
+    const { csv } = buildComplianceCsv({
+      organisationType: 'direct-producers',
+      submissionStatus: 'pending',
+      items: [
+        {
+          organisationName: null,
+          organisationReferenceNumber: null,
+          recyclingObligationsMet: false,
+          obligationCoveragePercentage: null,
+          dateSubmitted: new Date(2027, 0, 15)
+        }
+      ],
+      now: NOW
+    })
+
+    const { loadCsv } = await import('./download.page-object.js')
+    const { rows } = loadCsv(csv)
+
+    expect(rows[0]['Organisation name']).toBe('')
+    expect(rows[0]['Date submitted']).toBe('15 January 2027')
+  })
+
   test('not-submitted omits the date submitted column entirely', async () => {
     const items = [
       {

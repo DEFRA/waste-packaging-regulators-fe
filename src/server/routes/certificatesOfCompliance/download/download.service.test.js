@@ -36,10 +36,20 @@ describe('#getComplianceDownload (real API path)', () => {
     )
 
     obligationsApi = {
-      listComplianceDeclarations: vi.fn()
+      listComplianceDeclarations: vi.fn(),
+      getComplianceObligationOrNull: vi
+        .fn()
+        .mockResolvedValue({ obligations: [] })
     }
-    organisationsApi = {}
-    accountApi = {}
+    organisationsApi = {
+      listComplianceOrganisations: vi.fn()
+    }
+    accountApi = {
+      getOrganisationsByExternalIds: vi
+        .fn()
+        .mockResolvedValue({ organisations: [], notFoundExternalIds: [] }),
+      getOrganisationsByCompaniesHouseNumbers: vi.fn().mockResolvedValue([])
+    }
 
     createWasteObligationsApiService.mockReturnValue(obligationsApi)
     createWasteOrganisationsApiService.mockReturnValue(organisationsApi)
@@ -91,6 +101,88 @@ describe('#getComplianceDownload (real API path)', () => {
     const { csv } = await getComplianceDownload(
       'direct-producers',
       'accepted',
+      'trace-1',
+      NOW
+    )
+
+    const { loadCsv } = await import('./download.page-object.js')
+    const { rows } = loadCsv(csv)
+
+    expect(rows).toHaveLength(0)
+  })
+
+  test('assembles not-submitted rows from organisations without a live declaration', async () => {
+    organisationsApi.listComplianceOrganisations.mockResolvedValue({
+      organisations: [
+        { id: 'org-live', name: 'Riverbank Ltd' },
+        { id: 'org-submitted', name: 'Already In Ltd' }
+      ]
+    })
+    obligationsApi.listComplianceDeclarations.mockImplementation(({ status }) =>
+      Promise.resolve(
+        status === 'Submitted'
+          ? {
+              total: 1,
+              complianceDeclarations: [
+                { organisation: { id: 'org-submitted' } }
+              ]
+            }
+          : { total: 0, complianceDeclarations: [] }
+      )
+    )
+    accountApi.getOrganisationsByExternalIds.mockResolvedValue({
+      organisations: [{ externalId: 'org-live', referenceNumber: 'REF-LIVE' }]
+    })
+
+    const { csv } = await getComplianceDownload(
+      'direct-producers',
+      'not-submitted',
+      'trace-1',
+      NOW
+    )
+
+    const { loadCsv } = await import('./download.page-object.js')
+    const { headers, rows } = loadCsv(csv)
+
+    // org-submitted has a Submitted declaration, so only org-live is not-submitted.
+    expect(rows).toHaveLength(1)
+    expect(rows[0]['Organisation name']).toBe('Riverbank Ltd')
+    expect(rows[0]['Organisation ID']).toBe('REF-LIVE')
+    expect(headers).not.toContain('Date submitted')
+    expect(obligationsApi.getComplianceObligationOrNull).toHaveBeenCalled()
+  })
+
+  test('skips obligation percentages for not-submitted compliance schemes', async () => {
+    organisationsApi.listComplianceOrganisations.mockResolvedValue({
+      organisations: [
+        { id: 'cs-1', name: 'Scheme Co', companiesHouseNumber: 'CH1' }
+      ]
+    })
+    obligationsApi.listComplianceDeclarations.mockResolvedValue({
+      total: 0,
+      complianceDeclarations: []
+    })
+
+    const { csv } = await getComplianceDownload(
+      'compliance-schemes',
+      'not-submitted',
+      'trace-1',
+      NOW
+    )
+
+    const { loadCsv } = await import('./download.page-object.js')
+    const { headers, rows } = loadCsv(csv)
+
+    expect(rows).toHaveLength(1)
+    expect(rows[0]['Organisation name']).toBe('Scheme Co')
+    expect(headers).toContain('Regulation 43')
+    expect(obligationsApi.getComplianceObligationOrNull).not.toHaveBeenCalled()
+  })
+
+  test('returns a header-only CSV for an unrecognised submission status', async () => {
+    const { csv } = await getComplianceDownload(
+      'direct-producers',
+      'queried',
       'trace-1',
       NOW
     )

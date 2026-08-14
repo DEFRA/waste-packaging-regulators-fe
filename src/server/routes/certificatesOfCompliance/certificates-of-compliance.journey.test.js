@@ -1,4 +1,5 @@
 import { createServer } from '#server/server.js'
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
   mockPendingItems,
@@ -1055,11 +1056,28 @@ describe('certificates of compliance — journey', () => {
       expect(response.headers.location).toBe('/signin-oidc')
     })
 
-    it('returns a bad request for invalid params', async () => {
+    it('returns a bad request for an invalid organisation type', async () => {
       const response = await inject(
         '/certificates-of-compliance/download?organisation_type=invalid&submission_status=pending'
       )
       expect(response.statusCode).toBe(statusCodes.badRequest)
+    })
+
+    it('returns a bad request for an invalid submission status', async () => {
+      const response = await inject(
+        '/certificates-of-compliance/download?organisation_type=direct-producers&submission_status=invalid'
+      )
+      expect(response.statusCode).toBe(statusCodes.badRequest)
+    })
+
+    it('surfaces a downstream failure as an error response', async () => {
+      config.set('mockErrorStatus', statusCodes.internalServerError)
+      try {
+        const response = await inject(pendingDownloadUrl)
+        expect(response.statusCode).toBe(statusCodes.internalServerError)
+      } finally {
+        config.set('mockErrorStatus', null)
+      }
     })
 
     describe('generates CSV downloads for all combinations', () => {
