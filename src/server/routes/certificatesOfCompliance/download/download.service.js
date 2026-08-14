@@ -71,17 +71,15 @@ async function getAllItemsFor({
 
   const registrationType = registrationTypeByOrganisationType[organisationType]
 
-  switch (submissionStatus) {
-    case 'not-submitted': {
-      return getAllNotSubmittedItems({
-        obligationsApi,
-        organisationsApi,
-        accountApi,
-        organisationType,
-        registrationType,
-        traceId
-      })
-    }
+  if (submissionStatus === 'not-submitted') {
+    return getAllNotSubmittedItems({
+      obligationsApi,
+      organisationsApi,
+      accountApi,
+      organisationType,
+      registrationType,
+      traceId
+    })
   }
 
   const status = statusBySubmissionStatus[submissionStatus]

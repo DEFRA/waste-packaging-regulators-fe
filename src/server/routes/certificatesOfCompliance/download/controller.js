@@ -3,8 +3,15 @@ import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getComplianceDownload } from './download.service.js'
 import Boom from '@hapi/boom'
 
-const VALID_ORGANISATION_TYPES = ['direct-producers', 'compliance-schemes']
-const VALID_SUBMISSION_STATUSES = ['pending', 'accepted', 'not-submitted']
+const VALID_ORGANISATION_TYPES = new Set([
+  'direct-producers',
+  'compliance-schemes'
+])
+const VALID_SUBMISSION_STATUSES = new Set([
+  'pending',
+  'accepted',
+  'not-submitted'
+])
 
 export const certificatesOfComplianceDownloadController = {
   async handler(request, h) {
@@ -18,11 +25,11 @@ export const certificatesOfComplianceDownloadController = {
       submission_status: submissionStatus
     } = request.query
 
-    if (!VALID_ORGANISATION_TYPES.includes(organisationType)) {
+    if (!VALID_ORGANISATION_TYPES.has(organisationType)) {
       throw Boom.badRequest(`Invalid organisation_type: ${organisationType}`)
     }
 
-    if (!VALID_SUBMISSION_STATUSES.includes(submissionStatus)) {
+    if (!VALID_SUBMISSION_STATUSES.has(submissionStatus)) {
       throw Boom.badRequest(`Invalid submission_status: ${submissionStatus}`)
     }
 
