@@ -39,7 +39,14 @@ export function mapDeclarationToItem(declaration) {
     recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
     regulation43Met: isRegulation43Compliant,
     // Whole number from the obligations API — display as-is (no frontend rounding).
-    obligationCoveragePercentage: obligationCoveragePercentage ?? null,
+    // The search endpoint does not return one, but it does embed the obligations,
+    // so fall back to the same calculation the not-submitted tab uses rather than
+    // leaving the column blank.
+    obligationCoveragePercentage:
+      obligationCoveragePercentage ??
+      (declaration.obligations?.length
+        ? calculateObligationCoveragePercentage(declaration.obligations)
+        : null),
     dateSubmitted: created
   }
 }
@@ -265,11 +272,21 @@ async function getComplianceSummary(
     acceptedDeclarations
   ] = await Promise.all([
     obligationsApi.listComplianceDeclarations(
-      { status: 'Submitted', registrationType, pageSize: 1 },
+      {
+        obligationYear: COMPLIANCE_YEAR,
+        status: 'Submitted',
+        registrationType,
+        pageSize: 1
+      },
       traceId
     ),
     obligationsApi.listComplianceDeclarations(
-      { status: 'Accepted', registrationType, pageSize: 1 },
+      {
+        obligationYear: COMPLIANCE_YEAR,
+        status: 'Accepted',
+        registrationType,
+        pageSize: 1
+      },
       traceId
     ),
     organisationsApi.listComplianceOrganisations(
@@ -278,12 +295,16 @@ async function getComplianceSummary(
     ),
     fetchAllDeclarations(
       obligationsApi,
-      { status: 'Submitted', registrationType },
+      {
+        obligationYear: COMPLIANCE_YEAR,
+        status: 'Submitted',
+        registrationType
+      },
       traceId
     ),
     fetchAllDeclarations(
       obligationsApi,
-      { status: 'Accepted', registrationType },
+      { obligationYear: COMPLIANCE_YEAR, status: 'Accepted', registrationType },
       traceId
     )
   ])
@@ -319,12 +340,20 @@ export async function buildAllNotSubmittedItems({
       ),
       fetchAllDeclarations(
         obligationsApi,
-        { status: 'Submitted', registrationType },
+        {
+          obligationYear: COMPLIANCE_YEAR,
+          status: 'Submitted',
+          registrationType
+        },
         traceId
       ),
       fetchAllDeclarations(
         obligationsApi,
-        { status: 'Accepted', registrationType },
+        {
+          obligationYear: COMPLIANCE_YEAR,
+          status: 'Accepted',
+          registrationType
+        },
         traceId
       )
     ])
@@ -437,6 +466,10 @@ async function getComplianceList({
 
   const data = await obligationsApi.listComplianceDeclarations(
     {
+      // Always scoped to the compliance year the page shows. It is also the prefix of
+      // the ObligationYear_Status_OrganisationRegistrationType index, so sending it
+      // lets that index narrow the set before any residual filtering.
+      obligationYear: COMPLIANCE_YEAR,
       status,
       registrationType,
       page,

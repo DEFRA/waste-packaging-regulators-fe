@@ -1,4 +1,9 @@
 {% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
@@ -8,30 +13,49 @@
   </div>
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <div class="v3-search-panel govuk-!-margin-bottom-4">
-        {%- from "moj/components/search/macro.njk" import mojSearch -%}
-        {{ mojSearch({
-          action: "/certificates-of-compliance",
-          method: "get",
-          input: {
-            id: "search",
-            name: "search"
-          },
-          label: {
-            text: "Search by organisation name or ID",
-            classes: "govuk-!-font-weight-bold"
-          },
-          hint: {
-            text: ""
-          },
-          button: {
-            text: "Search",
-            classes: "govuk-!-margin-bottom-0"
-          }
+      {% if errors %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: errors.summary
         }) }}
+      {% endif %}
+
+      {# Hand-rolled rather than the mojSearch macro: that macro cannot set the
+         input value or an error message, and renders its own form with no slot
+         for the hidden inputs that keep the user on the same type and tab. #}
+      <div class="v3-search-panel govuk-!-margin-bottom-4">
+        <div class="moj-search">
+          <form action="/certificates-of-compliance" method="get" novalidate>
+            <input type="hidden" name="type" value="{{ organisationType }}">
+            <input type="hidden" name="tab" value="{{ activeTab }}">
+            <input type="hidden" name="sort" value="{{ sort.column }}[{{ sort.direction }}]">
+
+            {{ govukInput({
+              classes: "moj-search__input",
+              label: {
+                text: "Search by organisation name or ID",
+                classes: "moj-search__label govuk-!-font-weight-bold"
+              },
+              id: "search",
+              name: "search",
+              type: "search",
+              value: searchTerm,
+              errorMessage: errors.search if errors
+            }) }}
+
+            {{ govukButton({
+              classes: "moj-search__button govuk-!-margin-bottom-0",
+              text: "Search"
+            }) }}
+          </form>
+        </div>
       </div>
     </div>
   </div>
+  {% if isSearch %}
+    {% include "certificatesOfCompliance/partials/search-results.njk" %}
+  {% endif %}
+
   {% include "certificatesOfCompliance/partials/producer-subnavigation.njk" %}
   <div class="govuk-tabs">
     <ul class="govuk-tabs__list">

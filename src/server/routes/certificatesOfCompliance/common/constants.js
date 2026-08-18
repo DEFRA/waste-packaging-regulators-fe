@@ -10,6 +10,20 @@ export const statusBySubmissionStatus = {
 
 export const PAGE_SIZE = 20
 export const DECLARATIONS_BATCH_SIZE = 100
+export const SEARCH_TERM_MAX_LENGTH = 100
+export const SEARCH_ERROR_TEXT = 'Enter an organisation name or ID'
+// Search spans the pending and accepted tabs at once, in one call at the
+// backend's maximum page size. Anything beyond that is a term to refine.
+export const SEARCH_STATUSES = Object.values(statusBySubmissionStatus).join(',')
+export const SEARCH_RESULTS_PAGE_SIZE = 100
+
+// The Submission status column labels a row by the tab it would otherwise sit
+// under, so the declaration statuses come from statusBySubmissionStatus rather
+// than being written out again.
+export const searchSubmissionStatusByDeclarationStatus = {
+  [statusBySubmissionStatus.pending]: 'Pending',
+  [statusBySubmissionStatus.accepted]: 'Accepted'
+}
 export const NO_DATA = 'No data'
 export const UNKNOWN_ORGANISATION = 'Unknown organisation'
 export const COMPLIANCE_SCHEMES = 'compliance-schemes'

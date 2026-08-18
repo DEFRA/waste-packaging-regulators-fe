@@ -1,0 +1,62 @@
+{% from "status-tag/macro.njk" import appStatusTag %}
+
+<div id="search-results" class="govuk-!-margin-bottom-6">
+  <p class="govuk-body govuk-!-margin-bottom-4">
+    <strong>{{ searchResultCount }}</strong> {{ "result" if searchResultCount == 1 else "results" }} for <strong>"{{ searchTerm }}"</strong>.
+    <a href="{{ clearSearchUrl }}" class="govuk-link govuk-link--no-visited-state govuk-!-margin-left-2">Clear search</a>
+  </p>
+
+  {% if searchItems.length %}
+    {% if searchTruncated %}
+      <p class="govuk-body govuk-!-margin-bottom-4">
+        Showing the first {{ searchItems.length }} results. Refine your search to narrow them down.
+      </p>
+    {% endif %}
+
+    <table class="govuk-table v3-compact-table">
+      <caption class="govuk-table__caption govuk-visually-hidden">Search results</caption>
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header govuk-!-width-one-quarter" scope="col">Organisation name</th>
+          <th class="govuk-table__header" scope="col">Organisation ID</th>
+          <th class="govuk-table__header" scope="col">Submission status</th>
+          <th class="govuk-table__header" scope="col">Recycling obligations</th>
+          {% if organisationType == 'compliance-schemes' %}
+            <th class="govuk-table__header" scope="col">Regulation 43</th>
+          {% else %}
+            <th class="govuk-table__header" scope="col">Percentage met</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for item in searchItems %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">
+              <a href="./{{ item.organisationId }}/certificates-of-compliance/{{ item.id }}" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
+            </td>
+            <td class="govuk-table__cell">{{ item.organisationReferenceNumber }}</td>
+            <td class="govuk-table__cell">
+              {% if item.submissionStatus == 'Accepted' %}
+                <strong class="govuk-tag govuk-tag--teal">Accepted</strong>
+              {% else %}
+                <strong class="govuk-tag govuk-tag--blue">{{ item.submissionStatus }}</strong>
+              {% endif %}
+            </td>
+            <td class="govuk-table__cell">
+              {{ appStatusTag({ value: item.recyclingObligationsMet, trueText: 'Met', falseText: 'Not met' }) }}
+            </td>
+            {% if organisationType == 'compliance-schemes' %}
+              <td class="govuk-table__cell">
+                {{ appStatusTag({ value: item.regulation43Met, trueText: 'Compliant', falseText: 'Not compliant' }) }}
+              </td>
+            {% else %}
+              <td class="govuk-table__cell">{% if item.obligationCoveragePercentage != null %}{{ item.obligationCoveragePercentage }}%{% else %}—{% endif %}</td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="govuk-body">Check the spelling, or search for part of the organisation name or ID</p>
+  {% endif %}
+</div>
