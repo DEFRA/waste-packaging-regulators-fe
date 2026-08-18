@@ -20,8 +20,7 @@ function createMockRequest(query = {}, yarData = {}) {
 describe('resolveSortForSubmissionStatus', () => {
   test('persists sort from query params for the active tab', () => {
     const request = createMockRequest({
-      sortColumn: 'dateSubmitted',
-      sortDirection: 'desc'
+      sort: 'DateSubmitted[desc]'
     })
 
     const result = resolveSortForSubmissionStatus(
@@ -31,11 +30,11 @@ describe('resolveSortForSubmissionStatus', () => {
     )
 
     expect(result).toEqual({
-      sortColumn: 'dateSubmitted',
+      sortColumn: 'DateSubmitted',
       sortDirection: 'desc'
     })
     expect(request.yar._store['complianceListSort:direct-producers']).toEqual({
-      pending: { column: 'dateSubmitted', direction: 'desc' }
+      pending: { column: 'DateSubmitted', direction: 'desc' }
     })
   })
 
@@ -44,8 +43,8 @@ describe('resolveSortForSubmissionStatus', () => {
       { tab: 'pending' },
       {
         'complianceListSort:direct-producers': {
-          pending: { column: 'dateSubmitted', direction: 'desc' },
-          accepted: { column: 'recyclingObligationsMet', direction: 'asc' }
+          pending: { column: 'DateSubmitted', direction: 'desc' },
+          accepted: { column: 'RecyclingObligations', direction: 'asc' }
         }
       }
     )
@@ -57,7 +56,7 @@ describe('resolveSortForSubmissionStatus', () => {
     )
 
     expect(result).toEqual({
-      sortColumn: 'dateSubmitted',
+      sortColumn: 'DateSubmitted',
       sortDirection: 'desc'
     })
   })
@@ -72,7 +71,7 @@ describe('resolveSortForSubmissionStatus', () => {
     )
 
     expect(result).toEqual({
-      sortColumn: 'organisationName',
+      sortColumn: 'OrganisationName',
       sortDirection: 'asc'
     })
   })

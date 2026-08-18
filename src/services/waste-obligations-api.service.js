@@ -46,11 +46,12 @@ export class WasteObligationsApiService extends BaseApiService {
     if (pageSize != null) {
       params.set('pageSize', String(pageSize))
     }
-    if (sortColumn != null) {
-      params.set('sortColumn', sortColumn)
-    }
-    if (sortDirection != null) {
-      params.set('sortDirection', sortDirection)
+    if (sortColumn != null && sortDirection != null) {
+      const sortParam =
+        sortColumn === 'OrganisationName'
+          ? `OrganisationName[${sortDirection}]`
+          : `${sortColumn}[${sortDirection}],OrganisationName[asc]`
+      params.set('sort', sortParam)
     }
     const qs = params.toString()
     return this.getJson(
