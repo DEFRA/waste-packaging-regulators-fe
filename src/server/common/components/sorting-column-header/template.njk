@@ -1,6 +1,6 @@
 <th class="govuk-table__header{{ " govuk-!-width-one-quarter" if params.firstColumn }}" scope="col" aria-sort="{{ params.sort.direction + "ending" if params.sort.column == params.columnName else 'none' }}">
   {% if params.sortable != false %}
-    <a class="govuk-link govuk-link--no-visited-state" href="{{ params.sort.baseUrl }}&amp;sortColumn={{ params.columnName }}&amp;sortDirection={{ 'desc' if params.sort.column == params.columnName and params.sort.direction == 'asc' else 'asc' }}">
+    <a class="govuk-link govuk-link--no-visited-state" href="{{ params.sort.baseUrl }}&amp;sort={{ params.columnName }}[{{ 'desc' if params.sort.column == params.columnName and params.sort.direction == 'asc' else 'asc' }}]">
       {{ params.columnLabel }}
       <svg
         width="22"

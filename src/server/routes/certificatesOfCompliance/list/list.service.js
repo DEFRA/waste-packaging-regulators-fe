@@ -209,8 +209,18 @@ export function compareValues(valA, valB) {
 export function sortItems(items, sortColumn, sortDirection) {
   const direction = sortDirection === 'asc' ? 1 : -1
 
+  const frontendSortMapping = {
+    RecyclingObligations: 'recyclingObligationsMet',
+    PercentageMet: 'obligationCoveragePercentage',
+    DateSubmitted: 'dateSubmitted',
+    Regulation43: 'regulation43Met',
+    OrganisationName: 'organisationName',
+    OrganisationId: 'id'
+  }
+  const sortProperty = frontendSortMapping[sortColumn] || sortColumn
+
   return items.sort((a, b) => {
-    const primary = compareValues(a[sortColumn], b[sortColumn]) * direction
+    const primary = compareValues(a[sortProperty], b[sortProperty]) * direction
 
     if (primary !== 0) {
       return primary
@@ -478,11 +488,8 @@ export async function getCertificatesOfComplianceViewModel(
   ])
 
   let paginationBaseUrl = baseUrl
-  if (sortColumn) {
-    paginationBaseUrl += `&sortColumn=${sortColumn}`
-  }
-  if (sortDirection) {
-    paginationBaseUrl += `&sortDirection=${sortDirection}`
+  if (sortColumn && sortDirection) {
+    paginationBaseUrl += `&sort=${sortColumn}[${sortDirection}]`
   }
 
   return {

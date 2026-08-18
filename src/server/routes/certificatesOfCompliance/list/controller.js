@@ -8,9 +8,9 @@ const complianceListSortKey = (organisationType) =>
 
 export const getDefaultSortColumn = (submissionStatus) => {
   if (submissionStatus !== 'not-submitted') {
-    return 'dateSubmitted'
+    return 'DateSubmitted'
   }
-  return 'organisationName'
+  return 'OrganisationName'
 }
 
 export function resolveSortForSubmissionStatus(
@@ -21,9 +21,10 @@ export function resolveSortForSubmissionStatus(
   const sortStorageKey = complianceListSortKey(type)
   const storedSorts = request.yar.get(sortStorageKey) ?? {}
 
-  if (request.query.sortColumn) {
-    const sortColumn = request.query.sortColumn
-    const sortDirection = request.query.sortDirection ?? 'asc'
+  if (request.query.sort) {
+    const match = request.query.sort.match(/^([^[]+)(?:\[([^\]]+)\])?$/)
+    const sortColumn = match ? match[1] : request.query.sort
+    const sortDirection = match?.[2] ?? 'asc'
     request.yar.set(sortStorageKey, {
       ...storedSorts,
       [submissionStatus]: { column: sortColumn, direction: sortDirection }

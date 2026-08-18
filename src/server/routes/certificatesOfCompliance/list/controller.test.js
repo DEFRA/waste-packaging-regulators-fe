@@ -303,74 +303,74 @@ describe('#certificatesOfComplianceController', () => {
       {
         type: 'direct-producers',
         tab: 'pending',
-        column: 'obligationCoveragePercentage',
+        column: 'PercentageMet',
         direction: 'asc'
       },
       {
         type: 'direct-producers',
         tab: 'pending',
-        column: 'recyclingObligationsMet',
+        column: 'RecyclingObligations',
         direction: 'asc'
       },
       {
         type: 'direct-producers',
         tab: 'pending',
-        column: 'dateSubmitted',
+        column: 'DateSubmitted',
         direction: 'asc'
       },
       {
         type: 'direct-producers',
         tab: 'pending',
-        column: 'obligationCoveragePercentage',
+        column: 'PercentageMet',
         direction: 'desc'
       },
       {
         type: 'direct-producers',
         tab: 'pending',
-        column: 'recyclingObligationsMet',
+        column: 'RecyclingObligations',
         direction: 'desc'
       },
       {
         type: 'direct-producers',
         tab: 'pending',
-        column: 'dateSubmitted',
+        column: 'DateSubmitted',
         direction: 'desc'
       },
       { type: 'direct-producers', tab: 'accepted' },
       {
         type: 'direct-producers',
         tab: 'accepted',
-        column: 'obligationCoveragePercentage',
+        column: 'PercentageMet',
         direction: 'asc'
       },
       {
         type: 'direct-producers',
         tab: 'accepted',
-        column: 'recyclingObligationsMet',
+        column: 'RecyclingObligations',
         direction: 'asc'
       },
       {
         type: 'direct-producers',
         tab: 'accepted',
-        column: 'dateSubmitted',
+        column: 'DateSubmitted',
         direction: 'asc'
       },
       {
         type: 'direct-producers',
         tab: 'accepted',
-        column: 'obligationCoveragePercentage',
+        column: 'PercentageMet',
         direction: 'desc'
       },
       {
         type: 'direct-producers',
         tab: 'accepted',
-        column: 'recyclingObligationsMet',
+        column: 'RecyclingObligations',
         direction: 'desc'
       },
       {
         type: 'direct-producers',
         tab: 'accepted',
-        column: 'dateSubmitted',
+        column: 'DateSubmitted',
         direction: 'desc'
       },
       { type: 'direct-producers', tab: 'not-submitted' },
@@ -378,74 +378,74 @@ describe('#certificatesOfComplianceController', () => {
       {
         type: 'compliance-schemes',
         tab: 'pending',
-        column: 'regulation43Met',
+        column: 'Regulation43',
         direction: 'asc'
       },
       {
         type: 'compliance-schemes',
         tab: 'pending',
-        column: 'recyclingObligationsMet',
+        column: 'RecyclingObligations',
         direction: 'asc'
       },
       {
         type: 'compliance-schemes',
         tab: 'pending',
-        column: 'dateSubmitted',
+        column: 'DateSubmitted',
         direction: 'asc'
       },
       {
         type: 'compliance-schemes',
         tab: 'pending',
-        column: 'regulation43Met',
+        column: 'Regulation43',
         direction: 'desc'
       },
       {
         type: 'compliance-schemes',
         tab: 'pending',
-        column: 'recyclingObligationsMet',
+        column: 'RecyclingObligations',
         direction: 'desc'
       },
       {
         type: 'compliance-schemes',
         tab: 'pending',
-        column: 'dateSubmitted',
+        column: 'DateSubmitted',
         direction: 'desc'
       },
       { type: 'compliance-schemes', tab: 'accepted' },
       {
         type: 'compliance-schemes',
         tab: 'accepted',
-        column: 'regulation43Met',
+        column: 'Regulation43',
         direction: 'asc'
       },
       {
         type: 'compliance-schemes',
         tab: 'accepted',
-        column: 'recyclingObligationsMet',
+        column: 'RecyclingObligations',
         direction: 'asc'
       },
       {
         type: 'compliance-schemes',
         tab: 'accepted',
-        column: 'dateSubmitted',
+        column: 'DateSubmitted',
         direction: 'asc'
       },
       {
         type: 'compliance-schemes',
         tab: 'accepted',
-        column: 'regulation43Met',
+        column: 'Regulation43',
         direction: 'desc'
       },
       {
         type: 'compliance-schemes',
         tab: 'accepted',
-        column: 'recyclingObligationsMet',
+        column: 'RecyclingObligations',
         direction: 'desc'
       },
       {
         type: 'compliance-schemes',
         tab: 'accepted',
-        column: 'dateSubmitted',
+        column: 'DateSubmitted',
         direction: 'desc'
       },
       { type: 'compliance-schemes', tab: 'not-submitted' }
@@ -453,7 +453,7 @@ describe('#certificatesOfComplianceController', () => {
       'Should display sort $direction on column $column on the $type $tab tab',
       async ({ type, tab, column, direction }) => {
         let page = `/certificates-of-compliance?type=${type}&tab=${tab}`
-        if (column) page += `&sortColumn=${column}&sortDirection=${direction}`
+        if (column) page += `&sort=${column}[${direction}]`
 
         const { result } = await inject(page)
 
@@ -474,11 +474,11 @@ describe('#certificatesOfComplianceController', () => {
 
         if (column) {
           expect(activeSortAnchor.attr('href')).toContain(
-            `sortColumn=${column}&sortDirection=${nextDirection}`
+            `sort=${column}[${nextDirection}]`
           )
         } else if (tab === 'pending' || tab === 'accepted') {
           expect(activeSortAnchor.attr('href')).toContain(
-            `sortColumn=dateSubmitted&sortDirection=${nextDirection}`
+            `sort=DateSubmitted[${nextDirection}]`
           )
         }
       }
@@ -566,7 +566,7 @@ describe('#certificatesOfComplianceController', () => {
 
       let response = await server.inject({
         method: 'GET',
-        url: '/certificates-of-compliance?tab=pending&sortColumn=dateSubmitted&sortDirection=desc',
+        url: '/certificates-of-compliance?tab=pending&sort=DateSubmitted[desc]',
         headers: { cookie }
       })
       cookie = mergeCookiesFromResponse(cookie, response)
@@ -584,7 +584,7 @@ describe('#certificatesOfComplianceController', () => {
         headers: { cookie }
       })
 
-      expect(response.result).toContain('sortColumn=dateSubmitted')
+      expect(response.result).toContain('sort=DateSubmitted[asc]')
       expect(response.result).toContain('aria-sort="descending"')
     })
   })
