@@ -290,6 +290,14 @@ export const config = convict({
       sensitive: true
     }
   },
+  csvExport: {
+    obligationConcurrency: {
+      doc: 'Max concurrent obligation lookups when building the not-submitted CSV export. Bounds the fan-out so a large producer population cannot overwhelm the obligations service (and the legacy PRN service behind it).',
+      format: 'nat',
+      default: 20,
+      env: 'CSV_EXPORT_OBLIGATION_CONCURRENCY'
+    }
+  },
   wasteObligationsApi: {
     baseUrl: {
       doc: 'Waste obligations API base URL',

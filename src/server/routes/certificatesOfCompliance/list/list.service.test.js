@@ -4,6 +4,15 @@ vi.mock('#config/config.js', () => ({
   config: { get: vi.fn() }
 }))
 
+vi.mock('#server/common/helpers/logging/logger.js', () => ({
+  createLogger: () => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn()
+  })
+}))
+
 vi.mock('#services/waste-obligations-api.service.js', () => ({
   createWasteObligationsApiService: vi.fn()
 }))
@@ -500,7 +509,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
     let mockAccountApi
 
     beforeEach(() => {
-      config.get.mockReturnValue(false)
+      config.get.mockImplementation((key) =>
+        key === 'csvExport.obligationConcurrency' ? 20 : false
+      )
       mockObligationsApi = {
         listComplianceDeclarations: vi.fn(),
         getComplianceObligation: vi.fn().mockResolvedValue({ obligations: [] }),

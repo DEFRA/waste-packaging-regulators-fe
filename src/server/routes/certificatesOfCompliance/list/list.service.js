@@ -21,6 +21,10 @@ import { mapOrganisationName } from '../common/organisation.js'
 import { resolveSchemeOperators } from '../common/scheme-operator.js'
 import { calculateObligationCoveragePercentage } from '../common/display.js'
 import { throwIfMockErrorConfigured } from '#server/common/helpers/mock-api-error.js'
+import pMap from 'p-map'
+import { createLogger } from '#server/common/helpers/logging/logger.js'
+
+const logger = createLogger()
 
 export function mapDeclarationToItem(declaration) {
   const {
@@ -130,13 +134,28 @@ export async function fetchAllDeclarations(api, params, traceId) {
   ]
 }
 
+// One obligation lookup per organisation. The on-screen list resolves only the
+// visible page (<= PAGE_SIZE), but the CSV export resolves the whole population,
+// so the fan-out is bounded with p-map: an unbounded Promise.all here fired
+// thousands of simultaneous requests and took the service down. Concurrency is
+// configurable; the default matches the page size the list already resolves
+// successfully. p-map's default stopOnError aborts the whole export on the first
+// failed lookup, so a regulator gets a clear error rather than a partial CSV.
 export async function resolveNotSubmittedObligationCoveragePercentages(
   obligationsApi,
   items,
   traceId
 ) {
-  await Promise.all(
-    items.map(async (item) => {
+  const concurrency = config.get('csvExport.obligationConcurrency')
+
+  logger.info(
+    { traceId, itemCount: items.length, concurrency },
+    'Resolving not-submitted obligation percentages'
+  )
+
+  await pMap(
+    items,
+    async (item) => {
       const data = await obligationsApi.getComplianceObligationOrNull(
         {
           organisationId: item.organisationId,
@@ -147,7 +166,13 @@ export async function resolveNotSubmittedObligationCoveragePercentages(
       item.obligationCoveragePercentage = calculateObligationCoveragePercentage(
         data?.obligations ?? []
       )
-    })
+    },
+    { concurrency }
+  )
+
+  logger.info(
+    { traceId, itemCount: items.length },
+    'Resolved not-submitted obligation percentages'
   )
 }
 
