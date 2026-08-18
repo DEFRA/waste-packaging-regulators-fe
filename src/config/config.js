@@ -297,6 +297,12 @@ export const config = convict({
       default: 'http://localhost:8080',
       env: 'WASTE_OBLIGATIONS_API_BASE_URL'
     },
+    requestTimeoutMs: {
+      doc: 'Per-request timeout (ms) for waste obligations API calls',
+      format: 'nat',
+      default: 30000,
+      env: 'WASTE_OBLIGATIONS_API_REQUEST_TIMEOUT_MS'
+    },
     authMode: {
       doc: 'Authentication mode for waste obligations API',
       format: ['basic', 'bearer', 'none'],
