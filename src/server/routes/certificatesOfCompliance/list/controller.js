@@ -22,7 +22,7 @@ export function resolveSortForSubmissionStatus(
   const storedSorts = request.yar.get(sortStorageKey) ?? {}
 
   if (request.query.sort) {
-    const match = request.query.sort.match(/^([^\[]+)(?:\[([^\]]+)\])?$/)
+    const match = request.query.sort.match(/^([^[]+)(?:\[([^\]]+)\])?$/)
     const sortColumn = match ? match[1] : request.query.sort
     const sortDirection = match && match[2] ? match[2] : 'asc'
     request.yar.set(sortStorageKey, {
