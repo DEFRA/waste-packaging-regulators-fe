@@ -4,6 +4,7 @@ import { ApiError } from './api-error.js'
 import { getServiceOAuthAccessToken } from './oauth-token.js'
 
 const DEFAULT_CACHE_TTL_MS = 300000
+const DEFAULT_REQUEST_TIMEOUT_MS = 30000
 const DEFAULT_ACCEPT_HEADER = 'application/json'
 const AUTH_MODE_BASIC = 'basic'
 const AUTH_MODE_BEARER = 'bearer'
@@ -29,6 +30,10 @@ export class BaseApiService {
     this.baseUrl = trimTrailingSlash(coalesce(options.baseUrl, ''))
     this.fetchImpl = coalesce(options.fetchImpl, fetch)
     this.cacheTtlMs = coalesce(options.cacheTtlMs, DEFAULT_CACHE_TTL_MS)
+    this.requestTimeoutMs = coalesce(
+      options.requestTimeoutMs,
+      DEFAULT_REQUEST_TIMEOUT_MS
+    )
     this.cacheClient = coalesce(options.cacheClient, null)
     this.logger = coalesce(options.logger, createLogger())
     this.headers = this.#buildDefaultHeaders(options.headers)
@@ -145,7 +150,11 @@ export class BaseApiService {
     let response
 
     try {
-      response = await this.fetchImpl(url, { method, ...init })
+      response = await this.fetchImpl(url, {
+        method,
+        signal: AbortSignal.timeout(this.requestTimeoutMs),
+        ...init
+      })
     } catch (cause) {
       this.#logUpstreamCall({
         method,

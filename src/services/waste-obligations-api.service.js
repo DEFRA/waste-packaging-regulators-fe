@@ -150,6 +150,7 @@ export function createWasteObligationsApiService(options = {}) {
 
   return new WasteObligationsApiService({
     baseUrl: config.get('wasteObligationsApi.baseUrl'),
+    requestTimeoutMs: config.get('wasteObligationsApi.requestTimeoutMs'),
     authMode: config.get('wasteObligationsApi.authMode'),
     clientId: config.get('wasteObligationsApi.clientId'),
     clientSecret: config.get('wasteObligationsApi.clientSecret'),
