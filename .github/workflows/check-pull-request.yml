@@ -50,6 +50,8 @@ jobs:
   journey-tests:
     name: Run Journey Tests
     permissions:
+      contents: read
+      id-token: write
       checks: write
       pull-requests: write
     uses: DEFRA/waste-packaging-regulator-tests/.github/workflows/journey-tests.yml@main
