@@ -351,6 +351,7 @@ function mapDeclarationContactFields(
       organisation.registrationType
     ),
     registrationType: organisation.registrationType,
+    environmentalRegulator: organisation.regulator ?? null,
     organisationRef: displayOrNoData(organisation.referenceNumber),
     companiesHouseNumber:
       mapCompaniesHouseNumberFromWasteOrganisation(wasteOrganisation),

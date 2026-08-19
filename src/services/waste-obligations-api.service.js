@@ -46,12 +46,11 @@ export class WasteObligationsApiService extends BaseApiService {
     if (pageSize != null) {
       params.set('pageSize', String(pageSize))
     }
-    if (sortColumn != null && sortDirection != null) {
-      const sortParam =
-        sortColumn === 'OrganisationName'
-          ? `OrganisationName[${sortDirection}]`
-          : `${sortColumn}[${sortDirection}],OrganisationName[asc]`
-      params.set('sort', sortParam)
+    if (sortColumn != null) {
+      params.set('sortColumn', sortColumn)
+    }
+    if (sortDirection != null) {
+      params.set('sortDirection', sortDirection)
     }
     const qs = params.toString()
     return this.getJson(
@@ -83,12 +82,15 @@ export class WasteObligationsApiService extends BaseApiService {
   }
 
   async updateComplianceDeclaration(
-    { organisationId, id, status, reason, user } = {},
+    { organisationId, id, status, reason, user, notification } = {},
     traceId
   ) {
     const body = { status, user }
     if (reason != null) {
       body.reason = reason
+    }
+    if (notification != null) {
+      body.notification = notification
     }
 
     return this.patchJson(
@@ -150,7 +152,6 @@ export function createWasteObligationsApiService(options = {}) {
 
   return new WasteObligationsApiService({
     baseUrl: config.get('wasteObligationsApi.baseUrl'),
-    requestTimeoutMs: config.get('wasteObligationsApi.requestTimeoutMs'),
     authMode: config.get('wasteObligationsApi.authMode'),
     clientId: config.get('wasteObligationsApi.clientId'),
     clientSecret: config.get('wasteObligationsApi.clientSecret'),

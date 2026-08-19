@@ -412,7 +412,7 @@ describe('certificate detail action helpers', () => {
       expect(createWasteObligationsApiService).not.toHaveBeenCalled()
     })
 
-    test('sends status Cancelled with the reason when useMockApi is false', async () => {
+    test('sends status Cancelled with notification parameters when useMockApi is false', async () => {
       config.get.mockReturnValue(false)
       const mockApi = { updateComplianceDeclaration: vi.fn() }
       createWasteObligationsApiService.mockReturnValue(mockApi)
@@ -422,7 +422,11 @@ describe('certificate detail action helpers', () => {
         'decl-1',
         { id: 'user-oid-1', email: 'user@example.com', name: 'John Doe' },
         'Producer requested to cancel',
-        'trace-1'
+        'trace-1',
+        {
+          registrationType: 'DirectProducer',
+          environmentalRegulator: 'EA'
+        }
       )
 
       expect(mockApi.updateComplianceDeclaration).toHaveBeenCalledWith(
@@ -435,6 +439,13 @@ describe('certificate detail action helpers', () => {
             id: 'user-oid-1',
             email: 'user@example.com',
             name: 'John Doe'
+          },
+          notification: {
+            parameters: {
+              certOrStatement: 'certificate',
+              certOrStatement_cy: 'tystysgrif',
+              regulator_cy: 'Asiantaeth yr Amgylchedd'
+            }
           }
         },
         'trace-1'
