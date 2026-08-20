@@ -83,12 +83,15 @@ export class WasteObligationsApiService extends BaseApiService {
   }
 
   async updateComplianceDeclaration(
-    { organisationId, id, status, reason, user } = {},
+    { organisationId, id, status, reason, user, notification } = {},
     traceId
   ) {
     const body = { status, user }
     if (reason != null) {
       body.reason = reason
+    }
+    if (notification != null) {
+      body.notification = notification
     }
 
     return this.patchJson(

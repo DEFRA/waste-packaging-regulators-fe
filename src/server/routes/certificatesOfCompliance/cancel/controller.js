@@ -195,7 +195,7 @@ export const certificatesOfComplianceCancelPostController = {
       return h.redirect(reasonPath(organisationId, id))
     }
 
-    const { registrationType } =
+    const { registrationType, environmentalRegulator } =
       await getCertificateOfComplianceDetailViewModel(organisationId, id, {
         traceId: request.getTraceId(),
         session: request.yar
@@ -208,7 +208,8 @@ export const certificatesOfComplianceCancelPostController = {
         id,
         request.yar.get('user'),
         reasonLabel,
-        request.getTraceId()
+        request.getTraceId(),
+        { registrationType, environmentalRegulator }
       )
     } catch (error) {
       handleApiError(request, error)

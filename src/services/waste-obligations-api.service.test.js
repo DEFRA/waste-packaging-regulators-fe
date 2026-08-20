@@ -57,14 +57,14 @@ describe('WasteObligationsApiService', () => {
         registrationType: 'DirectProducer',
         page: 1,
         pageSize: 20,
-        sortColumn: 'OrganisationId',
+        sortColumn: 'DateSubmitted',
         sortDirection: 'desc'
       },
       'trace-1'
     )
 
     expect(fetchImpl).toHaveBeenCalledWith(
-      'http://localhost:8080/compliance-declarations?status=Submitted&registrationType=DirectProducer&page=1&pageSize=20&sort=OrganisationId%5Bdesc%5D%2COrganisationName%5Basc%5D',
+      'http://localhost:8080/compliance-declarations?status=Submitted&registrationType=DirectProducer&page=1&pageSize=20&sort=DateSubmitted%5Bdesc%5D%2COrganisationName%5Basc%5D',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({
@@ -414,6 +414,58 @@ describe('WasteObligationsApiService', () => {
           obligationYear: 2026
         })
       ).rejects.toMatchObject({ status: 500 })
+    })
+  })
+
+  test('updateComplianceDeclaration includes notification when provided', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(mockOkResponse({ id: 'decl-1', status: 'Cancelled' }))
+    const service = new WasteObligationsApiService({
+      baseUrl: 'http://localhost:8080',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    await service.updateComplianceDeclaration(
+      {
+        organisationId: 'org-abc',
+        id: 'decl-1',
+        status: 'Cancelled',
+        reason: 'Producer requested to cancel',
+        user: { id: 'user-1', email: 'user@example.com' },
+        notification: {
+          parameters: {
+            certOrStatement: 'certificate',
+            certOrStatement_cy: 'tystysgrif',
+            regulator_cy: 'Regulator'
+          }
+        }
+      },
+      'trace-3'
+    )
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:8080/organisations/org-abc/compliance-declarations/decl-1',
+      expect.objectContaining({
+        method: 'PATCH',
+        headers: expect.objectContaining({ 'x-cdp-request-id': 'trace-3' })
+      })
+    )
+
+    const [, init] = fetchImpl.mock.calls[0]
+    expect(JSON.parse(init.body)).toEqual({
+      status: 'Cancelled',
+      reason: 'Producer requested to cancel',
+      user: { id: 'user-1', email: 'user@example.com' },
+      notification: {
+        parameters: {
+          certOrStatement: 'certificate',
+          certOrStatement_cy: 'tystysgrif',
+          regulator_cy: 'Regulator'
+        }
+      }
     })
   })
 
