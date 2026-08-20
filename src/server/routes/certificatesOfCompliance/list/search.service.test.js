@@ -2,6 +2,15 @@ vi.mock('#config/config.js', () => ({
   config: { get: vi.fn() }
 }))
 
+vi.mock('#server/common/helpers/logging/logger.js', () => ({
+  createLogger: () => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn()
+  })
+}))
+
 vi.mock('#services/waste-obligations-api.service.js', () => ({
   createWasteObligationsApiService: vi.fn()
 }))
@@ -54,7 +63,9 @@ describe('#getComplianceSearchResults', () => {
 
   describe('with the real API', () => {
     beforeEach(() => {
-      config.get.mockImplementation((key) => (key === 'useMockApi' ? false : ''))
+      config.get.mockImplementation((key) =>
+        key === 'useMockApi' ? false : ''
+      )
     })
 
     test('Should request pending and accepted together for the page organisation type', async () => {
@@ -193,10 +204,7 @@ describe('#getComplianceSearchResults', () => {
         total: 250
       })
 
-      const result = await getComplianceSearchResults(
-        'direct-producers',
-        'ltd'
-      )
+      const result = await getComplianceSearchResults('direct-producers', 'ltd')
 
       expect(result.total).toBe(250)
       expect(result.truncated).toBe(true)

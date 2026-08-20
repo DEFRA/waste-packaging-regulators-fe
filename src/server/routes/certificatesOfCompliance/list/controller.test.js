@@ -676,7 +676,9 @@ describe('#certificatesOfComplianceController', () => {
       expect($('body').text()).toContain(
         'Check the spelling, or search for part of the organisation name or ID'
       )
-      expect($('table').first().find('th:contains("Submission status")')).toHaveLength(0)
+      expect(
+        $('table').first().find('th:contains("Submission status")')
+      ).toHaveLength(0)
     })
 
     test('Should not render the results table when no search has been made', async () => {

@@ -208,6 +208,50 @@ describe('BaseApiService', () => {
     })
   })
 
+  describe('request timeout', () => {
+    test('passes an AbortSignal to fetch so calls cannot hang indefinitely', async () => {
+      const fetchImpl = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockResolvedValue({})
+      })
+      const service = new BaseApiService({
+        baseUrl: 'http://localhost',
+        fetchImpl,
+        serviceName: 'test-api'
+      })
+
+      await service.getJson('/resource', {}, null)
+
+      const [, init] = fetchImpl.mock.calls[0]
+      expect(init.signal).toBeInstanceOf(AbortSignal)
+    })
+
+    test('a call that outlives the timeout is aborted and surfaces as an ApiError', async () => {
+      // fetch that never settles on its own — only the abort signal can end it,
+      // mirroring a downstream that has stopped responding.
+      const fetchImpl = vi.fn(
+        (_url, init) =>
+          new Promise((_resolve, reject) => {
+            init.signal.addEventListener('abort', () =>
+              reject(init.signal.reason)
+            )
+          })
+      )
+      const service = new BaseApiService({
+        baseUrl: 'http://localhost',
+        fetchImpl,
+        requestTimeoutMs: 5,
+        serviceName: 'waste-obligations'
+      })
+
+      await expect(service.getJson('/things', {}, null)).rejects.toMatchObject({
+        name: 'ApiError',
+        serviceName: 'waste-obligations'
+      })
+    })
+  })
+
   test('postJson returns parsed json when content-type is application/json', async () => {
     const created = { id: '1' }
     const fetchImpl = vi.fn().mockResolvedValue({

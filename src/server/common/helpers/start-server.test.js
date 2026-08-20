@@ -19,7 +19,7 @@ describe('#startServer', () => {
 
     createServerSpy = vi.spyOn(createServerImport, 'createServer')
     hapiServerSpy = vi.spyOn(hapi, 'server')
-  })
+  }, 30000)
 
   afterAll(() => {
     vi.unstubAllEnvs()

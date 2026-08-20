@@ -4,6 +4,15 @@ vi.mock('#config/config.js', () => ({
   config: { get: vi.fn() }
 }))
 
+vi.mock('#server/common/helpers/logging/logger.js', () => ({
+  createLogger: () => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn()
+  })
+}))
+
 vi.mock('#services/waste-obligations-api.service.js', () => ({
   createWasteObligationsApiService: vi.fn()
 }))
@@ -31,9 +40,15 @@ describe('#getComplianceDownload (real API path)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    config.get.mockImplementation((key) =>
-      key === 'useMockApi' ? false : undefined
-    )
+    config.get.mockImplementation((key) => {
+      if (key === 'useMockApi') {
+        return false
+      }
+      if (key === 'csvExport.obligationConcurrency') {
+        return 20
+      }
+      return undefined
+    })
 
     obligationsApi = {
       listComplianceDeclarations: vi.fn(),
@@ -191,5 +206,87 @@ describe('#getComplianceDownload (real API path)', () => {
     const { rows } = loadCsv(csv)
 
     expect(rows).toHaveLength(0)
+  })
+
+  describe('not-submitted obligation fan-out is bounded (direct producers)', () => {
+    // Every not-submitted producer needs one obligation lookup. Set up a
+    // population larger than the concurrency limit so the bounding is exercised.
+    const setupNotSubmittedPopulation = (size) => {
+      const organisations = Array.from({ length: size }, (_, i) => ({
+        id: `org-${i}`,
+        name: `Org ${i}`
+      }))
+      organisationsApi.listComplianceOrganisations.mockResolvedValue({
+        organisations
+      })
+      obligationsApi.listComplianceDeclarations.mockResolvedValue({
+        total: 0,
+        complianceDeclarations: []
+      })
+      return organisations
+    }
+
+    test('resolves the whole population, not just the first page', async () => {
+      setupNotSubmittedPopulation(45)
+
+      const { csv } = await getComplianceDownload(
+        'direct-producers',
+        'not-submitted',
+        'trace-1',
+        NOW
+      )
+
+      expect(
+        obligationsApi.getComplianceObligationOrNull
+      ).toHaveBeenCalledTimes(45)
+
+      const { loadCsv } = await import('./download.page-object.js')
+      expect(loadCsv(csv).rows).toHaveLength(45)
+    })
+
+    test('never runs more than the configured concurrency at once', async () => {
+      setupNotSubmittedPopulation(45)
+
+      let inFlight = 0
+      let peak = 0
+      obligationsApi.getComplianceObligationOrNull.mockImplementation(
+        async () => {
+          inFlight += 1
+          peak = Math.max(peak, inFlight)
+          await new Promise((resolve) => setTimeout(resolve, 1))
+          inFlight -= 1
+          return { obligations: [] }
+        }
+      )
+
+      await getComplianceDownload(
+        'direct-producers',
+        'not-submitted',
+        'trace-1',
+        NOW
+      )
+
+      expect(peak).toBe(20)
+    })
+
+    test('fails the whole download when any obligation lookup fails (no partial CSV)', async () => {
+      setupNotSubmittedPopulation(45)
+
+      obligationsApi.getComplianceObligationOrNull.mockImplementation(
+        ({ organisationId }) =>
+          organisationId === 'org-7'
+            ? Promise.reject(new Error('obligations unavailable'))
+            : Promise.resolve({ obligations: [] })
+      )
+
+      await expect(
+        getComplianceDownload(
+          'direct-producers',
+          'not-submitted',
+          'trace-1',
+          NOW
+        )
+      ).rejects.toThrow('obligations unavailable')
+    })
   })
 })

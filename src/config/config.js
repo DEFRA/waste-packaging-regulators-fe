@@ -290,12 +290,26 @@ export const config = convict({
       sensitive: true
     }
   },
+  csvExport: {
+    obligationConcurrency: {
+      doc: 'Max concurrent obligation lookups when building the not-submitted CSV export. Bounds the fan-out so a large producer population cannot overwhelm the obligations service (and the legacy PRN service behind it).',
+      format: 'nat',
+      default: 20,
+      env: 'CSV_EXPORT_OBLIGATION_CONCURRENCY'
+    }
+  },
   wasteObligationsApi: {
     baseUrl: {
       doc: 'Waste obligations API base URL',
       format: String,
       default: 'http://localhost:8080',
       env: 'WASTE_OBLIGATIONS_API_BASE_URL'
+    },
+    requestTimeoutMs: {
+      doc: 'Per-request timeout (ms) for waste obligations API calls',
+      format: 'nat',
+      default: 30000,
+      env: 'WASTE_OBLIGATIONS_API_REQUEST_TIMEOUT_MS'
     },
     authMode: {
       doc: 'Authentication mode for waste obligations API',
