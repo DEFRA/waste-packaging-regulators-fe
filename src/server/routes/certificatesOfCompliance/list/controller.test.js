@@ -485,6 +485,211 @@ describe('#certificatesOfComplianceController', () => {
     )
   })
 
+  describe('Search form', () => {
+    test('Should render an empty search input when no search has been made', async () => {
+      const { result } = await inject('/certificates-of-compliance')
+      const $ = load(result)
+
+      expect($('input#search')).toHaveLength(1)
+      expect($('input#search').attr('value')).toBe('')
+      expect($('.govuk-error-summary')).toHaveLength(0)
+    })
+
+    test('Should carry the current type and tab as hidden inputs', async () => {
+      const { result } = await inject(
+        '/certificates-of-compliance?type=compliance-schemes&tab=accepted'
+      )
+      const $ = load(result)
+      const form = $('form[action="/certificates-of-compliance"]')
+
+      expect(form.find('input[name="type"]').attr('value')).toBe(
+        'compliance-schemes'
+      )
+      expect(form.find('input[name="tab"]').attr('value')).toBe('accepted')
+    })
+
+    test('Should retain the entered term in the search input', async () => {
+      const { statusCode, result } = await inject(
+        '/certificates-of-compliance?search=zeina'
+      )
+      const $ = load(result)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect($('input#search').attr('value')).toBe('zeina')
+      expect($('.govuk-error-summary')).toHaveLength(0)
+    })
+
+    test('Should trim surrounding whitespace from the entered term', async () => {
+      const { result } = await inject(
+        '/certificates-of-compliance?search=%20zeina%20'
+      )
+      const $ = load(result)
+
+      expect($('input#search').attr('value')).toBe('zeina')
+    })
+
+    test.each(['', '%20%20'])(
+      'Should show an error summary when Search is pressed with "%s"',
+      async (value) => {
+        const { statusCode, result } = await inject(
+          `/certificates-of-compliance?search=${value}`
+        )
+        const $ = load(result)
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect($('.govuk-error-summary__title').text()).toContain(
+          'There is a problem'
+        )
+        expect($('.govuk-error-summary a').text()).toContain(
+          'Enter an organisation name or ID'
+        )
+        expect($('.govuk-error-summary a').attr('href')).toBe('#search')
+        expect($('#search-error').text()).toContain(
+          'Enter an organisation name or ID'
+        )
+        expect($('title').text()).toContain('Error:')
+      }
+    )
+
+    test('Should still render the tabs and main table when the search is invalid', async () => {
+      const { result } = await inject('/certificates-of-compliance?search=')
+
+      expect(result).toEqual(expect.stringContaining('pending submissions'))
+    })
+  })
+
+  describe('Search results', () => {
+    const searchFor = (term, type = 'direct-producers') =>
+      inject(
+        `/certificates-of-compliance?type=${type}&search=${encodeURIComponent(term)}`
+      )
+
+    test('Should show the result count with the term in bold and a Clear search link', async () => {
+      const { result } = await searchFor(mockPendingItems[0].organisationName)
+      const $ = load(result)
+
+      expect($('body').text()).toContain('1 result for')
+      expect(result).toEqual(
+        expect.stringContaining(
+          `<strong>"${mockPendingItems[0].organisationName}"</strong>`
+        )
+      )
+      expect($('a:contains("Clear search")').attr('href')).toBe(
+        '/certificates-of-compliance?type=direct-producers&tab=pending'
+      )
+    })
+
+    test('Should render the results table above the service navigation', async () => {
+      const { result } = await searchFor(mockPendingItems[0].organisationName)
+
+      expect(result.indexOf('Submission status')).toBeLessThan(
+        result.indexOf('aria-label="Filter by producer type"')
+      )
+    })
+
+    test('Should render a row linking to the submission', async () => {
+      const item = mockPendingItems[0]
+      const { result } = await searchFor(item.organisationName)
+      const $ = load(result)
+      // The same organisation also appears in the main table below, so scope to
+      // the results table.
+      const link = $('table')
+        .first()
+        .find(
+          `a[href="./${item.organisationId}/certificates-of-compliance/${item.id}"]`
+        )
+
+      expect(link.text().trim()).toBe(item.organisationName)
+    })
+
+    test('Should show the Pending tag for a submitted declaration', async () => {
+      const { result } = await searchFor(mockPendingItems[0].organisationName)
+
+      expect(result).toEqual(
+        expect.stringContaining(
+          '<strong class="govuk-tag govuk-tag--blue">Pending</strong>'
+        )
+      )
+    })
+
+    test('Should show the Accepted tag for an accepted declaration', async () => {
+      const { result } = await searchFor(mockAcceptedItems[0].organisationName)
+
+      expect(result).toEqual(
+        expect.stringContaining(
+          '<strong class="govuk-tag govuk-tag--teal">Accepted</strong>'
+        )
+      )
+    })
+
+    test('Should match on organisation ID', async () => {
+      const item = mockAcceptedItems[0]
+      const { result } = await searchFor(item.organisationReferenceNumber)
+
+      expect(result).toEqual(expect.stringContaining(item.organisationName))
+    })
+
+    test('Should show Percentage met and no Date submitted for direct producers', async () => {
+      const { result } = await searchFor(mockPendingItems[0].organisationName)
+      const $ = load(result)
+      const headers = $('table')
+        .first()
+        .find('thead th')
+        .map((_, el) => $(el).text().trim())
+        .get()
+
+      expect(headers).toEqual([
+        'Organisation name',
+        'Organisation ID',
+        'Submission status',
+        'Recycling obligations',
+        'Percentage met'
+      ])
+    })
+
+    test('Should show Regulation 43 and no Date submitted for compliance schemes', async () => {
+      const { result } = await searchFor(
+        mockComplianceSchemePendingItems[0].organisationName,
+        'compliance-schemes'
+      )
+      const $ = load(result)
+      const headers = $('table')
+        .first()
+        .find('thead th')
+        .map((_, el) => $(el).text().trim())
+        .get()
+
+      expect(headers).toEqual([
+        'Organisation name',
+        'Organisation ID',
+        'Submission status',
+        'Recycling obligations',
+        'Regulation 43'
+      ])
+    })
+
+    test('Should show guidance and no results table for a term matching nothing', async () => {
+      const { result } = await searchFor('zzzznomatchzzzz')
+      const $ = load(result)
+
+      expect($('body').text()).toContain('0 results for')
+      expect($('body').text()).toContain(
+        'Check the spelling, or search for part of the organisation name or ID'
+      )
+      expect(
+        $('table').first().find('th:contains("Submission status")')
+      ).toHaveLength(0)
+    })
+
+    test('Should not render the results table when no search has been made', async () => {
+      const { result } = await inject('/certificates-of-compliance')
+      const $ = load(result)
+
+      expect($('body').text()).not.toContain('result for')
+      expect($('a:contains("Clear search")')).toHaveLength(0)
+    })
+  })
+
   describe('Pagination', () => {
     test('Should include type and tab params in pagination links', async () => {
       const { result } = await inject(

@@ -1,7 +1,35 @@
 import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
+import {
+  SEARCH_ERROR_TEXT,
+  SEARCH_TERM_MAX_LENGTH
+} from '../common/constants.js'
 import { getCertificatesOfComplianceViewModel } from './list.service.js'
+import { getComplianceSearchResults } from './search.service.js'
+
+// An absent `search` param means no search was run, so the page renders as
+// normal. An empty or whitespace-only one means the user pressed Search with
+// nothing entered, which is a validation error.
+export const parseSearchTerm = (rawSearch) => {
+  if (rawSearch === undefined) {
+    return { searchTerm: '', errors: null }
+  }
+
+  const searchTerm = rawSearch.trim().slice(0, SEARCH_TERM_MAX_LENGTH)
+
+  if (searchTerm === '') {
+    return {
+      searchTerm: '',
+      errors: {
+        summary: [{ text: SEARCH_ERROR_TEXT, href: '#search' }],
+        search: { text: SEARCH_ERROR_TEXT }
+      }
+    }
+  }
+
+  return { searchTerm, errors: null }
+}
 
 const complianceListSortKey = (organisationType) =>
   `complianceListSort:${organisationType}`
@@ -72,20 +100,35 @@ export const certificatesOfComplianceController = {
       type
     )
 
+    const { searchTerm, errors } = parseSearchTerm(request.query.search)
+
     const traceId = request.headers[config.get('tracing.header')]
 
-    const viewModel = await getCertificatesOfComplianceViewModel(
-      type,
-      submissionStatus,
-      Number.parseInt(page, 10),
-      sortColumn,
-      sortDirection,
-      traceId
-    ).catch((error) => {
+    const [viewModel, search] = await Promise.all([
+      getCertificatesOfComplianceViewModel(
+        type,
+        submissionStatus,
+        Number.parseInt(page, 10),
+        sortColumn,
+        sortDirection,
+        traceId
+      ),
+      searchTerm ? getComplianceSearchResults(type, searchTerm, traceId) : null
+    ]).catch((error) => {
       handleApiError(request, error)
       throw error
     })
 
-    return h.view('certificatesOfCompliance/list/index', viewModel)
+    return h.view('certificatesOfCompliance/list/index', {
+      ...viewModel,
+      searchTerm,
+      errors,
+      isSearch: search !== null,
+      searchItems: search?.items ?? [],
+      searchResultCount: search?.total ?? 0,
+      searchTruncated: search?.truncated ?? false,
+      clearSearchUrl: `/certificates-of-compliance?type=${type}&tab=${submissionStatus}`,
+      pageTitle: errors ? `Error: ${viewModel.heading}` : viewModel.heading
+    })
   }
 }
