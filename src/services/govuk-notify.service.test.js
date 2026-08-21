@@ -74,6 +74,77 @@ describe('govuk-notify.service', () => {
     )
   })
 
+  test('formatEmailBodyAsHtml returns an empty string for empty input', () => {
+    expect(formatEmailBodyAsHtml('')).toBe('')
+    expect(formatEmailBodyAsHtml(null)).toBe('')
+  })
+
+  test('formatEmailBodyAsHtml leaves invalid @ patterns unchanged', () => {
+    expect(formatEmailBodyAsHtml('Contact us @ home today.')).toBe(
+      '<p>Contact us @ home today.</p>'
+    )
+  })
+
+  test('formatEmailBodyAsHtml strips trailing punctuation from linkified emails', () => {
+    expect(
+      formatEmailBodyAsHtml(
+        'Email packagingproducers@environment-agency.gov.uk.'
+      )
+    ).toBe(
+      '<p>Email <a href="mailto:packagingproducers@environment-agency.gov.uk">packagingproducers@environment-agency.gov.uk</a>.</p>'
+    )
+  })
+
+  test('formatEmailBodyAsHtml keeps unsafe markdown links as plain text', () => {
+    expect(
+      formatEmailBodyAsHtml('See [bad link](javascript:alert(1)) for details.')
+    ).toBe('<p>See [bad link](javascript:alert(1)) for details.</p>')
+  })
+
+  test('formatEmailBodyAsHtml supports http markdown links', () => {
+    expect(
+      formatEmailBodyAsHtml(
+        'Visit [HTTP site](http://example.test) for details.'
+      )
+    ).toBe(
+      '<p>Visit <a href="http://example.test">HTTP site</a> for details.</p>'
+    )
+  })
+
+  test('formatEmailBodyAsHtml leaves unclosed bold and malformed link syntax unchanged', () => {
+    expect(formatEmailBodyAsHtml('Read **unfinished bold text')).toBe(
+      '<p>Read **unfinished bold text</p>'
+    )
+    expect(formatEmailBodyAsHtml('Broken [link text only')).toBe(
+      '<p>Broken [link text only</p>'
+    )
+  })
+
+  test('formatEmailBodyAsHtml handles unclosed paragraph tags in Notify HTML', () => {
+    expect(formatEmailBodyAsHtml('<p># Preview section')).toBe(
+      '<p># Preview section'
+    )
+  })
+
+  test('formatEmailBodyAsHtml treats non-html angle-bracket text as plain text', () => {
+    expect(formatEmailBodyAsHtml('Score <3 for packaging')).toBe(
+      '<p>Score &lt;3 for packaging</p>'
+    )
+    expect(formatEmailBodyAsHtml('Ends with <')).toBe('<p>Ends with &lt;</p>')
+  })
+
+  test('formatEmailBodyAsHtml normalises uppercase h1 closing tags', () => {
+    expect(formatEmailBodyAsHtml('<H1>Preview section</H1>')).toBe(
+      '<h2>Preview section</h2>'
+    )
+  })
+
+  test('formatEmailBodyAsHtml treats a hash-only line as plain paragraph text', () => {
+    expect(formatEmailBodyAsHtml('#\r\n\r\nValid text.')).toBe(
+      '<p>#</p><p>Valid text.</p>'
+    )
+  })
+
   test('throws when the GOV.UK Notify API key is unset', async () => {
     config.get.mockImplementation((key) =>
       key === 'govukNotify.apiKey' ? '' : undefined
@@ -141,5 +212,27 @@ describe('govuk-notify.service', () => {
       subject: 'Preview subject',
       body: '<p>Preview body</p>'
     })
+  })
+
+  test('uses the text field when Notify preview body is absent', async () => {
+    config.get.mockImplementation((key) =>
+      key === 'govukNotify.apiKey' ? 'test-api-key' : ''
+    )
+    const previewTemplateById = vi.fn().mockResolvedValue({
+      data: {
+        subject: 'Preview subject',
+        text: 'Plain Notify text'
+      }
+    })
+    NotifyClient.mockImplementation(function MockNotifyClient() {
+      this.previewTemplateById = previewTemplateById
+    })
+
+    const preview = await previewCancellationTemplate('template-id', {
+      firstName: 'Jane',
+      lastName: 'Doe'
+    })
+
+    expect(preview.body).toBe('<p>Plain Notify text</p>')
   })
 })

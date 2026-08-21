@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi, afterEach } from 'vitest'
 
 vi.mock('#services/govuk-notify.service.js', async (importOriginal) => {
   const { createCancellationEmailNotifyModuleMock } =
@@ -11,12 +11,18 @@ import {
   mockComplianceSchemePendingItems,
   mockPendingItems
 } from '../certificates-of-compliance.mock.js'
+import * as complianceMock from '../certificates-of-compliance.mock.js'
 import { cancellationEmailTemplateIds } from './cancellation-email-templates.js'
+import * as cancellationEmailTemplates from './cancellation-email-templates.js'
 import {
   buildCancellationEmailPersonalisation,
   buildCancellationEmailPreview,
   dedupeRecipientsByEmail
 } from './cancellation-email-preview.service.js'
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 describe('cancellation-email-preview.service helpers', () => {
   test('dedupes recipients by email case-insensitively and sorts by email', () => {
@@ -144,4 +150,89 @@ describe('buildCancellationEmailPreview', () => {
       )
     }
   )
+
+  test('returns declaration-not-found when the declaration is missing', async () => {
+    vi.spyOn(complianceMock, 'getMockDetailDataById').mockReturnValue(null)
+
+    const preview = await buildCancellationEmailPreview({
+      organisationId: mockPendingItems[0].organisationId,
+      id: mockPendingItems[0].id,
+      reasonKey: 'producer-request',
+      traceId: 'trace-preview'
+    })
+
+    expect(preview).toEqual({ error: 'declaration-not-found' })
+  })
+
+  test('returns invalid-reason when the reason key is not recognised', async () => {
+    const preview = await buildCancellationEmailPreview({
+      organisationId: mockPendingItems[0].organisationId,
+      id: mockPendingItems[0].id,
+      reasonKey: 'not-a-valid-reason',
+      traceId: 'trace-preview'
+    })
+
+    expect(preview).toEqual({ error: 'invalid-reason' })
+  })
+
+  test('returns no-recipients when the organisation has no enrolled emails', async () => {
+    vi.spyOn(complianceMock, 'getMockPersonEmails').mockReturnValue([])
+
+    const preview = await buildCancellationEmailPreview({
+      organisationId: mockPendingItems[0].organisationId,
+      id: mockPendingItems[0].id,
+      reasonKey: 'producer-request',
+      traceId: 'trace-preview'
+    })
+
+    expect(preview).toEqual({ error: 'no-recipients' })
+  })
+
+  test('returns unknown-template when no Notify template matches the reason', async () => {
+    vi.spyOn(
+      cancellationEmailTemplates,
+      'resolveCancellationTemplateId'
+    ).mockReturnValue(null)
+
+    const preview = await buildCancellationEmailPreview({
+      organisationId: mockPendingItems[0].organisationId,
+      id: mockPendingItems[0].id,
+      reasonKey: 'producer-request',
+      traceId: 'trace-preview'
+    })
+
+    expect(preview).toEqual({ error: 'unknown-template' })
+  })
+
+  test('returns notify-not-configured when GOV.UK Notify is unavailable', async () => {
+    previewCancellationTemplate.mockRejectedValueOnce(
+      Object.assign(new Error('GOV.UK Notify API key is not configured'), {
+        code: 'notify-not-configured'
+      })
+    )
+
+    const preview = await buildCancellationEmailPreview({
+      organisationId: mockPendingItems[0].organisationId,
+      id: mockPendingItems[0].id,
+      reasonKey: 'producer-request',
+      traceId: 'trace-preview'
+    })
+
+    expect(preview).toEqual({ error: 'notify-not-configured' })
+  })
+
+  test('rethrows unexpected Notify preview errors', async () => {
+    previewCancellationTemplate.mockRejectedValueOnce(
+      new Error('Notify failed')
+    )
+
+    await expect(
+      buildCancellationEmailPreview({
+        organisationId: mockPendingItems[0].organisationId,
+        id: mockPendingItems[0].id,
+        reasonKey: 'producer-request',
+        traceId: 'trace-preview'
+      })
+    ).rejects.toThrow('Notify failed')
+  })
 })
