@@ -449,6 +449,15 @@ export const config = convict({
         env: 'AZURE_AD_B2C_LOGOUT_URL'
       }
     }
+  },
+  govukNotify: {
+    apiKey: {
+      doc: 'GOV.UK Notify API key for rendering cancellation email previews. When unset, the preview page shows an unavailable message.',
+      format: String,
+      default: '',
+      env: 'GOVUKNOTIFY_API_KEY',
+      sensitive: true
+    }
   }
 })
 
