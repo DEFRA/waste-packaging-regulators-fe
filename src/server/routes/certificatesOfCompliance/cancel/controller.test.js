@@ -1,5 +1,12 @@
 import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+
+vi.mock('#services/govuk-notify.service.js', async (importOriginal) => {
+  const { createCancellationEmailNotifyModuleMock } =
+    await import('#test-helpers/cancellation-email-notify.mock.js')
+  return createCancellationEmailNotifyModuleMock(importOriginal)
+})
+
 import {
   mockPendingItems,
   mockComplianceSchemePendingItems,
@@ -13,7 +20,11 @@ import {
   crumbTokenFromCookie,
   mergeCookiesFromResponse
 } from '#test-helpers/cookies.js'
-import { loadReasonPage, loadCheckPage } from './cancel.page-object.js'
+import {
+  loadReasonPage,
+  loadCheckPage,
+  loadEmailPreviewPage
+} from './cancel.page-object.js'
 
 const DP_ITEM = mockPendingItems[0]
 const CS_ITEM = mockComplianceSchemePendingItems[0]
@@ -26,6 +37,8 @@ const reasonUrlFor = (item) =>
   `/${item.organisationId}/certificates-of-compliance/${item.id}/cancel/reason`
 const checkUrlFor = (item) =>
   `/${item.organisationId}/certificates-of-compliance/${item.id}/cancel/check`
+const emailPreviewUrlFor = (item, reason = 'producer-request') =>
+  `/${item.organisationId}/certificates-of-compliance/${item.id}/cancel/email-preview?reason=${reason}`
 // The cancellation itself posts to the bare …/cancel resource.
 const actionUrlFor = (item) =>
   `/${item.organisationId}/certificates-of-compliance/${item.id}/cancel`
@@ -267,6 +280,9 @@ describe('certificates of compliance — cancel', () => {
       expect(page.emailLink).toBe(
         'View the cancellation email (opens in new tab)'
       )
+      expect(page.emailLinkHref).toBe(
+        emailPreviewUrlFor(DP_ITEM, 'producer-request')
+      )
       expect(page.insetText).toContain(
         "we'll cancel the certificate and email the person who submitted it"
       )
@@ -283,6 +299,55 @@ describe('certificates of compliance — cancel', () => {
       expect(loadCheckPage(response.payload).insetText).toContain(
         "we'll cancel the statement and email the person who submitted it"
       )
+    })
+  })
+
+  describe('GET email preview', () => {
+    it('redirects unauthenticated users to /signin-oidc', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: emailPreviewUrlFor(DP_ITEM)
+      })
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe('/signin-oidc')
+    })
+
+    it('redirects to the reason page when no reason is in the URL', async () => {
+      const cookie = await signIn()
+      const response = await get(
+        `/${DP_ITEM.organisationId}/certificates-of-compliance/${DP_ITEM.id}/cancel/email-preview`,
+        cookie
+      )
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe(reasonUrlFor(DP_ITEM))
+    })
+
+    it('lists all recipient emails and renders personalisation from the Notify preview for a direct producer', async () => {
+      const cookie = await signIn()
+      const response = await get(emailPreviewUrlFor(DP_ITEM), cookie)
+      const page = loadEmailPreviewPage(response.payload)
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(page.toLine).toBe(
+        'catherine.morris@howco.test, james.wright@howco.test'
+      )
+      expect(page.bodyHtml).toContain('Catherine')
+      expect(page.bodyHtml).toContain('Morris')
+      expect(page.bodyHtml).toContain('ea@environment-agency.gov.uk')
+      expect(page.bodyHtml).toContain('<h2>Preview section</h2>')
+    })
+
+    it('lists recipient emails and renders personalisation from the Notify preview for a compliance scheme', async () => {
+      const cookie = await signIn()
+      const response = await get(emailPreviewUrlFor(CS_ITEM), cookie)
+      const page = loadEmailPreviewPage(response.payload)
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(page.toLine).toBe('jane.doe@ecopack.co.uk')
+      expect(page.bodyHtml).toContain('Jane')
+      expect(page.bodyHtml).toContain('Doe')
+      expect(page.bodyHtml).toContain('ea@environment-agency.gov.uk')
+      expect(page.bodyHtml).toContain('<h2>Preview section</h2>')
     })
   })
 

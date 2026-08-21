@@ -1,4 +1,5 @@
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
+import { config } from '#config/config.js'
 import { cancelComplianceDeclaration } from '../actions/cancel.service.js'
 import { getComplianceDeclarationReviewStatus } from '../actions/review-status.service.js'
 import {
@@ -14,6 +15,7 @@ import {
   getCancelReasonLabel,
   isValidCancelReason
 } from './reasons.js'
+import { buildCancellationEmailPreview } from './cancellation-email-preview.service.js'
 
 function detailPath(organisationId, id) {
   return `/${organisationId}/certificates-of-compliance/${id}`
@@ -27,6 +29,23 @@ function reasonPath(organisationId, id, reason) {
 function checkPath(organisationId, id, reason) {
   const base = `${detailPath(organisationId, id)}/cancel/check`
   return reason ? `${base}?reason=${encodeURIComponent(reason)}` : base
+}
+
+function emailPreviewPath(organisationId, id, reason) {
+  const base = `${detailPath(organisationId, id)}/cancel/email-preview`
+  return reason ? `${base}?reason=${encodeURIComponent(reason)}` : base
+}
+
+const previewErrorMessages = {
+  'no-recipients':
+    'We could not find any recipient email addresses for this organisation.',
+  'unknown-template':
+    'We could not find an email template for the selected cancellation reason.',
+  'declaration-not-found':
+    'We could not find the compliance declaration for this preview.',
+  'invalid-reason': 'The selected cancellation reason is not valid.',
+  'notify-not-configured':
+    'The cancellation email preview is unavailable because GOV.UK Notify is not configured for this environment.'
 }
 
 function buildErrors(docTypeLower) {
@@ -63,6 +82,36 @@ async function renderReasonForm(
     docTypeLower,
     reasonItems: buildCancelReasonItems(registrationType, selected),
     errors
+  })
+}
+
+async function renderCancellationEmailPreview(
+  request,
+  h,
+  { organisationId, id, reason }
+) {
+  const preview = await buildCancellationEmailPreview({
+    organisationId,
+    id,
+    reasonKey: reason,
+    traceId: request.getTraceId()
+  })
+
+  if (preview.error) {
+    return h.view('certificatesOfCompliance/cancel/email-preview-unavailable', {
+      pageTitle: 'Cancellation email preview unavailable',
+      message:
+        previewErrorMessages[preview.error] ??
+        'The cancellation email preview is unavailable.'
+    })
+  }
+
+  return h.view('certificatesOfCompliance/cancel/email-preview', {
+    pageTitle: preview.subject,
+    subject: preview.subject,
+    body: preview.body,
+    toAddresses: preview.toAddresses,
+    assetPath: config.get('assetPath')
   })
 }
 
@@ -159,8 +208,44 @@ export const certificatesOfComplianceCancelCheckGetController = {
       docTypeLower,
       reason,
       reasonLabel: getCancelReasonLabel(registrationType, reason),
-      reasonPath: reasonPath(organisationId, id, reason)
+      reasonPath: reasonPath(organisationId, id, reason),
+      emailPreviewUrl: emailPreviewPath(organisationId, id, reason)
     })
+  }
+}
+
+export const certificatesOfComplianceCancelEmailPreviewGetController = {
+  async handler(request, h) {
+    if (!request.yar.get('user')) {
+      return redirectToSignIn(request, h)
+    }
+
+    const { organisationId, id } = request.params
+    const reviewStatus = await getComplianceDeclarationReviewStatus(
+      organisationId,
+      id,
+      request.getTraceId(),
+      request.yar
+    )
+
+    if (!canCancelComplianceDeclaration(reviewStatus)) {
+      return h.redirect(detailPath(organisationId, id))
+    }
+
+    const { reason } = request.query
+    if (!isValidCancelReason(reason)) {
+      return h.redirect(reasonPath(organisationId, id))
+    }
+
+    try {
+      return await renderCancellationEmailPreview(request, h, {
+        organisationId,
+        id,
+        reason
+      })
+    } catch (error) {
+      return handleApiError(request, error)
+    }
   }
 }
 

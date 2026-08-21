@@ -1,0 +1,112 @@
+/*
+ * Standalone cancellation email preview — matches regulator-responsibility-prototype
+ * cancel-certificate-email-preview.njk (centred card on grey background, GOV.UK Notify chrome).
+ * Not part of the main application.scss bundle; linked only from email-preview.njk.
+ */
+
+body {
+  margin: 0;
+  padding: 30px 15px;
+  background-color: #e8ebed;
+  font-family: Helvetica, Arial, sans-serif;
+  color: #0b0c0c;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.email {
+  max-width: 640px;
+  margin: 0 auto;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(11, 12, 12, 0.12);
+}
+
+.email__client-meta {
+  padding: 16px 48px;
+  border-bottom: 1px solid #e8ebed;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #505a5f;
+  background: #f8f8f8;
+}
+
+.email__client-meta p {
+  margin: 0 0 4px;
+}
+
+.email__client-meta p:last-child {
+  margin: 0;
+}
+
+.email__client-meta strong {
+  color: #0b0c0c;
+  font-weight: 700;
+  display: inline-block;
+  min-width: 64px;
+}
+
+.email__header {
+  background-color: #1d70b8;
+  padding: 15px 48px;
+}
+
+.email__header-logo svg {
+  display: block;
+  height: 30px;
+  width: auto;
+}
+
+.email__org {
+  padding: 24px 48px 0;
+}
+
+.email__org-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  border-left: 4px solid #00a33b;
+  padding-left: 11px;
+}
+
+.email__org-logo img {
+  display: block;
+  width: 36px;
+  height: auto;
+}
+
+.email__org-logo span {
+  font-size: 19px;
+  line-height: 1.25;
+  font-weight: 400;
+  color: #0b0c0c;
+}
+
+.email__body {
+  padding: 48px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.email__body p {
+  margin: 0 0 18px;
+}
+
+.email__body h2 {
+  font-size: 19px;
+  font-weight: 700;
+  margin: 28px 0 12px;
+  line-height: 1.3;
+}
+
+.email__body h2:first-child {
+  margin-top: 0;
+}
+
+.email__body p:last-child {
+  margin-bottom: 0;
+}
+
+.email__body a {
+  color: #1d70b8;
+  text-decoration: underline;
+}

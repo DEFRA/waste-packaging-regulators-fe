@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { getMockPersonEmails } from '#server/routes/certificatesOfCompliance/certificates-of-compliance.mock.js'
 import { ApiError } from './apiBaseClient/api-error.js'
 import { BaseApiService } from './apiBaseClient/base-api.service.js'
 
@@ -68,6 +69,52 @@ export class AccountApiService extends BaseApiService {
       }
       throw err
     }
+  }
+
+  async getPersonEmails(organisationId, entityTypeCode, traceId) {
+    if (config.get('useMockApi')) {
+      this.logger?.debug?.(
+        { organisationId, entityTypeCode },
+        'Returning mock person emails (MOCK_API)'
+      )
+      return getMockPersonEmails(organisationId, entityTypeCode)
+    }
+
+    const params = new URLSearchParams({
+      organisationId,
+      entityTypeCode
+    })
+    const path = `/api/organisations/person-emails?${params.toString()}`
+    const url = this.buildUrl(path)
+    const response = await this.fetchImpl(url, {
+      method: 'GET',
+      headers: await this.getHeaders(this.getTracingHeader(traceId)),
+      signal: AbortSignal.timeout(this.requestTimeoutMs)
+    })
+
+    if (response.status === statusCodes.noContent) {
+      return []
+    }
+
+    if (!response.ok) {
+      let errorBody = null
+      try {
+        errorBody = await response.json()
+      } catch {
+        errorBody = null
+      }
+
+      throw ApiError.from({
+        message: `${this.serviceName} API request failed with status ${response.status}`,
+        status: response.status,
+        body: errorBody,
+        serviceName: this.serviceName,
+        method: 'GET',
+        url
+      })
+    }
+
+    return response.json()
   }
 
   async getAccountDetailsById(userId, traceId) {

@@ -60,9 +60,27 @@ export function loadCheckPage(payload) {
       changeUrl: reasonRow?.find('.govuk-summary-list__actions a').attr('href')
     },
     emailLink: emailRow?.find('.govuk-summary-list__value a').text().trim(),
+    emailLinkHref: emailRow?.find('.govuk-summary-list__value a').attr('href'),
     insetText: $('.govuk-inset-text').text().trim(),
     hiddenReason: $('input[name="cancel-reason"]').attr('value'),
     confirmButton: $('.govuk-button').first().text().trim(),
     formAction: $('form').attr('action')
+  }
+}
+
+export function loadEmailPreviewPage(payload) {
+  const $ = load(payload)
+  const toLine = $('.email__client-meta')
+    .find('p')
+    .filter((_, element) => $(element).text().trim().startsWith('To:'))
+    .text()
+    .replace(/^To:\s*/, '')
+    .trim()
+
+  return {
+    title: $('title').text().trim(),
+    toLine,
+    bodyHtml: $('.email__body').html()?.trim() ?? '',
+    unavailableHeading: $('.panel h1').text().trim()
   }
 }

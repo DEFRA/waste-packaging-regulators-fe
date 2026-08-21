@@ -109,6 +109,7 @@ describe('context and cache', () => {
 
       test('Should log that the Vite Manifest file is not available', () => {
         expect(mockLoggerError).toHaveBeenCalledWith(
+          expect.any(SyntaxError),
           'Vite manifest.json not found'
         )
       })

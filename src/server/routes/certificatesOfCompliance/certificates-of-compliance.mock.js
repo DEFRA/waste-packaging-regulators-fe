@@ -897,6 +897,38 @@ const mockBasicUserPerson = {
 }
 
 export const mockAccountOrganisationsByExternalId = {
+  [MOCK_ORG_HOWCO_ID]: {
+    externalId: MOCK_ORG_HOWCO_ID,
+    name: MOCK_ORG_HOWCO_NAME,
+    referenceNumber: '101411',
+    persons: [
+      mockApprovedPerson(
+        'Catherine',
+        'Morris',
+        'catherine.morris@howco.test',
+        '020 7946 0100'
+      ),
+      mockApprovedPerson(
+        'James',
+        'Wright',
+        'james.wright@howco.test',
+        '020 7946 0109'
+      )
+    ]
+  },
+  [MOCK_ORG_ECOPACK_ID]: {
+    externalId: MOCK_ORG_ECOPACK_ID,
+    name: MOCK_ORG_ECOPACK_OPERATOR_NAME,
+    referenceNumber: '110234',
+    persons: [
+      mockApprovedPerson(
+        'Jane',
+        'Doe',
+        'jane.doe@ecopack.co.uk',
+        '020 7946 0110'
+      )
+    ]
+  },
   [MOCK_ORG_REDWOOD_ID]: {
     externalId: MOCK_ORG_REDWOOD_ID,
     name: MOCK_ORG_REDWOOD_NAME,
@@ -1006,6 +1038,17 @@ export const mockAccountOrganisationsByExternalId = {
 
 export function getMockAccountOrganisationByExternalId(organisationId) {
   return mockAccountOrganisationsByExternalId[organisationId] ?? null
+}
+
+export function getMockPersonEmails(organisationId) {
+  const organisation = getMockAccountOrganisationByExternalId(organisationId)
+  const persons = organisation?.persons ?? []
+
+  return persons.map(({ firstName, lastName, email }) => ({
+    firstName,
+    lastName,
+    email
+  }))
 }
 
 export function getMockOrganisationById(organisationId) {
