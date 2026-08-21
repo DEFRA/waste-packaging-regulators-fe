@@ -208,14 +208,12 @@ function formatPlainTextNotifyBody(body) {
   let paragraphLines = []
 
   const flushParagraph = () => {
-    if (paragraphLines.length === 0) {
-      return
+    if (paragraphLines.length > 0) {
+      parts.push(
+        `<p>${paragraphLines.map(formatInlineMarkdown).join('<br>')}</p>`
+      )
+      paragraphLines = []
     }
-
-    parts.push(
-      `<p>${paragraphLines.map(formatInlineMarkdown).join('<br>')}</p>`
-    )
-    paragraphLines = []
   }
 
   for (const line of splitNotifyBodyLines(body)) {
