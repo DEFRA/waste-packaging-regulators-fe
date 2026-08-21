@@ -1,40 +1,61 @@
 import { NotifyClient } from 'notifications-node-client'
 import { config } from '#config/config.js'
 
+const MARKDOWN_HEADING_PATTERN = /^#{1,6}\s*([^\r\n]+)$/
+const MARKDOWN_BOLD_PATTERN = /\*\*([^*]+)\*\*/g
+const MARKDOWN_LINK_PATTERN =
+  /\[([^\]]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/gi
+const EMAIL_PATTERN = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g
+const NOTIFY_HEADING_IN_PARAGRAPH_PATTERN = /<p>\s*#+\s*([^<]+)\s*<\/p>/gi
+const HTML_TAG_PATTERN = /<[a-z]/i
+const H1_TAG_PATTERN = /<\/?h1\b/gi
+
 function escapeHtml(text) {
   return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
 }
 
 function parseMarkdownHeading(line) {
-  const match = line.trim().match(/^#+\s*(.+)$/)
+  const match = line.trim().match(MARKDOWN_HEADING_PATTERN)
   return match ? match[1].trim() : null
 }
 
 function linkifyEmails(text) {
-  return text.replace(
-    /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g,
-    (email) => `<a href="mailto:${email}">${email}</a>`
-  )
+  return text.replace(EMAIL_PATTERN, (email) => {
+    return `<a href="mailto:${email}">${email}</a>`
+  })
 }
 
 function formatInlineMarkdown(text) {
   let formatted = escapeHtml(text)
 
-  formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-  formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, url) => {
-    const href = url.trim()
-    if (/^(?:https?:\/\/|mailto:)/i.test(href)) {
-      return `<a href="${escapeHtml(href)}">${label}</a>`
-    }
-    return `[${label}](${url})`
-  })
+  formatted = formatted.replace(MARKDOWN_BOLD_PATTERN, '<strong>$1</strong>')
+  formatted = formatted.replace(
+    MARKDOWN_LINK_PATTERN,
+    (_, label, url) => `<a href="${escapeHtml(url.trim())}">${label}</a>`
+  )
   formatted = linkifyEmails(formatted)
 
   return formatted
+}
+
+function appendPlainTextLine(line, parts, paragraphLines, flushParagraph) {
+  if (line.trim() === '') {
+    flushParagraph()
+    return
+  }
+
+  const heading = parseMarkdownHeading(line)
+  if (heading !== null) {
+    flushParagraph()
+    parts.push(`<h2>${formatInlineMarkdown(heading)}</h2>`)
+    return
+  }
+
+  paragraphLines.push(line)
 }
 
 function formatPlainTextNotifyBody(body) {
@@ -53,19 +74,7 @@ function formatPlainTextNotifyBody(body) {
   }
 
   for (const line of body.split(/\r?\n/)) {
-    if (line.trim() === '') {
-      flushParagraph()
-      continue
-    }
-
-    const heading = parseMarkdownHeading(line)
-    if (heading !== null) {
-      flushParagraph()
-      parts.push(`<h2>${formatInlineMarkdown(heading)}</h2>`)
-      continue
-    }
-
-    paragraphLines.push(line)
+    appendPlainTextLine(line, parts, paragraphLines, flushParagraph)
   }
 
   flushParagraph()
@@ -74,15 +83,17 @@ function formatPlainTextNotifyBody(body) {
 
 function formatNotifyHtmlBody(html) {
   const withHeadings = html.replace(
-    /<p>\s*#+\s*(.+?)\s*<\/p>/gi,
+    NOTIFY_HEADING_IN_PARAGRAPH_PATTERN,
     (_, text) => `<h2>${formatInlineMarkdown(text.trim())}</h2>`
   )
 
-  return withHeadings.replace(/<\/?h1\b/gi, (tag) => tag.replace(/h1/i, 'h2'))
+  return withHeadings.replace(H1_TAG_PATTERN, (tag) =>
+    tag.replaceAll(/h1/gi, 'h2')
+  )
 }
 
 export function isHtmlEmailBody(body) {
-  return /<\/?[a-z][\s\S]*>/i.test(body ?? '')
+  return HTML_TAG_PATTERN.test(body ?? '')
 }
 
 export function formatEmailBodyAsHtml(body) {

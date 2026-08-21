@@ -235,7 +235,7 @@ export const certificatesOfComplianceCancelEmailPreviewGetController = {
         assetPath: config.get('assetPath')
       })
     } catch (error) {
-      handleApiError(request, error)
+      return handleApiError(request, error)
     }
   }
 }
@@ -288,7 +288,7 @@ export const certificatesOfComplianceCancelPostController = {
         { registrationType, environmentalRegulator }
       )
     } catch (error) {
-      handleApiError(request, error)
+      return handleApiError(request, error)
     }
 
     setMockDeclarationStatusOverride(request.yar, declarationKey, 'Cancelled', {
