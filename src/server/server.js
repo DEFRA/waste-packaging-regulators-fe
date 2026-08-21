@@ -53,7 +53,10 @@ function registerAuthStrategy(server, tls) {
       authenticate: (_request, h) =>
         h.authenticated({
           credentials: {
-            profile: { oid: 'mock-user-oid', email: 'mock-user@test.local' }
+            profile: {
+              oid: '00000000-0000-4000-8000-000000000001',
+              email: 'mock-user@test.local'
+            }
           }
         })
     }))

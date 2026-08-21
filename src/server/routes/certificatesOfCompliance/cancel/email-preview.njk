@@ -1,0 +1,36 @@
+{# Standalone preview — no layouts/page.njk; centred GOV.UK Notify chrome like the regulator prototype. #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ subject }}</title>
+  <link rel="stylesheet" href="{{ assetPath }}/stylesheets/email-preview.css">
+</head>
+<body>
+  <div class="email" role="article" aria-label="Cancellation email preview">
+    <div class="email__client-meta">
+      <p><strong>From:</strong> Extended Producer Responsibility for Packaging (pEPR) &lt;noreply@notifications.service.gov.uk&gt;</p>
+      <p><strong>To:</strong> {{ toAddresses | join(', ') }}</p>
+      <p><strong>Subject:</strong> {{ subject }}</p>
+    </div>
+
+    <div class="email__header">
+      <span class="email__header-logo">
+        {% include "certificatesOfCompliance/cancel/partials/email-preview-govuk-logo.njk" %}
+      </span>
+    </div>
+
+    <div class="email__org">
+      <span class="email__org-logo">
+        <img src="{{ assetPath }}/images/gov-crest.png" alt="" width="36">
+        <span>Department for Environment, Food &amp; Rural Affairs</span>
+      </span>
+    </div>
+
+    <div class="email__body">
+      {{ body | safe }}
+    </div>
+  </div>
+</body>
+</html>

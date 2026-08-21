@@ -3,6 +3,7 @@ import { NodePackageImporter } from 'sass-embedded'
 
 export default defineConfig({
   base: '/public',
+  publicDir: 'src/client/static',
   build: {
     outDir: '.public',
     manifest: true,
