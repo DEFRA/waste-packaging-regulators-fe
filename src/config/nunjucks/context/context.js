@@ -19,7 +19,7 @@ export function context(request) {
     try {
       viteManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
     } catch (error) {
-      logger.error(`Vite ${path.basename(manifestPath)} not found`)
+      logger.error(error, `Vite ${path.basename(manifestPath)} not found`)
     }
   }
 

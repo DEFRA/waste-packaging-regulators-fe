@@ -85,6 +85,36 @@ async function renderReasonForm(
   })
 }
 
+async function renderCancellationEmailPreview(
+  request,
+  h,
+  { organisationId, id, reason }
+) {
+  const preview = await buildCancellationEmailPreview({
+    organisationId,
+    id,
+    reasonKey: reason,
+    traceId: request.getTraceId()
+  })
+
+  if (preview.error) {
+    return h.view('certificatesOfCompliance/cancel/email-preview-unavailable', {
+      pageTitle: 'Cancellation email preview unavailable',
+      message:
+        previewErrorMessages[preview.error] ??
+        'The cancellation email preview is unavailable.'
+    })
+  }
+
+  return h.view('certificatesOfCompliance/cancel/email-preview', {
+    pageTitle: preview.subject,
+    subject: preview.subject,
+    body: preview.body,
+    toAddresses: preview.toAddresses,
+    assetPath: config.get('assetPath')
+  })
+}
+
 export const certificatesOfComplianceCancelReasonGetController = {
   async handler(request, h) {
     if (!request.yar.get('user')) {
@@ -208,31 +238,10 @@ export const certificatesOfComplianceCancelEmailPreviewGetController = {
     }
 
     try {
-      const preview = await buildCancellationEmailPreview({
+      return await renderCancellationEmailPreview(request, h, {
         organisationId,
         id,
-        reasonKey: reason,
-        traceId: request.getTraceId()
-      })
-
-      if (preview.error) {
-        return h.view(
-          'certificatesOfCompliance/cancel/email-preview-unavailable',
-          {
-            pageTitle: 'Cancellation email preview unavailable',
-            message:
-              previewErrorMessages[preview.error] ??
-              'The cancellation email preview is unavailable.'
-          }
-        )
-      }
-
-      return h.view('certificatesOfCompliance/cancel/email-preview', {
-        pageTitle: preview.subject,
-        subject: preview.subject,
-        body: preview.body,
-        toAddresses: preview.toAddresses,
-        assetPath: config.get('assetPath')
+        reason
       })
     } catch (error) {
       return handleApiError(request, error)
@@ -288,7 +297,7 @@ export const certificatesOfComplianceCancelPostController = {
         { registrationType, environmentalRegulator }
       )
     } catch (error) {
-      return handleApiError(request, error)
+      handleApiError(request, error)
     }
 
     setMockDeclarationStatusOverride(request.yar, declarationKey, 'Cancelled', {

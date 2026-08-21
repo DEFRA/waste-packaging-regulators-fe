@@ -1,6 +1,9 @@
 import { NotifyClient } from 'notifications-node-client'
 import { config } from '#config/config.js'
 
+const MAX_MARKDOWN_HEADING_LEVEL = 6
+const EMAIL_LOCAL_SPECIAL_CHARS = new Set(['.', '_', '%', '+', '-'])
+
 function escapeHtml(text) {
   return String(text)
     .replaceAll('&', '&amp;')
@@ -10,21 +13,19 @@ function escapeHtml(text) {
 }
 
 function isAsciiLetter(char) {
-  const code = char.charCodeAt(0)
-  return (code >= 97 && code <= 122) || (code >= 65 && code <= 90)
+  return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z')
+}
+
+function isDigit(char) {
+  return char >= '0' && char <= '9'
 }
 
 function isEmailLocalPartChar(char) {
-  const code = char.charCodeAt(0)
-  return (
-    isAsciiLetter(char) ||
-    (code >= 48 && code <= 57) ||
-    char === '.' ||
-    char === '_' ||
-    char === '%' ||
-    char === '+' ||
-    char === '-'
-  )
+  if (isAsciiLetter(char) || isDigit(char)) {
+    return true
+  }
+
+  return EMAIL_LOCAL_SPECIAL_CHARS.has(char)
 }
 
 function isEmailDomainChar(char) {
@@ -51,7 +52,7 @@ function parseMarkdownHeading(line) {
   let hashCount = 0
   while (
     hashCount < trimmed.length &&
-    hashCount < 6 &&
+    hashCount < MAX_MARKDOWN_HEADING_LEVEL &&
     trimmed[hashCount] === '#'
   ) {
     hashCount += 1
@@ -65,29 +66,27 @@ function parseMarkdownHeading(line) {
   return headingText.length > 0 ? headingText : null
 }
 
-function formatBold(text) {
-  let result = ''
-  let index = 0
-
-  while (index < text.length) {
-    const open = text.indexOf('**', index)
-    if (open === -1) {
-      result += text.slice(index)
-      break
-    }
-
-    result += text.slice(index, open)
-    const close = text.indexOf('**', open + 2)
-    if (close === -1) {
-      result += text.slice(open)
-      break
-    }
-
-    result += `<strong>${text.slice(open + 2, close)}</strong>`
-    index = close + 2
+function formatBold(text, index = 0, result = '') {
+  if (index >= text.length) {
+    return result
   }
 
-  return result
+  const open = text.indexOf('**', index)
+  if (open === -1) {
+    return result + text.slice(index)
+  }
+
+  const close = text.indexOf('**', open + 2)
+  if (close === -1) {
+    return result + text.slice(index)
+  }
+
+  const boldHtml = `<strong>${text.slice(open + 2, close)}</strong>`
+  return formatBold(
+    text,
+    close + 2,
+    result + text.slice(index, open) + boldHtml
+  )
 }
 
 function isSafeMarkdownUrl(url) {
@@ -99,44 +98,43 @@ function isSafeMarkdownUrl(url) {
   )
 }
 
-function formatMarkdownLinks(text) {
-  let result = ''
-  let index = 0
-
-  while (index < text.length) {
-    const openBracket = text.indexOf('[', index)
-    if (openBracket === -1) {
-      result += text.slice(index)
-      break
-    }
-
-    result += text.slice(index, openBracket)
-    const closeBracket = text.indexOf(']', openBracket + 1)
-    const openParen =
-      closeBracket === -1 ? -1 : text.indexOf('(', closeBracket + 1)
-    const closeParen = openParen === -1 ? -1 : text.indexOf(')', openParen + 1)
-
-    if (
-      closeBracket === -1 ||
-      openParen !== closeBracket + 1 ||
-      closeParen === -1
-    ) {
-      result += text[openBracket]
-      index = openBracket + 1
-      continue
-    }
-
-    const label = text.slice(openBracket + 1, closeBracket)
-    const url = text.slice(openParen + 1, closeParen)
-    if (isSafeMarkdownUrl(url)) {
-      result += `<a href="${escapeHtml(url.trim())}">${label}</a>`
-    } else {
-      result += text.slice(openBracket, closeParen + 1)
-    }
-    index = closeParen + 1
+function formatMarkdownLinkSegment(text, index, result) {
+  const openBracket = text.indexOf('[', index)
+  if (openBracket === -1) {
+    return result + text.slice(index)
   }
 
-  return result
+  const closeBracket = text.indexOf(']', openBracket + 1)
+  const openParen =
+    closeBracket === -1 ? -1 : text.indexOf('(', closeBracket + 1)
+  const closeParen = openParen === -1 ? -1 : text.indexOf(')', openParen + 1)
+
+  const isValidLink =
+    closeBracket !== -1 && openParen === closeBracket + 1 && closeParen !== -1
+
+  if (!isValidLink) {
+    return formatMarkdownLinkSegment(
+      text,
+      openBracket + 1,
+      result + text.slice(index, openBracket + 1)
+    )
+  }
+
+  const label = text.slice(openBracket + 1, closeBracket)
+  const url = text.slice(openParen + 1, closeParen)
+  const replacement = isSafeMarkdownUrl(url)
+    ? `<a href="${escapeHtml(url.trim())}">${label}</a>`
+    : text.slice(openBracket, closeParen + 1)
+
+  return formatMarkdownLinkSegment(
+    text,
+    closeParen + 1,
+    result + text.slice(index, openBracket) + replacement
+  )
+}
+
+function formatMarkdownLinks(text) {
+  return formatMarkdownLinkSegment(text, 0, '')
 }
 
 function linkifyEmails(text) {
@@ -146,8 +144,7 @@ function linkifyEmails(text) {
   while (index < text.length) {
     const at = text.indexOf('@', index)
     if (at === -1) {
-      result += text.slice(index)
-      break
+      return result + text.slice(index)
     }
 
     let start = at - 1
@@ -191,17 +188,15 @@ function formatInlineMarkdown(text) {
 function appendPlainTextLine(line, parts, paragraphLines, flushParagraph) {
   if (line.trim() === '') {
     flushParagraph()
-    return
+  } else {
+    const heading = parseMarkdownHeading(line)
+    if (heading !== null) {
+      flushParagraph()
+      parts.push(`<h2>${formatInlineMarkdown(heading)}</h2>`)
+    } else {
+      paragraphLines.push(line)
+    }
   }
-
-  const heading = parseMarkdownHeading(line)
-  if (heading !== null) {
-    flushParagraph()
-    parts.push(`<h2>${formatInlineMarkdown(heading)}</h2>`)
-    return
-  }
-
-  paragraphLines.push(line)
 }
 
 function splitNotifyBodyLines(body) {
@@ -239,54 +234,50 @@ function normaliseH1Tags(html) {
     .replaceAll('</H1>', '</h2>')
 }
 
-function convertParagraphMarkdownHeadings(html) {
-  const lowerHtml = html.toLowerCase()
+function convertParagraphHeadingSegment(html, lowerHtml, index, result) {
   const openTag = '<p>'
   const closeTag = '</p>'
-  let result = ''
-  let index = 0
-
-  while (index < html.length) {
-    const paragraphStart = lowerHtml.indexOf(openTag, index)
-    if (paragraphStart === -1) {
-      result += html.slice(index)
-      break
-    }
-
-    result += html.slice(index, paragraphStart)
-    const contentStart = paragraphStart + openTag.length
-    const paragraphEnd = lowerHtml.indexOf(closeTag, contentStart)
-    if (paragraphEnd === -1) {
-      result += html.slice(paragraphStart)
-      break
-    }
-
-    const inner = html.slice(contentStart, paragraphEnd).trim()
-    const heading = parseMarkdownHeading(inner)
-    if (heading !== null) {
-      result += `<h2>${formatInlineMarkdown(heading)}</h2>`
-    } else {
-      result += html.slice(paragraphStart, paragraphEnd + closeTag.length)
-    }
-
-    index = paragraphEnd + closeTag.length
+  const paragraphStart = lowerHtml.indexOf(openTag, index)
+  if (paragraphStart === -1) {
+    return result + html.slice(index)
   }
 
-  return result
+  const contentStart = paragraphStart + openTag.length
+  const paragraphEnd = lowerHtml.indexOf(closeTag, contentStart)
+  if (paragraphEnd === -1) {
+    return result + html.slice(index)
+  }
+
+  const inner = html.slice(contentStart, paragraphEnd).trim()
+  const heading = parseMarkdownHeading(inner)
+  const paragraphHtml =
+    heading !== null
+      ? `<h2>${formatInlineMarkdown(heading)}</h2>`
+      : html.slice(paragraphStart, paragraphEnd + closeTag.length)
+
+  return convertParagraphHeadingSegment(
+    html,
+    lowerHtml,
+    paragraphEnd + closeTag.length,
+    result + html.slice(index, paragraphStart) + paragraphHtml
+  )
+}
+
+function convertParagraphMarkdownHeadings(html) {
+  return convertParagraphHeadingSegment(html, html.toLowerCase(), 0, '')
 }
 
 function formatNotifyHtmlBody(html) {
   return normaliseH1Tags(convertParagraphMarkdownHeadings(html))
 }
 
-export function isHtmlEmailBody(body) {
-  const text = body ?? ''
-  const tagStart = text.indexOf('<')
-  if (tagStart === -1 || tagStart === text.length - 1) {
+export function isHtmlEmailBody(body = '') {
+  const tagStart = body.indexOf('<')
+  if (tagStart === -1 || tagStart === body.length - 1) {
     return false
   }
 
-  return isAsciiLetter(text[tagStart + 1])
+  return isAsciiLetter(body[tagStart + 1])
 }
 
 export function formatEmailBodyAsHtml(body) {
