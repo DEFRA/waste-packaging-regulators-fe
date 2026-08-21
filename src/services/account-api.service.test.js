@@ -147,6 +147,71 @@ describe('AccountApiService', () => {
     expect(result).toEqual([])
   })
 
+  test('getPersonEmails GETs enrolled person emails for an organisation', async () => {
+    const organisationId = externalIds[0]
+    const responseBody = [
+      {
+        firstName: 'Approved',
+        lastName: 'Person',
+        email: 'approved-person@email.com'
+      }
+    ]
+    const fetchImpl = vi.fn().mockResolvedValue(mockOkResponse(responseBody))
+    const service = new AccountApiService({
+      baseUrl: 'http://localhost:3001',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+    vi.spyOn(config, 'get').mockImplementation((key) =>
+      key === 'useMockApi' ? false : undefined
+    )
+
+    const result = await service.getPersonEmails(
+      organisationId,
+      'DR',
+      'trace-3'
+    )
+
+    expect(result).toEqual(responseBody)
+    expect(fetchImpl).toHaveBeenCalledWith(
+      `http://localhost:3001/api/organisations/person-emails?organisationId=${organisationId}&entityTypeCode=DR`,
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          Accept: 'application/json',
+          Authorization: expect.stringMatching(/^Basic /),
+          'x-cdp-request-id': 'trace-3'
+        })
+      })
+    )
+  })
+
+  test('getPersonEmails returns an empty array when the API responds with 204', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 204,
+      json: vi.fn()
+    })
+    const service = new AccountApiService({
+      baseUrl: 'http://localhost:3001',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+    vi.spyOn(config, 'get').mockImplementation((key) =>
+      key === 'useMockApi' ? false : undefined
+    )
+
+    const result = await service.getPersonEmails(
+      externalIds[0],
+      'CS',
+      'trace-4'
+    )
+
+    expect(result).toEqual([])
+  })
+
   test('getOrganisationWithPersons GETs the organisation by external id', async () => {
     const responseBody = {
       organisationName: 'Scheme Operator Co',
