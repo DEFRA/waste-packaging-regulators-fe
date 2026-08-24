@@ -17,6 +17,23 @@ import {
   previewCancellationTemplate
 } from './govuk-notify.service.js'
 
+const defaultNotifyBaseUrl = 'http://localhost:6011'
+
+function mockGovukNotifyConfig({
+  apiKey = 'test-api-key',
+  baseUrl = defaultNotifyBaseUrl
+} = {}) {
+  config.get.mockImplementation((key) => {
+    if (key === 'govukNotify.apiKey') {
+      return apiKey
+    }
+    if (key === 'govukNotify.baseUrl') {
+      return baseUrl
+    }
+    return ''
+  })
+}
+
 describe('govuk-notify.service', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -146,9 +163,7 @@ describe('govuk-notify.service', () => {
   })
 
   test('throws when the GOV.UK Notify API key is unset', async () => {
-    config.get.mockImplementation((key) =>
-      key === 'govukNotify.apiKey' ? '' : undefined
-    )
+    mockGovukNotifyConfig({ apiKey: '' })
 
     await expect(
       previewCancellationTemplate('template-id', {
@@ -161,9 +176,7 @@ describe('govuk-notify.service', () => {
   })
 
   test('converts plain text Notify preview bodies to HTML', async () => {
-    config.get.mockImplementation((key) =>
-      key === 'govukNotify.apiKey' ? 'test-api-key' : ''
-    )
+    mockGovukNotifyConfig()
     const previewTemplateById = vi.fn().mockResolvedValue({
       data: {
         subject: 'Preview subject',
@@ -185,9 +198,7 @@ describe('govuk-notify.service', () => {
   })
 
   test('calls GOV.UK Notify when an API key is configured', async () => {
-    config.get.mockImplementation((key) =>
-      key === 'govukNotify.apiKey' ? 'test-api-key' : ''
-    )
+    mockGovukNotifyConfig()
     const previewTemplateById = vi.fn().mockResolvedValue({
       data: {
         subject: 'Preview subject',
@@ -204,6 +215,10 @@ describe('govuk-notify.service', () => {
       personalisation
     )
 
+    expect(NotifyClient).toHaveBeenCalledWith(
+      defaultNotifyBaseUrl,
+      'test-api-key'
+    )
     expect(previewTemplateById).toHaveBeenCalledWith(
       'template-id',
       personalisation
@@ -214,10 +229,33 @@ describe('govuk-notify.service', () => {
     })
   })
 
-  test('uses the text field when Notify preview body is absent', async () => {
-    config.get.mockImplementation((key) =>
-      key === 'govukNotify.apiKey' ? 'test-api-key' : ''
+  test('uses GOV.UK Notify base URL from config when set', async () => {
+    mockGovukNotifyConfig({
+      baseUrl: 'https://api.notifications.service.gov.uk'
+    })
+    const previewTemplateById = vi.fn().mockResolvedValue({
+      data: {
+        subject: 'Preview subject',
+        body: '<p>Preview body</p>'
+      }
+    })
+    NotifyClient.mockImplementation(function MockNotifyClient() {
+      this.previewTemplateById = previewTemplateById
+    })
+
+    await previewCancellationTemplate('template-id', {
+      firstName: 'Jane',
+      lastName: 'Doe'
+    })
+
+    expect(NotifyClient).toHaveBeenCalledWith(
+      'https://api.notifications.service.gov.uk',
+      'test-api-key'
     )
+  })
+
+  test('uses the text field when Notify preview body is absent', async () => {
+    mockGovukNotifyConfig()
     const previewTemplateById = vi.fn().mockResolvedValue({
       data: {
         subject: 'Preview subject',
