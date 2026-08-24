@@ -20,14 +20,14 @@
         <tr class="govuk-table__row">
           {{ appSortingColumnHeader({ sortable: false, firstColumn: true, columnName: 'OrganisationName', columnLabel: 'Organisation name' }) }}
           {{ appSortingColumnHeader({ sortable: false, columnName: 'OrganisationId', columnLabel: 'Organisation ID' }) }}
-          {{ appSortingColumnHeader({ sort: sort, columnName: 'RecyclingObligations', columnLabel: 'Recycling obligations', sortable: activeTab != 'not-submitted' }) }}
+          {{ appSortingColumnHeader({ sort: sort, columnName: 'RecyclingObligations', columnLabel: 'Recycling obligations', sortable: activeTab != 'not-submitted', defaultDirection: 'asc' }) }}
           {% if organisationType == 'compliance-schemes' %}
-            {{ appSortingColumnHeader({ sort: sort, columnName: 'Regulation43', columnLabel: 'Regulation 43', sortable: activeTab != 'not-submitted' }) }}
+            {{ appSortingColumnHeader({ sort: sort, columnName: 'Regulation43', columnLabel: 'Regulation 43', sortable: activeTab != 'not-submitted', defaultDirection: 'asc' }) }}
           {% else %}
-            {{ appSortingColumnHeader({ sort: sort, columnName: 'PercentageMet', columnLabel: 'Percentage met', sortable: activeTab != 'not-submitted' }) }}
+            {{ appSortingColumnHeader({ sort: sort, columnName: 'PercentageMet', columnLabel: 'Percentage met', sortable: activeTab != 'not-submitted', defaultDirection: 'asc' }) }}
           {% endif %}
           {% if activeTab != 'not-submitted' %}
-            {{ appSortingColumnHeader({ sort: sort, columnName: 'DateSubmitted', columnLabel: 'Date submitted' }) }}
+            {{ appSortingColumnHeader({ sort: sort, columnName: 'DateSubmitted', columnLabel: 'Date submitted', defaultDirection: 'desc' }) }}
           {% endif %}
         </tr>
       </thead>

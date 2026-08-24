@@ -68,9 +68,12 @@ export function resolveSortForSubmissionStatus(
     }
   }
 
+  const defaultSortColumn = getDefaultSortColumn(submissionStatus)
+  const defaultSortDirection = defaultSortColumn === 'DateSubmitted' ? 'desc' : 'asc'
+
   return {
-    sortColumn: getDefaultSortColumn(submissionStatus),
-    sortDirection: request.query.sortDirection ?? 'asc'
+    sortColumn: defaultSortColumn,
+    sortDirection: request.query.sortDirection ?? defaultSortDirection
   }
 }
 
