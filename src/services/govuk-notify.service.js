@@ -290,6 +290,10 @@ export function formatEmailBodyAsHtml(body) {
   return formatPlainTextNotifyBody(body)
 }
 
+export function createNotifyClient(apiKey, baseUrl) {
+  return new NotifyClient(baseUrl, apiKey)
+}
+
 export async function previewCancellationTemplate(templateId, personalisation) {
   const apiKey = config.get('govukNotify.apiKey')
   if (!apiKey) {
@@ -298,7 +302,8 @@ export async function previewCancellationTemplate(templateId, personalisation) {
     throw error
   }
 
-  const client = new NotifyClient(apiKey)
+  const baseUrl = config.get('govukNotify.baseUrl')
+  const client = createNotifyClient(apiKey, baseUrl)
   const response = await client.previewTemplateById(templateId, personalisation)
   const data = response.data ?? response
   const rawBody = data.body ?? data.text ?? ''

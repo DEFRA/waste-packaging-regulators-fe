@@ -451,6 +451,12 @@ export const config = convict({
     }
   },
   govukNotify: {
+    baseUrl: {
+      doc: 'GOV.UK Notify API base URL',
+      format: String,
+      default: 'http://localhost:6011',
+      env: 'GOVUKNOTIFY_BASE_URL'
+    },
     apiKey: {
       doc: 'GOV.UK Notify API key for rendering cancellation email previews. When unset, the preview page shows an unavailable message.',
       format: String,
