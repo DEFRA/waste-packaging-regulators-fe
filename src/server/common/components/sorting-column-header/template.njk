@@ -1,6 +1,8 @@
 <th class="govuk-table__header{{ " govuk-!-width-one-quarter" if params.firstColumn }}" scope="col" aria-sort="{{ params.sort.direction + "ending" if params.sort.column == params.columnName else 'none' }}">
   {% if params.sortable != false %}
-    <a class="govuk-link govuk-link--no-visited-state" href="{{ params.sort.baseUrl }}&amp;sort={{ params.columnName }}[{{ 'desc' if params.sort.column == params.columnName and params.sort.direction == 'asc' else 'asc' }}]">
+    {% set defaultDirection = params.defaultDirection | default('asc') %}
+    {% set nextDirection = 'desc' if params.sort.column == params.columnName and params.sort.direction == 'asc' else ('asc' if params.sort.column == params.columnName and params.sort.direction == 'desc' else defaultDirection) %}
+    <a class="govuk-link govuk-link--no-visited-state" href="{{ params.sort.baseUrl }}&amp;sort={{ params.columnName }}[{{ nextDirection }}]">
       {{ params.columnLabel }}
       <svg
         width="22"

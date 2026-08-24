@@ -457,7 +457,9 @@ describe('#certificatesOfComplianceController', () => {
 
         const { result } = await inject(page)
 
-        const curDirection = direction || 'asc'
+        const defaultDirection =
+          !column && (tab === 'pending' || tab === 'accepted') ? 'desc' : 'asc'
+        const curDirection = direction || defaultDirection
         const nextDirection = curDirection === 'asc' ? 'desc' : 'asc'
 
         const $ = load(result)
@@ -469,18 +471,24 @@ describe('#certificatesOfComplianceController', () => {
           return
         }
 
+        const activeColumn = column || 'DateSubmitted'
+
         expect(activeSortAnchor).toHaveLength(1)
         expect(activeSortAnchor.find('path')).toHaveLength(1)
 
-        if (column) {
-          expect(activeSortAnchor.attr('href')).toContain(
-            `sort=${column}[${nextDirection}]`
-          )
-        } else if (tab === 'pending' || tab === 'accepted') {
-          expect(activeSortAnchor.attr('href')).toContain(
-            `sort=DateSubmitted[${nextDirection}]`
-          )
-        }
+        $('th a.govuk-link').each((_, el) => {
+          const href = $(el).attr('href')
+          const match = href.match(/sort=([^[&]+)\[(asc|desc)\]/)
+          if (!match) return
+          const [, col, dir] = match
+
+          if (col === activeColumn) {
+            expect(dir).toBe(nextDirection)
+          } else {
+            const expectedDefault = col === 'DateSubmitted' ? 'desc' : 'asc'
+            expect(dir).toBe(expectedDefault)
+          }
+        })
       }
     )
   })
