@@ -69,7 +69,8 @@ export function resolveSortForSubmissionStatus(
   }
 
   const defaultSortColumn = getDefaultSortColumn(submissionStatus)
-  const defaultSortDirection = defaultSortColumn === 'DateSubmitted' ? 'desc' : 'asc'
+  const defaultSortDirection =
+    defaultSortColumn === 'DateSubmitted' ? 'desc' : 'asc'
 
   return {
     sortColumn: defaultSortColumn,

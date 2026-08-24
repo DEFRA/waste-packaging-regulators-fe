@@ -478,7 +478,7 @@ describe('#certificatesOfComplianceController', () => {
 
         $('th a.govuk-link').each((_, el) => {
           const href = $(el).attr('href')
-          const match = href.match(/sort=([^\[&]+)\[(asc|desc)\]/)
+          const match = href.match(/sort=([^[&]+)\[(asc|desc)\]/)
           if (!match) return
           const [, col, dir] = match
 
