@@ -1575,7 +1575,7 @@ const mockDetailById = {
 
 export function getMockDetailDataById(id) {
   if (mockDetailById[id]) {
-    return mockDetailById[id]
+    return { ...mockDetailById[id], id }
   }
 
   const isComplianceScheme = [
