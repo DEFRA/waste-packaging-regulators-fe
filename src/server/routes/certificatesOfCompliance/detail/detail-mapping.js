@@ -290,9 +290,12 @@ function mapDeclarationMaterialGroups(obligations) {
 export function deriveRecyclingObligationsMet(obligations) {
   const resolved = obligations ?? []
   const { materialTotals } = mapDeclarationMaterialGroups(resolved)
-  return mapMaterialTotalsStatusToRecyclingObligationsMet(materialTotals.status, {
-    hasObligations: resolved.length !== 0
-  })
+  return mapMaterialTotalsStatusToRecyclingObligationsMet(
+    materialTotals.status,
+    {
+      hasObligations: resolved.length !== 0
+    }
+  )
 }
 
 function noDetailActions() {
