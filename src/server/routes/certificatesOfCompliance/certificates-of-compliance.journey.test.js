@@ -975,11 +975,11 @@ describe('certificates of compliance — journey', () => {
         })
         expect(summaryRows.submittedOn.present).toBe(false)
         expect(summaryRows.nameOnAccount.present).toBe(false)
+
+        // All materials are NoDataYet, so the summary row reads "No data"
         expect(summaryRows.recyclingObligations.present).toBe(true)
-        expect(summaryRows.recyclingObligations.tag).toEqual({
-          text: 'Not met',
-          colour: 'red'
-        })
+        expect(summaryRows.recyclingObligations.value).toBe('No data')
+        expect(summaryRows.recyclingObligations.tag).toBe(null)
       })
     })
 

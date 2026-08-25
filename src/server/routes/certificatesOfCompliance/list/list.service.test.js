@@ -297,7 +297,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.showDeclaration).toBe(false)
       expect(vm.showSubmittedOn).toBe(false)
       expect(vm.showNameOnAccount).toBe(false)
-      expect(vm.recyclingObligationsMet).toBe(false)
+      expect(vm.recyclingObligationsMet).toBeNull()
       expect(vm.complianceTypeLabel).toBe('2026 certificate of compliance')
     })
 
@@ -2083,13 +2083,13 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.declarationStatus).toBe('Unsubmitted')
         })
 
-        test('sets recyclingObligationsMet to false when obligations exist but are not met', async () => {
+        test('sets recyclingObligationsMet to null when all obligation materials are no-data', async () => {
           const vm = await getCertificateOfComplianceDetailViewModel(
             'org-abc',
             'decl-1'
           )
 
-          expect(vm.recyclingObligationsMet).toBe(false)
+          expect(vm.recyclingObligationsMet).toBeNull()
         })
 
         test('maps obligations from fallback data into materials', async () => {

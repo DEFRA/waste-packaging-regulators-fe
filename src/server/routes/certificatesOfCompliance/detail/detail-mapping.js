@@ -51,8 +51,9 @@ function mapMaterialTotalsStatusToRecyclingObligationsMet(
     case 'met':
       return true
     case 'not-met':
-    case 'no-data':
       return false
+    case 'no-data':
+      return null
     default:
       throw new Error(`Unexpected material totals status: ${status}`)
   }
