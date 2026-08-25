@@ -54,22 +54,14 @@
               <div class="govuk-summary-list__row">
                 <dt class="govuk-summary-list__key">Regulation 43</dt>
                 <dd class="govuk-summary-list__value">
-                  {% if regulation43Met == null %}
-                    No data
-                  {% else %}
-                    {{ appStatusTag({ value: regulation43Met, trueText: 'Compliant', falseText: 'Not compliant', fontSize:'' }) }}
-                  {% endif %}
+                  {{ appStatusTag({ value: regulation43Met, trueText: 'Compliant', falseText: 'Not compliant', fontSize:'' }) }}
                 </dd>
               </div>
             {% endif %}
             <div class="govuk-summary-list__row">
               <dt class="govuk-summary-list__key">Recycling obligations</dt>
               <dd class="govuk-summary-list__value">
-                {% if recyclingObligationsMet == null %}
-                  No data
-                {% else %}
-                  {{ appStatusTag({ value: recyclingObligationsMet, trueText: 'Met', falseText: 'Not met', fontSize:'' }) }}
-                {% endif %}
+                {{ appStatusTag({ value: recyclingObligationsMet, trueText: 'Met', falseText: 'Not met', fontSize:'' }) }}
               </dd>
             </div>
             <div class="govuk-summary-list__row">

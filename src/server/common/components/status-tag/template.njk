@@ -1,4 +1,6 @@
-{% if params.value %}
+{% if params.value == null %}
+  No data
+{% elif params.value %}
   <strong class="govuk-tag govuk-tag--green {{params.fontSize | default('govuk-!-font-size-16')}}">{{ params.trueText }}</strong>
 {% else %}
   <strong class="govuk-tag govuk-tag--red {{ params.fontSize | default('govuk-!-font-size-16') }}">{{ params.falseText }}</strong>
