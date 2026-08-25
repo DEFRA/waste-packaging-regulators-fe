@@ -163,6 +163,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         'not-submitted',
         1
       )
+
       expect(vm.items).toEqual(
         sortItems([...mockNotSubmittedItems], undefined, undefined)
       )
@@ -297,7 +298,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
       expect(vm.showDeclaration).toBe(false)
       expect(vm.showSubmittedOn).toBe(false)
       expect(vm.showNameOnAccount).toBe(false)
-      expect(vm.recyclingObligationsMet).toBe(false)
+      expect(vm.recyclingObligationsMet).toBeNull()
       expect(vm.complianceTypeLabel).toBe('2026 certificate of compliance')
     })
 
@@ -2083,13 +2084,13 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.declarationStatus).toBe('Unsubmitted')
         })
 
-        test('sets recyclingObligationsMet to false when obligations exist but are not met', async () => {
+        test('sets recyclingObligationsMet to null when all obligation materials are no-data', async () => {
           const vm = await getCertificateOfComplianceDetailViewModel(
             'org-abc',
             'decl-1'
           )
 
-          expect(vm.recyclingObligationsMet).toBe(false)
+          expect(vm.recyclingObligationsMet).toBeNull()
         })
 
         test('maps obligations from fallback data into materials', async () => {
@@ -3565,12 +3566,22 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.items[0].obligationCoveragePercentage).toBe(0)
       })
 
-      test('does not call getComplianceObligationOrNull for compliance-schemes not-submitted tab', async () => {
+      test('resolves recycling status for compliance-schemes not-submitted tab', async () => {
         mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
           total: 0,
           complianceDeclarations: []
         })
-        mockObligationsApi.getComplianceObligationOrNull = vi.fn()
+        mockObligationsApi.getComplianceObligationOrNull = vi
+          .fn()
+          .mockResolvedValue({
+            obligations: [
+              {
+                material: 'Plastic',
+                status: 'NotMet',
+                tonnages: { obligated: 100, accepted: 0 }
+              }
+            ]
+          })
         mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
           organisations: [
             {
@@ -3582,7 +3593,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           ]
         })
 
-        await getCertificatesOfComplianceViewModel(
+        const vm = await getCertificatesOfComplianceViewModel(
           'compliance-schemes',
           'not-submitted',
           1
@@ -3590,7 +3601,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
         expect(
           mockObligationsApi.getComplianceObligationOrNull
-        ).not.toHaveBeenCalled()
+        ).toHaveBeenCalled()
+        expect(vm.items[0].recyclingObligationsMet).toBe(false)
       })
 
       test('does not call getComplianceObligationOrNull for pending tab', async () => {

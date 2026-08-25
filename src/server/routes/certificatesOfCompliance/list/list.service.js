@@ -7,6 +7,7 @@ import {
   mockSummaryByOrganisationType,
   mockListByOrganisationType
 } from '../certificates-of-compliance.mock.js'
+import { deriveRecyclingObligationsMet } from '../detail/detail-mapping.js'
 import {
   registrationTypeByOrganisationType,
   statusBySubmissionStatus,
@@ -148,7 +149,7 @@ export async function fetchAllDeclarations(api, params, traceId) {
 // configurable; the default matches the page size the list already resolves
 // successfully. p-map's default stopOnError aborts the whole export on the first
 // failed lookup, so a regulator gets a clear error rather than a partial CSV.
-export async function resolveNotSubmittedObligationCoveragePercentages(
+export async function resolveNotSubmittedObligationData(
   obligationsApi,
   items,
   traceId
@@ -157,7 +158,7 @@ export async function resolveNotSubmittedObligationCoveragePercentages(
 
   logger.info(
     { traceId, itemCount: items.length, concurrency },
-    'Resolving not-submitted obligation percentages'
+    'Resolving not-submitted obligation data'
   )
 
   await pMap(
@@ -170,16 +171,17 @@ export async function resolveNotSubmittedObligationCoveragePercentages(
         },
         traceId
       )
-      item.obligationCoveragePercentage = calculateObligationCoveragePercentage(
-        data?.obligations ?? []
-      )
+      const obligations = data?.obligations ?? []
+      item.recyclingObligationsMet = deriveRecyclingObligationsMet(obligations)
+      item.obligationCoveragePercentage =
+        calculateObligationCoveragePercentage(obligations)
     },
     { concurrency }
   )
 
   logger.info(
     { traceId, itemCount: items.length },
-    'Resolved not-submitted obligation percentages'
+    'Resolved not-submitted obligation data'
   )
 }
 
@@ -424,13 +426,7 @@ async function getNotSubmittedComplianceList({
     organisationType
   )
 
-  if (organisationType !== COMPLIANCE_SCHEMES) {
-    await resolveNotSubmittedObligationCoveragePercentages(
-      obligationsApi,
-      items,
-      traceId
-    )
-  }
+  await resolveNotSubmittedObligationData(obligationsApi, items, traceId)
 
   return {
     items,

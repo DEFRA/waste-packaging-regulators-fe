@@ -151,7 +151,7 @@ describe('#buildComplianceCsv', () => {
     expect(rows[0]['Organisation name']).toBe('Coastal Ltd')
     expect(rows[0]['Percentage met']).toBe('40%')
     expect(rows[0]['Date submitted']).toBeUndefined()
-    expect(rows[0]['Recycling obligations']).toBe('')
+    expect(rows[0]['Recycling obligations']).toBe('No data')
   })
 
   test('compliance schemes fill Regulation 43 and omit Percentage met', async () => {
@@ -180,5 +180,31 @@ describe('#buildComplianceCsv', () => {
     expect(rows[0]['Percentage met']).toBeUndefined()
     expect(rows[0]['Regulation 43']).toBe('Compliant')
     expect(rows[0]['Recycling obligations']).toBe('Met')
+  })
+
+  test('renders "No data" for null recycling obligations and regulation 43', async () => {
+    const items = [
+      {
+        organisationId: 'cs-2',
+        organisationName: 'Metroline',
+        organisationReferenceNumber: 'CS200',
+        recyclingObligationsMet: null,
+        regulation43Met: null,
+        dateSubmitted: null
+      }
+    ]
+
+    const { csv } = buildComplianceCsv({
+      organisationType: 'compliance-schemes',
+      submissionStatus: 'not-submitted',
+      items,
+      now: NOW
+    })
+
+    const { loadCsv } = await import('./download.page-object.js')
+    const { rows } = loadCsv(csv)
+
+    expect(rows[0]['Recycling obligations']).toBe('No data')
+    expect(rows[0]['Regulation 43']).toBe('No data')
   })
 })

@@ -16,7 +16,7 @@ function percentageText(value) {
 
 function optionalBoolText(value, trueText, falseText) {
   if (value == null) {
-    return ''
+    return 'No data'
   }
   return value ? trueText : falseText
 }

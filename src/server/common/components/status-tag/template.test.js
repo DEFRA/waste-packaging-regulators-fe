@@ -14,4 +14,15 @@ describe('Status Tag Component', () => {
     expect($('strong').hasClass(expectedClass)).toBe(true)
     expect($('strong').text().trim()).toBe(expectedText)
   })
+
+  test('renders bare "No data" text (no tag) when value is null', () => {
+    const $ = renderComponent('status-tag', {
+      trueText: 'Pending',
+      falseText: 'Rejected',
+      value: null
+    })
+
+    expect($('strong')).toHaveLength(0)
+    expect($.root().text().trim()).toBe('No data')
+  })
 })
