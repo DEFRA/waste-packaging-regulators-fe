@@ -5,15 +5,14 @@ import { createWasteOrganisationsApiService } from '#services/waste-organisation
 import { mockListByOrganisationType } from '../certificates-of-compliance.mock.js'
 import {
   registrationTypeByOrganisationType,
-  statusBySubmissionStatus,
-  COMPLIANCE_SCHEMES
+  statusBySubmissionStatus
 } from '../common/constants.js'
 import {
   buildAllNotSubmittedItems,
   fetchAllDeclarations,
   mapDeclarationToItem,
   resolveNotSubmittedReferenceNumbers,
-  resolveNotSubmittedObligationCoveragePercentages
+  resolveNotSubmittedObligationData
 } from '../list/list.service.js'
 import { throwIfMockErrorConfigured } from '#server/common/helpers/mock-api-error.js'
 import { buildComplianceCsv } from './download-model.js'
@@ -41,13 +40,7 @@ async function getAllNotSubmittedItems({
     organisationType
   )
 
-  if (organisationType !== COMPLIANCE_SCHEMES) {
-    await resolveNotSubmittedObligationCoveragePercentages(
-      obligationsApi,
-      allItems,
-      traceId
-    )
-  }
+  await resolveNotSubmittedObligationData(obligationsApi, allItems, traceId)
 
   return allItems
 }

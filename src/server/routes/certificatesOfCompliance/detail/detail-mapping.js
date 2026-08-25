@@ -287,6 +287,14 @@ function mapDeclarationMaterialGroups(obligations) {
   }
 }
 
+export function deriveRecyclingObligationsMet(obligations) {
+  const resolved = obligations ?? []
+  const { materialTotals } = mapDeclarationMaterialGroups(resolved)
+  return mapMaterialTotalsStatusToRecyclingObligationsMet(materialTotals.status, {
+    hasObligations: resolved.length !== 0
+  })
+}
+
 function noDetailActions() {
   return {
     showAccept: false,
@@ -476,10 +484,7 @@ export function mapObligationToDetail(
     showSubmittedOn: false,
     showNameOnAccount: false,
     complianceDocumentNoun: complianceDocumentNoun(orgFields.registrationType),
-    recyclingObligationsMet: mapMaterialTotalsStatusToRecyclingObligationsMet(
-      materialGroups.materialTotals.status,
-      { hasObligations: obligations.length !== 0 }
-    ),
+    recyclingObligationsMet: deriveRecyclingObligationsMet(obligations),
     regulation43Met: null,
     dateDeclarationSubmitted: NO_DATA,
     // Organisation ID mirrors the listing: the Account API reference number

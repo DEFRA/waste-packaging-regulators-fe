@@ -167,7 +167,7 @@ describe('#getComplianceDownload (real API path)', () => {
     expect(obligationsApi.getComplianceObligationOrNull).toHaveBeenCalled()
   })
 
-  test('skips obligation percentages for not-submitted compliance schemes', async () => {
+  test('resolves recycling status for not-submitted compliance schemes', async () => {
     organisationsApi.listComplianceOrganisations.mockResolvedValue({
       organisations: [
         { id: 'cs-1', name: 'Scheme Co', companiesHouseNumber: 'CH1' }
@@ -176,6 +176,15 @@ describe('#getComplianceDownload (real API path)', () => {
     obligationsApi.listComplianceDeclarations.mockResolvedValue({
       total: 0,
       complianceDeclarations: []
+    })
+    obligationsApi.getComplianceObligationOrNull.mockResolvedValue({
+      obligations: [
+        {
+          material: 'Plastic',
+          status: 'Met',
+          tonnages: { obligated: 100, accepted: 100 }
+        }
+      ]
     })
 
     const { csv } = await getComplianceDownload(
@@ -191,7 +200,8 @@ describe('#getComplianceDownload (real API path)', () => {
     expect(rows).toHaveLength(1)
     expect(rows[0]['Organisation name']).toBe('Scheme Co')
     expect(headers).toContain('Regulation 43')
-    expect(obligationsApi.getComplianceObligationOrNull).not.toHaveBeenCalled()
+    expect(obligationsApi.getComplianceObligationOrNull).toHaveBeenCalled()
+    expect(rows[0]['Recycling obligations']).toBe('Met')
   })
 
   test('returns a header-only CSV for an unrecognised submission status', async () => {
