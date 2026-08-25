@@ -1,5 +1,4 @@
 import { config } from '#config/config.js'
-import { createAccountApiService } from '#services/account-api.service.js'
 import { previewCancellationTemplate } from '#services/govuk-notify.service.js'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
@@ -11,32 +10,11 @@ import {
 import { getCancelReasonLabel } from './reasons.js'
 import {
   isWelshOrganisation,
-  mapRegistrationTypeToEntityTypeCode,
   resolveCancellationTemplateId
 } from './cancellation-email-templates.js'
+import { buildCancellationEmailRecipients } from './build-cancellation-email-recipients.js'
 
-export function dedupeRecipientsByEmail(recipients = []) {
-  const seen = new Set()
-
-  return recipients
-    .filter((recipient) => {
-      const email = recipient?.email?.trim()
-      if (!email) {
-        return false
-      }
-
-      const key = email.toLowerCase()
-      if (seen.has(key)) {
-        return false
-      }
-
-      seen.add(key)
-      return true
-    })
-    .sort((left, right) =>
-      left.email.localeCompare(right.email, undefined, { sensitivity: 'base' })
-    )
-}
+export { dedupeRecipientsByEmail } from './build-cancellation-email-recipients.js'
 
 export function buildCancellationEmailPersonalisation(
   declaration,
@@ -78,18 +56,11 @@ async function fetchWasteOrganisation(organisationId, traceId) {
 }
 
 async function fetchCancellationRecipients(
+  declaration,
   organisationId,
-  registrationType,
   traceId
 ) {
-  const entityTypeCode = mapRegistrationTypeToEntityTypeCode(registrationType)
-  const accountApi = createAccountApiService()
-  const recipients = await accountApi.getPersonEmails(
-    organisationId,
-    entityTypeCode,
-    traceId
-  )
-  return dedupeRecipientsByEmail(recipients)
+  return buildCancellationEmailRecipients(declaration, organisationId, traceId)
 }
 
 export async function buildCancellationEmailPreview({
@@ -111,7 +82,7 @@ export async function buildCancellationEmailPreview({
 
   const [wasteOrganisation, recipients] = await Promise.all([
     fetchWasteOrganisation(organisationId, traceId),
-    fetchCancellationRecipients(organisationId, registrationType, traceId)
+    fetchCancellationRecipients(declaration, organisationId, traceId)
   ])
 
   if (recipients.length === 0) {
