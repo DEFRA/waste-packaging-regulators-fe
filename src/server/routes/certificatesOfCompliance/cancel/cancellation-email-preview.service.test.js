@@ -107,7 +107,7 @@ describe('buildCancellationEmailPreview', () => {
     {
       organisationType: 'direct producer',
       item: mockPendingItems[0],
-      toAddresses: ['catherine.morris@howco.test', 'james.wright@howco.test'],
+      toAddresses: ['catherine.morris@howco.test', 'user@example.com'],
       firstName: 'Catherine',
       lastName: 'Morris',
       certOrStatement: 'certificate'
@@ -175,8 +175,26 @@ describe('buildCancellationEmailPreview', () => {
     expect(preview).toEqual({ error: 'invalid-reason' })
   })
 
-  test('returns no-recipients when the organisation has no enrolled emails', async () => {
-    vi.spyOn(complianceMock, 'getMockPersonEmails').mockReturnValue([])
+  test('returns no-recipients when the submitter and primary contact have no email', async () => {
+    vi.spyOn(
+      complianceMock,
+      'getMockAccountOrganisationByExternalId'
+    ).mockReturnValue({
+      persons: []
+    })
+    vi.spyOn(complianceMock, 'getMockDetailDataById').mockReturnValue({
+      ...complianceMock.mockDetailData,
+      audit: [
+        {
+          action: 'Submitted',
+          user: {
+            id: 'missing-email-user',
+            email: '   ',
+            name: 'No Email User'
+          }
+        }
+      ]
+    })
 
     const preview = await buildCancellationEmailPreview({
       organisationId: mockPendingItems[0].organisationId,
