@@ -322,15 +322,13 @@ describe('certificates of compliance — cancel', () => {
       expect(response.headers.location).toBe(reasonUrlFor(DP_ITEM))
     })
 
-    it('lists all recipient emails and renders personalisation from the Notify preview for a direct producer', async () => {
+    it('lists submitter and primary contact emails and renders personalisation from the Notify preview for a direct producer', async () => {
       const cookie = await signIn()
       const response = await get(emailPreviewUrlFor(DP_ITEM), cookie)
       const page = loadEmailPreviewPage(response.payload)
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(page.toLine).toBe(
-        'catherine.morris@howco.test, james.wright@howco.test'
-      )
+      expect(page.toLine).toBe('catherine.morris@howco.test, user@example.com')
       expect(page.bodyHtml).toContain('Catherine')
       expect(page.bodyHtml).toContain('Morris')
       expect(page.bodyHtml).toContain('ea@environment-agency.gov.uk')

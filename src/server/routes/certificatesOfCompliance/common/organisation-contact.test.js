@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'vitest'
-import { mapOrganisationContact } from './organisation-contact.js'
+import {
+  mapOrganisationContact,
+  mapPrimaryContactPerson
+} from './organisation-contact.js'
 
 const approvedPerson = {
   firstName: 'Nadia',
@@ -26,6 +29,37 @@ const basicUser = {
 }
 
 const noContact = { email: null, telephoneNumber: null }
+
+describe('mapPrimaryContactPerson', () => {
+  test('maps the Approved Person name and email for cancellation recipients', () => {
+    expect(
+      mapPrimaryContactPerson({ persons: [basicUser, approvedPerson] })
+    ).toEqual({
+      firstName: 'Nadia',
+      lastName: 'Clarke',
+      email: 'nadia.clarke@example.test'
+    })
+  })
+
+  test('returns null when no Approved Person is enrolled', () => {
+    expect(
+      mapPrimaryContactPerson({ persons: [basicUser, delegatedPerson] })
+    ).toBeNull()
+  })
+
+  test('returns null when the Approved Person is missing a name', () => {
+    expect(
+      mapPrimaryContactPerson({
+        persons: [
+          {
+            email: 'approved@example.test',
+            serviceRole: 'Approved Person'
+          }
+        ]
+      })
+    ).toBeNull()
+  })
+})
 
 describe('mapOrganisationContact', () => {
   test('maps the Approved Person email and telephone number', () => {
