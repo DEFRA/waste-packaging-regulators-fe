@@ -39,16 +39,10 @@ export function obligationsHandlers(data) {
     ),
     http.patch(
       `${base}/organisations/:organisationId/compliance-declarations/:id`,
-      dataHandler(async ({ request, params }) => {
-        const body = await request.json().catch(() => ({}))
-        const updated = data.updateDeclaration(params.id, {
-          status: body?.status,
-          user: body?.user,
-          reason: body?.reason,
-          timestamp: new Date().toISOString()
-        })
-        return updated
-          ? HttpResponse.json(updated)
+      dataHandler(({ params }) => {
+        const declaration = data.getDeclarationById(params.id)
+        return declaration
+          ? HttpResponse.json(declaration)
           : notFound('Declaration not found')
       })
     ),

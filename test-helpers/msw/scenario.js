@@ -21,7 +21,6 @@ import { getMockServer } from '#mocks/server.js'
 import {
   createBackends,
   backendHandlers,
-  defaultBackends,
   toDeclaration,
   listOrganisationName
 } from '#mocks/backends.js'
@@ -363,9 +362,7 @@ export function applyScenario(scenario) {
   server.use(...scenario.handlers)
 }
 
-// Restore the default fixture handlers and clear any approve/cancel transitions
-// left on the default backend (a test that PATCHes it without a scenario).
+// Restore the default fixture handlers.
 export function resetScenario() {
   getMockServer()?.resetHandlers()
-  defaultBackends.obligations.resetOverrides()
 }

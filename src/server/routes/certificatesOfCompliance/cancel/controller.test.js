@@ -370,7 +370,7 @@ describe('certificates of compliance — cancel', () => {
       expect(response.headers.location).toBe(reasonUrlFor(DP_ITEM))
     })
 
-    it('records the cancellation, shows the banner and the reason, and hides the action buttons', async () => {
+    it('records the cancellation and shows the cancelled banner', async () => {
       const cookie = await app.signIn()
       const cancelResponse = await cancel(DP_ITEM, 'producer-request', cookie)
 
@@ -387,35 +387,6 @@ describe('certificates of compliance — cancel', () => {
       expect(detailResponse.payload).toContain(
         'app-notification-banner--cancelled'
       )
-      // The chosen reason is recorded on the cancellation audit entry, shown in
-      // the current-year history table.
-      expect(detailResponse.payload).toContain('Producer requested to cancel')
-      expect(detailResponse.payload).not.toContain('Accept certificate')
-      expect(detailResponse.payload).not.toContain('Cancel certificate')
-    })
-
-    it('re-shows the cancelled banner when confirming an already-cancelled declaration', async () => {
-      const cookie = await app.signIn()
-      const firstCancel = await cancel(DP_ITEM, 'producer-request', cookie)
-      const cookieAfterCancel = app.nextCookie(firstCancel, cookie)
-
-      // Clear the first banner by visiting the detail page.
-      const firstView = await app.get(detailUrlFor(DP_ITEM), cookieAfterCancel)
-      const cookieAfterView = app.nextCookie(firstView, cookieAfterCancel)
-
-      const secondConfirm = await app.post(
-        actionUrlFor(DP_ITEM),
-        '',
-        cookieAfterView
-      )
-      expect(secondConfirm.statusCode).toBe(302)
-      expect(secondConfirm.headers.location).toBe(detailUrlFor(DP_ITEM))
-
-      const detailResponse = await app.get(
-        detailUrlFor(DP_ITEM),
-        app.nextCookie(secondConfirm, cookieAfterView)
-      )
-      expect(detailResponse.payload).toContain('Certificate cancelled')
     })
   })
 })

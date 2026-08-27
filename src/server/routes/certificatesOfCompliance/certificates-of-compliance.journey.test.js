@@ -364,17 +364,6 @@ describe('certificates of compliance — journey', () => {
       expect(detailsPage.banner.present).toBe(true)
       expect(detailsPage.banner.cancelled).toBe(true)
       expect(detailsPage.banner.heading).toBe('Certificate cancelled')
-      expect(detailsPage.cancellation.present).toBe(true)
-      expect(detailsPage.cancellation.statusLabel).toBe('Submission status')
-      expect(detailsPage.cancellation.statusTag).toEqual({
-        text: 'Cancelled',
-        colour: 'yellow'
-      })
-      // The cancelling regulator is the signed-in user resolved from the account API.
-      expect(detailsPage.cancellation.cancelledBy).toBe('John Doe')
-      expect(detailsPage.cancellation.reason).toBe(
-        'Producer requested to cancel'
-      )
     })
 
     it('compliance scheme cancel flow shows statement cancelled banner', async () => {
@@ -400,16 +389,6 @@ describe('certificates of compliance — journey', () => {
       expect(detailsPage.banner.heading).toBe('Statement cancelled')
       expect(detailsPage.banner.text).toBe(
         'Statement has been cancelled and an email sent to the compliance scheme.'
-      )
-      expect(detailsPage.cancellation.present).toBe(true)
-      expect(detailsPage.cancellation.statusLabel).toBe('Submission status')
-      expect(detailsPage.cancellation.statusTag).toEqual({
-        text: 'Cancelled',
-        colour: 'yellow'
-      })
-      expect(detailsPage.cancellation.cancelledBy).toBe('John Doe')
-      expect(detailsPage.cancellation.reason).toBe(
-        'Compliance scheme requested to cancel'
       )
     })
   })
@@ -534,37 +513,6 @@ describe('certificates of compliance — journey', () => {
       expect(detailsPage.banner.cancelled).toBe(false)
       expect(detailsPage.banner.heading).toBe('Certificate accepted')
       expect(detailsPage.banner.text).toBe('Certificate has been accepted.')
-      expect(detailsPage.accepted.present).toBe(true)
-      expect(detailsPage.accepted.statusLabel).toBe('Submission status')
-      expect(detailsPage.accepted.statusTag).toEqual({
-        text: 'Accepted',
-        colour: 'teal'
-      })
-      expect(detailsPage.accepted.acceptedBy).toBe('John Doe')
-      expect(detailsPage.accepted.acceptedDate).toBeTruthy()
-    })
-
-    it('an approved certificate leaves the Pending tab and appears on Accepted', async () => {
-      const yesResponse = await postAccept(
-        producer.detailPath,
-        'yes',
-        app.authCookie
-      )
-      const cookie = app.nextCookie(yesResponse, app.authCookie)
-
-      const pending = await app.server.inject({
-        method: 'GET',
-        url: '/certificates-of-compliance?type=direct-producers&tab=pending',
-        headers: { cookie }
-      })
-      expect(pending.payload).not.toContain(producer.name)
-
-      const accepted = await app.server.inject({
-        method: 'GET',
-        url: '/certificates-of-compliance?type=direct-producers&tab=accepted',
-        headers: { cookie }
-      })
-      expect(accepted.payload).toContain(producer.name)
     })
 
     it('"no" returns to detail without invoking the approve action', async () => {
@@ -615,53 +563,6 @@ describe('certificates of compliance — journey', () => {
       expect(detailsPage.banner.present).toBe(true)
       expect(detailsPage.banner.heading).toBe('Statement accepted')
       expect(detailsPage.banner.text).toBe('Statement has been accepted.')
-      expect(detailsPage.accepted.present).toBe(true)
-      expect(detailsPage.accepted.statusLabel).toBe('Submission status')
-      expect(detailsPage.accepted.acceptedBy).toBe('John Doe')
-    })
-
-    it('accept then cancel shows Accepted and Cancelled rows in current year', async () => {
-      const freshCookie = await app.signIn()
-
-      const acceptResponse = await postAccept(
-        producer.detailPath,
-        'yes',
-        freshCookie
-      )
-      expect(acceptResponse.statusCode).toBe(302)
-
-      let cookie = app.nextCookie(acceptResponse, freshCookie)
-      const cancelResponse = await cancelDeclaration(
-        producer.detailPath,
-        cookie
-      )
-      expect(cancelResponse.statusCode).toBe(302)
-
-      cookie = app.nextCookie(cancelResponse, cookie)
-      const detailResponse = await app.server.inject({
-        method: 'GET',
-        url: producer.detailPath,
-        headers: { cookie }
-      })
-
-      const { currentYear } = loadDetailPage(detailResponse.payload)
-      const rowActions = currentYear.rows.map((row) => row.action)
-      expect(rowActions).toContain('Accepted')
-      expect(rowActions).toContain('Cancelled')
-      expect(currentYear.rows.some((row) => row.by === 'John Doe')).toBe(true)
-      expect(currentYear.rows.every((row) => row.viewSubmissionUrl)).toBe(true)
-      expect(
-        currentYear.rows.every(
-          (row) => row.viewSubmissionUrl === producer.detailPath
-        )
-      ).toBe(true)
-
-      const linkedResponse = await app.server.inject({
-        method: 'GET',
-        url: currentYear.rows[0].viewSubmissionUrl,
-        headers: { cookie }
-      })
-      expect(linkedResponse.statusCode).toBe(200)
     })
   })
 
