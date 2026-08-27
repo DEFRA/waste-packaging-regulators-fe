@@ -10,32 +10,31 @@
     <div class="govuk-grid-column-two-thirds">
       {% if errors %}
         {{ govukErrorSummary({
-          titleText: "There is a problem",
+          titleText: t(locale, "common.errorSummary.title"),
           errorList: errors.summary
         }) }}
       {% endif %}
 
-      {% set docTypeLower = "statement" if registrationType == "ComplianceScheme" else "certificate" %}
-      <form method="post" action="/{{ organisationId }}/certificates-of-compliance/{{ id }}/accept" novalidate>
+      <form method="post" action="{{ localeUrl('/' ~ organisationId ~ '/certificates-of-compliance/' ~ id ~ '/accept', locale) }}" novalidate>
         {{ appCsrfField(CSRFToken) }}
         {{ govukRadios({
           name: "confirm-accept",
           fieldset: {
             legend: {
-              text: "Are you sure you want to accept this " + docTypeLower + " for " + companyName + "?",
+              text: i18n.t('legend', { docTypeLower: docTypeLower, companyName: companyName }),
               isPageHeading: true,
               classes: "govuk-fieldset__legend--l"
             }
           },
           errorMessage: errors.confirmAccept if errors,
           items: [
-            { value: "yes", text: "Yes" },
-            { value: "no", text: "No" }
+            { value: "yes", text: t(locale, "common.yes") },
+            { value: "no", text: t(locale, "common.no") }
           ]
         }) }}
 
         {{ govukButton({
-          text: "Continue",
+          text: t(locale, "common.continue"),
           preventDoubleClick: true
         }) }}
       </form>

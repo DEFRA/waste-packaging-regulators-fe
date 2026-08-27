@@ -10,18 +10,18 @@
     <div class="govuk-grid-column-two-thirds">
       {% if errors %}
         {{ govukErrorSummary({
-          titleText: "There is a problem",
+          titleText: t(locale, "common.errorSummary.title"),
           errorList: errors.summary
         }) }}
       {% endif %}
 
-      <form method="post" action="/{{ organisationId }}/certificates-of-compliance/{{ id }}/cancel/reason" novalidate>
+      <form method="post" action="{{ localeUrl('/' ~ organisationId ~ '/certificates-of-compliance/' ~ id ~ '/cancel/reason', locale) }}" novalidate>
         {{ appCsrfField(CSRFToken) }}
         {{ govukRadios({
           name: "cancel-reason",
           fieldset: {
             legend: {
-              text: "Why are you cancelling " + companyName + "'s " + docTypeLower + "?",
+              text: i18n.t('reason.legend', { companyName: companyName, docTypeLower: docTypeLower }),
               isPageHeading: true,
               classes: "govuk-fieldset__legend--l"
             }
@@ -31,7 +31,7 @@
         }) }}
 
         {{ govukButton({
-          text: "Continue",
+          text: t(locale, "common.continue"),
           preventDoubleClick: true
         }) }}
       </form>

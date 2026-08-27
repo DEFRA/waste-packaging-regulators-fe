@@ -9,8 +9,8 @@
     <a
       class="govuk-link"
       data-module="app-table-download"
-      href="/certificates-of-compliance/download?organisation_type={{ organisationType }}&submission_status={{ activeTab }}">
-      Download list (CSV)
+      href="{{ localeUrl('/certificates-of-compliance/download?organisation_type=' ~ organisationType ~ '&submission_status=' ~ activeTab, locale) }}">
+      {{ i18n.t('downloadLink') }}
     </a>
   </p>
   {% if items.length > 0 %}
@@ -18,16 +18,16 @@
       <caption class="govuk-table__caption govuk-visually-hidden">{{ tabSummaryText | capitalize }}</caption>
       <thead class="govuk-table__head">
         <tr class="govuk-table__row">
-          {{ appSortingColumnHeader({ sortable: false, firstColumn: true, columnName: 'OrganisationName', columnLabel: 'Organisation name' }) }}
-          {{ appSortingColumnHeader({ sortable: false, columnName: 'OrganisationId', columnLabel: 'Organisation ID' }) }}
-          {{ appSortingColumnHeader({ sort: sort, columnName: 'RecyclingObligations', columnLabel: 'Recycling obligations', sortable: activeTab != 'not-submitted', defaultDirection: 'asc' }) }}
+          {{ appSortingColumnHeader({ sortable: false, firstColumn: true, columnName: 'OrganisationName', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.organisationName'), locale: locale, i18n: i18n }) }}
+          {{ appSortingColumnHeader({ sortable: false, columnName: 'OrganisationId', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.organisationId'), locale: locale, i18n: i18n }) }}
+          {{ appSortingColumnHeader({ sort: sort, columnName: 'RecyclingObligations', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.recyclingObligations'), sortable: activeTab != 'not-submitted', defaultDirection: 'asc', locale: locale, i18n: i18n }) }}
           {% if organisationType == 'compliance-schemes' %}
-            {{ appSortingColumnHeader({ sort: sort, columnName: 'Regulation43', columnLabel: 'Regulation 43', sortable: activeTab != 'not-submitted', defaultDirection: 'asc' }) }}
+            {{ appSortingColumnHeader({ sort: sort, columnName: 'Regulation43', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.regulation43'), sortable: activeTab != 'not-submitted', defaultDirection: 'asc', locale: locale, i18n: i18n }) }}
           {% else %}
-            {{ appSortingColumnHeader({ sort: sort, columnName: 'PercentageMet', columnLabel: 'Percentage met', sortable: activeTab != 'not-submitted', defaultDirection: 'asc' }) }}
+            {{ appSortingColumnHeader({ sort: sort, columnName: 'PercentageMet', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.percentageMet'), sortable: activeTab != 'not-submitted', defaultDirection: 'asc', locale: locale, i18n: i18n }) }}
           {% endif %}
           {% if activeTab != 'not-submitted' %}
-            {{ appSortingColumnHeader({ sort: sort, columnName: 'DateSubmitted', columnLabel: 'Date submitted', defaultDirection: 'desc' }) }}
+            {{ appSortingColumnHeader({ sort: sort, columnName: 'DateSubmitted', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.dateSubmitted'), defaultDirection: 'desc', locale: locale, i18n: i18n }) }}
           {% endif %}
         </tr>
       </thead>
@@ -37,21 +37,21 @@
             <th scope="row" class="govuk-table__header govuk-!-width-one-quarter">
               {% if item.id == null %}
                 <a
-                  href="./{{ item.organisationId }}/certificates-of-compliance?obligationYear={{ complianceYear }}"
+                  href="{{ localeUrl('./' ~ item.organisationId ~ '/certificates-of-compliance?obligationYear=' ~ complianceYear, locale) }}"
                   class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
               {% else %}
                 <a
-                  href="./{{ item.organisationId }}/certificates-of-compliance/{{ item.id }}"
+                  href="{{ localeUrl('./' ~ item.organisationId ~ '/certificates-of-compliance/' ~ item.id, locale) }}"
                   class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
               {% endif %}
             </th>
             <td class="govuk-table__cell">{{ item.organisationReferenceNumber }}</td>
             <td class="govuk-table__cell">
-              {{ appStatusTag({ value: item.recyclingObligationsMet, trueText: 'Met', falseText: 'Not met' }) }}
+              {{ appStatusTag({ value: item.recyclingObligationsMet, trueText: i18n.ct('statusTag', 'met'), falseText: i18n.ct('statusTag', 'notMet'), locale: locale, i18n: i18n }) }}
             </td>
             {% if organisationType == 'compliance-schemes' %}
               <td class="govuk-table__cell">
-                {{ appStatusTag({ value: item.regulation43Met, trueText: 'Compliant', falseText: 'Not compliant' }) }}
+                {{ appStatusTag({ value: item.regulation43Met, trueText: i18n.ct('statusTag', 'compliant'), falseText: i18n.ct('statusTag', 'notCompliant'), locale: locale, i18n: i18n }) }}
               </td>
             {% else %}
               <td class="govuk-table__cell">

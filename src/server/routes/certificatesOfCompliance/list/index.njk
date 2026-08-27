@@ -7,7 +7,7 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
-      <span class="govuk-caption-l">{{ complianceYear }} relevant year</span>
+      <span class="govuk-caption-l">{{ i18n.t('relevantYearCaption', { complianceYear: complianceYear }) }}</span>
       <h1 class="govuk-heading-xl govuk-!-margin-bottom-6">{{ heading }}</h1>
     </div>
   </div>
@@ -15,7 +15,7 @@
     <div class="govuk-grid-column-two-thirds">
       {% if errors %}
         {{ govukErrorSummary({
-          titleText: "There is a problem",
+          titleText: t(locale, "common.errorSummary.title"),
           errorList: errors.summary
         }) }}
       {% endif %}
@@ -25,7 +25,7 @@
          for the hidden inputs that keep the user on the same type and tab. #}
       <div class="v3-search-panel govuk-!-margin-bottom-4">
         <div class="moj-search">
-          <form action="/certificates-of-compliance" method="get" novalidate>
+          <form action="{{ localeUrl('/certificates-of-compliance', locale) }}" method="get" novalidate>
             <input type="hidden" name="type" value="{{ organisationType }}">
             <input type="hidden" name="tab" value="{{ activeTab }}">
             <input type="hidden" name="sort" value="{{ sort.column }}[{{ sort.direction }}]">
@@ -33,7 +33,7 @@
             {{ govukInput({
               classes: "moj-search__input",
               label: {
-                text: "Search by organisation name or ID",
+                text: i18n.t('search.label'),
                 classes: "moj-search__label govuk-!-font-weight-bold"
               },
               id: "search",
@@ -45,7 +45,7 @@
 
             {{ govukButton({
               classes: "moj-search__button govuk-!-margin-bottom-0",
-              text: "Search"
+              text: t(locale, "common.search")
             }) }}
           </form>
         </div>
@@ -60,30 +60,30 @@
   <div class="govuk-tabs">
     <ul class="govuk-tabs__list">
       <li class="govuk-tabs__list-item{% if activeTab == 'pending' %} govuk-tabs__list-item--selected{% endif %}">
-        <a class="govuk-tabs__tab" href="?type={{ organisationType }}&tab=pending" {% if activeTab == 'pending' %} aria-current="page" {% endif %}>
-          Pending ({{ totalPending }})
+        <a class="govuk-tabs__tab" href="{{ localeUrl('?type=' ~ organisationType ~ '&tab=pending', locale) }}" {% if activeTab == 'pending' %} aria-current="page" {% endif %}>
+          {{ tabLabels.pending }}
         </a>
       </li>
       <li class="govuk-tabs__list-item{% if activeTab == 'accepted' %} govuk-tabs__list-item--selected{% endif %}">
-        <a class="govuk-tabs__tab" href="?type={{ organisationType }}&tab=accepted" {% if activeTab == 'accepted' %} aria-current="page" {% endif %}>
-          Accepted ({{ totalAccepted }})
+        <a class="govuk-tabs__tab" href="{{ localeUrl('?type=' ~ organisationType ~ '&tab=accepted', locale) }}" {% if activeTab == 'accepted' %} aria-current="page" {% endif %}>
+          {{ tabLabels.accepted }}
         </a>
       </li>
       <li class="govuk-tabs__list-item{% if activeTab == 'not-submitted' %} govuk-tabs__list-item--selected{% endif %}">
-        <a class="govuk-tabs__tab" href="?type={{ organisationType }}&tab=not-submitted" {% if activeTab == 'not-submitted' %} aria-current="page" {% endif %}>
-          Not submitted ({{ totalNotSubmitted }})
+        <a class="govuk-tabs__tab" href="{{ localeUrl('?type=' ~ organisationType ~ '&tab=not-submitted', locale) }}" {% if activeTab == 'not-submitted' %} aria-current="page" {% endif %}>
+          {{ tabLabels.notSubmitted }}
         </a>
       </li>
     </ul>
     {% if activeTab == 'pending' %}
       {% set tabCount = totalPending %}
-      {% set tabSummaryText = 'pending submissions' %}
+      {% set tabSummaryText = i18n.t('tabSummary.pending') %}
     {% elif activeTab == 'accepted' %}
       {% set tabCount = totalAccepted %}
-      {% set tabSummaryText = 'accepted submissions' %}
+      {% set tabSummaryText = i18n.t('tabSummary.accepted') %}
     {% elif activeTab == 'not-submitted' %}
       {% set tabCount = totalNotSubmitted %}
-      {% set tabSummaryText = 'not submitted' %}
+      {% set tabSummaryText = i18n.t('tabSummary.notSubmitted') %}
     {% endif %}
     {% include "certificatesOfCompliance/partials/tab-panel.njk" %}
   </div>
