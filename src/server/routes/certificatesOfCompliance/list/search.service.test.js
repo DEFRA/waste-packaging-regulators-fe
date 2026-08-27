@@ -68,7 +68,7 @@ describe('#getComplianceSearchResults', () => {
       )
     })
 
-    test('Should request pending and accepted together for the page organisation type', async () => {
+    test('Should request pending, accepted and cancelled together for the page organisation type', async () => {
       listComplianceDeclarations.mockResolvedValue({
         complianceDeclarations: [],
         total: 0
@@ -79,7 +79,7 @@ describe('#getComplianceSearchResults', () => {
       expect(listComplianceDeclarations).toHaveBeenCalledWith(
         {
           obligationYear: 2026,
-          status: 'Submitted,Accepted',
+          status: 'Submitted,Accepted,Cancelled',
           registrationType: 'ComplianceScheme',
           search: 'zeina',
           sortColumn: 'DateSubmitted',
@@ -91,13 +91,14 @@ describe('#getComplianceSearchResults', () => {
       )
     })
 
-    test('Should label Submitted as Pending and Accepted as Accepted', async () => {
+    test('Should label Submitted as Pending, and pass Accepted and Cancelled through', async () => {
       listComplianceDeclarations.mockResolvedValue({
         complianceDeclarations: [
           buildDeclaration({ id: 'a', status: 'Submitted' }),
-          buildDeclaration({ id: 'b', status: 'Accepted' })
+          buildDeclaration({ id: 'b', status: 'Accepted' }),
+          buildDeclaration({ id: 'c', status: 'Cancelled' })
         ],
-        total: 2
+        total: 3
       })
 
       const { items } = await getComplianceSearchResults(
@@ -107,7 +108,8 @@ describe('#getComplianceSearchResults', () => {
 
       expect(items.map((item) => item.submissionStatus)).toEqual([
         'Pending',
-        'Accepted'
+        'Accepted',
+        'Cancelled'
       ])
     })
 

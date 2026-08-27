@@ -13,6 +13,7 @@ import {
   mockPendingItems,
   mockAcceptedItems,
   mockNotSubmittedItems,
+  mockCancelledItems,
   mockComplianceSchemeAcceptedItems,
   mockComplianceSchemePendingItems
 } from '../certificates-of-compliance.mock.js'
@@ -627,6 +628,45 @@ describe('#certificatesOfComplianceController', () => {
         expect.stringContaining(
           '<strong class="govuk-tag govuk-tag--teal">Accepted</strong>'
         )
+      )
+    })
+
+    test('Should show the Cancelled tag for a cancelled declaration', async () => {
+      const { result } = await searchFor(mockCancelledItems[0].organisationName)
+
+      expect(result).toEqual(
+        expect.stringContaining(
+          '<strong class="govuk-tag govuk-tag--grey">Cancelled</strong>'
+        )
+      )
+    })
+
+    // A producer can hold a cancelled submission alongside a newer pending one.
+    // Search is the only place both are visible, so it returns a row per
+    // submission rather than one row per organisation.
+    test('Should return a row per submission for a producer with more than one', async () => {
+      const cancelled = mockCancelledItems[0]
+      const pending = mockPendingItems.find(
+        (item) => item.organisationId === cancelled.organisationId
+      )
+      const { result } = await searchFor(cancelled.organisationName)
+      const $ = load(result)
+      const rows = $('table').first().find('tbody tr')
+
+      expect($('body').text()).toContain('2 results for')
+      expect(rows).toHaveLength(2)
+
+      // Ordered by date submitted, newest first, so the newer pending
+      // submission sits above the older cancelled one.
+      expect(rows.eq(0).text()).toContain('Pending')
+      expect(rows.eq(1).text()).toContain('Cancelled')
+
+      // Each row links to its own submission, not to a shared organisation page.
+      expect(rows.eq(0).find('a').attr('href')).toBe(
+        `./${pending.organisationId}/certificates-of-compliance/${pending.id}`
+      )
+      expect(rows.eq(1).find('a').attr('href')).toBe(
+        `./${cancelled.organisationId}/certificates-of-compliance/${cancelled.id}`
       )
     })
 

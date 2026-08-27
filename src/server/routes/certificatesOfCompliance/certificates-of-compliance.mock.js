@@ -63,6 +63,9 @@ const MOCK_DECL_CS_PENDING_ID = 'decl-cs-001'
 const MOCK_DECL_CS_PENDING_SECONDARY_ID = 'decl-cs-002'
 const MOCK_DECL_CS_ACCEPTED_ID = 'decl-cs-101'
 const MOCK_DECL_CS_ACCEPTED_SECONDARY_ID = 'decl-cs-102'
+/** Current-year cancelled submissions, reachable only through search */
+const MOCK_DECL_GREENFIELD_CANCELLED_ID = 'decl-204872-cancelled'
+const MOCK_DECL_CS_CANCELLED_ID = 'decl-cs-201'
 const MOCK_REF_GREENFIELD = '204872'
 const MOCK_REF_CS_GREENCIRCLE = '110987'
 const MOCK_CHN_CS_ECOPACK = 'CS_GENERATED_0923795'
@@ -328,9 +331,39 @@ export const mockComplianceSchemeNotSubmittedItems = [
   }
 ]
 
+// Cancelled submissions have no tab of their own — they are only reachable
+// through search. Greenfield holds one alongside the newer pending submission
+// in mockPendingItems, which is the "producer with more than one submission"
+// case. Howco is deliberately left with a single submission, since tests assert
+// it returns exactly one result.
+export const mockCancelledItems = [
+  {
+    id: MOCK_DECL_GREENFIELD_CANCELLED_ID,
+    organisationId: MOCK_ORG_GREENFIELD_ID,
+    organisationReferenceNumber: MOCK_REF_GREENFIELD,
+    organisationName: MOCK_ORG_GREENFIELD_NAME,
+    recyclingObligationsMet: false,
+    obligationCoveragePercentage: 62,
+    dateSubmitted: '2027-01-05'
+  }
+]
+
+export const mockComplianceSchemeCancelledItems = [
+  {
+    id: MOCK_DECL_CS_CANCELLED_ID,
+    organisationId: MOCK_ORG_GREENCIRCLE_ID,
+    organisationReferenceNumber: MOCK_REF_CS_GREENCIRCLE,
+    organisationName: MOCK_ORG_GREENCIRCLE_OPERATOR_NAME,
+    recyclingObligationsMet: false,
+    regulation43Met: false,
+    dateSubmitted: '2027-01-09'
+  }
+]
+
 export const mockListByTab = {
   pending: mockPendingItems,
   accepted: mockAcceptedItems,
+  cancelled: mockCancelledItems,
   'not-submitted': mockNotSubmittedItems
 }
 
@@ -339,6 +372,7 @@ export const mockListByOrganisationType = {
   'compliance-schemes': {
     pending: mockComplianceSchemePendingItems,
     accepted: mockComplianceSchemeAcceptedItems,
+    cancelled: mockComplianceSchemeCancelledItems,
     'not-submitted': mockComplianceSchemeNotSubmittedItems
   }
 }

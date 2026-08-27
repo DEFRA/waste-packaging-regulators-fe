@@ -31,13 +31,15 @@
       <tbody class="govuk-table__body">
         {% for item in searchItems %}
           <tr class="govuk-table__row">
-            <td class="govuk-table__cell">
+            <th scope="row" class="govuk-table__header govuk-!-width-one-quarter">
               <a href="./{{ item.organisationId }}/certificates-of-compliance/{{ item.id }}" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
-            </td>
+            </th>
             <td class="govuk-table__cell">{{ item.organisationReferenceNumber }}</td>
             <td class="govuk-table__cell">
               {% if item.submissionStatus == 'Accepted' %}
                 <strong class="govuk-tag govuk-tag--teal">Accepted</strong>
+              {% elif item.submissionStatus == 'Cancelled' %}
+                <strong class="govuk-tag govuk-tag--grey">Cancelled</strong>
               {% else %}
                 <strong class="govuk-tag govuk-tag--blue">{{ item.submissionStatus }}</strong>
               {% endif %}

@@ -12,17 +12,27 @@ export const PAGE_SIZE = 20
 export const DECLARATIONS_BATCH_SIZE = 100
 export const SEARCH_TERM_MAX_LENGTH = 100
 export const SEARCH_ERROR_TEXT = 'Enter an organisation name or ID'
+export const CANCELLED_STATUS = 'Cancelled'
+
 // Search spans the pending and accepted tabs at once, in one call at the
 // backend's maximum page size. Anything beyond that is a term to refine.
-export const SEARCH_STATUSES = Object.values(statusBySubmissionStatus).join(',')
+// Cancelled is included too but is not a tab, so it is listed explicitly
+// rather than derived from statusBySubmissionStatus: an organisation can hold
+// a cancelled submission alongside a newer pending one and both rows must
+// show, which is the only way that history is reachable from the list page.
+export const SEARCH_STATUSES = [
+  ...Object.values(statusBySubmissionStatus),
+  CANCELLED_STATUS
+].join(',')
 export const SEARCH_RESULTS_PAGE_SIZE = 100
 
 // The Submission status column labels a row by the tab it would otherwise sit
 // under, so the declaration statuses come from statusBySubmissionStatus rather
-// than being written out again.
+// than being written out again. Cancelled has no tab, so it labels itself.
 export const searchSubmissionStatusByDeclarationStatus = {
   [statusBySubmissionStatus.pending]: 'Pending',
-  [statusBySubmissionStatus.accepted]: 'Accepted'
+  [statusBySubmissionStatus.accepted]: 'Accepted',
+  [CANCELLED_STATUS]: 'Cancelled'
 }
 export const NO_DATA = 'No data'
 export const UNKNOWN_ORGANISATION = 'Unknown organisation'

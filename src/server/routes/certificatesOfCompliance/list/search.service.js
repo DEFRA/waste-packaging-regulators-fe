@@ -45,6 +45,10 @@ function getMockSearchResults(organisationType, searchTerm) {
     ...(listByTab.accepted ?? []).map((item) => ({
       ...item,
       submissionStatus: 'Accepted'
+    })),
+    ...(listByTab.cancelled ?? []).map((item) => ({
+      ...item,
+      submissionStatus: 'Cancelled'
     }))
   ].filter((item) => mockRowMatchesTerm(item, searchTerm))
 
@@ -53,8 +57,9 @@ function getMockSearchResults(organisationType, searchTerm) {
   return { items, total: items.length, truncated: false }
 }
 
-// Pending and accepted submissions matching the term, for the organisation type
-// of the page. One row per submission, most recent first.
+// Pending, accepted and cancelled submissions matching the term, for the
+// organisation type of the page. One row per submission, most recent first, so
+// an organisation with more than one submission gets a row for each.
 export async function getComplianceSearchResults(
   organisationType,
   searchTerm,
