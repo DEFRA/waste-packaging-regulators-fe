@@ -1,8 +1,5 @@
-import {
-  NO_DATA,
-  GLASS_BREAKDOWN_MATERIALS,
-  certificateActionLabelsByRegistrationType
-} from '../common/constants.js'
+import { GLASS_BREAKDOWN_MATERIALS } from '../common/constants.js'
+import { translateActionLabels } from '../common/locale-strings.js'
 import {
   displayOrNoData,
   complianceDocumentNoun,
@@ -59,7 +56,7 @@ function mapMaterialTotalsStatusToRecyclingObligationsMet(
   }
 }
 
-function mapAcceptedOutcomeFields(data) {
+function mapAcceptedOutcomeFields(data, locale = 'en') {
   if (data.status !== 'Accepted') {
     return {
       showAcceptedOutcome: false,
@@ -72,14 +69,15 @@ function mapAcceptedOutcomeFields(data) {
 
   return {
     showAcceptedOutcome: true,
-    acceptedBy: displayOrNoData(acceptedAudit?.user?.name),
+    acceptedBy: displayOrNoData(acceptedAudit?.user?.name, locale),
     acceptedDate: displayOrNoData(
-      formatSubmissionDate(acceptedAudit?.timestamp ?? data.updated)
+      formatSubmissionDate(acceptedAudit?.timestamp ?? data.updated, locale),
+      locale
     )
   }
 }
 
-function mapCancelledOutcomeFields(data) {
+function mapCancelledOutcomeFields(data, locale = 'en') {
   if (data.status !== 'Cancelled') {
     return {
       showCancelledOutcome: false,
@@ -96,11 +94,12 @@ function mapCancelledOutcomeFields(data) {
 
   return {
     showCancelledOutcome: true,
-    cancelledBy: displayOrNoData(cancelledAudit?.user?.name),
+    cancelledBy: displayOrNoData(cancelledAudit?.user?.name, locale),
     cancelledDate: displayOrNoData(
-      formatSubmissionDate(cancelledAudit?.timestamp ?? data.updated)
+      formatSubmissionDate(cancelledAudit?.timestamp ?? data.updated, locale),
+      locale
     ),
-    cancellationReason: displayOrNoData(cancelledAudit?.reason)
+    cancellationReason: displayOrNoData(cancelledAudit?.reason, locale)
   }
 }
 
@@ -150,19 +149,24 @@ function computeTotals(rows) {
   }
 }
 
-function mapQueryDetails(queryDetails) {
+function mapQueryDetails(queryDetails, locale = 'en') {
   if (!queryDetails) {
     return null
   }
   return {
     queriedMaterials: queryDetails.queriedMaterials ?? null,
     reason: queryDetails.reason ?? null,
-    dateQueried: formatDate(queryDetails.dateQueried ?? queryDetails.actionDate)
+    dateQueried: formatDate(
+      queryDetails.dateQueried ?? queryDetails.actionDate,
+      locale
+    )
   }
 }
 
-function mapQueriedOutcome(data) {
-  return data.status === 'Queried' ? mapQueryDetails(data.queryDetails) : null
+function mapQueriedOutcome(data, locale = 'en') {
+  return data.status === 'Queried'
+    ? mapQueryDetails(data.queryDetails, locale)
+    : null
 }
 
 function mapHistoryReason(status, transitionAudit) {
@@ -178,10 +182,11 @@ function mapHistoryReason(status, transitionAudit) {
 
 function buildCurrentYearViewSubmissionUrl(
   declaration,
-  fallbackOrganisationId
+  fallbackOrganisationId,
+  locale = 'en'
 ) {
   const organisationId = declaration.organisation?.id ?? fallbackOrganisationId
-  return buildCertificateDetailPath(organisationId, declaration.id)
+  return buildCertificateDetailPath(organisationId, declaration.id, locale)
 }
 
 function getCurrentYearTransitionAudits(declaration) {
@@ -190,10 +195,15 @@ function getCurrentYearTransitionAudits(declaration) {
   )
 }
 
-function buildCurrentYearHistoryRow(declaration, entry, viewSubmissionUrl) {
+function buildCurrentYearHistoryRow(
+  declaration,
+  entry,
+  viewSubmissionUrl,
+  locale = 'en'
+) {
   return {
     sortTimestamp: entry.timestamp ?? declaration.updated,
-    date: formatHistoryDate(entry.timestamp ?? declaration.updated),
+    date: formatHistoryDate(entry.timestamp ?? declaration.updated, locale),
     action: entry.action,
     by: entry.user?.name ?? '',
     reason: mapHistoryReason(entry.action, entry),
@@ -201,10 +211,14 @@ function buildCurrentYearHistoryRow(declaration, entry, viewSubmissionUrl) {
   }
 }
 
-function buildCurrentYearHistoryRowFromStatus(declaration, viewSubmissionUrl) {
+function buildCurrentYearHistoryRowFromStatus(
+  declaration,
+  viewSubmissionUrl,
+  locale = 'en'
+) {
   return {
     sortTimestamp: declaration.updated,
-    date: formatHistoryDate(declaration.updated),
+    date: formatHistoryDate(declaration.updated, locale),
     action: declaration.status,
     by: '',
     reason: mapHistoryReason(declaration.status, null),
@@ -212,20 +226,30 @@ function buildCurrentYearHistoryRowFromStatus(declaration, viewSubmissionUrl) {
   }
 }
 
-function mapCurrentYearHistory(fallbackOrganisationId, declarations = []) {
+function mapCurrentYearHistory(
+  fallbackOrganisationId,
+  declarations = [],
+  locale = 'en'
+) {
   const rows = []
 
   for (const declaration of declarations) {
     const viewSubmissionUrl = buildCurrentYearViewSubmissionUrl(
       declaration,
-      fallbackOrganisationId
+      fallbackOrganisationId,
+      locale
     )
     const transitionAudits = getCurrentYearTransitionAudits(declaration)
 
     if (transitionAudits.length > 0) {
       for (const entry of transitionAudits) {
         rows.push(
-          buildCurrentYearHistoryRow(declaration, entry, viewSubmissionUrl)
+          buildCurrentYearHistoryRow(
+            declaration,
+            entry,
+            viewSubmissionUrl,
+            locale
+          )
         )
       }
       continue
@@ -236,7 +260,11 @@ function mapCurrentYearHistory(fallbackOrganisationId, declarations = []) {
       declaration.status === 'Cancelled'
     ) {
       rows.push(
-        buildCurrentYearHistoryRowFromStatus(declaration, viewSubmissionUrl)
+        buildCurrentYearHistoryRowFromStatus(
+          declaration,
+          viewSubmissionUrl,
+          locale
+        )
       )
     }
   }
@@ -298,11 +326,11 @@ export function deriveRecyclingObligationsMet(obligations) {
   )
 }
 
-function noDetailActions() {
+function noDetailActions(locale = 'en') {
   return {
     showAccept: false,
     showCancel: false,
-    labels: certificateActionLabelsByRegistrationType.DirectProducer,
+    labels: translateActionLabels('DirectProducer', locale),
     urls: { accept: '#', cancel: '#' }
   }
 }
@@ -311,18 +339,20 @@ function resolveDeclarationActions(
   reviewStatus,
   resolvedOrganisationId,
   resolvedId,
-  registrationType
+  registrationType,
+  locale = 'en'
 ) {
   if (resolvedOrganisationId && resolvedId) {
     return buildCertificateDetailActions(
       reviewStatus,
       resolvedOrganisationId,
       resolvedId,
-      registrationType
+      registrationType,
+      locale
     )
   }
 
-  return noDetailActions()
+  return noDetailActions(locale)
 }
 
 function mapDeclarationComplianceFields(
@@ -332,45 +362,61 @@ function mapDeclarationComplianceFields(
     obligationStatus,
     isRegulation43Compliant,
     companyName,
-    created
+    created,
+    locale = 'en'
   }
 ) {
   return {
     complianceYear: obligationYear == null ? null : String(obligationYear),
     complianceTypeLabel: buildComplianceTypeLabel(
       obligationYear,
-      organisation.registrationType
+      organisation.registrationType,
+      locale
     ),
     complianceDocumentNoun: complianceDocumentNoun(
-      organisation.registrationType
+      organisation.registrationType,
+      locale
     ),
     recyclingObligationsMet: mapRecyclingObligationsMet(obligationStatus),
     regulation43Met: isRegulation43Compliant ?? null,
     regulation43Statement: buildRegulation43Statement(
       isRegulation43Compliant ?? null,
-      companyName
+      companyName,
+      locale
     ),
-    dateDeclarationSubmitted: displayOrNoData(formatSubmissionDate(created))
+    dateDeclarationSubmitted: displayOrNoData(
+      formatSubmissionDate(created, locale),
+      locale
+    )
   }
 }
 
 function mapDeclarationContactFields(
   organisation,
-  { wasteOrganisation, submittedUser, submitterPhoneNumber, submitterName }
+  {
+    wasteOrganisation,
+    submittedUser,
+    submitterPhoneNumber,
+    submitterName,
+    locale = 'en'
+  }
 ) {
   return {
     organisationType: mapRegistrationTypeToOrganisationType(
-      organisation.registrationType
+      organisation.registrationType,
+      locale
     ),
     registrationType: organisation.registrationType,
     environmentalRegulator: organisation.regulator ?? null,
-    organisationRef: displayOrNoData(organisation.referenceNumber),
-    companiesHouseNumber:
-      mapCompaniesHouseNumberFromWasteOrganisation(wasteOrganisation),
-    nameOnAccount: displayOrNoData(submittedUser?.name),
-    declarationEmailAddress: displayOrNoData(submittedUser?.email),
-    companyPhoneNumber: displayOrNoData(submitterPhoneNumber),
-    declarationSignedBy: displayOrNoData(submitterName)
+    organisationRef: displayOrNoData(organisation.referenceNumber, locale),
+    companiesHouseNumber: mapCompaniesHouseNumberFromWasteOrganisation(
+      wasteOrganisation,
+      locale
+    ),
+    nameOnAccount: displayOrNoData(submittedUser?.name, locale),
+    declarationEmailAddress: displayOrNoData(submittedUser?.email, locale),
+    companyPhoneNumber: displayOrNoData(submitterPhoneNumber, locale),
+    declarationSignedBy: displayOrNoData(submitterName, locale)
   }
 }
 
@@ -381,7 +427,8 @@ export function mapDeclarationToDetail(
     id,
     declarationsForYear,
     submitterPhoneNumber,
-    wasteOrganisation
+    wasteOrganisation,
+    locale = 'en'
   } = {}
 ) {
   const {
@@ -421,27 +468,31 @@ export function mapDeclarationToDetail(
       obligationStatus,
       isRegulation43Compliant,
       companyName,
-      created
+      created,
+      locale
     }),
-    ...mapAcceptedOutcomeFields(data),
-    ...mapCancelledOutcomeFields(data),
+    ...mapAcceptedOutcomeFields(data, locale),
+    ...mapCancelledOutcomeFields(data, locale),
     ...mapDeclarationContactFields(organisation, {
       wasteOrganisation,
       submittedUser,
       submitterPhoneNumber,
-      submitterName
+      submitterName,
+      locale
     }),
     ...mapDeclarationMaterialGroups(obligations),
     actions: resolveDeclarationActions(
       reviewStatus,
       resolvedOrganisationId,
       resolvedId,
-      organisation.registrationType
+      organisation.registrationType,
+      locale
     ),
-    queryDetails: mapQueriedOutcome(data),
+    queryDetails: mapQueriedOutcome(data, locale),
     currentYearActions: mapCurrentYearHistory(
       resolvedOrganisationId,
-      historyDeclarations
+      historyDeclarations,
+      locale
     ),
     showObligations: (obligations ?? []).length !== 0
   }
@@ -454,14 +505,16 @@ export function mapObligationToDetail(
     organisation,
     accountOrganisationName,
     accountOrganisationReferenceNumber,
-    accountOrganisationContact
+    accountOrganisationContact,
+    locale = 'en'
   } = {}
 ) {
   const obligations = data?.obligations ?? []
   const materialGroups = mapDeclarationMaterialGroups(obligations)
 
   const orgFields = mapWasteOrganisationToDetailFields(organisation, {
-    obligationYear
+    obligationYear,
+    locale
   })
 
   // Compliance schemes take their name from the waste-organisations record (as
@@ -473,36 +526,47 @@ export function mapObligationToDetail(
     ? orgFields.companyName
     : (accountOrganisationName ?? orgFields.companyName)
 
+  const noData = displayOrNoData(null, locale)
+
   return {
     complianceYear: obligationYear == null ? null : String(obligationYear),
     complianceTypeLabel: buildComplianceTypeLabel(
       obligationYear,
-      orgFields.registrationType
+      orgFields.registrationType,
+      locale
     ),
     ...orgFields,
-    companyName: displayOrNoData(companyName),
+    companyName: displayOrNoData(companyName, locale),
     declarationStatus: 'Unsubmitted',
     reviewStatus: null,
     showDeclaration: false,
     showSubmittedOn: false,
     showNameOnAccount: false,
-    complianceDocumentNoun: complianceDocumentNoun(orgFields.registrationType),
+    complianceDocumentNoun: complianceDocumentNoun(
+      orgFields.registrationType,
+      locale
+    ),
     recyclingObligationsMet: deriveRecyclingObligationsMet(obligations),
     regulation43Met: null,
-    dateDeclarationSubmitted: NO_DATA,
+    dateDeclarationSubmitted: noData,
     // Organisation ID mirrors the listing: the Account API reference number
     // (or "No data"). Never the internal external id / GUID.
     organisationRef: displayOrNoData(
-      accountOrganisationReferenceNumber ?? organisation?.referenceNumber
+      accountOrganisationReferenceNumber ?? organisation?.referenceNumber,
+      locale
     ),
-    nameOnAccount: NO_DATA,
-    declarationEmailAddress: displayOrNoData(accountOrganisationContact?.email),
+    nameOnAccount: noData,
+    declarationEmailAddress: displayOrNoData(
+      accountOrganisationContact?.email,
+      locale
+    ),
     companyPhoneNumber: displayOrNoData(
-      accountOrganisationContact?.telephoneNumber
+      accountOrganisationContact?.telephoneNumber,
+      locale
     ),
-    declarationSignedBy: NO_DATA,
+    declarationSignedBy: noData,
     ...materialGroups,
-    actions: noDetailActions(),
+    actions: noDetailActions(locale),
     showAcceptedOutcome: false,
     acceptedBy: null,
     acceptedDate: null,

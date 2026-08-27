@@ -3,6 +3,13 @@ import { createAccountApiService } from '#services/account-api.service.js'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
 import { deriveRecyclingObligationsMet } from '../detail/detail-mapping.js'
+import { appendLangQuery } from '#server/common/helpers/i18n/locale-url.js'
+import {
+  cocPageI18n,
+  translateEmptyTabMessage,
+  translateTabSummaryText
+} from '../common/locale-strings.js'
+import { translate } from '#server/common/helpers/i18n/translate.js'
 import {
   registrationTypeByOrganisationType,
   statusBySubmissionStatus,
@@ -10,8 +17,7 @@ import {
   DECLARATIONS_BATCH_SIZE,
   NO_DATA,
   COMPLIANCE_SCHEMES,
-  COMPLIANCE_YEAR,
-  emptyTabMessages
+  COMPLIANCE_YEAR
 } from '../common/constants.js'
 import { mapOrganisationName } from '../common/organisation.js'
 import { resolveSchemeOperators } from '../common/scheme-operator.js'
@@ -486,7 +492,8 @@ export async function getCertificatesOfComplianceViewModel(
   currentPage,
   sortColumn,
   sortDirection,
-  traceId
+  traceId,
+  locale = 'en'
 ) {
   const apiWasteObligation = createWasteObligationsApiService()
   const apiWasteOrganisation = createWasteOrganisationsApiService()
@@ -518,9 +525,11 @@ export async function getCertificatesOfComplianceViewModel(
     paginationBaseUrl += `&sort=${sortColumn}[${sortDirection}]`
   }
 
+  const i18n = cocPageI18n(locale, 'list')
+
   return {
-    heading: 'View certificates and statements of compliance',
-    backlink: './',
+    heading: translate(locale, 'certificatesOfCompliance.list.heading'),
+    backlink: appendLangQuery('./', locale),
     complianceYear: summary.complianceYear,
     totalPending: summary.totalPending,
     totalAccepted: summary.totalAccepted,
@@ -528,16 +537,25 @@ export async function getCertificatesOfComplianceViewModel(
     organisationType,
     activeTab: tab,
     items: list.items,
-    emptyTabMessage: emptyTabMessages[tab] ?? '',
+    emptyTabMessage: translateEmptyTabMessage(tab, locale),
+    tabSummaryText: translateTabSummaryText(tab, locale),
+    tabLabels: {
+      pending: i18n.t('tabs.pending', { count: summary.totalPending }),
+      accepted: i18n.t('tabs.accepted', { count: summary.totalAccepted }),
+      notSubmitted: i18n.t('tabs.notSubmitted', {
+        count: summary.totalNotSubmitted
+      })
+    },
     pagination: {
       currentPage,
       totalPages: list.totalPages,
-      baseUrl: paginationBaseUrl
+      baseUrl: appendLangQuery(paginationBaseUrl, locale)
     },
     sort: {
       column: sortColumn,
       direction: sortDirection,
-      baseUrl: `${baseUrl}&page=1`
-    }
+      baseUrl: appendLangQuery(`${baseUrl}&page=1`, locale)
+    },
+    i18n
   }
 }

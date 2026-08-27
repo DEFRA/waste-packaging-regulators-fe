@@ -118,13 +118,15 @@ async function fetchOrganisationContact(accountApi, externalId, traceId) {
   return mapOrganisationContact(organisationWithPersons)
 }
 
+
 async function getNotSubmittedDeclarationDetail(
   obligationsApi,
   organisationsApi,
   accountApi,
   organisationId,
   obligationYear,
-  traceId
+  traceId,
+  locale = 'en'
 ) {
   // The waste-organisations record is needed before the Account lookup so we
   // know whether to resolve by external id (direct producers) or Companies
@@ -149,7 +151,8 @@ async function getNotSubmittedDeclarationDetail(
     organisation,
     accountOrganisationName: accountOrganisation.name,
     accountOrganisationReferenceNumber: accountOrganisation.referenceNumber,
-    accountOrganisationContact: accountOrganisation.contact
+    accountOrganisationContact: accountOrganisation.contact,
+    locale
   })
 }
 
@@ -160,7 +163,8 @@ async function getSubmittedDeclarationDetail(
   organisationId,
   id,
   obligationYear,
-  traceId
+  traceId,
+  locale = 'en'
 ) {
   const declaration = await obligationsApi.getComplianceDeclarationOrNull(
     { id, organisationId },
@@ -182,7 +186,8 @@ async function getSubmittedDeclarationDetail(
       id,
       declarationsForYear: listResponse?.complianceDeclarations ?? [],
       submitterPhoneNumber,
-      wasteOrganisation
+      wasteOrganisation,
+      locale
     })
   }
 
@@ -192,7 +197,8 @@ async function getSubmittedDeclarationDetail(
   )
   return mapObligationToDetail(fallbackObligationData, {
     organisationId,
-    obligationYear
+    obligationYear,
+    locale
   })
 }
 
@@ -202,7 +208,7 @@ export async function getDeclarationDetail(
   accountApi,
   organisationId,
   id,
-  { traceId, obligationYear } = {}
+  { traceId, obligationYear, locale = 'en' } = {}
 ) {
   if (!id) {
     return getNotSubmittedDeclarationDetail(
@@ -211,7 +217,8 @@ export async function getDeclarationDetail(
       accountApi,
       organisationId,
       obligationYear,
-      traceId
+      traceId,
+      locale
     )
   }
 
@@ -222,6 +229,7 @@ export async function getDeclarationDetail(
     organisationId,
     id,
     obligationYear,
-    traceId
+    traceId,
+    locale
   )
 }

@@ -54,7 +54,8 @@ export async function buildCancellationEmailPreview({
   organisationId,
   id,
   reasonKey,
-  traceId
+  traceId,
+  locale = 'en'
 }) {
   const declaration = await fetchDeclaration(organisationId, id, traceId)
   if (declaration == null) {
@@ -62,7 +63,7 @@ export async function buildCancellationEmailPreview({
   }
 
   const registrationType = declaration.organisation?.registrationType
-  const reasonLabel = getCancelReasonLabel(registrationType, reasonKey)
+  const reasonLabel = getCancelReasonLabel(registrationType, reasonKey, locale)
   if (!reasonLabel) {
     return { error: 'invalid-reason' }
   }

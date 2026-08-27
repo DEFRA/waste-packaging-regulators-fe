@@ -1,29 +1,34 @@
 import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
+import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import {
-  SEARCH_ERROR_TEXT,
-  SEARCH_TERM_MAX_LENGTH
-} from '../common/constants.js'
+  appendLangQuery,
+  persistAuthLocale
+} from '#server/common/helpers/i18n/locale-url.js'
+import { translate } from '#server/common/helpers/i18n/translate.js'
+import { SEARCH_TERM_MAX_LENGTH } from '../common/constants.js'
+import { cocPageI18n } from '../common/locale-strings.js'
 import { getCertificatesOfComplianceViewModel } from './list.service.js'
 import { getComplianceSearchResults } from './search.service.js'
 
-// An absent `search` param means no search was run, so the page renders as
-// normal. An empty or whitespace-only one means the user pressed Search with
-// nothing entered, which is a validation error.
-export const parseSearchTerm = (rawSearch) => {
+export const parseSearchTerm = (rawSearch, locale = 'en') => {
   if (rawSearch === undefined) {
     return { searchTerm: '', errors: null }
   }
 
   const searchTerm = rawSearch.trim().slice(0, SEARCH_TERM_MAX_LENGTH)
+  const searchError = translate(
+    locale,
+    'certificatesOfCompliance.list.search.error'
+  )
 
   if (searchTerm === '') {
     return {
       searchTerm: '',
       errors: {
-        summary: [{ text: SEARCH_ERROR_TEXT, href: '#search' }],
-        search: { text: SEARCH_ERROR_TEXT }
+        summary: [{ text: searchError, href: '#search' }],
+        search: { text: searchError }
       }
     }
   }
@@ -80,9 +85,12 @@ export function resolveSortForSubmissionStatus(
 
 export const certificatesOfComplianceController = {
   async handler(request, h) {
+    const locale = getLocale(request)
+
     if (!request.yar.get('user')) {
+      persistAuthLocale(request, locale)
       request.yar.set('returnTo', request.url.pathname + request.url.search)
-      return h.redirect('/signin-oidc')
+      return h.redirect(appendLangQuery('/signin-oidc', locale))
     }
 
     const {
@@ -104,7 +112,7 @@ export const certificatesOfComplianceController = {
       type
     )
 
-    const { searchTerm, errors } = parseSearchTerm(request.query.search)
+    const { searchTerm, errors } = parseSearchTerm(request.query.search, locale)
 
     const traceId = request.headers[config.get('tracing.header')]
 
@@ -115,7 +123,8 @@ export const certificatesOfComplianceController = {
         Number.parseInt(page, 10),
         sortColumn,
         sortDirection,
-        traceId
+        traceId,
+        locale
       ),
       searchTerm ? getComplianceSearchResults(type, searchTerm, traceId) : null
     ]).catch((error) => {
@@ -123,16 +132,26 @@ export const certificatesOfComplianceController = {
       throw error
     })
 
+    const i18n = cocPageI18n(locale, 'list')
+    const errorPrefix = translate(locale, 'common.errorPrefix')
+
     return h.view('certificatesOfCompliance/list/index', {
       ...viewModel,
+      locale,
+      i18n,
       searchTerm,
       errors,
       isSearch: search !== null,
       searchItems: search?.items ?? [],
       searchResultCount: search?.total ?? 0,
       searchTruncated: search?.truncated ?? false,
-      clearSearchUrl: `/certificates-of-compliance?type=${type}&tab=${submissionStatus}`,
-      pageTitle: errors ? `Error: ${viewModel.heading}` : viewModel.heading
+      clearSearchUrl: appendLangQuery(
+        `/certificates-of-compliance?type=${type}&tab=${submissionStatus}`,
+        locale
+      ),
+      pageTitle: errors
+        ? `${errorPrefix}${viewModel.heading}`
+        : viewModel.heading
     })
   }
 }
