@@ -1,17 +1,9 @@
 import {
-  NO_DATA,
   organisationTypeDisplayNames,
   registrationTypeFromApi
 } from './constants.js'
 import { displayOrNoData } from './display.js'
 import { mapOrganisationName } from './organisation.js'
-
-const emptyWasteOrganisationDetailFields = {
-  companyName: null,
-  registrationType: null,
-  organisationType: NO_DATA,
-  companiesHouseNumber: NO_DATA
-}
 
 export function deriveRegistrationType(registrations, obligationYear) {
   const resolvedRegistrations = registrations ?? []
@@ -78,24 +70,36 @@ function resolveWasteOrganisationRegistrationType(
 // An unmapped type falls back to the raw value rather than hiding it. The
 // own-property check keeps inherited Object keys (e.g. 'constructor') from
 // resolving to a function.
-export function mapRegistrationTypeToOrganisationType(registrationType) {
+export function mapRegistrationTypeToOrganisationType(
+  registrationType,
+  locale = 'en'
+) {
   return displayOrNoData(
     Object.hasOwn(organisationTypeDisplayNames, registrationType)
       ? organisationTypeDisplayNames[registrationType]
-      : registrationType
+      : registrationType,
+    locale
   )
 }
 
-export function mapCompaniesHouseNumberFromWasteOrganisation(organisation) {
-  return displayOrNoData(organisation?.companiesHouseNumber)
+export function mapCompaniesHouseNumberFromWasteOrganisation(
+  organisation,
+  locale = 'en'
+) {
+  return displayOrNoData(organisation?.companiesHouseNumber, locale)
 }
 
 export function mapWasteOrganisationToDetailFields(
   organisation,
-  { obligationYear } = {}
+  { obligationYear, locale = 'en' } = {}
 ) {
   if (!organisation) {
-    return emptyWasteOrganisationDetailFields
+    return {
+      companyName: null,
+      registrationType: null,
+      organisationType: displayOrNoData(null, locale),
+      companiesHouseNumber: displayOrNoData(null, locale)
+    }
   }
 
   const registrationType = resolveWasteOrganisationRegistrationType(
@@ -106,8 +110,13 @@ export function mapWasteOrganisationToDetailFields(
   return {
     companyName: mapOrganisationName(organisation),
     registrationType,
-    organisationType: mapRegistrationTypeToOrganisationType(registrationType),
-    companiesHouseNumber:
-      mapCompaniesHouseNumberFromWasteOrganisation(organisation)
+    organisationType: mapRegistrationTypeToOrganisationType(
+      registrationType,
+      locale
+    ),
+    companiesHouseNumber: mapCompaniesHouseNumberFromWasteOrganisation(
+      organisation,
+      locale
+    )
   }
 }
