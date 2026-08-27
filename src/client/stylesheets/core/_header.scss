@@ -5,28 +5,46 @@
   border-bottom-color: $app-light-grey;
 }
 
-.app-service-navigation__inner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: govuk-spacing(2);
+// Right-align the language switcher in the service navigation end slot.
+.govuk-service-navigation > .govuk-width-container {
+  @media #{govuk-from-breakpoint(tablet)} {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
 }
 
 .language-toggle-nav {
-  margin-left: auto;
-  margin-bottom: govuk-spacing(2);
+  margin: govuk-spacing(2) 0 govuk-spacing(3);
+
+  @media #{govuk-from-breakpoint(tablet)} {
+    margin: 0;
+    padding: govuk-spacing(3) 0;
+  }
 }
 
 .language-toggle {
+  @include govuk-font($size: 16);
   list-style: none;
   padding: 0;
   margin: 0;
-  display: flex;
-  gap: govuk-spacing(3);
-  justify-content: flex-end;
+  text-align: right;
 }
 
 .language-toggle__option {
+  display: inline;
   margin: 0;
+
+  &:not(:last-child)::after {
+    content: '|';
+    display: inline-block;
+    margin: 0 govuk-spacing(2);
+    color: govuk-colour('black');
+    font-weight: normal;
+  }
+}
+
+.language-toggle__active {
+  @include govuk-typography-weight-bold;
 }
