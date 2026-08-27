@@ -29,6 +29,7 @@ import { createWasteObligationsApiService } from '#services/waste-obligations-ap
 import { getComplianceSearchResults } from './search.service.js'
 import {
   mockAcceptedItems,
+  mockCancelledItems,
   mockComplianceSchemePendingItems,
   mockPendingItems
 } from '../certificates-of-compliance.mock.js'
@@ -111,6 +112,24 @@ describe('#getComplianceSearchResults', () => {
         'Accepted',
         'Cancelled'
       ])
+    })
+
+    // Only Submitted, Accepted and Cancelled are requested, so this is a guard
+    // against the API returning something else rather than an expected path.
+    test('Should fall back to the raw status when it has no label', async () => {
+      listComplianceDeclarations.mockResolvedValue({
+        complianceDeclarations: [
+          buildDeclaration({ id: 'a', status: 'Queried' })
+        ],
+        total: 1
+      })
+
+      const { items } = await getComplianceSearchResults(
+        'direct-producers',
+        'zeina'
+      )
+
+      expect(items[0].submissionStatus).toBe('Queried')
     })
 
     // Ordering is delegated to the API via the sort parameter, so the rows are
@@ -244,6 +263,34 @@ describe('#getComplianceSearchResults', () => {
       )
       expect(items[0].submissionStatus).toBe('Pending')
       expect(listComplianceDeclarations).not.toHaveBeenCalled()
+    })
+
+    test('Should return a row per submission for a fixture organisation with more than one', async () => {
+      const cancelled = mockCancelledItems[0]
+
+      const { items } = await getComplianceSearchResults(
+        'direct-producers',
+        cancelled.organisationName
+      )
+
+      expect(items.map((item) => item.submissionStatus)).toEqual([
+        'Pending',
+        'Cancelled'
+      ])
+      expect(items.map((item) => item.id)).toHaveLength(2)
+    })
+
+    // Guards the fixture lookup: an organisation type with no fixtures, and a
+    // fixture set missing any of the status keys, both come back empty rather
+    // than throwing.
+    test('Should return nothing for an organisation type with no fixtures', async () => {
+      const { items, total } = await getComplianceSearchResults(
+        'not-an-organisation-type',
+        'zeina'
+      )
+
+      expect(items).toEqual([])
+      expect(total).toBe(0)
     })
 
     test('Should match a fixture organisation reference number', async () => {
