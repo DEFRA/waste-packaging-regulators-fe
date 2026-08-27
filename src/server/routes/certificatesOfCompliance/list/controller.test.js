@@ -1,79 +1,44 @@
+import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import {
+  sessionCookieFromResponse,
+  mergeCookiesFromResponse
+} from '#test-helpers/cookies.js'
 import { load } from 'cheerio'
 import { vi } from 'vitest'
 import * as listService from './list.service.js'
 import { getDefaultSortColumn } from './controller.js'
-import { setupRegulatorsApp } from '#test-helpers/msw/harness.js'
 import {
-  obligationPresets,
-  materialRow
-} from '#test-helpers/msw/obligations.js'
+  mockSummary,
+  mockPendingItems,
+  mockAcceptedItems,
+  mockNotSubmittedItems,
+  mockComplianceSchemeAcceptedItems,
+  mockComplianceSchemePendingItems
+} from '../certificates-of-compliance.mock.js'
 import { emptyTabMessages } from '../common/constants.js'
 
-// A small compliance world the value-asserting tests declare for themselves, so
-// the counts, rows and percentages they check trace back to this input rather
-// than a shared fixture. Behavioural tests (navigation, sorting mechanics,
-// validation) below don't apply a scenario and run against the default mock.
-const LIST_ORGS = [
-  {
-    name: 'Aldbury Producers Ltd',
-    reference: '100001',
-    status: 'pending',
-    obligations: [materialRow('Aluminium', 100, 97, 'NotMet')] // 97% coverage
-  },
-  {
-    name: 'Braemar Producers Ltd',
-    reference: '100002',
-    status: 'pending',
-    obligations: obligationPresets.allMet
-  },
-  {
-    name: 'Cedar Producers Ltd',
-    reference: '100003',
-    status: 'accepted',
-    obligations: obligationPresets.allMet
-  },
-  {
-    name: 'Dover Producers Ltd',
-    reference: '100004',
-    status: 'not-submitted',
-    obligations: [materialRow('Aluminium', 100, 92, 'NotMet')] // 92% coverage
-  },
-  {
-    name: 'Elgin Producers Ltd',
-    reference: '100005',
-    status: 'not-submitted',
-    obligations: obligationPresets.allNoData
-  },
-  {
-    name: 'Foxton Compliance Operators',
-    type: 'compliance-scheme',
-    reference: '200001',
-    status: 'pending',
-    obligations: obligationPresets.allMet,
-    regulation43: false
-  },
-  {
-    name: 'Girvan Compliance Operators',
-    type: 'compliance-scheme',
-    reference: '200002',
-    status: 'accepted',
-    obligations: obligationPresets.allMet,
-    regulation43: true
-  },
-  {
-    name: 'Harlow Compliance Operators',
-    type: 'compliance-scheme',
-    reference: '200003',
-    status: 'not-submitted',
-    obligations: obligationPresets.allMet
-  }
-]
-
 describe('#certificatesOfComplianceController', () => {
-  const app = setupRegulatorsApp()
+  let server
+  let sessionCookie
 
-  const inject = (url) => app.get(url)
+  beforeAll(async () => {
+    server = await createServer()
+    await server.initialize()
+    // Sign in via mock strategy to get a session cookie for use in all tests
+    const response = await server.inject({
+      method: 'GET',
+      url: '/signin-oidc'
+    })
+    sessionCookie = sessionCookieFromResponse(response)
+  })
+
+  afterAll(async () => {
+    await server.stop({ timeout: 0 })
+  })
+
+  const inject = (url) =>
+    server.inject({ method: 'GET', url, headers: { cookie: sessionCookie } })
 
   test('Should return 200 for default request', async () => {
     const { statusCode } = await inject('/certificates-of-compliance')
@@ -92,7 +57,9 @@ describe('#certificatesOfComplianceController', () => {
   test('Should render the compliance year from the summary', async () => {
     const { result } = await inject('/certificates-of-compliance')
 
-    expect(result).toEqual(expect.stringContaining('2026 relevant year'))
+    expect(result).toEqual(
+      expect.stringContaining(`${mockSummary.complianceYear} relevant year`)
+    )
   })
 
   describe('Organisation type navigation', () => {
@@ -134,9 +101,7 @@ describe('#certificatesOfComplianceController', () => {
         '/certificates-of-compliance?type=direct-producers&tab=accepted'
       )
 
-      expect(result).toEqual(
-        expect.stringContaining('type=direct-producers&tab=accepted')
-      )
+      expect(result).toMatch(/type=direct-producers(?:&amp;|&)tab=accepted/)
     })
 
     test('Should include the current tab in the non-active organisation type nav link', async () => {
@@ -144,42 +109,33 @@ describe('#certificatesOfComplianceController', () => {
         '/certificates-of-compliance?type=compliance-schemes&tab=accepted'
       )
 
-      expect(result).toEqual(
-        expect.stringContaining('type=direct-producers&tab=accepted')
-      )
+      expect(result).toMatch(/type=direct-producers(?:&amp;|&)tab=accepted/)
     })
   })
 
   describe('Tab counts', () => {
     test('Should show the pending count from mock data in the tab label', async () => {
-      const scenario = app.given(LIST_ORGS)
       const { result } = await inject('/certificates-of-compliance')
 
       expect(result).toEqual(
-        expect.stringContaining(
-          `Pending (${scenario.rowsFor('DirectProducer', 'pending').length})`
-        )
+        expect.stringContaining(`Pending (${mockSummary.totalPending})`)
       )
     })
 
     test('Should show the accepted count from mock data in the tab label', async () => {
-      const scenario = app.given(LIST_ORGS)
       const { result } = await inject('/certificates-of-compliance')
 
       expect(result).toEqual(
-        expect.stringContaining(
-          `Accepted (${scenario.rowsFor('DirectProducer', 'accepted').length})`
-        )
+        expect.stringContaining(`Accepted (${mockSummary.totalAccepted})`)
       )
     })
 
     test('Should show the not submitted count from mock data in the tab label', async () => {
-      const scenario = app.given(LIST_ORGS)
       const { result } = await inject('/certificates-of-compliance')
 
       expect(result).toEqual(
         expect.stringContaining(
-          `Not submitted (${scenario.rowsFor('DirectProducer', 'not-submitted').length})`
+          `Not submitted (${mockSummary.totalNotSubmitted})`
         )
       )
     })
@@ -187,56 +143,54 @@ describe('#certificatesOfComplianceController', () => {
 
   describe('Tab content', () => {
     test('Should render pending items in the pending tab by default', async () => {
-      const scenario = app.given(LIST_ORGS)
-      const rows = scenario.rowsFor('DirectProducer', 'pending')
       const { result } = await inject('/certificates-of-compliance')
 
       expect(result).toEqual(
-        expect.stringContaining(`<strong>${rows.length}</strong>`)
+        expect.stringContaining(`<strong>${mockSummary.totalPending}</strong>`)
       )
       expect(result).toEqual(expect.stringContaining('pending submissions'))
-      rows.forEach(({ organisationName, id }) => {
+      mockPendingItems.forEach(({ organisationName, id }) => {
         expect(result).toEqual(expect.stringContaining(organisationName))
         expect(result).toEqual(expect.stringContaining(id))
       })
     })
 
     test('Should render accepted items in the accepted tab', async () => {
-      const scenario = app.given(LIST_ORGS)
-      const rows = scenario.rowsFor('DirectProducer', 'accepted')
       const { result, statusCode } = await inject(
         '/certificates-of-compliance?tab=accepted'
       )
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toEqual(
-        expect.stringContaining(`<strong>${rows.length}</strong>`)
+        expect.stringContaining(`<strong>${mockSummary.totalAccepted}</strong>`)
       )
       expect(result).toEqual(expect.stringContaining('accepted submissions'))
-      rows.forEach(({ organisationName, id }) => {
+      mockAcceptedItems.forEach(({ organisationName, id }) => {
         expect(result).toEqual(expect.stringContaining(organisationName))
         expect(result).toEqual(expect.stringContaining(id))
       })
     })
 
     test('Should render not submitted items in the not submitted tab', async () => {
-      const scenario = app.given(LIST_ORGS)
-      const rows = scenario.rowsFor('DirectProducer', 'not-submitted')
       const { result, statusCode } = await inject(
         '/certificates-of-compliance?tab=not-submitted'
       )
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toEqual(
-        expect.stringContaining(`<strong>${rows.length}</strong>`)
+        expect.stringContaining(
+          `<strong>${mockSummary.totalNotSubmitted}</strong>`
+        )
       )
       expect(result).toEqual(expect.stringContaining('not submitted'))
-      rows.forEach(({ organisationName, organisationReferenceNumber }) => {
-        expect(result).toEqual(expect.stringContaining(organisationName))
-        expect(result).toEqual(
-          expect.stringContaining(organisationReferenceNumber)
-        )
-      })
+      mockNotSubmittedItems.forEach(
+        ({ organisationName, organisationReferenceNumber }) => {
+          expect(result).toEqual(expect.stringContaining(organisationName))
+          expect(result).toEqual(
+            expect.stringContaining(organisationReferenceNumber)
+          )
+        }
+      )
     })
 
     test('Should not render other tab panels when a specific tab is active', async () => {
@@ -289,11 +243,9 @@ describe('#certificatesOfComplianceController', () => {
     )
 
     test('Should render Percentage met for direct-producer pending items', async () => {
-      const scenario = app.given(LIST_ORGS)
-      // Aldbury is declared with 97 accepted of 100 obligated → 97%.
-      const item = scenario
-        .rowsFor('DirectProducer', 'pending')
-        .find((entry) => entry.obligationCoveragePercentage === 97)
+      const item = mockPendingItems.find(
+        (entry) => entry.obligationCoveragePercentage === 97
+      )
       const { result } = await inject(
         '/certificates-of-compliance?type=direct-producers&tab=pending'
       )
@@ -303,10 +255,9 @@ describe('#certificatesOfComplianceController', () => {
     })
 
     test('Should render Percentage met for direct-producer not-submitted items', async () => {
-      const scenario = app.given(LIST_ORGS)
-      const item = scenario
-        .rowsFor('DirectProducer', 'not-submitted')
-        .find((entry) => entry.obligationCoveragePercentage === 92)
+      const item = mockNotSubmittedItems.find(
+        (entry) => entry.obligationCoveragePercentage === 92
+      )
       const { result } = await inject(
         '/certificates-of-compliance?type=direct-producers&tab=not-submitted'
       )
@@ -316,10 +267,9 @@ describe('#certificatesOfComplianceController', () => {
     })
 
     test('Should render Compliant tag for items where regulation43Met is true', async () => {
-      const scenario = app.given(LIST_ORGS)
-      const trueItem = scenario
-        .rowsFor('ComplianceScheme', 'accepted')
-        .find((item) => item.regulation43Met === true)
+      const trueItem = mockComplianceSchemeAcceptedItems.find(
+        (item) => item.regulation43Met === true
+      )
       const { result } = await inject(
         '/certificates-of-compliance?type=compliance-schemes&tab=accepted'
       )
@@ -329,10 +279,9 @@ describe('#certificatesOfComplianceController', () => {
     })
 
     test('Should render Not compliant tag for items where regulation43Met is false', async () => {
-      const scenario = app.given(LIST_ORGS)
-      const falseItem = scenario
-        .rowsFor('ComplianceScheme', 'pending')
-        .find((item) => item.regulation43Met === false)
+      const falseItem = mockComplianceSchemePendingItems.find(
+        (item) => item.regulation43Met === false
+      )
       const { result } = await inject(
         '/certificates-of-compliance?type=compliance-schemes&tab=pending'
       )
@@ -614,39 +563,24 @@ describe('#certificatesOfComplianceController', () => {
   })
 
   describe('Search results', () => {
-    let pendingItem
-    let acceptedItem
-    let schemeItem
-
-    beforeEach(() => {
-      const scenario = app.given(LIST_ORGS)
-      pendingItem = scenario.rowsFor('DirectProducer', 'pending')[0]
-      acceptedItem = scenario.rowsFor('DirectProducer', 'accepted')[0]
-      schemeItem = scenario.rowsFor('ComplianceScheme', 'pending')[0]
-    })
-
     const searchFor = (term, type = 'direct-producers') =>
       inject(
         `/certificates-of-compliance?type=${type}&search=${encodeURIComponent(term)}`
       )
 
     test('Should show the result count with the term in bold and a Clear search link', async () => {
-      const { result } = await searchFor(pendingItem.organisationName)
+      const { result } = await searchFor(mockPendingItems[0].organisationName)
       const $ = load(result)
 
       expect($('body').text()).toContain('1 result for')
-      expect(result).toEqual(
-        expect.stringContaining(
-          `<strong>"${pendingItem.organisationName}"</strong>`
-        )
-      )
+      expect($('body').text()).toContain(mockPendingItems[0].organisationName)
       expect($('a:contains("Clear search")').attr('href')).toBe(
         '/certificates-of-compliance?type=direct-producers&tab=pending'
       )
     })
 
     test('Should render the results table above the service navigation', async () => {
-      const { result } = await searchFor(pendingItem.organisationName)
+      const { result } = await searchFor(mockPendingItems[0].organisationName)
 
       expect(result.indexOf('Submission status')).toBeLessThan(
         result.indexOf('aria-label="Filter by producer type"')
@@ -654,21 +588,22 @@ describe('#certificatesOfComplianceController', () => {
     })
 
     test('Should render a row linking to the submission', async () => {
-      const { result } = await searchFor(pendingItem.organisationName)
+      const item = mockPendingItems[0]
+      const { result } = await searchFor(item.organisationName)
       const $ = load(result)
       // The same organisation also appears in the main table below, so scope to
       // the results table.
       const link = $('table')
         .first()
         .find(
-          `a[href="./${pendingItem.organisationId}/certificates-of-compliance/${pendingItem.id}"]`
+          `a[href="./${item.organisationId}/certificates-of-compliance/${item.id}"]`
         )
 
-      expect(link.text().trim()).toBe(pendingItem.organisationName)
+      expect(link.text().trim()).toBe(item.organisationName)
     })
 
     test('Should show the Pending tag for a submitted declaration', async () => {
-      const { result } = await searchFor(pendingItem.organisationName)
+      const { result } = await searchFor(mockPendingItems[0].organisationName)
 
       expect(result).toEqual(
         expect.stringContaining(
@@ -678,7 +613,7 @@ describe('#certificatesOfComplianceController', () => {
     })
 
     test('Should show the Accepted tag for an accepted declaration', async () => {
-      const { result } = await searchFor(acceptedItem.organisationName)
+      const { result } = await searchFor(mockAcceptedItems[0].organisationName)
 
       expect(result).toEqual(
         expect.stringContaining(
@@ -688,13 +623,10 @@ describe('#certificatesOfComplianceController', () => {
     })
 
     test('Should match on organisation ID', async () => {
-      const { result } = await searchFor(
-        acceptedItem.organisationReferenceNumber
-      )
+      const item = mockAcceptedItems[0]
+      const { result } = await searchFor(item.organisationReferenceNumber)
 
-      expect(result).toEqual(
-        expect.stringContaining(acceptedItem.organisationName)
-      )
+      expect(result).toEqual(expect.stringContaining(item.organisationName))
     })
 
     // A cancelled declaration belongs to no tab, so search is the only place it
@@ -758,7 +690,7 @@ describe('#certificatesOfComplianceController', () => {
     })
 
     test('Should show Percentage met and no Date submitted for direct producers', async () => {
-      const { result } = await searchFor(pendingItem.organisationName)
+      const { result } = await searchFor(mockPendingItems[0].organisationName)
       const $ = load(result)
       const headers = $('table')
         .first()
@@ -777,7 +709,7 @@ describe('#certificatesOfComplianceController', () => {
 
     test('Should show Regulation 43 and no Date submitted for compliance schemes', async () => {
       const { result } = await searchFor(
-        schemeItem.organisationName,
+        mockComplianceSchemePendingItems[0].organisationName,
         'compliance-schemes'
       )
       const $ = load(result)
@@ -824,10 +756,8 @@ describe('#certificatesOfComplianceController', () => {
         '/certificates-of-compliance?type=direct-producers&tab=pending&page=1'
       )
 
-      expect(result).toEqual(
-        expect.stringContaining(
-          '/certificates-of-compliance?type=direct-producers&tab=pending'
-        )
+      expect(result).toMatch(
+        /\/certificates-of-compliance\?type=direct-producers(?:&amp;|&)tab=pending/
       )
     })
   })
@@ -887,28 +817,35 @@ describe('#certificatesOfComplianceController', () => {
     let sortSessionCookie
 
     beforeAll(async () => {
-      sortSessionCookie = await app.signIn()
+      const response = await server.inject({
+        method: 'GET',
+        url: '/signin-oidc'
+      })
+      sortSessionCookie = sessionCookieFromResponse(response)
     })
 
     test('Should include restored sort in pagination links after returning to a tab', async () => {
       let cookie = sortSessionCookie
 
-      let response = await app.get(
-        '/certificates-of-compliance?tab=pending&sort=DateSubmitted[desc]',
-        cookie
-      )
-      cookie = app.nextCookie(response, cookie)
+      let response = await server.inject({
+        method: 'GET',
+        url: '/certificates-of-compliance?tab=pending&sort=DateSubmitted[desc]',
+        headers: { cookie }
+      })
+      cookie = mergeCookiesFromResponse(cookie, response)
 
-      response = await app.get(
-        '/certificates-of-compliance?tab=accepted',
-        cookie
-      )
-      cookie = app.nextCookie(response, cookie)
+      response = await server.inject({
+        method: 'GET',
+        url: '/certificates-of-compliance?tab=accepted',
+        headers: { cookie }
+      })
+      cookie = mergeCookiesFromResponse(cookie, response)
 
-      response = await app.get(
-        '/certificates-of-compliance?tab=pending',
-        cookie
-      )
+      response = await server.inject({
+        method: 'GET',
+        url: '/certificates-of-compliance?tab=pending',
+        headers: { cookie }
+      })
 
       expect(response.result).toContain('sort=DateSubmitted[asc]')
       expect(response.result).toContain('aria-sort="descending"')

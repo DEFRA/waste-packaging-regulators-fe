@@ -1361,8 +1361,8 @@ describe('certificates of compliance — journey', () => {
       )
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).toContain(
-        '/certificates-of-compliance/download?organisation_type=direct-producers&submission_status=pending'
+      expect(response.payload).toMatch(
+        /\/certificates-of-compliance\/download\?organisation_type=direct-producers(?:&amp;|&)submission_status=pending/
       )
       expect(response.payload).toContain('Download list (CSV)')
     })
