@@ -3,8 +3,7 @@ import { describe, expect, test, it, vi, beforeEach, afterEach } from 'vitest'
 import { config } from '#/config/config.js'
 import {
   createAccountApiService,
-  AccountApiService,
-  mockAccountDetails
+  AccountApiService
 } from './account-api.service.js'
 
 function mockOkResponse(data) {
@@ -334,42 +333,6 @@ describe('AccountApiService', () => {
   })
 
   describe('getAccountDetailsById', () => {
-    test('returns mockAccountDetails when useMockApi is true', async () => {
-      const getSpy = vi
-        .spyOn(config, 'get')
-        .mockImplementation((key) => (key === 'useMockApi' ? true : undefined))
-
-      const service = new AccountApiService({
-        baseUrl: 'http://localhost:3001',
-        clientId: 'Developer',
-        clientSecret: 'developer-pwd',
-        fetchImpl: vi.fn()
-      })
-
-      const result = await service.getAccountDetailsById('some-user-id')
-
-      expect(result).toEqual(mockAccountDetails)
-      getSpy.mockRestore()
-    })
-
-    test('does not call the API when useMockApi is true', async () => {
-      const getSpy = vi
-        .spyOn(config, 'get')
-        .mockImplementation((key) => (key === 'useMockApi' ? true : undefined))
-      const fetchImpl = vi.fn()
-      const service = new AccountApiService({
-        baseUrl: 'http://localhost:3001',
-        clientId: 'Developer',
-        clientSecret: 'developer-pwd',
-        fetchImpl
-      })
-
-      await service.getAccountDetailsById('some-user-id')
-
-      expect(fetchImpl).not.toHaveBeenCalled()
-      getSpy.mockRestore()
-    })
-
     describe('response mapping when useMockApi is false', () => {
       let getSpy
       let result

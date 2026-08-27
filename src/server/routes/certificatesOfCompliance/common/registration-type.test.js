@@ -6,7 +6,7 @@ import {
   mapWasteOrganisationToDetailFields
 } from './registration-type.js'
 import { findSubmittedAuditUser } from '../detail/audit.js'
-import { mockSubmittedAuditEntry } from '../certificates-of-compliance.mock.js'
+import { mockSubmittedAuditEntry } from '#test-helpers/mock-fixtures.js'
 
 describe('organisation and audit detail mapping', () => {
   test('deriveRegistrationType maps LARGE_PRODUCER to DirectProducer for obligation year', () => {

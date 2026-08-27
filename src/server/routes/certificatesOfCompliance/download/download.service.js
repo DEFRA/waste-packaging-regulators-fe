@@ -1,8 +1,6 @@
-import { config } from '#config/config.js'
 import { createAccountApiService } from '#services/account-api.service.js'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
-import { mockListByOrganisationType } from '../certificates-of-compliance.mock.js'
 import {
   registrationTypeByOrganisationType,
   statusBySubmissionStatus
@@ -14,7 +12,6 @@ import {
   resolveNotSubmittedReferenceNumbers,
   resolveNotSubmittedObligationData
 } from '../list/list.service.js'
-import { throwIfMockErrorConfigured } from '#server/common/helpers/mock-api-error.js'
 import { buildComplianceCsv } from './download-model.js'
 
 // Builds the full, unsorted not-submitted item list for CSV export.
@@ -55,13 +52,6 @@ async function getAllItemsFor({
   accountApi,
   traceId
 }) {
-  if (config.get('useMockApi')) {
-    throwIfMockErrorConfigured('waste-obligations-api')
-    const listBySubmissionStatus =
-      mockListByOrganisationType[organisationType] ?? {}
-    return [...(listBySubmissionStatus[submissionStatus] ?? [])]
-  }
-
   const registrationType = registrationTypeByOrganisationType[organisationType]
 
   if (submissionStatus === 'not-submitted') {

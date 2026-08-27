@@ -7,7 +7,7 @@ import { getDeclarationDetail } from './detail-fetch.service.js'
 export async function getCertificateOfComplianceDetailViewModel(
   organisationId,
   id,
-  { traceId, bannerFlags = {}, session, obligationYear } = {}
+  { traceId, bannerFlags = {}, obligationYear } = {}
 ) {
   const obligationsApi = createWasteObligationsApiService()
   const organisationsApi = createWasteOrganisationsApiService()
@@ -19,7 +19,7 @@ export async function getCertificateOfComplianceDetailViewModel(
     accountApi,
     organisationId,
     id,
-    { traceId, session, obligationYear }
+    { traceId, obligationYear }
   )
 
   return {

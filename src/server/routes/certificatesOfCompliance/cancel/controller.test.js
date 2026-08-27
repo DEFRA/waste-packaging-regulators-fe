@@ -13,7 +13,7 @@ import {
   mockDetailData,
   mockComplianceSchemeDetailData,
   mockDirectProducerCancelledDetailData
-} from '../certificates-of-compliance.mock.js'
+} from '#test-helpers/mock-fixtures.js'
 import {
   authCookiesFromResponse,
   csrfTokenCookieFromResponse,

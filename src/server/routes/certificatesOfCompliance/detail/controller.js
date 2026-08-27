@@ -40,7 +40,6 @@ export const certificatesOfComplianceDetailController = {
       {
         traceId,
         bannerFlags,
-        session: request.yar,
         obligationYear
       }
     ).catch((error) => {

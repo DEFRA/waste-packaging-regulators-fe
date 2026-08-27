@@ -7,6 +7,7 @@ import {
   mergeCookiesFromResponse
 } from '#test-helpers/cookies.js'
 import { redirectToSignIn } from './actions-controller.js'
+import { resetMockData } from '#mocks/server.js'
 
 describe('redirectToSignIn', () => {
   it('stores the pathname as returnTo in the session', () => {
@@ -14,7 +15,8 @@ describe('redirectToSignIn', () => {
     const request = {
       yar,
       url: {
-        pathname: '/org-123/certificates-of-compliance/decl-1/accept',
+        pathname:
+          '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411/accept',
         search: ''
       }
     }
@@ -24,7 +26,7 @@ describe('redirectToSignIn', () => {
 
     expect(yar.set).toHaveBeenCalledWith(
       'returnTo',
-      '/org-123/certificates-of-compliance/decl-1/accept'
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411/accept'
     )
   })
 
@@ -76,6 +78,13 @@ describe('certificates of compliance detail action buttons', () => {
     await server.stop({ timeout: 0 })
   })
 
+  // Approve/cancel now persist at the MSW boundary rather than per-session, so
+  // clear those transitions between tests to keep each one starting from the
+  // pending declaration.
+  afterEach(() => {
+    resetMockData()
+  })
+
   const inject = (options, cookie = sessionCookie) =>
     server.inject({
       ...options,
@@ -100,7 +109,7 @@ describe('certificates of compliance detail action buttons', () => {
   // direct approve endpoint.
   const acceptDeclaration = (cookie = sessionCookie) =>
     postWithCrumb(
-      '/org-123/certificates-of-compliance/decl-1/accept',
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411/accept',
       cookie,
       'confirm-accept=yes'
     )
@@ -109,12 +118,12 @@ describe('certificates of compliance detail action buttons', () => {
   // The reason travels in the form body, not the session.
   const cancelDeclaration = async (cookie = sessionCookie) => {
     await postWithCrumb(
-      '/org-123/certificates-of-compliance/decl-1/cancel/reason',
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411/cancel/reason',
       cookie,
       'cancel-reason=producer-request'
     )
     return postWithCrumb(
-      '/org-123/certificates-of-compliance/decl-1/cancel',
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411/cancel',
       cookie,
       'cancel-reason=producer-request'
     )
@@ -132,13 +141,13 @@ describe('certificates of compliance detail action buttons', () => {
 
       expect(acceptResponse.statusCode).toBe(302)
       expect(acceptResponse.headers.location).toBe(
-        '/org-123/certificates-of-compliance/decl-1'
+        '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
       )
 
       const detailResponse = await inject(
         {
           method: 'GET',
-          url: '/org-123/certificates-of-compliance/decl-1'
+          url: '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
         },
         mergeCookiesFromResponse(cookieAfterCancel, acceptResponse)
       )
@@ -154,13 +163,13 @@ describe('certificates of compliance detail action buttons', () => {
 
       expect(acceptResponse.statusCode).toBe(302)
       expect(acceptResponse.headers.location).toBe(
-        '/org-123/certificates-of-compliance/decl-1'
+        '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
       )
 
       const detailResponse = await inject(
         {
           method: 'GET',
-          url: '/org-123/certificates-of-compliance/decl-1'
+          url: '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
         },
         mergeCookiesFromResponse(sessionCookie, acceptResponse)
       )
@@ -171,7 +180,7 @@ describe('certificates of compliance detail action buttons', () => {
       expect(detailResponse.payload).not.toContain('Accept certificate')
       expect(detailResponse.payload).toContain('Cancel certificate')
       expect(detailResponse.payload).toContain(
-        '/org-123/certificates-of-compliance/decl-1/cancel/reason'
+        '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411/cancel/reason'
       )
     })
   })
@@ -182,13 +191,13 @@ describe('certificates of compliance detail action buttons', () => {
 
       expect(cancelResponse.statusCode).toBe(302)
       expect(cancelResponse.headers.location).toBe(
-        '/org-123/certificates-of-compliance/decl-1'
+        '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
       )
 
       const detailResponse = await inject(
         {
           method: 'GET',
-          url: '/org-123/certificates-of-compliance/decl-1'
+          url: '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
         },
         mergeCookiesFromResponse(sessionCookie, cancelResponse)
       )
@@ -216,7 +225,7 @@ describe('certificates of compliance detail action buttons', () => {
     const firstDetailResponse = await inject(
       {
         method: 'GET',
-        url: '/org-123/certificates-of-compliance/decl-1'
+        url: '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
       },
       cookieAfterApprove
     )
@@ -226,7 +235,7 @@ describe('certificates of compliance detail action buttons', () => {
     const secondDetailResponse = await inject(
       {
         method: 'GET',
-        url: '/org-123/certificates-of-compliance/decl-1'
+        url: '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
       },
       mergeCookiesFromResponse(cookieAfterApprove, firstDetailResponse)
     )
@@ -245,7 +254,7 @@ describe('certificates of compliance detail action buttons', () => {
     await inject(
       {
         method: 'GET',
-        url: '/org-123/certificates-of-compliance/decl-1'
+        url: '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
       },
       cookieAfterFirstApprove
     )
@@ -259,7 +268,7 @@ describe('certificates of compliance detail action buttons', () => {
     const detailResponse = await inject(
       {
         method: 'GET',
-        url: '/org-123/certificates-of-compliance/decl-1'
+        url: '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
       },
       mergeCookiesFromResponse(cookieAfterFirstApprove, repeatApproveResponse)
     )
@@ -278,7 +287,7 @@ describe('certificates of compliance detail action buttons', () => {
     const firstDetailResponse = await inject(
       {
         method: 'GET',
-        url: '/org-123/certificates-of-compliance/decl-1'
+        url: '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
       },
       cookieAfterApprove
     )
@@ -287,7 +296,7 @@ describe('certificates of compliance detail action buttons', () => {
     const secondDetailResponse = await inject(
       {
         method: 'GET',
-        url: '/org-123/certificates-of-compliance/decl-1'
+        url: '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
       },
       mergeCookiesFromResponse(cookieAfterApprove, firstDetailResponse)
     )

@@ -1,14 +1,9 @@
 import { describe, expect, test, vi, beforeEach } from 'vitest'
 
-vi.mock('#config/config.js', () => ({
-  config: { get: vi.fn() }
-}))
-
 vi.mock('#services/account-api.service.js', () => ({
   createAccountApiService: vi.fn()
 }))
 
-import { config } from '#config/config.js'
 import { createAccountApiService } from '#services/account-api.service.js'
 import { buildCancellationEmailRecipients } from './build-cancellation-email-recipients.js'
 
@@ -59,7 +54,6 @@ const organisationSubmitterMatchesApprovedPerson = {
 describe('buildCancellationEmailRecipients', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    config.get.mockReturnValue(false)
     createAccountApiService.mockReturnValue({
       getOrganisationWithPersonsOrNull: vi.fn()
     })

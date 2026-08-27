@@ -15,7 +15,7 @@ import {
   mockNotSubmittedItems,
   mockComplianceSchemeAcceptedItems,
   mockComplianceSchemePendingItems
-} from '../certificates-of-compliance.mock.js'
+} from '#test-helpers/mock-fixtures.js'
 import { emptyTabMessages } from '../common/constants.js'
 
 describe('#certificatesOfComplianceController', () => {

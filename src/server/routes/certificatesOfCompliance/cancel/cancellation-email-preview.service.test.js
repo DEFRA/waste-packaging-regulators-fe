@@ -1,4 +1,4 @@
-import { describe, expect, test, vi, afterEach } from 'vitest'
+import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest'
 
 vi.mock('#services/govuk-notify.service.js', async (importOriginal) => {
   const { createCancellationEmailNotifyModuleMock } =
@@ -6,12 +6,25 @@ vi.mock('#services/govuk-notify.service.js', async (importOriginal) => {
   return createCancellationEmailNotifyModuleMock(importOriginal)
 })
 
+vi.mock('#services/waste-obligations-api.service.js', () => ({
+  createWasteObligationsApiService: vi.fn()
+}))
+vi.mock('#services/waste-organisations-api.service.js', () => ({
+  createWasteOrganisationsApiService: vi.fn()
+}))
+vi.mock('#services/account-api.service.js', () => ({
+  createAccountApiService: vi.fn()
+}))
+
 import { previewCancellationTemplate } from '#services/govuk-notify.service.js'
+import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
+import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
+import { createAccountApiService } from '#services/account-api.service.js'
 import {
   mockComplianceSchemePendingItems,
   mockPendingItems
-} from '../certificates-of-compliance.mock.js'
-import * as complianceMock from '../certificates-of-compliance.mock.js'
+} from '#test-helpers/mock-fixtures.js'
+import { getDeclarationById, getWasteOrganisation } from '#mocks/backends.js'
 import { cancellationEmailTemplateIds } from './cancellation-email-templates.js'
 import * as cancellationEmailTemplates from './cancellation-email-templates.js'
 import {
@@ -102,7 +115,52 @@ describe('cancellation-email-preview.service helpers', () => {
   })
 })
 
+// The email goes to the declaration's submitter and the organisation's primary
+// contact (its Approved Person); the submitter's email comes from the fixture
+// declaration's audit trail.
+const approved = (firstName, lastName, email) => ({
+  firstName,
+  lastName,
+  email,
+  serviceRole: 'Approved Person'
+})
+const personsByOrg = {
+  [mockPendingItems[0].organisationId]: {
+    persons: [approved('Catherine', 'Morris', 'catherine.morris@howco.test')]
+  },
+  [mockComplianceSchemePendingItems[0].organisationId]: {
+    persons: [approved('Jane', 'Doe', 'jane.doe@ecopack.co.uk')]
+  }
+}
+
 describe('buildCancellationEmailPreview', () => {
+  let obligationsApi
+  let organisationsApi
+  let accountApi
+
+  beforeEach(() => {
+    // Fake the backends with the canonical fixtures, so each test can override a
+    // single call (missing declaration, no recipients) to exercise one branch.
+    obligationsApi = {
+      getComplianceDeclarationOrNull: vi.fn(({ id } = {}) =>
+        Promise.resolve(getDeclarationById(id))
+      )
+    }
+    organisationsApi = {
+      getOrganisation: vi.fn(({ organisationId } = {}) =>
+        Promise.resolve(getWasteOrganisation(organisationId))
+      )
+    }
+    accountApi = {
+      getOrganisationWithPersonsOrNull: vi.fn((organisationId) =>
+        Promise.resolve(personsByOrg[organisationId] ?? null)
+      )
+    }
+    createWasteObligationsApiService.mockReturnValue(obligationsApi)
+    createWasteOrganisationsApiService.mockReturnValue(organisationsApi)
+    createAccountApiService.mockReturnValue(accountApi)
+  })
+
   test.each([
     {
       organisationType: 'direct producer',
@@ -152,7 +210,7 @@ describe('buildCancellationEmailPreview', () => {
   )
 
   test('returns declaration-not-found when the declaration is missing', async () => {
-    vi.spyOn(complianceMock, 'getMockDetailDataById').mockReturnValue(null)
+    obligationsApi.getComplianceDeclarationOrNull.mockResolvedValue(null)
 
     const preview = await buildCancellationEmailPreview({
       organisationId: mockPendingItems[0].organisationId,
@@ -176,24 +234,13 @@ describe('buildCancellationEmailPreview', () => {
   })
 
   test('returns no-recipients when the submitter and primary contact have no email', async () => {
-    vi.spyOn(
-      complianceMock,
-      'getMockAccountOrganisationByExternalId'
-    ).mockReturnValue({
-      persons: []
+    const declaration = getDeclarationById(mockPendingItems[0].id)
+    obligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+      ...declaration,
+      audit: [{ action: 'Submitted', user: { email: '   ', name: 'No Email' } }]
     })
-    vi.spyOn(complianceMock, 'getMockDetailDataById').mockReturnValue({
-      ...complianceMock.mockDetailData,
-      audit: [
-        {
-          action: 'Submitted',
-          user: {
-            id: 'missing-email-user',
-            email: '   ',
-            name: 'No Email User'
-          }
-        }
-      ]
+    accountApi.getOrganisationWithPersonsOrNull.mockResolvedValue({
+      persons: []
     })
 
     const preview = await buildCancellationEmailPreview({

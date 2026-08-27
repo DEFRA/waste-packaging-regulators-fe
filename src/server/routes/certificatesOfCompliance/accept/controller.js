@@ -4,8 +4,7 @@ import { approveComplianceDeclaration } from '../actions/approve.service.js'
 import { getComplianceDeclarationReviewStatus } from '../actions/review-status.service.js'
 import {
   certificateActionSessionKeys,
-  getDeclarationSessionKey,
-  setMockDeclarationStatusOverride
+  getDeclarationSessionKey
 } from '../actions/session.service.js'
 import { canApproveComplianceDeclaration } from '../actions/status.js'
 import { getCertificateOfComplianceDetailViewModel } from '../detail/detail.service.js'
@@ -34,8 +33,7 @@ async function renderForm(request, h, { errors = null } = {}) {
   const traceId = getTraceIdFromRequest(request)
   const { companyName, registrationType } =
     await getCertificateOfComplianceDetailViewModel(organisationId, id, {
-      traceId,
-      session: request.yar
+      traceId
     })
 
   const docTypeLower =
@@ -63,8 +61,7 @@ async function approveDeclaration(request, h) {
   const reviewStatus = await getComplianceDeclarationReviewStatus(
     organisationId,
     id,
-    traceId,
-    request.yar
+    traceId
   )
 
   if (reviewStatus === 'Approved') {
@@ -87,7 +84,6 @@ async function approveDeclaration(request, h) {
     handleApiError(request, error)
   }
 
-  setMockDeclarationStatusOverride(request.yar, declarationKey, 'Approved')
   request.yar.set(certificateActionSessionKeys.justApproved, declarationKey)
 
   return h.redirect(detailPath(organisationId, id))
@@ -104,8 +100,7 @@ export const certificatesOfComplianceAcceptGetController = {
     const reviewStatus = await getComplianceDeclarationReviewStatus(
       organisationId,
       id,
-      traceId,
-      request.yar
+      traceId
     )
 
     // Don't show the confirmation form if the declaration can no longer be approved

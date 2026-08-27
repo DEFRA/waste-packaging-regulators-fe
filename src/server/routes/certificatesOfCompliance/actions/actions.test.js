@@ -27,7 +27,6 @@ import {
 } from './detail-actions.js'
 import {
   readAndClearCertificateActionBannerFlags,
-  setMockDeclarationStatusOverride,
   certificateActionSessionKeys
 } from './session.service.js'
 import {
@@ -260,29 +259,6 @@ describe('certificate detail action helpers', () => {
     expect(canCancelComplianceDeclaration('Cancelled')).toBe(false)
   })
 
-  test('setMockDeclarationStatusOverride stores status in session when useMockApi is true', () => {
-    config.get.mockReturnValue(true)
-    const session = {
-      data: {},
-      get(key) {
-        return this.data[key]
-      },
-      set(key, value) {
-        this.data[key] = value
-      }
-    }
-
-    setMockDeclarationStatusOverride(session, 'org-1/decl-1', 'Approved')
-
-    expect(session.data['certificate-mock-status:org-1/decl-1']).toBe(
-      'Accepted'
-    )
-    expect(session.data['certificate-mock-audit:org-1/decl-1']).toHaveLength(1)
-    expect(session.data['certificate-mock-audit:org-1/decl-1'][0].action).toBe(
-      'Accepted'
-    )
-  })
-
   test('mapSessionUserToApiUser maps session user to API user', () => {
     expect(
       mapSessionUserToApiUser({
@@ -318,15 +294,6 @@ describe('certificate detail action helpers', () => {
     })
   })
 
-  test('setMockDeclarationStatusOverride does nothing when useMockApi is false', () => {
-    config.get.mockReturnValue(false)
-    const session = { set: vi.fn() }
-
-    setMockDeclarationStatusOverride(session, 'org-1/decl-1', 'Approved')
-
-    expect(session.set).not.toHaveBeenCalled()
-  })
-
   test('readAndClearCertificateActionBannerFlags clears the query banner when shown', () => {
     const session = {
       data: {
@@ -356,19 +323,6 @@ describe('certificate detail action helpers', () => {
   })
 
   describe('approveComplianceDeclaration', () => {
-    test('skips API call when useMockApi is true', async () => {
-      config.get.mockReturnValue(true)
-
-      await approveComplianceDeclaration(
-        'org-1',
-        'decl-1',
-        { user: 'mock-user' },
-        'trace-1'
-      )
-
-      expect(createWasteObligationsApiService).not.toHaveBeenCalled()
-    })
-
     test('calls updateComplianceDeclaration when useMockApi is false', async () => {
       config.get.mockReturnValue(false)
       const mockApi = { updateComplianceDeclaration: vi.fn() }
@@ -398,20 +352,6 @@ describe('certificate detail action helpers', () => {
   })
 
   describe('cancelComplianceDeclaration', () => {
-    test('skips API call when useMockApi is true', async () => {
-      config.get.mockReturnValue(true)
-
-      await cancelComplianceDeclaration(
-        'org-1',
-        'decl-1',
-        { user: 'mock-user' },
-        'Producer requested to cancel',
-        'trace-1'
-      )
-
-      expect(createWasteObligationsApiService).not.toHaveBeenCalled()
-    })
-
     test('sends status Cancelled with notification parameters when useMockApi is false', async () => {
       config.get.mockReturnValue(false)
       const mockApi = { updateComplianceDeclaration: vi.fn() }

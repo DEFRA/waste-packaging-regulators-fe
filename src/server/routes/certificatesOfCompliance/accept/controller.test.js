@@ -6,7 +6,7 @@ import {
   mockAcceptedItems,
   mockDetailData,
   mockComplianceSchemeDetailData
-} from '../certificates-of-compliance.mock.js'
+} from '#test-helpers/mock-fixtures.js'
 import {
   authCookiesFromResponse,
   csrfTokenCookieFromResponse,

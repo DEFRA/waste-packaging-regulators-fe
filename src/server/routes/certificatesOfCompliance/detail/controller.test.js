@@ -10,7 +10,7 @@ import {
   MOCK_DECL_CS_PREV_CANCELLED_ID,
   MOCK_DECL_HOWCO_PREV_ACCEPTED_ID,
   MOCK_DECL_HOWCO_PREV_CANCELLED_ID
-} from '../certificates-of-compliance.mock.js'
+} from '#test-helpers/mock-fixtures.js'
 import { sessionCookieFromResponse } from '#test-helpers/cookies.js'
 import { loadDetailPage } from './detail.page-object.js'
 
@@ -53,14 +53,16 @@ describe('#certificatesOfComplianceDetailController', () => {
     server.inject({ method: 'GET', url, headers: { cookie: sessionCookie } })
 
   it('should return a 200 status code', async () => {
-    const response = await inject('/org-123/certificates-of-compliance/101411')
+    const response = await inject(
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
+    )
     expect(response.statusCode).toBe(statusCodes.ok)
   })
 
   it('should redirect to /signin-oidc when unauthenticated', async () => {
     const response = await server.inject({
       method: 'GET',
-      url: '/org-123/certificates-of-compliance/101411'
+      url: '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
     })
     expect(response.statusCode).toBe(302)
     expect(response.headers.location).toBe('/signin-oidc')
@@ -81,7 +83,9 @@ describe('#certificatesOfComplianceDetailController', () => {
       expected: mockDetailData.organisation.name
     }
   ])('should render $description', async ({ expected }) => {
-    const response = await inject('/org-123/certificates-of-compliance/101411')
+    const response = await inject(
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
+    )
     expect(response.payload).toContain(expected)
   })
 
@@ -102,7 +106,9 @@ describe('#certificatesOfComplianceDetailController', () => {
   })
 
   it('should not render Regulation 43 for a direct producer', async () => {
-    const response = await inject('/org-123/certificates-of-compliance/101411')
+    const response = await inject(
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
+    )
     expect(response.payload).not.toContain('Regulation 43')
   })
 
@@ -143,25 +149,33 @@ describe('#certificatesOfComplianceDetailController', () => {
   })
 
   it('should render the formatted date declaration was submitted', async () => {
-    const response = await inject('/org-123/certificates-of-compliance/101411')
+    const response = await inject(
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
+    )
     expect(response.payload).toContain('31 January 2027 at 00:00')
   })
 
   it('should render the organisation type', async () => {
-    const response = await inject('/org-123/certificates-of-compliance/101411')
+    const response = await inject(
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
+    )
     // DirectProducer maps to 'Direct producer'
     expect(response.payload).toContain('Direct producer')
   })
 
   it('should render the organisation ID', async () => {
-    const response = await inject('/org-123/certificates-of-compliance/101411')
+    const response = await inject(
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
+    )
     expect(response.payload).toContain(
       mockDetailData.organisation.referenceNumber
     )
   })
 
   it('should render the Companies House link when a company number is present', async () => {
-    const response = await inject('/org-123/certificates-of-compliance/101411')
+    const response = await inject(
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
+    )
     expect(response.payload).toContain('View on Companies House')
     expect(response.payload).toContain(
       `company/${mockDetailData.organisation.companiesHouseNumber}`
@@ -185,19 +199,25 @@ describe('#certificatesOfComplianceDetailController', () => {
   })
 
   it('should render the declaration signer name', async () => {
-    const response = await inject('/org-123/certificates-of-compliance/101411')
+    const response = await inject(
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
+    )
     expect(response.payload).toContain(mockDetailData.submitterName)
   })
 
   it('should render all main material names in the recycling obligations table', async () => {
-    const response = await inject('/org-123/certificates-of-compliance/101411')
+    const response = await inject(
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
+    )
     for (const obligation of expectedMaterials) {
       expect(response.payload).toContain(obligation.material)
     }
   })
 
   it('should render non-zero material obligation tonnages', async () => {
-    const response = await inject('/org-123/certificates-of-compliance/101411')
+    const response = await inject(
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
+    )
     for (const obligation of expectedMaterials) {
       if (obligation.tonnages.obligated > 0) {
         expect(response.payload).toContain(
@@ -208,35 +228,43 @@ describe('#certificatesOfComplianceDetailController', () => {
   })
 
   it('should render material totals row', async () => {
-    const response = await inject('/org-123/certificates-of-compliance/101411')
+    const response = await inject(
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
+    )
     expect(response.payload).toContain(String(expectedMaterialTotalObligated))
     expect(response.payload).toContain(String(expectedMaterialTotalAccepted))
   })
 
   it('should render glass breakdown material names', async () => {
-    const response = await inject('/org-123/certificates-of-compliance/101411')
+    const response = await inject(
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
+    )
     for (const obligation of expectedGlassBreakdown) {
       expect(response.payload).toContain(obligation.material)
     }
   })
 
   it('should render two Totals rows — one per table', async () => {
-    const response = await inject('/org-123/certificates-of-compliance/101411')
+    const response = await inject(
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
+    )
     const occurrences = (response.payload.match(/Totals/g) ?? []).length
     expect(occurrences).toBeGreaterThanOrEqual(2)
   })
 
   it('should render action buttons for a pending certificate', async () => {
-    const response = await inject('/org-123/certificates-of-compliance/101411')
+    const response = await inject(
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
+    )
     expect(response.payload).toContain('Accept certificate')
     expect(response.payload).toContain('Cancel certificate')
     // Both are links: Accept to the Yes/No confirmation page, Cancel to the
     // reason page that starts the cancellation flow.
     expect(response.payload).toContain(
-      'href="/org-123/certificates-of-compliance/101411/accept"'
+      'href="/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411/accept"'
     )
     expect(response.payload).toContain(
-      'href="/org-123/certificates-of-compliance/101411/cancel/reason"'
+      'href="/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411/cancel/reason"'
     )
   })
 
@@ -254,14 +282,14 @@ describe('#certificatesOfComplianceDetailController', () => {
   describe('Submission status label', () => {
     it('renders the Submission status label for a submitted declaration', async () => {
       const response = await inject(
-        '/org-123/certificates-of-compliance/101411'
+        '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
       )
       expect(response.payload).toContain('Submission status')
     })
 
     it('renders a blue Pending tag for a submitted (pending review) declaration', async () => {
       const response = await inject(
-        '/org-123/certificates-of-compliance/101411'
+        '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
       )
       expect(response.payload).toContain('govuk-tag--blue')
       expect(response.payload).toContain('Pending')
@@ -347,7 +375,8 @@ describe('#certificatesOfComplianceDetailController', () => {
       '/b0b1b2b3-b4b5-b6b7-b8b9-babbbcbdbebf/certificates-of-compliance/decl-accepted-only'
     const cancelledOnlyUrl =
       '/c0c1c2c3-c4c5-c6c7-c8c9-cacbcccdcecf/certificates-of-compliance/decl-cancelled-only'
-    const bothUrl = '/org-123/certificates-of-compliance/101411'
+    const bothUrl =
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
     const csBothUrl =
       '/923fa611-571c-4948-ab7d-fbb75e75ed65/certificates-of-compliance/decl-cs-001'
     const howcoOrgId = '497f6eca-6276-4993-bfeb-53cbbbba6f08'
@@ -510,7 +539,9 @@ describe('#certificatesOfComplianceDetailController', () => {
       })
     )
 
-    const response = await inject('/org-123/certificates-of-compliance/101411')
+    const response = await inject(
+      '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
+    )
 
     expect(response.statusCode).toBe(statusCodes.internalServerError)
     expect(response.payload).toContain(

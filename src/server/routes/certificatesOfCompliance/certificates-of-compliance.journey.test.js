@@ -1,5 +1,6 @@
 import { createServer } from '#server/server.js'
 import { config } from '#config/config.js'
+import { resetMockData } from '#mocks/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
   mockPendingItems,
@@ -11,7 +12,7 @@ import {
   mockComplianceSchemeNotSubmittedItems,
   mockDirectProducerCancelledDetailData,
   mockComplianceSchemeCancelledDetailData
-} from './certificates-of-compliance.mock.js'
+} from '#test-helpers/mock-fixtures.js'
 import { loadDetailPage } from './detail/detail.page-object.js'
 import {
   authCookiesFromResponse,
@@ -67,6 +68,13 @@ describe('certificates of compliance — journey', () => {
 
   afterAll(async () => {
     await server.stop({ timeout: 0 })
+  })
+
+  // Approve/cancel persist at the MSW boundary (shared across the process), so
+  // clear those transitions between tests to keep each starting from the seeded
+  // fixture state.
+  afterEach(() => {
+    resetMockData()
   })
 
   const inject = (url) =>
