@@ -1,4 +1,10 @@
+import { appendLangQuery } from '#server/common/helpers/i18n/locale-url.js'
+import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
+import { persistAuthLocale } from '#server/common/helpers/i18n/locale-url.js'
+
 export function redirectToSignIn(request, h) {
+  const locale = getLocale(request)
+  persistAuthLocale(request, locale)
   request.yar.set('returnTo', request.url.pathname + request.url.search)
-  return h.redirect('/signin-oidc')
+  return h.redirect(appendLangQuery('/signin-oidc', locale))
 }

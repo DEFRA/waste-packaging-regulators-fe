@@ -7,6 +7,12 @@ import {
 } from '#server/auth/azure-ad-b2c.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { createAccountApiService } from '#services/account-api.service.js'
+import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
+import {
+  appendLangQuery,
+  clearAuthLocale
+} from '#server/common/helpers/i18n/locale-url.js'
+import { translate } from '#server/common/helpers/i18n/translate.js'
 
 const MAX_LOGOUT_REDIRECTS = 10
 
@@ -65,9 +71,10 @@ function resetAuthSession(request, h) {
 }
 
 function buildSignOutRedirect(h, azure, request) {
+  const locale = getLocale(request)
   const prefix = getB2cAuthorityPrefix(azure)
   if (!prefix) {
-    return h.redirect('/signed-out')
+    return h.redirect(appendLangQuery('/signed-out', locale))
   }
 
   const pathOrUrl = azure.postLogoutRedirectPath || '/signed-out'
@@ -77,6 +84,8 @@ function buildSignOutRedirect(h, azure, request) {
 
 export const signinOidcController = {
   async handler(request, h) {
+    const locale = getLocale(request)
+
     if (request.auth?.credentials) {
       const apiAccount = createAccountApiService()
       const user = await apiAccount.getAccountDetailsById(
@@ -89,7 +98,8 @@ export const signinOidcController = {
     }
     const returnTo = request.yar.get('returnTo') || '/'
     request.yar.clear('returnTo')
-    return h.redirect(returnTo)
+    clearAuthLocale(request)
+    return h.redirect(appendLangQuery(returnTo, locale))
   }
 }
 export const signOutController = {
@@ -107,11 +117,12 @@ export const signOutController = {
 }
 
 export const signedOutController = {
-  handler(_request, h) {
+  handler(request, h) {
+    const locale = getLocale(request)
     return h.view('auth/signed-out', {
-      pageTitle: 'Signed out',
-      heading: 'Signed out',
-      message: 'You have been signed out.'
+      pageTitle: translate(locale, 'auth.signedOut.pageTitle'),
+      heading: translate(locale, 'auth.signedOut.heading'),
+      message: translate(locale, 'auth.signedOut.message')
     })
   }
 }
