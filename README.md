@@ -130,23 +130,18 @@ by [Mock Service Worker](https://mswjs.io/) and answered from local fixtures. Th
 production code makes ordinary `fetch` calls and is unaware of the mock — nothing
 is branched on `MOCK_API` outside the mock layer.
 
-The fixtures live in [`src/mocks/`](./src/mocks). One canonical set of compliance
-records is the single source of truth: the list, detail, search and CSV responses
-are all projections of it, so those surfaces cannot disagree. The default data
-deliberately covers every variation (met / not met / no data, each submission
-status, direct producers and compliance schemes) so you can eyeball them all
-locally — visit the certificates-of-compliance pages after `npm run dev`.
-
-Approving or cancelling a certificate locally persists in-memory for the process,
-so the detail page reflects the new status on the redirect (the store resets on
-restart).
+The default data deliberately covers every variation (met / not met / no data, each
+submission status, direct producers and compliance schemes), so you can eyeball them
+all locally — visit the certificates-of-compliance pages after `npm run dev`.
+Approving or cancelling a certificate persists in-memory for the process, so the UI
+reflects the new status on the redirect (the store resets on restart).
 
 Set `MOCK_ERROR_STATUS=<http status>` alongside `MOCK_API=true` to make every
 mocked call return that status instead of data, so you can walk a journey into the
 real error pages without a failing backend.
 
-Adding data or writing tests against the mocks: see
-[`AGENTS.md`](./AGENTS.md).
+The mock layer's design, structure and how to work with it: see
+[`src/mocks/README.md`](./src/mocks/README.md).
 
 ### Alternate backend API profiles
 
