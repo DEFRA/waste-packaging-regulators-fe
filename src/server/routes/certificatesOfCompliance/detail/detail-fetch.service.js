@@ -118,7 +118,6 @@ async function fetchOrganisationContact(accountApi, externalId, traceId) {
   return mapOrganisationContact(organisationWithPersons)
 }
 
-
 async function getNotSubmittedDeclarationDetail(
   obligationsApi,
   organisationsApi,
