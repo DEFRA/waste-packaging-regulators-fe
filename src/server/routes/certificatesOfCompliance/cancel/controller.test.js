@@ -1,4 +1,3 @@
-import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 
 vi.mock('#services/govuk-notify.service.js', async (importOriginal) => {
@@ -7,31 +6,53 @@ vi.mock('#services/govuk-notify.service.js', async (importOriginal) => {
   return createCancellationEmailNotifyModuleMock(importOriginal)
 })
 
-import {
-  mockPendingItems,
-  mockComplianceSchemePendingItems,
-  mockDetailData,
-  mockComplianceSchemeDetailData,
-  mockDirectProducerCancelledDetailData
-} from '#test-helpers/mock-fixtures.js'
-import {
-  authCookiesFromResponse,
-  csrfTokenCookieFromResponse,
-  crumbTokenFromCookie,
-  mergeCookiesFromResponse
-} from '#test-helpers/cookies.js'
+import { setupRegulatorsApp } from '#test-helpers/msw/harness.js'
 import {
   loadReasonPage,
   loadCheckPage,
   loadEmailPreviewPage
 } from './cancel.page-object.js'
 
-const DP_ITEM = mockPendingItems[0]
-const CS_ITEM = mockComplianceSchemePendingItems[0]
-const CANCELLED_ITEM = {
-  organisationId: mockDirectProducerCancelledDetailData.organisation.id,
-  id: mockDirectProducerCancelledDetailData.id
-}
+// The declarations, and the recipient contacts the email preview lists, are
+// declared inline so every asserted value traces back to this input.
+const approved = (firstName, lastName, email, telephoneNumber) => ({
+  firstName,
+  lastName,
+  email,
+  telephoneNumber,
+  serviceRole: 'Approved Person'
+})
+const ORGS = [
+  {
+    name: 'Kelmscott Producers Ltd',
+    status: 'pending',
+    submitter: 'Nadia Roche',
+    persons: [
+      approved(
+        'Catherine',
+        'Morris',
+        'catherine.morris@howco.test',
+        '020 7946 0100'
+      ),
+      approved('James', 'Wright', 'james.wright@howco.test', '020 7946 0109')
+    ]
+  },
+  {
+    name: 'Perrenar Compliance Operators',
+    type: 'compliance-scheme',
+    status: 'pending',
+    submitter: 'Owen Pryce',
+    persons: [
+      approved('Jane', 'Doe', 'jane.doe@ecopack.co.uk', '020 7946 0110')
+    ]
+  },
+  { name: 'Quenby Producers Ltd', status: 'cancelled', listed: false }
+]
+const itemOf = (org) => ({
+  organisationId: org.organisationId,
+  id: org.declarationId,
+  name: org.name
+})
 
 const reasonUrlFor = (item) =>
   `/${item.organisationId}/certificates-of-compliance/${item.id}/cancel/reason`
@@ -45,60 +66,30 @@ const actionUrlFor = (item) =>
 const detailUrlFor = (item) =>
   `/${item.organisationId}/certificates-of-compliance/${item.id}`
 
-// hapi/yar stores the session in the cookie itself, so each response carries an
-// updated Set-Cookie that the next request must reuse.
-function nextCookie(response, fallback) {
-  return mergeCookiesFromResponse(fallback, response)
-}
-
 describe('certificates of compliance — cancel', () => {
-  let server
-  let anonCrumbCookie
+  const app = setupRegulatorsApp()
+  let DP_ITEM
+  let CS_ITEM
+  let CANCELLED_ITEM
 
-  beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-
-    const anonResponse = await server.inject({
-      method: 'GET',
-      url: '/certificates-of-compliance'
-    })
-    anonCrumbCookie = csrfTokenCookieFromResponse(anonResponse)
+  // Fresh scenario per test so a cancellation in one test never leaks into the next.
+  beforeEach(() => {
+    const scenario = app.given(ORGS)
+    DP_ITEM = itemOf(scenario.byName('Kelmscott Producers Ltd'))
+    CS_ITEM = itemOf(scenario.byName('Perrenar Compliance Operators'))
+    CANCELLED_ITEM = itemOf(scenario.byName('Quenby Producers Ltd'))
   })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
-  async function signIn() {
-    const response = await server.inject({ method: 'GET', url: '/signin-oidc' })
-    return authCookiesFromResponse(response)
-  }
-
-  const get = (url, cookie) =>
-    server.inject({ method: 'GET', url, headers: { cookie } })
-
-  const post = (url, payload, cookie) => {
-    const crumb = crumbTokenFromCookie(cookie)
-    const body = [payload, `CSRFToken=${crumb}`].filter(Boolean).join('&')
-    return server.inject({
-      method: 'POST',
-      url,
-      payload: body,
-      headers: { cookie, 'content-type': 'application/x-www-form-urlencoded' }
-    })
-  }
 
   // Choose a reason, then confirm — the two POSTs that make up a cancellation.
   // The reason travels in the form body, not the session.
   async function cancel(item, reason, cookie) {
-    await post(reasonUrlFor(item), `cancel-reason=${reason}`, cookie)
-    return post(actionUrlFor(item), `cancel-reason=${reason}`, cookie)
+    await app.post(reasonUrlFor(item), `cancel-reason=${reason}`, cookie)
+    return app.post(actionUrlFor(item), `cancel-reason=${reason}`, cookie)
   }
 
   describe('GET reason page', () => {
     it('redirects unauthenticated users to /signin-oidc', async () => {
-      const response = await server.inject({
+      const response = await app.server.inject({
         method: 'GET',
         url: reasonUrlFor(DP_ITEM)
       })
@@ -107,13 +98,13 @@ describe('certificates of compliance — cancel', () => {
     })
 
     it('renders the reason radios with certificate wording for a Direct Producer', async () => {
-      const cookie = await signIn()
-      const response = await get(reasonUrlFor(DP_ITEM), cookie)
+      const cookie = await app.signIn()
+      const response = await app.get(reasonUrlFor(DP_ITEM), cookie)
       const page = loadReasonPage(response.payload)
 
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(page.heading).toBe(
-        `Why are you cancelling ${mockDetailData.organisation.name}'s certificate?`
+        `Why are you cancelling ${DP_ITEM.name}'s certificate?`
       )
       expect(page.reasons.map((r) => r.value)).toEqual([
         'incorrect-signer',
@@ -131,13 +122,13 @@ describe('certificates of compliance — cancel', () => {
     })
 
     it('renders the reason radios with statement wording for a Compliance Scheme', async () => {
-      const cookie = await signIn()
-      const response = await get(reasonUrlFor(CS_ITEM), cookie)
+      const cookie = await app.signIn()
+      const response = await app.get(reasonUrlFor(CS_ITEM), cookie)
       const page = loadReasonPage(response.payload)
 
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(page.heading).toBe(
-        `Why are you cancelling ${mockComplianceSchemeDetailData.organisation.schemeOperatorName}'s statement?`
+        `Why are you cancelling ${CS_ITEM.name}'s statement?`
       )
       expect(page.reasons[2].label).toBe(
         'Compliance scheme can meet recycling obligations'
@@ -145,16 +136,16 @@ describe('certificates of compliance — cancel', () => {
     })
 
     it('pre-selects no reason on first load', async () => {
-      const cookie = await signIn()
-      const response = await get(reasonUrlFor(DP_ITEM), cookie)
+      const cookie = await app.signIn()
+      const response = await app.get(reasonUrlFor(DP_ITEM), cookie)
       const page = loadReasonPage(response.payload)
 
       expect(page.reasons.every((r) => !r.checked)).toBe(true)
     })
 
     it('pre-selects the reason carried in the URL', async () => {
-      const cookie = await signIn()
-      const response = await get(
+      const cookie = await app.signIn()
+      const response = await app.get(
         `${reasonUrlFor(DP_ITEM)}?reason=obligations-changed`,
         cookie
       )
@@ -165,8 +156,8 @@ describe('certificates of compliance — cancel', () => {
     })
 
     it('redirects to the detail page when the declaration is already cancelled', async () => {
-      const cookie = await signIn()
-      const response = await get(reasonUrlFor(CANCELLED_ITEM), cookie)
+      const cookie = await app.signIn()
+      const response = await app.get(reasonUrlFor(CANCELLED_ITEM), cookie)
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe(detailUrlFor(CANCELLED_ITEM))
     })
@@ -174,17 +165,17 @@ describe('certificates of compliance — cancel', () => {
 
   describe('POST reason page', () => {
     it('redirects unauthenticated users to /signin-oidc', async () => {
-      const response = await post(
+      const response = await app.post(
         reasonUrlFor(DP_ITEM),
         'cancel-reason=producer-request',
-        anonCrumbCookie
+        await app.anonCrumb()
       )
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe('/signin-oidc')
     })
 
     it('rejects a request with no CSRF token', async () => {
-      const response = await server.inject({
+      const response = await app.server.inject({
         method: 'POST',
         url: reasonUrlFor(DP_ITEM),
         payload: 'cancel-reason=producer-request',
@@ -194,8 +185,8 @@ describe('certificates of compliance — cancel', () => {
     })
 
     it('re-renders with an error summary when no reason is selected', async () => {
-      const cookie = await signIn()
-      const response = await post(reasonUrlFor(DP_ITEM), '', cookie)
+      const cookie = await app.signIn()
+      const response = await app.post(reasonUrlFor(DP_ITEM), '', cookie)
       const page = loadReasonPage(response.payload)
 
       expect(response.statusCode).toBe(statusCodes.ok)
@@ -207,8 +198,8 @@ describe('certificates of compliance — cancel', () => {
     })
 
     it('re-renders with statement wording in the error for a Compliance Scheme', async () => {
-      const cookie = await signIn()
-      const response = await post(reasonUrlFor(CS_ITEM), '', cookie)
+      const cookie = await app.signIn()
+      const response = await app.post(reasonUrlFor(CS_ITEM), '', cookie)
 
       expect(loadReasonPage(response.payload).error.message).toBe(
         'Select why you are cancelling this statement'
@@ -216,8 +207,8 @@ describe('certificates of compliance — cancel', () => {
     })
 
     it('re-renders when an unrecognised reason is submitted', async () => {
-      const cookie = await signIn()
-      const response = await post(
+      const cookie = await app.signIn()
+      const response = await app.post(
         reasonUrlFor(DP_ITEM),
         'cancel-reason=nonsense',
         cookie
@@ -231,8 +222,8 @@ describe('certificates of compliance — cancel', () => {
     })
 
     it('redirects to the check page when a valid reason is selected', async () => {
-      const cookie = await signIn()
-      const response = await post(
+      const cookie = await app.signIn()
+      const response = await app.post(
         reasonUrlFor(DP_ITEM),
         'cancel-reason=producer-request',
         cookie
@@ -246,22 +237,22 @@ describe('certificates of compliance — cancel', () => {
 
   describe('GET check page', () => {
     it('redirects to the reason page when no reason is in the URL', async () => {
-      const cookie = await signIn()
-      const response = await get(checkUrlFor(DP_ITEM), cookie)
+      const cookie = await app.signIn()
+      const response = await app.get(checkUrlFor(DP_ITEM), cookie)
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe(reasonUrlFor(DP_ITEM))
     })
 
     it('redirects to the detail page when the declaration is already cancelled', async () => {
-      const cookie = await signIn()
-      const response = await get(checkUrlFor(CANCELLED_ITEM), cookie)
+      const cookie = await app.signIn()
+      const response = await app.get(checkUrlFor(CANCELLED_ITEM), cookie)
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe(detailUrlFor(CANCELLED_ITEM))
     })
 
     it('shows the selected reason, a Change link and inset text for a Direct Producer', async () => {
-      const cookie = await signIn()
-      const response = await get(
+      const cookie = await app.signIn()
+      const response = await app.get(
         `${checkUrlFor(DP_ITEM)}?reason=producer-request`,
         cookie
       )
@@ -269,7 +260,7 @@ describe('certificates of compliance — cancel', () => {
 
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(page.heading).toBe('Confirm and send cancellation email')
-      expect(page.organisation).toBe(mockDetailData.organisation.name)
+      expect(page.organisation).toBe(DP_ITEM.name)
       expect(page.reason.value).toBe('Producer requested to cancel')
       // Change link carries the reason back to the reason page for pre-selection.
       expect(page.reason.changeUrl).toBe(
@@ -290,8 +281,8 @@ describe('certificates of compliance — cancel', () => {
     })
 
     it('shows statement inset text for a Compliance Scheme', async () => {
-      const cookie = await signIn()
-      const response = await get(
+      const cookie = await app.signIn()
+      const response = await app.get(
         `${checkUrlFor(CS_ITEM)}?reason=producer-request`,
         cookie
       )
@@ -304,7 +295,7 @@ describe('certificates of compliance — cancel', () => {
 
   describe('GET email preview', () => {
     it('redirects unauthenticated users to /signin-oidc', async () => {
-      const response = await server.inject({
+      const response = await app.server.inject({
         method: 'GET',
         url: emailPreviewUrlFor(DP_ITEM)
       })
@@ -313,8 +304,8 @@ describe('certificates of compliance — cancel', () => {
     })
 
     it('redirects to the reason page when no reason is in the URL', async () => {
-      const cookie = await signIn()
-      const response = await get(
+      const cookie = await app.signIn()
+      const response = await app.get(
         `/${DP_ITEM.organisationId}/certificates-of-compliance/${DP_ITEM.id}/cancel/email-preview`,
         cookie
       )
@@ -323,25 +314,29 @@ describe('certificates of compliance — cancel', () => {
     })
 
     it('lists submitter and primary contact emails and renders personalisation from the Notify preview for a direct producer', async () => {
-      const cookie = await signIn()
-      const response = await get(emailPreviewUrlFor(DP_ITEM), cookie)
+      const cookie = await app.signIn()
+      const response = await app.get(emailPreviewUrlFor(DP_ITEM), cookie)
       const page = loadEmailPreviewPage(response.payload)
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(page.toLine).toBe('catherine.morris@howco.test, user@example.com')
+      expect(page.toLine).toBe(
+        'catherine.morris@howco.test, nadia.roche@scenario.test'
+      )
       expect(page.bodyHtml).toContain('Catherine')
       expect(page.bodyHtml).toContain('Morris')
       expect(page.bodyHtml).toContain('ea@environment-agency.gov.uk')
       expect(page.bodyHtml).toContain('<h2>Preview section</h2>')
     })
 
-    it('lists recipient emails and renders personalisation from the Notify preview for a compliance scheme', async () => {
-      const cookie = await signIn()
-      const response = await get(emailPreviewUrlFor(CS_ITEM), cookie)
+    it('lists submitter and primary contact emails and renders personalisation from the Notify preview for a compliance scheme', async () => {
+      const cookie = await app.signIn()
+      const response = await app.get(emailPreviewUrlFor(CS_ITEM), cookie)
       const page = loadEmailPreviewPage(response.payload)
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(page.toLine).toBe('jane.doe@ecopack.co.uk')
+      expect(page.toLine).toBe(
+        'jane.doe@ecopack.co.uk, owen.pryce@scenario.test'
+      )
       expect(page.bodyHtml).toContain('Jane')
       expect(page.bodyHtml).toContain('Doe')
       expect(page.bodyHtml).toContain('ea@environment-agency.gov.uk')
@@ -351,13 +346,17 @@ describe('certificates of compliance — cancel', () => {
 
   describe('POST cancel (the action)', () => {
     it('redirects unauthenticated users to /signin-oidc', async () => {
-      const response = await post(actionUrlFor(DP_ITEM), '', anonCrumbCookie)
+      const response = await app.post(
+        actionUrlFor(DP_ITEM),
+        '',
+        await app.anonCrumb()
+      )
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe('/signin-oidc')
     })
 
     it('rejects a request with no CSRF token', async () => {
-      const response = await server.inject({
+      const response = await app.server.inject({
         method: 'POST',
         url: actionUrlFor(DP_ITEM)
       })
@@ -365,22 +364,22 @@ describe('certificates of compliance — cancel', () => {
     })
 
     it('redirects to the reason page when no reason is submitted', async () => {
-      const cookie = await signIn()
-      const response = await post(actionUrlFor(DP_ITEM), '', cookie)
+      const cookie = await app.signIn()
+      const response = await app.post(actionUrlFor(DP_ITEM), '', cookie)
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe(reasonUrlFor(DP_ITEM))
     })
 
     it('records the cancellation, shows the banner and the reason, and hides the action buttons', async () => {
-      const cookie = await signIn()
+      const cookie = await app.signIn()
       const cancelResponse = await cancel(DP_ITEM, 'producer-request', cookie)
 
       expect(cancelResponse.statusCode).toBe(302)
       expect(cancelResponse.headers.location).toBe(detailUrlFor(DP_ITEM))
 
-      const detailResponse = await get(
+      const detailResponse = await app.get(
         detailUrlFor(DP_ITEM),
-        nextCookie(cancelResponse, cookie)
+        app.nextCookie(cancelResponse, cookie)
       )
 
       expect(detailResponse.statusCode).toBe(statusCodes.ok)
@@ -396,15 +395,15 @@ describe('certificates of compliance — cancel', () => {
     })
 
     it('re-shows the cancelled banner when confirming an already-cancelled declaration', async () => {
-      const cookie = await signIn()
+      const cookie = await app.signIn()
       const firstCancel = await cancel(DP_ITEM, 'producer-request', cookie)
-      const cookieAfterCancel = nextCookie(firstCancel, cookie)
+      const cookieAfterCancel = app.nextCookie(firstCancel, cookie)
 
       // Clear the first banner by visiting the detail page.
-      const firstView = await get(detailUrlFor(DP_ITEM), cookieAfterCancel)
-      const cookieAfterView = nextCookie(firstView, cookieAfterCancel)
+      const firstView = await app.get(detailUrlFor(DP_ITEM), cookieAfterCancel)
+      const cookieAfterView = app.nextCookie(firstView, cookieAfterCancel)
 
-      const secondConfirm = await post(
+      const secondConfirm = await app.post(
         actionUrlFor(DP_ITEM),
         '',
         cookieAfterView
@@ -412,9 +411,9 @@ describe('certificates of compliance — cancel', () => {
       expect(secondConfirm.statusCode).toBe(302)
       expect(secondConfirm.headers.location).toBe(detailUrlFor(DP_ITEM))
 
-      const detailResponse = await get(
+      const detailResponse = await app.get(
         detailUrlFor(DP_ITEM),
-        nextCookie(secondConfirm, cookieAfterView)
+        app.nextCookie(secondConfirm, cookieAfterView)
       )
       expect(detailResponse.payload).toContain('Certificate cancelled')
     })

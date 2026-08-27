@@ -47,17 +47,3 @@ export const defaultBackends = createBackends({
   wasteOrganisations,
   accountOrganisations
 })
-
-// Clears the default backends' approve/cancel transitions — for test isolation.
-export function resetMockData() {
-  defaultBackends.obligations.resetOverrides()
-}
-
-// Accessors bound to the default backends, for tests that fake the API services with
-// the canonical data.
-export const getDeclarationById = (id) =>
-  defaultBackends.obligations.getDeclarationById(id)
-export const getWasteOrganisation = (id) =>
-  defaultBackends.organisations.getWasteOrganisation(id)
-export const getAccountPersonEmails = (id) =>
-  defaultBackends.account.personEmails(id)

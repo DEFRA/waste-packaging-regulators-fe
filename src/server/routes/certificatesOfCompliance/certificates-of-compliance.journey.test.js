@@ -1,128 +1,96 @@
-import { createServer } from '#server/server.js'
 import { config } from '#config/config.js'
-import { resetMockData } from '#mocks/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import {
-  mockPendingItems,
-  mockAcceptedItems,
-  mockDetailData,
-  mockNotSubmittedItems,
-  mockComplianceSchemePendingItems,
-  mockComplianceSchemeAcceptedItems,
-  mockComplianceSchemeNotSubmittedItems,
-  mockDirectProducerCancelledDetailData,
-  mockComplianceSchemeCancelledDetailData
-} from '#test-helpers/mock-fixtures.js'
 import { loadDetailPage } from './detail/detail.page-object.js'
-import {
-  authCookiesFromResponse,
-  csrfTokenCookieFromResponse,
-  crumbTokenFromCookie,
-  mergeCookiesFromResponse,
-  sessionCookieFromResponse
-} from '#test-helpers/cookies.js'
+import { loadCsv } from './download/download.page-object.js'
+import { sessionCookieFromResponse } from '#test-helpers/cookies.js'
+import { setupRegulatorsApp } from '#test-helpers/msw/harness.js'
+import { materialRow, noDataRow } from '#test-helpers/msw/obligations.js'
 
-const HOWCO_DETAIL_URL =
-  '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
-const GREENFIELD_DETAIL_URL =
-  '/b1e2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/decl-204872'
-const ECOPACK_DETAIL_URL =
-  '/923fa611-571c-4948-ab7d-fbb75e75ed65/certificates-of-compliance/decl-cs-001'
-const RIVERSIDE_DETAIL_URL =
-  '/6d9a1e77-1b3f-4c22-8a41-8f5c1e9d2b34/certificates-of-compliance/decl-cs-102'
-const REDWOOD_UNSUBMITTED_URL =
-  '/d1e2f3a4-b5c6-7890-abcd-ef1234567890/certificates-of-compliance?obligationYear=2026'
-const FUTUREPACK_UNSUBMITTED_URL =
-  '/a9b8c7d6-e5f4-3210-abcd-ef9876543210/certificates-of-compliance?obligationYear=2026'
+// Obligation data the material-table tests assert against, declared here so the
+// per-material tonnages and statuses are visible next to the assertions.
+const ALL_MATERIALS = [
+  'Aluminium',
+  'Glass',
+  'PaperBoardFibre',
+  'Plastic',
+  'Steel',
+  'Wood',
+  'GlassRemelt',
+  'RemainingGlass'
+]
+const allMetObligations = ALL_MATERIALS.map((material) =>
+  materialRow(material, 100, 100)
+)
+const allNoDataObligations = ALL_MATERIALS.map((material) =>
+  noDataRow(material, 100)
+)
+const mixedObligations = [
+  materialRow('Aluminium', 215, 215, 'Met'),
+  materialRow('Glass', 640, 500, 'NotMet'),
+  materialRow('PaperBoardFibre', 870, 870, 'Met'),
+  materialRow('Plastic', 1740, 1500, 'NotMet'),
+  materialRow('Steel', 365, 365, 'Met'),
+  noDataRow('Wood', 80),
+  materialRow('GlassRemelt', 420, 380, 'NotMet'),
+  noDataRow('RemainingGlass', 220)
+]
 
-function detailPathFor(item) {
-  return `/${item.organisationId}/certificates-of-compliance/${item.id}`
-}
-
-function detailPathForDetailData(detailData) {
-  return `/${detailData.organisation.id}/certificates-of-compliance/${detailData.id}`
+const REGISTRATION_TYPE = {
+  'direct-producers': 'DirectProducer',
+  'compliance-schemes': 'ComplianceScheme'
 }
 
 describe('certificates of compliance — journey', () => {
-  let server
-  let sessionCookie
+  const app = setupRegulatorsApp()
   // A crumb minted without signing in, mirroring a real browser that loaded a
   // form (and its crumb) before its session lapsed.
   let anonCrumbCookie
 
   beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-    const response = await server.inject({
-      method: 'GET',
-      url: '/signin-oidc'
-    })
-    sessionCookie = authCookiesFromResponse(response)
-
-    const anonResponse = await server.inject({
-      method: 'GET',
-      url: '/certificates-of-compliance'
-    })
-    anonCrumbCookie = csrfTokenCookieFromResponse(anonResponse)
+    anonCrumbCookie = await app.anonCrumb()
   })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
-  // Approve/cancel persist at the MSW boundary (shared across the process), so
-  // clear those transitions between tests to keep each starting from the seeded
-  // fixture state.
-  afterEach(() => {
-    resetMockData()
-  })
-
-  const inject = (url) =>
-    server.inject({ method: 'GET', url, headers: { cookie: sessionCookie } })
 
   // POST a form body with the crumb echoed back from the given cookie.
-  const postForm = (url, cookie, payload = '') => {
-    const token = crumbTokenFromCookie(cookie)
-    const body = [payload, `CSRFToken=${token}`].filter(Boolean).join('&')
-    return server.inject({
-      method: 'POST',
-      url,
-      payload: body,
-      headers: {
-        cookie,
-        'content-type': 'application/x-www-form-urlencoded'
-      }
-    })
-  }
+  const postForm = (url, cookie, payload = '') => app.post(url, payload, cookie)
 
-  // Drive the two-step cancel flow: choose a reason, then confirm and send.
-  // The reason travels in the form body, not the session.
-  const cancelCertificate = async (item, cookie) => {
+  // Drive the two-step cancel flow: choose a reason, then confirm and send. The
+  // reason travels in the form body, not the session.
+  const cancelDeclaration = async (detailPath, cookie) => {
     await postForm(
-      `${detailPathFor(item)}/cancel/reason`,
+      `${detailPath}/cancel/reason`,
       cookie,
       'cancel-reason=producer-request'
     )
     return postForm(
-      `${detailPathFor(item)}/cancel`,
+      `${detailPath}/cancel`,
       cookie,
       'cancel-reason=producer-request'
     )
   }
 
   describe('unauthenticated access', () => {
+    let detailPath
+
+    beforeEach(() => {
+      detailPath = app
+        .given([{ name: 'Halvern Producers Ltd', status: 'pending' }])
+        .byName('Halvern Producers Ltd').detailPath
+    })
+
     it('redirects the list page to /signin-oidc and stores returnTo', async () => {
       const listUrl =
         '/certificates-of-compliance?type=direct-producers&tab=pending'
-      const response = await server.inject({ method: 'GET', url: listUrl })
+      const response = await app.server.inject({ method: 'GET', url: listUrl })
 
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe('/signin-oidc')
     })
 
     it('redirects the detail page to /signin-oidc and stores returnTo', async () => {
-      const detailUrl = detailPathFor(mockPendingItems[0])
-      const response = await server.inject({ method: 'GET', url: detailUrl })
+      const response = await app.server.inject({
+        method: 'GET',
+        url: detailPath
+      })
 
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe('/signin-oidc')
@@ -132,14 +100,14 @@ describe('certificates of compliance — journey', () => {
       const listUrl =
         '/certificates-of-compliance?type=direct-producers&tab=pending'
 
-      const unauthResponse = await server.inject({
+      const unauthResponse = await app.server.inject({
         method: 'GET',
         url: listUrl
       })
       expect(unauthResponse.statusCode).toBe(302)
       const unauthCookie = sessionCookieFromResponse(unauthResponse)
 
-      const signinResponse = await server.inject({
+      const signinResponse = await app.server.inject({
         method: 'GET',
         url: '/signin-oidc',
         headers: { cookie: unauthCookie }
@@ -156,13 +124,29 @@ describe('certificates of compliance — journey', () => {
   })
 
   describe('list → detail navigation', () => {
+    let scenario
+
+    beforeEach(() => {
+      scenario = app.given([
+        { name: 'Aldbury Producers Ltd', status: 'pending' },
+        { name: 'Braemar Producers Ltd', status: 'pending' },
+        { name: 'Cedar Producers Ltd', status: 'accepted' },
+        { name: 'Dover Producers Ltd', status: 'not-submitted' },
+        {
+          name: 'Elgin Compliance Operators',
+          type: 'compliance-scheme',
+          status: 'not-submitted'
+        }
+      ])
+    })
+
     it('list page renders items with links to detail pages', async () => {
-      const response = await inject(
+      const response = await app.get(
         '/certificates-of-compliance?type=direct-producers&tab=pending'
       )
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      for (const item of mockPendingItems) {
+      for (const item of scenario.rowsFor('DirectProducer', 'pending')) {
         expect(response.payload).toContain(item.organisationName)
         expect(response.payload).toContain(
           `./${item.organisationId}/certificates-of-compliance/${item.id}`
@@ -171,12 +155,12 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('not-submitted list shows organisation name with a detail link including obligation year', async () => {
-      const response = await inject(
+      const response = await app.get(
         '/certificates-of-compliance?type=direct-producers&tab=not-submitted'
       )
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      for (const item of mockNotSubmittedItems) {
+      for (const item of scenario.rowsFor('DirectProducer', 'not-submitted')) {
         expect(response.payload).toContain(item.organisationName)
         expect(response.payload).toContain(
           `./${item.organisationId}/certificates-of-compliance?obligationYear=2026`
@@ -188,19 +172,23 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('compliance scheme not-submitted list shows the organisation ID (reference number)', async () => {
-      const response = await inject(
+      const response = await app.get(
         '/certificates-of-compliance?type=compliance-schemes&tab=not-submitted'
       )
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      for (const item of mockComplianceSchemeNotSubmittedItems) {
+      for (const item of scenario.rowsFor(
+        'ComplianceScheme',
+        'not-submitted'
+      )) {
         expect(response.payload).toContain(item.organisationReferenceNumber)
         expect(response.payload).toContain(item.organisationName)
       }
     })
 
     it('following a pending item link loads the detail page', async () => {
-      const listResponse = await inject(
+      const org = scenario.byName('Aldbury Producers Ltd')
+      const listResponse = await app.get(
         '/certificates-of-compliance?type=direct-producers&tab=pending'
       )
       expect(listResponse.statusCode, 'Should return list page').toBe(
@@ -209,13 +197,13 @@ describe('certificates of compliance — journey', () => {
 
       const match = listResponse.payload.match(
         new RegExp(
-          `href="(\\.\\/[^"]+\\/certificates-of-compliance\\/${mockPendingItems[0].id})"`
+          `href="(\\.\\/[^"]+\\/certificates-of-compliance\\/${org.declarationId})"`
         )
       )
       expect(match, 'Should extract detail link').not.toBeNull()
 
       const detailPath = match[1].replace('./', '/')
-      const detailResponse = await inject(detailPath)
+      const detailResponse = await app.get(detailPath)
 
       expect(
         detailResponse.statusCode,
@@ -223,12 +211,13 @@ describe('certificates of compliance — journey', () => {
       ).toBe(statusCodes.ok)
       const { heading } = loadDetailPage(detailResponse.payload)
       expect(heading, 'Should show organisation name on detail page').toContain(
-        mockPendingItems[0].organisationName
+        org.name
       )
     })
 
     it('following an accepted item link loads the detail page', async () => {
-      const listResponse = await inject(
+      const org = scenario.byName('Cedar Producers Ltd')
+      const listResponse = await app.get(
         '/certificates-of-compliance?type=direct-producers&tab=accepted'
       )
       expect(listResponse.statusCode, 'Should return list page').toBe(
@@ -237,17 +226,17 @@ describe('certificates of compliance — journey', () => {
       expect(
         listResponse.payload,
         'Should return list page with organisation name'
-      ).toContain(mockAcceptedItems[0].organisationName)
+      ).toContain(org.name)
 
       const match = listResponse.payload.match(
         new RegExp(
-          `href="(\\.\\/[^"]+\\/certificates-of-compliance\\/${mockAcceptedItems[0].id})"`
+          `href="(\\.\\/[^"]+\\/certificates-of-compliance\\/${org.declarationId})"`
         )
       )
       expect(match).not.toBeNull()
 
       const detailPath = match[1].replace('./', '/')
-      const detailResponse = await inject(detailPath)
+      const detailResponse = await app.get(detailPath)
 
       expect(
         detailResponse.statusCode,
@@ -255,14 +244,45 @@ describe('certificates of compliance — journey', () => {
       ).toBe(statusCodes.ok)
       const { heading } = loadDetailPage(detailResponse.payload)
       expect(heading, 'Should show organisation name on detail page').toContain(
-        mockAcceptedItems[0].organisationName
+        org.name
       )
     })
   })
 
   describe('detail page actions', () => {
+    let scenario
+
+    beforeEach(() => {
+      scenario = app.given([
+        { name: 'Pending Producers Ltd', status: 'pending' },
+        {
+          name: 'Pending Compliance Operators',
+          type: 'compliance-scheme',
+          status: 'pending'
+        },
+        { name: 'Accepted Producers Ltd', status: 'accepted' },
+        {
+          name: 'Accepted Compliance Operators',
+          type: 'compliance-scheme',
+          status: 'accepted'
+        },
+        {
+          name: 'Cancelled Producers Ltd',
+          status: 'cancelled',
+          listed: false
+        },
+        {
+          name: 'Cancelled Compliance Operators',
+          type: 'compliance-scheme',
+          status: 'cancelled',
+          listed: false
+        }
+      ])
+    })
+
     it('shows Accept and Cancel certificate buttons for a pending direct producer', async () => {
-      const response = await inject(detailPathFor(mockPendingItems[0]))
+      const org = scenario.byName('Pending Producers Ltd')
+      const response = await app.get(org.detailPath)
 
       expect(response.statusCode).toBe(statusCodes.ok)
       const { actions } = loadDetailPage(response.payload)
@@ -271,8 +291,8 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('shows Accept and Cancel statement buttons for a pending compliance scheme', async () => {
-      const item = mockComplianceSchemePendingItems[0]
-      const response = await inject(detailPathFor(item))
+      const org = scenario.byName('Pending Compliance Operators')
+      const response = await app.get(org.detailPath)
 
       expect(response.statusCode).toBe(statusCodes.ok)
       const { actions } = loadDetailPage(response.payload)
@@ -281,32 +301,30 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('shows cancel only for an accepted direct producer', async () => {
-      const response = await inject(detailPathFor(mockAcceptedItems[0]))
+      const org = scenario.byName('Accepted Producers Ltd')
+      const response = await app.get(org.detailPath)
 
       expect(response.statusCode).toBe(statusCodes.ok)
       const { actions } = loadDetailPage(response.payload)
       expect(actions.accept).toBeNull()
       expect(actions.cancel.text).toBe('Cancel certificate')
-      expect(actions.cancel.href).toBe(
-        `${detailPathFor(mockAcceptedItems[0])}/cancel/reason`
-      )
+      expect(actions.cancel.href).toBe(`${org.detailPath}/cancel/reason`)
     })
 
     it('shows cancel only for an accepted compliance scheme', async () => {
-      const item = mockComplianceSchemeAcceptedItems[0]
-      const response = await inject(detailPathFor(item))
+      const org = scenario.byName('Accepted Compliance Operators')
+      const response = await app.get(org.detailPath)
 
       expect(response.statusCode).toBe(statusCodes.ok)
       const { actions } = loadDetailPage(response.payload)
       expect(actions.accept).toBeNull()
       expect(actions.cancel.text).toBe('Cancel statement')
-      expect(actions.cancel.href).toBe(`${detailPathFor(item)}/cancel/reason`)
+      expect(actions.cancel.href).toBe(`${org.detailPath}/cancel/reason`)
     })
 
     it('shows no action buttons for a cancelled direct producer', async () => {
-      const response = await inject(
-        detailPathForDetailData(mockDirectProducerCancelledDetailData)
-      )
+      const org = scenario.byName('Cancelled Producers Ltd')
+      const response = await app.get(org.detailPath)
 
       expect(response.statusCode).toBe(statusCodes.ok)
       const { actions } = loadDetailPage(response.payload)
@@ -315,9 +333,8 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('shows no action buttons for a cancelled compliance scheme', async () => {
-      const response = await inject(
-        detailPathForDetailData(mockComplianceSchemeCancelledDetailData)
-      )
+      const org = scenario.byName('Cancelled Compliance Operators')
+      const response = await app.get(org.detailPath)
 
       expect(response.statusCode).toBe(statusCodes.ok)
       const { actions } = loadDetailPage(response.payload)
@@ -326,17 +343,20 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('cancel flow redirects to detail with cancelled banner styling', async () => {
-      const item = mockPendingItems[0]
-      const cancelResponse = await cancelCertificate(item, sessionCookie)
+      const org = scenario.byName('Pending Producers Ltd')
+      const cancelResponse = await cancelDeclaration(
+        org.detailPath,
+        app.authCookie
+      )
 
       expect(cancelResponse.statusCode).toBe(302)
-      expect(cancelResponse.headers.location).toBe(detailPathFor(item))
+      expect(cancelResponse.headers.location).toBe(org.detailPath)
 
-      const detailResponse = await server.inject({
+      const detailResponse = await app.server.inject({
         method: 'GET',
-        url: detailPathFor(item),
+        url: org.detailPath,
         headers: {
-          cookie: mergeCookiesFromResponse(sessionCookie, cancelResponse)
+          cookie: app.nextCookie(cancelResponse, app.authCookie)
         }
       })
 
@@ -350,6 +370,7 @@ describe('certificates of compliance — journey', () => {
         text: 'Cancelled',
         colour: 'yellow'
       })
+      // The cancelling regulator is the signed-in user resolved from the account API.
       expect(detailsPage.cancellation.cancelledBy).toBe('John Doe')
       expect(detailsPage.cancellation.reason).toBe(
         'Producer requested to cancel'
@@ -357,16 +378,19 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('compliance scheme cancel flow shows statement cancelled banner', async () => {
-      const item = mockComplianceSchemePendingItems[0]
-      const cancelResponse = await cancelCertificate(item, sessionCookie)
+      const org = scenario.byName('Pending Compliance Operators')
+      const cancelResponse = await cancelDeclaration(
+        org.detailPath,
+        app.authCookie
+      )
 
       expect(cancelResponse.statusCode).toBe(302)
 
-      const detailResponse = await server.inject({
+      const detailResponse = await app.server.inject({
         method: 'GET',
-        url: detailPathFor(item),
+        url: org.detailPath,
         headers: {
-          cookie: mergeCookiesFromResponse(sessionCookie, cancelResponse)
+          cookie: app.nextCookie(cancelResponse, app.authCookie)
         }
       })
 
@@ -391,10 +415,17 @@ describe('certificates of compliance — journey', () => {
   })
 
   describe('sign-in populates user in session for certificate actions', () => {
+    let org
+
+    beforeEach(() => {
+      org = app
+        .given([{ name: 'Signin Producers Ltd', status: 'pending' }])
+        .byName('Signin Producers Ltd')
+    })
+
     it('cancel action redirects to /signin-oidc when no user is in session', async () => {
-      const item = mockPendingItems[0]
       const response = await postForm(
-        `${detailPathFor(item)}/cancel`,
+        `${org.detailPath}/cancel`,
         anonCrumbCookie
       )
 
@@ -403,22 +434,16 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('cancel action succeeds after sign-in populates user from account API', async () => {
-      const signinResponse = await server.inject({
-        method: 'GET',
-        url: '/signin-oidc'
-      })
-      const cookie = authCookiesFromResponse(signinResponse)
+      const cookie = await app.signIn()
 
-      const item = mockPendingItems[0]
-      const cancelResponse = await cancelCertificate(item, cookie)
+      const cancelResponse = await cancelDeclaration(org.detailPath, cookie)
 
       expect(cancelResponse.statusCode).toBe(302)
-      expect(cancelResponse.headers.location).toBe(detailPathFor(item))
+      expect(cancelResponse.headers.location).toBe(org.detailPath)
     })
 
     it('full flow: unauthenticated action → sign-in with user from account API → action succeeds', async () => {
-      const item = mockPendingItems[0]
-      const acceptUrl = `${detailPathFor(item)}/accept`
+      const acceptUrl = `${org.detailPath}/accept`
 
       // Submit the confirmation unauthenticated (carrying a crumb, as a real
       // form would) — stored as returnTo and redirected to sign-in
@@ -429,23 +454,17 @@ describe('certificates of compliance — journey', () => {
       )
       expect(unauthResponse.statusCode).toBe(302)
       expect(unauthResponse.headers.location).toBe('/signin-oidc')
-      const afterUnauth = mergeCookiesFromResponse(
-        anonCrumbCookie,
-        unauthResponse
-      )
+      const afterUnauth = app.nextCookie(unauthResponse, anonCrumbCookie)
 
       // Sign in — account API populates user in session, redirects back to acceptUrl
-      const signinResponse = await server.inject({
+      const signinResponse = await app.server.inject({
         method: 'GET',
         url: '/signin-oidc',
         headers: { cookie: afterUnauth }
       })
       expect(signinResponse.statusCode).toBe(302)
       expect(signinResponse.headers.location).toBe(acceptUrl)
-      const signedInCookie = mergeCookiesFromResponse(
-        afterUnauth,
-        signinResponse
-      )
+      const signedInCookie = app.nextCookie(signinResponse, afterUnauth)
 
       // Retry with the signed-in session — approval succeeds
       const acceptResponse = await postForm(
@@ -454,45 +473,60 @@ describe('certificates of compliance — journey', () => {
         'confirm-accept=yes'
       )
       expect(acceptResponse.statusCode).toBe(302)
-      expect(acceptResponse.headers.location).toBe(detailPathFor(item))
+      expect(acceptResponse.headers.location).toBe(org.detailPath)
     })
   })
 
   describe('accept confirmation journey', () => {
-    const acceptPathFor = (item) => `${detailPathFor(item)}/accept`
+    let producer
+    let scheme
 
-    const postAccept = (item, choice, cookie) =>
-      postForm(acceptPathFor(item), cookie, `confirm-accept=${choice}`)
+    beforeEach(() => {
+      const scenario = app.given([
+        { name: 'Confirm Producers Ltd', status: 'pending' },
+        {
+          name: 'Confirm Compliance Operators',
+          type: 'compliance-scheme',
+          status: 'pending'
+        }
+      ])
+      producer = scenario.byName('Confirm Producers Ltd')
+      scheme = scenario.byName('Confirm Compliance Operators')
+    })
+
+    const postAccept = (detailPath, choice, cookie) =>
+      postForm(`${detailPath}/accept`, cookie, `confirm-accept=${choice}`)
 
     it('detail page Accept button links to the confirmation page', async () => {
-      const item = mockPendingItems[0]
-      const response = await inject(detailPathFor(item))
+      const response = await app.get(producer.detailPath)
 
       expect(response.statusCode).toBe(statusCodes.ok)
       const { actions } = loadDetailPage(response.payload)
-      expect(actions.accept.href).toBe(acceptPathFor(item))
+      expect(actions.accept.href).toBe(`${producer.detailPath}/accept`)
     })
 
     it('GET on the confirmation page renders the Yes/No form', async () => {
-      const item = mockPendingItems[0]
-      const response = await inject(acceptPathFor(item))
+      const response = await app.get(`${producer.detailPath}/accept`)
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).toContain(mockDetailData.organisation.name)
+      expect(response.payload).toContain(producer.name)
       expect(response.payload).toContain('confirm-accept')
     })
 
     it('"yes" runs the approve action and lands on detail with the accepted banner', async () => {
-      const item = mockPendingItems[0]
-      const yesResponse = await postAccept(item, 'yes', sessionCookie)
+      const yesResponse = await postAccept(
+        producer.detailPath,
+        'yes',
+        app.authCookie
+      )
       expect(yesResponse.statusCode).toBe(302)
-      expect(yesResponse.headers.location).toBe(detailPathFor(item))
+      expect(yesResponse.headers.location).toBe(producer.detailPath)
 
-      const detailResponse = await server.inject({
+      const detailResponse = await app.server.inject({
         method: 'GET',
-        url: detailPathFor(item),
+        url: producer.detailPath,
         headers: {
-          cookie: mergeCookiesFromResponse(sessionCookie, yesResponse)
+          cookie: app.nextCookie(yesResponse, app.authCookie)
         }
       })
       const detailsPage = loadDetailPage(detailResponse.payload)
@@ -510,17 +544,43 @@ describe('certificates of compliance — journey', () => {
       expect(detailsPage.accepted.acceptedDate).toBeTruthy()
     })
 
-    it('"no" returns to detail without invoking the approve action', async () => {
-      const item = mockPendingItems[0]
-      const noResponse = await postAccept(item, 'no', sessionCookie)
-      expect(noResponse.statusCode).toBe(302)
-      expect(noResponse.headers.location).toBe(detailPathFor(item))
+    it('an approved certificate leaves the Pending tab and appears on Accepted', async () => {
+      const yesResponse = await postAccept(
+        producer.detailPath,
+        'yes',
+        app.authCookie
+      )
+      const cookie = app.nextCookie(yesResponse, app.authCookie)
 
-      const detailResponse = await server.inject({
+      const pending = await app.server.inject({
         method: 'GET',
-        url: detailPathFor(item),
+        url: '/certificates-of-compliance?type=direct-producers&tab=pending',
+        headers: { cookie }
+      })
+      expect(pending.payload).not.toContain(producer.name)
+
+      const accepted = await app.server.inject({
+        method: 'GET',
+        url: '/certificates-of-compliance?type=direct-producers&tab=accepted',
+        headers: { cookie }
+      })
+      expect(accepted.payload).toContain(producer.name)
+    })
+
+    it('"no" returns to detail without invoking the approve action', async () => {
+      const noResponse = await postAccept(
+        producer.detailPath,
+        'no',
+        app.authCookie
+      )
+      expect(noResponse.statusCode).toBe(302)
+      expect(noResponse.headers.location).toBe(producer.detailPath)
+
+      const detailResponse = await app.server.inject({
+        method: 'GET',
+        url: producer.detailPath,
         headers: {
-          cookie: mergeCookiesFromResponse(sessionCookie, noResponse)
+          cookie: app.nextCookie(noResponse, app.authCookie)
         }
       })
       expect(detailResponse.statusCode).toBe(statusCodes.ok)
@@ -529,8 +589,7 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('submitting without a choice re-renders the form with an error summary', async () => {
-      const item = mockPendingItems[0]
-      const response = await postAccept(item, '', sessionCookie)
+      const response = await postAccept(producer.detailPath, '', app.authCookie)
 
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(response.payload).toContain('There is a problem')
@@ -538,15 +597,18 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('"yes" on a Compliance Scheme shows statement-accepted banner', async () => {
-      const item = mockComplianceSchemePendingItems[0]
-      const yesResponse = await postAccept(item, 'yes', sessionCookie)
+      const yesResponse = await postAccept(
+        scheme.detailPath,
+        'yes',
+        app.authCookie
+      )
       expect(yesResponse.statusCode).toBe(302)
 
-      const detailResponse = await server.inject({
+      const detailResponse = await app.server.inject({
         method: 'GET',
-        url: detailPathFor(item),
+        url: scheme.detailPath,
         headers: {
-          cookie: mergeCookiesFromResponse(sessionCookie, yesResponse)
+          cookie: app.nextCookie(yesResponse, app.authCookie)
         }
       })
       const detailsPage = loadDetailPage(detailResponse.payload)
@@ -559,24 +621,26 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('accept then cancel shows Accepted and Cancelled rows in current year', async () => {
-      const signInResponse = await server.inject({
-        method: 'GET',
-        url: '/signin-oidc'
-      })
-      const freshCookie = authCookiesFromResponse(signInResponse)
+      const freshCookie = await app.signIn()
 
-      const item = mockPendingItems[1]
-      const acceptResponse = await postAccept(item, 'yes', freshCookie)
+      const acceptResponse = await postAccept(
+        producer.detailPath,
+        'yes',
+        freshCookie
+      )
       expect(acceptResponse.statusCode).toBe(302)
 
-      let cookie = mergeCookiesFromResponse(freshCookie, acceptResponse)
-      const cancelResponse = await cancelCertificate(item, cookie)
+      let cookie = app.nextCookie(acceptResponse, freshCookie)
+      const cancelResponse = await cancelDeclaration(
+        producer.detailPath,
+        cookie
+      )
       expect(cancelResponse.statusCode).toBe(302)
 
-      cookie = mergeCookiesFromResponse(cookie, cancelResponse)
-      const detailResponse = await server.inject({
+      cookie = app.nextCookie(cancelResponse, cookie)
+      const detailResponse = await app.server.inject({
         method: 'GET',
-        url: detailPathFor(item),
+        url: producer.detailPath,
         headers: { cookie }
       })
 
@@ -588,11 +652,11 @@ describe('certificates of compliance — journey', () => {
       expect(currentYear.rows.every((row) => row.viewSubmissionUrl)).toBe(true)
       expect(
         currentYear.rows.every(
-          (row) => row.viewSubmissionUrl === detailPathFor(item)
+          (row) => row.viewSubmissionUrl === producer.detailPath
         )
       ).toBe(true)
 
-      const linkedResponse = await server.inject({
+      const linkedResponse = await app.server.inject({
         method: 'GET',
         url: currentYear.rows[0].viewSubmissionUrl,
         headers: { cookie }
@@ -602,9 +666,42 @@ describe('certificates of compliance — journey', () => {
   })
 
   describe('declaration section', () => {
+    let scenario
+
+    beforeEach(() => {
+      scenario = app.given([
+        { name: 'Pending Producers Ltd', status: 'pending' },
+        {
+          name: 'Pending Compliance Operators',
+          type: 'compliance-scheme',
+          status: 'pending'
+        },
+        { name: 'Accepted Producers Ltd', status: 'accepted' },
+        { name: 'Unsubmitted Producers Ltd', status: 'not-submitted' },
+        {
+          name: 'Cancelled Producers Ltd',
+          status: 'cancelled',
+          listed: false,
+          cancelledBy: 'James Walker',
+          cancelledDate: '2026-03-10T09:15:00Z',
+          cancelledReason: 'Submitted after the deadline.'
+        },
+        {
+          name: 'Cancelled Compliance Operators',
+          type: 'compliance-scheme',
+          status: 'cancelled',
+          listed: false,
+          cancelledBy: 'James Walker',
+          cancelledDate: '2026-03-08T11:30:00Z',
+          cancelledReason: 'Incomplete member data submitted.'
+        }
+      ])
+    })
+
     it('shows the declaration for a submitted (pending) direct producer', async () => {
+      const org = scenario.byName('Pending Producers Ltd')
       const { declaration } = loadDetailPage(
-        (await inject(HOWCO_DETAIL_URL)).payload
+        (await app.get(org.detailPath)).payload
       )
 
       expect(declaration.present).toBe(true)
@@ -612,8 +709,9 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('shows the declaration for a submitted (pending) compliance scheme with statement wording', async () => {
+      const org = scenario.byName('Pending Compliance Operators')
       const { declaration } = loadDetailPage(
-        (await inject(ECOPACK_DETAIL_URL)).payload
+        (await app.get(org.detailPath)).payload
       )
 
       expect(declaration.present).toBe(true)
@@ -621,28 +719,27 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('shows the declaration for an accepted direct producer', async () => {
+      const org = scenario.byName('Accepted Producers Ltd')
       const { declaration } = loadDetailPage(
-        (await inject(detailPathFor(mockAcceptedItems[0]))).payload
+        (await app.get(org.detailPath)).payload
       )
 
       expect(declaration.present).toBe(true)
     })
 
     it('hides the declaration for an unsubmitted organisation', async () => {
+      const org = scenario.byName('Unsubmitted Producers Ltd')
       const { declaration } = loadDetailPage(
-        (await inject(REDWOOD_UNSUBMITTED_URL)).payload
+        (await app.get(org.detailPath)).payload
       )
 
       expect(declaration.present).toBe(false)
     })
 
     it('shows the declaration for a cancelled direct producer', async () => {
+      const org = scenario.byName('Cancelled Producers Ltd')
       const detailsPage = loadDetailPage(
-        (
-          await inject(
-            detailPathForDetailData(mockDirectProducerCancelledDetailData)
-          )
-        ).payload
+        (await app.get(org.detailPath)).payload
       )
 
       expect(detailsPage.declaration.present).toBe(true)
@@ -665,12 +762,9 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('shows the declaration for a cancelled compliance scheme', async () => {
+      const org = scenario.byName('Cancelled Compliance Operators')
       const detailsPage = loadDetailPage(
-        (
-          await inject(
-            detailPathForDetailData(mockComplianceSchemeCancelledDetailData)
-          )
-        ).payload
+        (await app.get(org.detailPath)).payload
       )
 
       expect(detailsPage.declaration.present).toBe(true)
@@ -694,9 +788,29 @@ describe('certificates of compliance — journey', () => {
   })
 
   describe('inset text', () => {
+    let scenario
+
+    beforeEach(() => {
+      scenario = app.given([
+        { name: 'Pending Producers Ltd', status: 'pending' },
+        {
+          name: 'Pending Compliance Operators',
+          type: 'compliance-scheme',
+          status: 'pending'
+        },
+        { name: 'Unsubmitted Producers Ltd', status: 'not-submitted' },
+        {
+          name: 'Unsubmitted Compliance Operators',
+          type: 'compliance-scheme',
+          status: 'not-submitted'
+        }
+      ])
+    })
+
     it('shows the submission message for a submitted direct producer', async () => {
+      const org = scenario.byName('Pending Producers Ltd')
       const { insetText } = loadDetailPage(
-        (await inject(HOWCO_DETAIL_URL)).payload
+        (await app.get(org.detailPath)).payload
       )
 
       expect(insetText).toContain(
@@ -705,8 +819,9 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('shows the submission message for a submitted compliance scheme', async () => {
+      const org = scenario.byName('Pending Compliance Operators')
       const { insetText } = loadDetailPage(
-        (await inject(ECOPACK_DETAIL_URL)).payload
+        (await app.get(org.detailPath)).payload
       )
 
       expect(insetText).toContain(
@@ -715,8 +830,9 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('shows the not-submitted certificate message for an unsubmitted direct producer', async () => {
+      const org = scenario.byName('Unsubmitted Producers Ltd')
       const { insetText } = loadDetailPage(
-        (await inject(REDWOOD_UNSUBMITTED_URL)).payload
+        (await app.get(org.detailPath)).payload
       )
 
       expect(insetText).toContain(
@@ -725,8 +841,9 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('shows the not-submitted statement message for an unsubmitted compliance scheme', async () => {
+      const org = scenario.byName('Unsubmitted Compliance Operators')
       const { insetText } = loadDetailPage(
-        (await inject(FUTUREPACK_UNSUBMITTED_URL)).payload
+        (await app.get(org.detailPath)).payload
       )
 
       expect(insetText).toContain(
@@ -736,8 +853,45 @@ describe('certificates of compliance — journey', () => {
   })
 
   describe('not-submitted compliance scheme detail', () => {
+    let scenario
+
+    beforeEach(() => {
+      scenario = app.given([
+        {
+          // The heading shows the operator name, not the scheme name, and the
+          // nominated contact is the Approved Person, not the Basic User.
+          name: 'FuturePack Operators',
+          schemeName: 'FuturePack Compliance Scheme',
+          type: 'compliance-scheme',
+          status: 'not-submitted',
+          persons: [
+            {
+              firstName: 'Sam',
+              lastName: 'Reed',
+              email: 'sam.reed@example.test',
+              telephoneNumber: '020 7946 1111',
+              serviceRole: 'Basic User'
+            },
+            {
+              firstName: 'Nadia',
+              lastName: 'Clarke',
+              email: 'nadia.clarke@futurepack.test',
+              telephoneNumber: '020 7946 0103',
+              serviceRole: 'Approved Person'
+            }
+          ]
+        },
+        {
+          name: 'Southgate Operators',
+          type: 'compliance-scheme',
+          status: 'not-submitted'
+        }
+      ])
+    })
+
     it('headings show the scheme operator, not the compliance scheme name', async () => {
-      const payload = (await inject(FUTUREPACK_UNSUBMITTED_URL)).payload
+      const org = scenario.byName('FuturePack Operators')
+      const payload = (await app.get(org.detailPath)).payload
       const { heading } = loadDetailPage(payload)
 
       expect(heading).toBe('FuturePack Operators')
@@ -745,7 +899,8 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('shows the email address and phone number of the nominated contact', async () => {
-      const payload = (await inject(FUTUREPACK_UNSUBMITTED_URL)).payload
+      const org = scenario.byName('FuturePack Operators')
+      const payload = (await app.get(org.detailPath)).payload
       const { summaryRows } = loadDetailPage(payload)
 
       expect(summaryRows.emailAddress.value).toBe(
@@ -756,10 +911,13 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('populates organisation type and company number for every scheme', async () => {
-      for (const item of mockComplianceSchemeNotSubmittedItems) {
+      for (const item of scenario.rowsFor(
+        'ComplianceScheme',
+        'not-submitted'
+      )) {
         const { heading, summaryRows } = loadDetailPage(
           (
-            await inject(
+            await app.get(
               `/${item.organisationId}/certificates-of-compliance?obligationYear=2026`
             )
           ).payload
@@ -772,8 +930,9 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('keeps Name on account hidden — there is no submitter', async () => {
+      const org = scenario.byName('FuturePack Operators')
       const { summaryRows } = loadDetailPage(
-        (await inject(FUTUREPACK_UNSUBMITTED_URL)).payload
+        (await app.get(org.detailPath)).payload
       )
 
       expect(summaryRows.nameOnAccount.present).toBe(false)
@@ -781,12 +940,35 @@ describe('certificates of compliance — journey', () => {
   })
 
   describe('Regulation 43 section', () => {
-    const ECOPACK_COMPLIANT_URL =
-      '/e1d2c3b4-a596-4878-9abc-def012345678/certificates-of-compliance/decl-cs-101'
+    let scenario
+
+    beforeEach(() => {
+      scenario = app.given([
+        {
+          name: 'EcoPack Group',
+          type: 'compliance-scheme',
+          status: 'pending',
+          regulation43: false
+        },
+        {
+          name: 'Nationwide Packaging Group',
+          type: 'compliance-scheme',
+          status: 'accepted',
+          regulation43: true
+        },
+        {
+          name: 'Unsubmitted Compliance Operators',
+          type: 'compliance-scheme',
+          status: 'not-submitted'
+        },
+        { name: 'Producer Ltd', status: 'pending' }
+      ])
+    })
 
     it('shows the not complied statement for a not compliant compliance scheme', async () => {
+      const org = scenario.byName('EcoPack Group')
       const { regulation43 } = loadDetailPage(
-        (await inject(ECOPACK_DETAIL_URL)).payload
+        (await app.get(org.detailPath)).payload
       )
 
       expect(regulation43.present).toBe(true)
@@ -796,8 +978,9 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('shows the complied statement for a compliant compliance scheme', async () => {
+      const org = scenario.byName('Nationwide Packaging Group')
       const { regulation43 } = loadDetailPage(
-        (await inject(ECOPACK_COMPLIANT_URL)).payload
+        (await app.get(org.detailPath)).payload
       )
 
       expect(regulation43.present).toBe(true)
@@ -807,10 +990,9 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('shows a grey No data empty state for a compliance scheme with no submission', async () => {
-      const FUTUREPACK_UNSUBMITTED_URL =
-        '/a9b8c7d6-e5f4-3210-abcd-ef9876543210/certificates-of-compliance?obligationYear=2026'
+      const org = scenario.byName('Unsubmitted Compliance Operators')
       const { regulation43 } = loadDetailPage(
-        (await inject(FUTUREPACK_UNSUBMITTED_URL)).payload
+        (await app.get(org.detailPath)).payload
       )
 
       expect(regulation43.present).toBe(true)
@@ -818,8 +1000,9 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('does not show the section for a direct producer', async () => {
+      const org = scenario.byName('Producer Ltd')
       const { regulation43 } = loadDetailPage(
-        (await inject(HOWCO_DETAIL_URL)).payload
+        (await app.get(org.detailPath)).payload
       )
 
       expect(regulation43.present).toBe(false)
@@ -832,9 +1015,22 @@ describe('certificates of compliance — journey', () => {
     const noData = { text: 'No data', colour: 'grey' }
 
     describe('fully-Met direct producer detail', () => {
+      let org
+      beforeEach(() => {
+        org = app
+          .given([
+            {
+              name: 'Fullymet Producers Ltd',
+              status: 'pending',
+              obligations: allMetObligations
+            }
+          ])
+          .byName('Fullymet Producers Ltd')
+      })
+
       it('renders green Met tags on every material row and the totals row', async () => {
         const { materials } = loadDetailPage(
-          (await inject(HOWCO_DETAIL_URL)).payload
+          (await app.get(org.detailPath)).payload
         )
 
         for (const row of materials.rows) {
@@ -845,7 +1041,7 @@ describe('certificates of compliance — journey', () => {
 
       it('renders green Met tags on every glass row and the totals row', async () => {
         const { glass } = loadDetailPage(
-          (await inject(HOWCO_DETAIL_URL)).payload
+          (await app.get(org.detailPath)).payload
         )
 
         for (const row of glass.rows) {
@@ -856,9 +1052,22 @@ describe('certificates of compliance — journey', () => {
     })
 
     describe('mixed direct producer detail', () => {
+      let org
+      beforeEach(() => {
+        org = app
+          .given([
+            {
+              name: 'Mixed Producers Ltd',
+              status: 'pending',
+              obligations: mixedObligations
+            }
+          ])
+          .byName('Mixed Producers Ltd')
+      })
+
       it('renders the correct 3-state tag per material row', async () => {
         const { materials } = loadDetailPage(
-          (await inject(GREENFIELD_DETAIL_URL)).payload
+          (await app.get(org.detailPath)).payload
         )
         const byName = Object.fromEntries(
           materials.rows.map((r) => [r.material, r.statusTag])
@@ -872,7 +1081,7 @@ describe('certificates of compliance — journey', () => {
 
       it('renders 0 in the tonnage cells of the null-tonnage Wood row', async () => {
         const { materials } = loadDetailPage(
-          (await inject(GREENFIELD_DETAIL_URL)).payload
+          (await app.get(org.detailPath)).payload
         )
         const wood = materials.rows.find((r) => r.material === 'Wood')
 
@@ -886,7 +1095,7 @@ describe('certificates of compliance — journey', () => {
 
       it('renders a red Not met tag on the materials totals row', async () => {
         const { materials } = loadDetailPage(
-          (await inject(GREENFIELD_DETAIL_URL)).payload
+          (await app.get(org.detailPath)).payload
         )
 
         expect(materials.totals.statusTag).toEqual(notMet)
@@ -894,7 +1103,7 @@ describe('certificates of compliance — journey', () => {
 
       it('renders the correct 3-state tag per glass row', async () => {
         const { glass } = loadDetailPage(
-          (await inject(GREENFIELD_DETAIL_URL)).payload
+          (await app.get(org.detailPath)).payload
         )
         const byName = Object.fromEntries(
           glass.rows.map((r) => [r.material, r.statusTag])
@@ -906,7 +1115,7 @@ describe('certificates of compliance — journey', () => {
 
       it('renders 0 in the tonnage cells of the null-tonnage RemainingGlass row', async () => {
         const { glass } = loadDetailPage(
-          (await inject(GREENFIELD_DETAIL_URL)).payload
+          (await app.get(org.detailPath)).payload
         )
         const remainingGlass = glass.rows.find(
           (r) => r.material === 'RemainingGlass'
@@ -922,9 +1131,23 @@ describe('certificates of compliance — journey', () => {
     })
 
     describe('fully-Met compliance scheme detail', () => {
+      let org
+      beforeEach(() => {
+        org = app
+          .given([
+            {
+              name: 'Fullymet Compliance Operators',
+              type: 'compliance-scheme',
+              status: 'pending',
+              obligations: allMetObligations
+            }
+          ])
+          .byName('Fullymet Compliance Operators')
+      })
+
       it('renders green Met tags on every material and glass row and both totals rows', async () => {
         const { materials, glass } = loadDetailPage(
-          (await inject(ECOPACK_DETAIL_URL)).payload
+          (await app.get(org.detailPath)).payload
         )
 
         for (const row of [...materials.rows, ...glass.rows]) {
@@ -936,9 +1159,23 @@ describe('certificates of compliance — journey', () => {
     })
 
     describe('mixed compliance scheme detail', () => {
+      let org
+      beforeEach(() => {
+        org = app
+          .given([
+            {
+              name: 'Mixed Compliance Operators',
+              type: 'compliance-scheme',
+              status: 'accepted',
+              obligations: mixedObligations
+            }
+          ])
+          .byName('Mixed Compliance Operators')
+      })
+
       it('renders the correct 3-state tag per material row', async () => {
         const { materials } = loadDetailPage(
-          (await inject(RIVERSIDE_DETAIL_URL)).payload
+          (await app.get(org.detailPath)).payload
         )
         const byName = Object.fromEntries(
           materials.rows.map((r) => [r.material, r.statusTag])
@@ -951,7 +1188,7 @@ describe('certificates of compliance — journey', () => {
 
       it('renders a red Not met tag on the materials totals row', async () => {
         const { materials } = loadDetailPage(
-          (await inject(RIVERSIDE_DETAIL_URL)).payload
+          (await app.get(org.detailPath)).payload
         )
 
         expect(materials.totals.statusTag).toEqual(notMet)
@@ -959,9 +1196,22 @@ describe('certificates of compliance — journey', () => {
     })
 
     describe('not-submitted direct producer detail', () => {
+      let org
+      beforeEach(() => {
+        org = app
+          .given([
+            {
+              name: 'Nodata Producers Ltd',
+              status: 'not-submitted',
+              obligations: allNoDataObligations
+            }
+          ])
+          .byName('Nodata Producers Ltd')
+      })
+
       it('renders a grey No data tag on every material and glass row and both totals rows', async () => {
         const { materials, glass } = loadDetailPage(
-          (await inject(REDWOOD_UNSUBMITTED_URL)).payload
+          (await app.get(org.detailPath)).payload
         )
 
         for (const row of [...materials.rows, ...glass.rows]) {
@@ -973,7 +1223,7 @@ describe('certificates of compliance — journey', () => {
 
       it('hides submission-only summary rows and shows live recycling status', async () => {
         const { summaryRows } = loadDetailPage(
-          (await inject(REDWOOD_UNSUBMITTED_URL)).payload
+          (await app.get(org.detailPath)).payload
         )
 
         expect(summaryRows.submissionStatus.present).toBe(true)
@@ -992,9 +1242,23 @@ describe('certificates of compliance — journey', () => {
     })
 
     describe('not-submitted compliance scheme detail', () => {
+      let org
+      beforeEach(() => {
+        org = app
+          .given([
+            {
+              name: 'Nodata Compliance Operators',
+              type: 'compliance-scheme',
+              status: 'not-submitted',
+              obligations: allNoDataObligations
+            }
+          ])
+          .byName('Nodata Compliance Operators')
+      })
+
       it('hides submission-only summary rows', async () => {
         const { summaryRows } = loadDetailPage(
-          (await inject(FUTUREPACK_UNSUBMITTED_URL)).payload
+          (await app.get(org.detailPath)).payload
         )
 
         expect(summaryRows.submittedOn.present).toBe(false)
@@ -1007,19 +1271,42 @@ describe('certificates of compliance — journey', () => {
     })
 
     describe('showObligations', () => {
-      const sterlingUrl = `/f3b4c5d6-e7a8-9012-cdef-123456789abc/certificates-of-compliance?obligationYear=2026`
-      const pinnacleUrl = `/a4b5c6d7-e8f9-0123-defa-234567890bcd/certificates-of-compliance?obligationYear=2026`
+      let withObligations
+      let nullObligations
+      let emptyObligations
+      beforeEach(() => {
+        const scenario = app.given([
+          {
+            name: 'Has Obligations Ltd',
+            status: 'not-submitted',
+            obligations: allNoDataObligations
+          },
+          {
+            name: 'Null Obligations Ltd',
+            status: 'not-submitted',
+            obligations: null
+          },
+          {
+            name: 'Empty Obligations Ltd',
+            status: 'not-submitted',
+            obligations: []
+          }
+        ])
+        withObligations = scenario.byName('Has Obligations Ltd')
+        nullObligations = scenario.byName('Null Obligations Ltd')
+        emptyObligations = scenario.byName('Empty Obligations Ltd')
+      })
 
       it('shows the obligations table when the org has obligations', async () => {
         const { obligations } = loadDetailPage(
-          (await inject(REDWOOD_UNSUBMITTED_URL)).payload
+          (await app.get(withObligations.detailPath)).payload
         )
 
         expect(obligations.tablePresent).toBe(true)
       })
 
       it('hides the obligations table and shows No data when obligations is null', async () => {
-        const response = await inject(sterlingUrl)
+        const response = await app.get(nullObligations.detailPath)
 
         expect(response.statusCode).toBe(statusCodes.ok)
         const { obligations } = loadDetailPage(response.payload)
@@ -1028,7 +1315,7 @@ describe('certificates of compliance — journey', () => {
       })
 
       it('hides the obligations table and shows No data when obligations is an empty array', async () => {
-        const response = await inject(pinnacleUrl)
+        const response = await app.get(emptyObligations.detailPath)
 
         expect(response.statusCode).toBe(statusCodes.ok)
         const { obligations } = loadDetailPage(response.payload)
@@ -1041,9 +1328,35 @@ describe('certificates of compliance — journey', () => {
   describe('CSV download', () => {
     const pendingDownloadUrl =
       '/certificates-of-compliance/download?organisation_type=direct-producers&submission_status=pending'
+    let scenario
+
+    beforeEach(() => {
+      scenario = app.given([
+        { name: 'CSV Producer One Ltd', status: 'pending' },
+        { name: 'CSV Producer Two Ltd', status: 'pending' },
+        { name: 'CSV Producer Three Ltd', status: 'accepted' },
+        { name: 'CSV Producer Four Ltd', status: 'not-submitted' },
+        { name: 'CSV Producer Five Ltd', status: 'not-submitted' },
+        {
+          name: 'CSV Scheme One Operators',
+          type: 'compliance-scheme',
+          status: 'pending'
+        },
+        {
+          name: 'CSV Scheme Two Operators',
+          type: 'compliance-scheme',
+          status: 'accepted'
+        },
+        {
+          name: 'CSV Scheme Three Operators',
+          type: 'compliance-scheme',
+          status: 'not-submitted'
+        }
+      ])
+    })
 
     it('renders the download link on the list page pointing at download', async () => {
-      const response = await inject(
+      const response = await app.get(
         '/certificates-of-compliance?type=direct-producers&tab=pending'
       )
 
@@ -1055,7 +1368,7 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('redirects to /signin-oidc when unauthenticated', async () => {
-      const response = await server.inject({
+      const response = await app.server.inject({
         method: 'GET',
         url: pendingDownloadUrl
       })
@@ -1065,14 +1378,14 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('returns a bad request for an invalid organisation type', async () => {
-      const response = await inject(
+      const response = await app.get(
         '/certificates-of-compliance/download?organisation_type=invalid&submission_status=pending'
       )
       expect(response.statusCode).toBe(statusCodes.badRequest)
     })
 
     it('returns a bad request for an invalid submission status', async () => {
-      const response = await inject(
+      const response = await app.get(
         '/certificates-of-compliance/download?organisation_type=direct-producers&submission_status=invalid'
       )
       expect(response.statusCode).toBe(statusCodes.badRequest)
@@ -1081,7 +1394,7 @@ describe('certificates of compliance — journey', () => {
     it('surfaces a downstream failure as an error response', async () => {
       config.set('mockErrorStatus', statusCodes.internalServerError)
       try {
-        const response = await inject(pendingDownloadUrl)
+        const response = await app.get(pendingDownloadUrl)
         expect(response.statusCode).toBe(statusCodes.internalServerError)
       } finally {
         config.set('mockErrorStatus', null)
@@ -1090,99 +1403,88 @@ describe('certificates of compliance — journey', () => {
 
     describe('generates CSV downloads for all combinations', () => {
       it.each([
-        ['direct-producers', 'pending', mockPendingItems.length],
-        ['direct-producers', 'accepted', mockAcceptedItems.length],
-        ['direct-producers', 'not-submitted', mockNotSubmittedItems.length],
-        [
-          'compliance-schemes',
-          'pending',
-          mockComplianceSchemePendingItems.length
-        ],
-        [
-          'compliance-schemes',
-          'accepted',
-          mockComplianceSchemeAcceptedItems.length
-        ],
-        [
-          'compliance-schemes',
-          'not-submitted',
-          mockComplianceSchemeNotSubmittedItems.length
-        ]
-      ])(
-        'for %s %s',
-        async (organisationType, submissionStatus, expectedCount) => {
-          const response = await inject(
-            `/certificates-of-compliance/download?organisation_type=${organisationType}&submission_status=${submissionStatus}`
+        ['direct-producers', 'pending'],
+        ['direct-producers', 'accepted'],
+        ['direct-producers', 'not-submitted'],
+        ['compliance-schemes', 'pending'],
+        ['compliance-schemes', 'accepted'],
+        ['compliance-schemes', 'not-submitted']
+      ])('for %s %s', async (organisationType, submissionStatus) => {
+        const expectedCount = scenario.rowsFor(
+          REGISTRATION_TYPE[organisationType],
+          submissionStatus
+        ).length
+
+        const response = await app.get(
+          `/certificates-of-compliance/download?organisation_type=${organisationType}&submission_status=${submissionStatus}`
+        )
+
+        expect(response.statusCode).toBe(statusCodes.ok)
+        expect(response.headers['content-type']).toContain('text/csv')
+        expect(response.headers['content-disposition']).toMatch(
+          new RegExp(
+            `^attachment; filename="2026-(certificates|statements)-of-compliance-${submissionStatus}-\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{2}\\.csv"$`
           )
+        )
 
-          expect(response.statusCode).toBe(statusCodes.ok)
-          expect(response.headers['content-type']).toContain('text/csv')
-          expect(response.headers['content-disposition']).toMatch(
-            new RegExp(
-              `^attachment; filename="2026-(certificates|statements)-of-compliance-${submissionStatus}-\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{2}\\.csv"$`
-            )
-          )
+        const { headers, rows, title } = loadCsv(response.payload)
 
-          const { loadCsv } = await import('./download/download.page-object.js')
-          const { headers, rows, title } = loadCsv(response.payload)
+        expect(rows).toHaveLength(expectedCount)
 
-          expect(rows).toHaveLength(expectedCount)
-
-          // Title: "<Status> <noun> of compliance submissions, <weekday> <day>
-          // <month> <year>, HH:MM:SS".
-          if (submissionStatus === 'pending') {
-            expect(title).toMatch(/^Pending /)
-          } else if (submissionStatus === 'accepted') {
-            expect(title).toMatch(/^Accepted /)
-          } else {
-            expect(title).toMatch(/^Not submitted /)
-          }
-
-          if (organisationType === 'compliance-schemes') {
-            expect(title).toContain('statement of compliance submissions')
-          } else {
-            expect(title).toContain('certificate of compliance submissions')
-          }
-
-          expect(title).toMatch(/, \w+ \d{1,2} \w+ \d{4}, \d{2}:\d{2}:\d{2}$/)
-
-          // Exact ordered header row.
-          if (
-            organisationType === 'compliance-schemes' &&
-            submissionStatus === 'not-submitted'
-          ) {
-            expect(headers).toEqual([
-              'Organisation name',
-              'Organisation ID',
-              'Recycling obligations',
-              'Regulation 43'
-            ])
-          } else if (organisationType === 'compliance-schemes') {
-            expect(headers).toEqual([
-              'Organisation name',
-              'Organisation ID',
-              'Recycling obligations',
-              'Regulation 43',
-              'Date submitted'
-            ])
-          } else if (submissionStatus === 'not-submitted') {
-            expect(headers).toEqual([
-              'Organisation name',
-              'Organisation ID',
-              'Recycling obligations',
-              'Percentage met'
-            ])
-          } else {
-            expect(headers).toEqual([
-              'Organisation name',
-              'Organisation ID',
-              'Recycling obligations',
-              'Percentage met',
-              'Date submitted'
-            ])
-          }
+        // Title: "<Status> <noun> of compliance submissions, <weekday> <day>
+        // <month> <year>, HH:MM:SS".
+        if (submissionStatus === 'pending') {
+          expect(title).toMatch(/^Pending /)
+        } else if (submissionStatus === 'accepted') {
+          expect(title).toMatch(/^Accepted /)
+        } else {
+          expect(title).toMatch(/^Not submitted /)
         }
-      )
+
+        if (organisationType === 'compliance-schemes') {
+          expect(title).toContain('statement of compliance submissions')
+        } else {
+          expect(title).toContain('certificate of compliance submissions')
+        }
+
+        expect(title).toMatch(/, \w+ \d{1,2} \w+ \d{4}, \d{2}:\d{2}:\d{2}$/)
+
+        // Exact ordered header row.
+        if (
+          organisationType === 'compliance-schemes' &&
+          submissionStatus === 'not-submitted'
+        ) {
+          expect(headers).toEqual([
+            'Organisation name',
+            'Organisation ID',
+            'Recycling obligations',
+            'Regulation 43'
+          ])
+        } else if (organisationType === 'compliance-schemes') {
+          expect(headers).toEqual([
+            'Organisation name',
+            'Organisation ID',
+            'Recycling obligations',
+            'Regulation 43',
+            'Date submitted'
+          ])
+        } else if (submissionStatus === 'not-submitted') {
+          expect(headers).toEqual([
+            'Organisation name',
+            'Organisation ID',
+            'Recycling obligations',
+            'Percentage met'
+          ])
+        } else {
+          expect(headers).toEqual([
+            'Organisation name',
+            'Organisation ID',
+            'Recycling obligations',
+            'Percentage met',
+            'Date submitted'
+          ])
+        }
+      })
     })
   })
 })

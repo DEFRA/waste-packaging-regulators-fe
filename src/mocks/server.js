@@ -48,5 +48,3 @@ export async function startMockApi() {
 export function getMockServer() {
   return mockServer
 }
-
-export { resetMockData } from './backends.js'

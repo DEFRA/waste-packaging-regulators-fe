@@ -6,7 +6,18 @@ import {
   mapWasteOrganisationToDetailFields
 } from './registration-type.js'
 import { findSubmittedAuditUser } from '../detail/audit.js'
-import { mockSubmittedAuditEntry } from '#test-helpers/mock-fixtures.js'
+
+// A representative submitted audit entry, declared here so the test that reads
+// its user is self-contained.
+const submittedAuditEntry = {
+  user: {
+    id: 'fa6d3a77-be37-4530-bf7f-7d552ef94170',
+    email: 'user@example.com',
+    name: 'Test User'
+  },
+  timestamp: '2026-07-02T16:12:48.816+00:00',
+  action: 'Submitted'
+}
 
 describe('organisation and audit detail mapping', () => {
   test('deriveRegistrationType maps LARGE_PRODUCER to DirectProducer for obligation year', () => {
@@ -139,8 +150,8 @@ describe('organisation and audit detail mapping', () => {
   })
 
   test('findSubmittedAuditUser returns user from Submitted audit entry', () => {
-    expect(findSubmittedAuditUser([mockSubmittedAuditEntry])).toEqual(
-      mockSubmittedAuditEntry.user
+    expect(findSubmittedAuditUser([submittedAuditEntry])).toEqual(
+      submittedAuditEntry.user
     )
   })
 

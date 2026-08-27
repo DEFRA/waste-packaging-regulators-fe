@@ -36,15 +36,20 @@ import {
   sortItems
 } from './list.service.js'
 import { getCertificateOfComplianceDetailViewModel } from '../detail/detail.service.js'
-import {
-  mockDetailData,
-  mockObligationData,
-  mockComplianceSchemeDetailData,
-  mockQueriedDetailData,
-  mockCancelledDetailData,
-  mockSubmittedAuditEntry
-} from '#test-helpers/mock-fixtures.js'
+import { complianceRecords } from '#mocks/waste-obligations/fixtures.js'
+import { toDeclaration } from '#mocks/backends.js'
 import { PAGE_SIZE, DECLARATIONS_BATCH_SIZE } from '../common/constants.js'
+
+// Canonical declaration shapes projected from the default records, fed to the fake
+// API services in the tests below and asserted against.
+const byKey = (key) => complianceRecords.find((record) => record.key === key)
+const declarationByKey = (key) => toDeclaration(byKey(key))
+const mockDetailData = declarationByKey('howco-pending')
+const mockComplianceSchemeDetailData = declarationByKey('ecopack-pending')
+const mockSubmittedAuditEntry = byKey('howco-pending').audit[0]
+const mockObligationData = {
+  obligations: byKey('redwood-not-submitted').obligations
+}
 
 // waste-organisations records carry no registrationType — it is derived from
 // the registrations they do carry, so fixtures must supply those instead.
@@ -1479,9 +1484,15 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
 
       test('maps Queried status with query details', async () => {
-        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue(
-          mockQueriedDetailData
-        )
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          status: 'Queried',
+          queryDetails: {
+            queriedMaterials: 'Plastic, Steel',
+            reason: 'Tonnage figures do not match submitted evidence.',
+            dateQueried: '2026-03-17T00:00:00Z'
+          }
+        })
 
         const vm = await getCertificateOfComplianceDetailViewModel(
           'org-abc',
@@ -1494,16 +1505,25 @@ describe('getCertificatesOfComplianceViewModel', () => {
           showCancel: true
         })
         expect(vm.queryDetails).toEqual({
-          queriedMaterials: mockQueriedDetailData.queryDetails.queriedMaterials,
-          reason: mockQueriedDetailData.queryDetails.reason,
+          queriedMaterials: 'Plastic, Steel',
+          reason: 'Tonnage figures do not match submitted evidence.',
           dateQueried: '17 March 2026'
         })
       })
 
       test('maps the Cancelled outcome from the cancellation audit entry', async () => {
-        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue(
-          mockCancelledDetailData
-        )
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          status: 'Cancelled',
+          audit: [
+            {
+              action: 'Cancelled',
+              timestamp: '2026-03-10T09:15:00Z',
+              user: { name: 'James Walker' },
+              reason: 'Submitted after the deadline.'
+            }
+          ]
+        })
 
         const vm = await getCertificateOfComplianceDetailViewModel(
           'org-abc',
