@@ -55,6 +55,8 @@ services:
     environment:
       PORT: 3000
       NODE_ENV: production
+      MOCK_API: ${MOCK_API:-false}
+      MOCK_AUTH: ${MOCK_AUTH:-false}
       REDIS_HOST: redis
       LOG_FORMAT: pino-pretty
       SESSION_COOKIE_SECURE: false
