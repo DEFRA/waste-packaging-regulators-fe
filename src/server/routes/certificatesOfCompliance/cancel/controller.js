@@ -4,8 +4,7 @@ import { cancelComplianceDeclaration } from '../actions/cancel.service.js'
 import { getComplianceDeclarationReviewStatus } from '../actions/review-status.service.js'
 import {
   certificateActionSessionKeys,
-  getDeclarationSessionKey,
-  setMockDeclarationStatusOverride
+  getDeclarationSessionKey
 } from '../actions/session.service.js'
 import { canCancelComplianceDeclaration } from '../actions/status.js'
 import { getCertificateOfComplianceDetailViewModel } from '../detail/detail.service.js'
@@ -64,8 +63,7 @@ async function renderReasonForm(
   const { organisationId, id } = request.params
   const { companyName, registrationType } =
     await getCertificateOfComplianceDetailViewModel(organisationId, id, {
-      traceId: request.getTraceId(),
-      session: request.yar
+      traceId: request.getTraceId()
     })
 
   const docTypeLower =
@@ -125,8 +123,7 @@ export const certificatesOfComplianceCancelReasonGetController = {
     const reviewStatus = await getComplianceDeclarationReviewStatus(
       organisationId,
       id,
-      request.getTraceId(),
-      request.yar
+      request.getTraceId()
     )
 
     // Don't offer a reason once the declaration can no longer be cancelled
@@ -174,8 +171,7 @@ export const certificatesOfComplianceCancelCheckGetController = {
     const reviewStatus = await getComplianceDeclarationReviewStatus(
       organisationId,
       id,
-      request.getTraceId(),
-      request.yar
+      request.getTraceId()
     )
 
     if (!canCancelComplianceDeclaration(reviewStatus)) {
@@ -192,8 +188,7 @@ export const certificatesOfComplianceCancelCheckGetController = {
 
     const { companyName, registrationType } =
       await getCertificateOfComplianceDetailViewModel(organisationId, id, {
-        traceId: request.getTraceId(),
-        session: request.yar
+        traceId: request.getTraceId()
       })
 
     const docTypeLower =
@@ -224,8 +219,7 @@ export const certificatesOfComplianceCancelEmailPreviewGetController = {
     const reviewStatus = await getComplianceDeclarationReviewStatus(
       organisationId,
       id,
-      request.getTraceId(),
-      request.yar
+      request.getTraceId()
     )
 
     if (!canCancelComplianceDeclaration(reviewStatus)) {
@@ -263,8 +257,7 @@ export const certificatesOfComplianceCancelPostController = {
     const reviewStatus = await getComplianceDeclarationReviewStatus(
       organisationId,
       id,
-      request.getTraceId(),
-      request.yar
+      request.getTraceId()
     )
 
     if (reviewStatus === 'Cancelled') {
@@ -282,8 +275,7 @@ export const certificatesOfComplianceCancelPostController = {
 
     const { registrationType, environmentalRegulator } =
       await getCertificateOfComplianceDetailViewModel(organisationId, id, {
-        traceId: request.getTraceId(),
-        session: request.yar
+        traceId: request.getTraceId()
       })
     const reasonLabel = getCancelReasonLabel(registrationType, reason)
 
@@ -300,9 +292,6 @@ export const certificatesOfComplianceCancelPostController = {
       handleApiError(request, error)
     }
 
-    setMockDeclarationStatusOverride(request.yar, declarationKey, 'Cancelled', {
-      reason: reasonLabel
-    })
     request.yar.set(certificateActionSessionKeys.justCancelled, declarationKey)
 
     return h.redirect(detailPath(organisationId, id))

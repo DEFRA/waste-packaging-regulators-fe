@@ -1,6 +1,4 @@
-import { config } from '#config/config.js'
 import { createAccountApiService } from '#services/account-api.service.js'
-import { getMockAccountOrganisationByExternalId } from '../certificates-of-compliance.mock.js'
 import { findSubmittedAuditUser } from '../detail/audit.js'
 import { mapPrimaryContactPerson } from '../common/organisation-contact.js'
 
@@ -84,10 +82,6 @@ async function fetchOrganisationWithPersons(
   organisationId,
   traceId
 ) {
-  if (config.get('useMockApi')) {
-    return getMockAccountOrganisationByExternalId(organisationId)
-  }
-
   return accountApi.getOrganisationWithPersonsOrNull(organisationId, traceId)
 }
 

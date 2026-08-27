@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
 
 export function mapSessionUserToApiUser(sessionUser) {
@@ -19,10 +18,6 @@ export async function approveComplianceDeclaration(
   sessionUser,
   traceId
 ) {
-  if (config.get('useMockApi')) {
-    return null
-  }
-
   const api = createWasteObligationsApiService()
   return api.updateComplianceDeclaration(
     {

@@ -1,12 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
-import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import {
-  authCookiesFromResponse,
-  crumbTokenFromCookie,
-  mergeCookiesFromResponse
-} from '#test-helpers/cookies.js'
 import { redirectToSignIn } from './actions-controller.js'
+import { setupRegulatorsApp } from '#test-helpers/msw/harness.js'
 
 describe('redirectToSignIn', () => {
   it('stores the pathname as returnTo in the session', () => {
@@ -59,88 +54,50 @@ describe('redirectToSignIn', () => {
 })
 
 describe('certificates of compliance detail action buttons', () => {
-  let server
-  let sessionCookie
+  const app = setupRegulatorsApp()
+  // The declaration under test is declared inline; each test starts from a fresh
+  // pending direct producer, so an approve/cancel never leaks into the next.
+  let detailUrl
 
-  beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-    const response = await server.inject({
-      method: 'GET',
-      url: '/signin-oidc'
-    })
-    sessionCookie = authCookiesFromResponse(response)
+  beforeEach(() => {
+    detailUrl = app
+      .given([{ name: 'Actionable Producers Ltd', status: 'pending' }])
+      .byName('Actionable Producers Ltd').detailPath
   })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
-  const inject = (options, cookie = sessionCookie) =>
-    server.inject({
-      ...options,
-      headers: { cookie, ...(options.headers ?? {}) }
-    })
-
-  // POST with the crumb echoed back from the given cookie's CSRFToken.
-  const postWithCrumb = (url, cookie = sessionCookie, fields = '') =>
-    inject(
-      {
-        method: 'POST',
-        url,
-        payload: [fields, `CSRFToken=${crumbTokenFromCookie(cookie)}`]
-          .filter(Boolean) // drop the empty `fields` default so there is no leading '&'
-          .join('&'),
-        headers: { 'content-type': 'application/x-www-form-urlencoded' }
-      },
-      cookie
-    )
 
   // Approval is performed by the accept confirmation handler — there is no
   // direct approve endpoint.
-  const acceptDeclaration = (cookie = sessionCookie) =>
-    postWithCrumb(
-      '/org-123/certificates-of-compliance/decl-1/accept',
-      cookie,
-      'confirm-accept=yes'
-    )
+  const acceptDeclaration = (cookie = app.authCookie) =>
+    app.post(`${detailUrl}/accept`, 'confirm-accept=yes', cookie)
 
   // Cancellation is a two-step flow: choose a reason, then confirm and send.
   // The reason travels in the form body, not the session.
-  const cancelDeclaration = async (cookie = sessionCookie) => {
-    await postWithCrumb(
-      '/org-123/certificates-of-compliance/decl-1/cancel/reason',
-      cookie,
-      'cancel-reason=producer-request'
+  const cancelDeclaration = async (cookie = app.authCookie) => {
+    await app.post(
+      `${detailUrl}/cancel/reason`,
+      'cancel-reason=producer-request',
+      cookie
     )
-    return postWithCrumb(
-      '/org-123/certificates-of-compliance/decl-1/cancel',
-      cookie,
-      'cancel-reason=producer-request'
+    return app.post(
+      `${detailUrl}/cancel`,
+      'cancel-reason=producer-request',
+      cookie
     )
   }
 
   describe('approval (via the accept confirmation)', () => {
     it('does not show the accepted banner when the declaration is already cancelled', async () => {
       const cancelResponse = await cancelDeclaration()
-      const cookieAfterCancel = mergeCookiesFromResponse(
-        sessionCookie,
-        cancelResponse
-      )
+      const cookieAfterCancel = app.nextCookie(cancelResponse, app.authCookie)
 
       const acceptResponse = await acceptDeclaration(cookieAfterCancel)
 
       expect(acceptResponse.statusCode).toBe(302)
-      expect(acceptResponse.headers.location).toBe(
-        '/org-123/certificates-of-compliance/decl-1'
-      )
+      expect(acceptResponse.headers.location).toBe(detailUrl)
 
-      const detailResponse = await inject(
-        {
-          method: 'GET',
-          url: '/org-123/certificates-of-compliance/decl-1'
-        },
-        mergeCookiesFromResponse(cookieAfterCancel, acceptResponse)
+      const detailResponse = await app.get(
+        detailUrl,
+        app.nextCookie(acceptResponse, cookieAfterCancel)
       )
 
       expect(detailResponse.payload).not.toContain('Certificate accepted')
@@ -153,16 +110,11 @@ describe('certificates of compliance detail action buttons', () => {
       const acceptResponse = await acceptDeclaration()
 
       expect(acceptResponse.statusCode).toBe(302)
-      expect(acceptResponse.headers.location).toBe(
-        '/org-123/certificates-of-compliance/decl-1'
-      )
+      expect(acceptResponse.headers.location).toBe(detailUrl)
 
-      const detailResponse = await inject(
-        {
-          method: 'GET',
-          url: '/org-123/certificates-of-compliance/decl-1'
-        },
-        mergeCookiesFromResponse(sessionCookie, acceptResponse)
+      const detailResponse = await app.get(
+        detailUrl,
+        app.nextCookie(acceptResponse, app.authCookie)
       )
 
       expect(detailResponse.statusCode).toBe(statusCodes.ok)
@@ -170,9 +122,7 @@ describe('certificates of compliance detail action buttons', () => {
       expect(detailResponse.payload).toContain('Certificate has been accepted.')
       expect(detailResponse.payload).not.toContain('Accept certificate')
       expect(detailResponse.payload).toContain('Cancel certificate')
-      expect(detailResponse.payload).toContain(
-        '/org-123/certificates-of-compliance/decl-1/cancel/reason'
-      )
+      expect(detailResponse.payload).toContain(`${detailUrl}/cancel/reason`)
     })
   })
 
@@ -181,16 +131,11 @@ describe('certificates of compliance detail action buttons', () => {
       const cancelResponse = await cancelDeclaration()
 
       expect(cancelResponse.statusCode).toBe(302)
-      expect(cancelResponse.headers.location).toBe(
-        '/org-123/certificates-of-compliance/decl-1'
-      )
+      expect(cancelResponse.headers.location).toBe(detailUrl)
 
-      const detailResponse = await inject(
-        {
-          method: 'GET',
-          url: '/org-123/certificates-of-compliance/decl-1'
-        },
-        mergeCookiesFromResponse(sessionCookie, cancelResponse)
+      const detailResponse = await app.get(
+        detailUrl,
+        app.nextCookie(cancelResponse, app.authCookie)
       )
 
       expect(detailResponse.statusCode).toBe(statusCodes.ok)
@@ -208,27 +153,15 @@ describe('certificates of compliance detail action buttons', () => {
 
   it('reflects API status on reload after the banner clears', async () => {
     const approveResponse = await acceptDeclaration()
-    const cookieAfterApprove = mergeCookiesFromResponse(
-      sessionCookie,
-      approveResponse
-    )
+    const cookieAfterApprove = app.nextCookie(approveResponse, app.authCookie)
 
-    const firstDetailResponse = await inject(
-      {
-        method: 'GET',
-        url: '/org-123/certificates-of-compliance/decl-1'
-      },
-      cookieAfterApprove
-    )
+    const firstDetailResponse = await app.get(detailUrl, cookieAfterApprove)
     expect(firstDetailResponse.payload).toContain('Certificate accepted')
     expect(firstDetailResponse.payload).not.toContain('Accept certificate')
 
-    const secondDetailResponse = await inject(
-      {
-        method: 'GET',
-        url: '/org-123/certificates-of-compliance/decl-1'
-      },
-      mergeCookiesFromResponse(cookieAfterApprove, firstDetailResponse)
+    const secondDetailResponse = await app.get(
+      detailUrl,
+      app.nextCookie(firstDetailResponse, cookieAfterApprove)
     )
     expect(secondDetailResponse.payload).not.toContain('Certificate accepted')
     expect(secondDetailResponse.payload).not.toContain('Accept certificate')
@@ -237,18 +170,12 @@ describe('certificates of compliance detail action buttons', () => {
 
   it('handles repeat approval idempotently without showing accept again', async () => {
     const firstApproveResponse = await acceptDeclaration()
-    const cookieAfterFirstApprove = mergeCookiesFromResponse(
-      sessionCookie,
-      firstApproveResponse
+    const cookieAfterFirstApprove = app.nextCookie(
+      firstApproveResponse,
+      app.authCookie
     )
 
-    await inject(
-      {
-        method: 'GET',
-        url: '/org-123/certificates-of-compliance/decl-1'
-      },
-      cookieAfterFirstApprove
-    )
+    await app.get(detailUrl, cookieAfterFirstApprove)
 
     const repeatApproveResponse = await acceptDeclaration(
       cookieAfterFirstApprove
@@ -256,12 +183,9 @@ describe('certificates of compliance detail action buttons', () => {
 
     expect(repeatApproveResponse.statusCode).toBe(302)
 
-    const detailResponse = await inject(
-      {
-        method: 'GET',
-        url: '/org-123/certificates-of-compliance/decl-1'
-      },
-      mergeCookiesFromResponse(cookieAfterFirstApprove, repeatApproveResponse)
+    const detailResponse = await app.get(
+      detailUrl,
+      app.nextCookie(repeatApproveResponse, cookieAfterFirstApprove)
     )
 
     expect(detailResponse.payload).toContain('Certificate accepted')
@@ -270,26 +194,14 @@ describe('certificates of compliance detail action buttons', () => {
 
   it('clears the banner flag after it has been shown once', async () => {
     const approveResponse = await acceptDeclaration()
-    const cookieAfterApprove = mergeCookiesFromResponse(
-      sessionCookie,
-      approveResponse
-    )
+    const cookieAfterApprove = app.nextCookie(approveResponse, app.authCookie)
 
-    const firstDetailResponse = await inject(
-      {
-        method: 'GET',
-        url: '/org-123/certificates-of-compliance/decl-1'
-      },
-      cookieAfterApprove
-    )
+    const firstDetailResponse = await app.get(detailUrl, cookieAfterApprove)
     expect(firstDetailResponse.payload).toContain('Certificate accepted')
 
-    const secondDetailResponse = await inject(
-      {
-        method: 'GET',
-        url: '/org-123/certificates-of-compliance/decl-1'
-      },
-      mergeCookiesFromResponse(cookieAfterApprove, firstDetailResponse)
+    const secondDetailResponse = await app.get(
+      detailUrl,
+      app.nextCookie(firstDetailResponse, cookieAfterApprove)
     )
     expect(secondDetailResponse.payload).not.toContain('Certificate accepted')
   })

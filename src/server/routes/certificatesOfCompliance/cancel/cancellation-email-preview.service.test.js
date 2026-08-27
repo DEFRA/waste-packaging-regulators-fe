@@ -1,4 +1,4 @@
-import { describe, expect, test, vi, afterEach } from 'vitest'
+import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest'
 
 vi.mock('#services/govuk-notify.service.js', async (importOriginal) => {
   const { createCancellationEmailNotifyModuleMock } =
@@ -6,12 +6,21 @@ vi.mock('#services/govuk-notify.service.js', async (importOriginal) => {
   return createCancellationEmailNotifyModuleMock(importOriginal)
 })
 
+vi.mock('#services/waste-obligations-api.service.js', () => ({
+  createWasteObligationsApiService: vi.fn()
+}))
+vi.mock('#services/waste-organisations-api.service.js', () => ({
+  createWasteOrganisationsApiService: vi.fn()
+}))
+vi.mock('#services/account-api.service.js', () => ({
+  createAccountApiService: vi.fn()
+}))
+
 import { previewCancellationTemplate } from '#services/govuk-notify.service.js'
-import {
-  mockComplianceSchemePendingItems,
-  mockPendingItems
-} from '../certificates-of-compliance.mock.js'
-import * as complianceMock from '../certificates-of-compliance.mock.js'
+import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
+import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
+import { createAccountApiService } from '#services/account-api.service.js'
+import { mockScenario } from '#test-helpers/msw/scenario.js'
 import { cancellationEmailTemplateIds } from './cancellation-email-templates.js'
 import * as cancellationEmailTemplates from './cancellation-email-templates.js'
 import {
@@ -102,33 +111,102 @@ describe('cancellation-email-preview.service helpers', () => {
   })
 })
 
+const approved = (firstName, lastName, email) => ({
+  firstName,
+  lastName,
+  email,
+  telephoneNumber: '020 7946 0000',
+  serviceRole: 'Approved Person'
+})
+
 describe('buildCancellationEmailPreview', () => {
+  let scenario
+  let obligationsApi
+  let organisationsApi
+  let accountApi
+
+  beforeEach(() => {
+    // The declaration under cancellation, its submitter and its contacts are
+    // declared inline, then the faked API services read them back from the
+    // scenario backends. The email goes to the submitter (from the declaration
+    // audit) and the primary contact (the Approved Person); a second Approved
+    // Person is present to show it is not a recipient.
+    scenario = mockScenario({
+      organisations: [
+        {
+          name: 'Howco Producers Ltd',
+          status: 'pending',
+          submitter: 'Nadia Roche',
+          persons: [
+            approved('Catherine', 'Morris', 'catherine.morris@howco.test'),
+            approved('James', 'Wright', 'james.wright@howco.test')
+          ]
+        },
+        {
+          name: 'EcoPack Operators',
+          type: 'compliance-scheme',
+          status: 'pending',
+          submitter: 'Owen Pryce',
+          persons: [approved('Jane', 'Doe', 'jane.doe@ecopack.co.uk')]
+        }
+      ]
+    })
+
+    obligationsApi = {
+      getComplianceDeclarationOrNull: vi.fn(({ id } = {}) =>
+        Promise.resolve(scenario.backends.obligations.getDeclarationById(id))
+      )
+    }
+    organisationsApi = {
+      getOrganisation: vi.fn(({ organisationId } = {}) =>
+        Promise.resolve(
+          scenario.backends.organisations.getWasteOrganisation(organisationId)
+        )
+      )
+    }
+    accountApi = {
+      getOrganisationWithPersonsOrNull: vi.fn((organisationId) =>
+        Promise.resolve(
+          scenario.backends.account.organisationWithPersons(organisationId)
+        )
+      )
+    }
+    createWasteObligationsApiService.mockReturnValue(obligationsApi)
+    createWasteOrganisationsApiService.mockReturnValue(organisationsApi)
+    createAccountApiService.mockReturnValue(accountApi)
+  })
+
+  const previewFor = (name, reasonKey = 'producer-request') => {
+    const org = scenario.byName(name)
+    return buildCancellationEmailPreview({
+      organisationId: org.organisationId,
+      id: org.declarationId,
+      reasonKey,
+      traceId: 'trace-preview'
+    })
+  }
+
   test.each([
     {
       organisationType: 'direct producer',
-      item: mockPendingItems[0],
-      toAddresses: ['catherine.morris@howco.test', 'user@example.com'],
+      name: 'Howco Producers Ltd',
+      toAddresses: ['catherine.morris@howco.test', 'nadia.roche@scenario.test'],
       firstName: 'Catherine',
       lastName: 'Morris',
       certOrStatement: 'certificate'
     },
     {
       organisationType: 'compliance scheme',
-      item: mockComplianceSchemePendingItems[0],
-      toAddresses: ['jane.doe@ecopack.co.uk'],
+      name: 'EcoPack Operators',
+      toAddresses: ['jane.doe@ecopack.co.uk', 'owen.pryce@scenario.test'],
       firstName: 'Jane',
       lastName: 'Doe',
       certOrStatement: 'statement'
     }
   ])(
     'wires recipients, template id and personalisation for a $organisationType',
-    async ({ item, toAddresses, firstName, lastName, certOrStatement }) => {
-      const preview = await buildCancellationEmailPreview({
-        organisationId: item.organisationId,
-        id: item.id,
-        reasonKey: 'producer-request',
-        traceId: 'trace-preview'
-      })
+    async ({ name, toAddresses, firstName, lastName, certOrStatement }) => {
+      const preview = await previewFor(name)
 
       expect(preview.error).toBeUndefined()
       expect(preview.toAddresses).toEqual(toAddresses)
@@ -152,56 +230,36 @@ describe('buildCancellationEmailPreview', () => {
   )
 
   test('returns declaration-not-found when the declaration is missing', async () => {
-    vi.spyOn(complianceMock, 'getMockDetailDataById').mockReturnValue(null)
+    obligationsApi.getComplianceDeclarationOrNull.mockResolvedValue(null)
 
-    const preview = await buildCancellationEmailPreview({
-      organisationId: mockPendingItems[0].organisationId,
-      id: mockPendingItems[0].id,
-      reasonKey: 'producer-request',
-      traceId: 'trace-preview'
-    })
+    const preview = await previewFor('Howco Producers Ltd')
 
     expect(preview).toEqual({ error: 'declaration-not-found' })
   })
 
   test('returns invalid-reason when the reason key is not recognised', async () => {
-    const preview = await buildCancellationEmailPreview({
-      organisationId: mockPendingItems[0].organisationId,
-      id: mockPendingItems[0].id,
-      reasonKey: 'not-a-valid-reason',
-      traceId: 'trace-preview'
-    })
+    const preview = await previewFor(
+      'Howco Producers Ltd',
+      'not-a-valid-reason'
+    )
 
     expect(preview).toEqual({ error: 'invalid-reason' })
   })
 
   test('returns no-recipients when the submitter and primary contact have no email', async () => {
-    vi.spyOn(
-      complianceMock,
-      'getMockAccountOrganisationByExternalId'
-    ).mockReturnValue({
+    const org = scenario.byName('Howco Producers Ltd')
+    const declaration = scenario.backends.obligations.getDeclarationById(
+      org.declarationId
+    )
+    obligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+      ...declaration,
+      audit: [{ action: 'Submitted', user: { email: '   ', name: 'No Email' } }]
+    })
+    accountApi.getOrganisationWithPersonsOrNull.mockResolvedValue({
       persons: []
     })
-    vi.spyOn(complianceMock, 'getMockDetailDataById').mockReturnValue({
-      ...complianceMock.mockDetailData,
-      audit: [
-        {
-          action: 'Submitted',
-          user: {
-            id: 'missing-email-user',
-            email: '   ',
-            name: 'No Email User'
-          }
-        }
-      ]
-    })
 
-    const preview = await buildCancellationEmailPreview({
-      organisationId: mockPendingItems[0].organisationId,
-      id: mockPendingItems[0].id,
-      reasonKey: 'producer-request',
-      traceId: 'trace-preview'
-    })
+    const preview = await previewFor('Howco Producers Ltd')
 
     expect(preview).toEqual({ error: 'no-recipients' })
   })
@@ -212,12 +270,7 @@ describe('buildCancellationEmailPreview', () => {
       'resolveCancellationTemplateId'
     ).mockReturnValue(null)
 
-    const preview = await buildCancellationEmailPreview({
-      organisationId: mockPendingItems[0].organisationId,
-      id: mockPendingItems[0].id,
-      reasonKey: 'producer-request',
-      traceId: 'trace-preview'
-    })
+    const preview = await previewFor('Howco Producers Ltd')
 
     expect(preview).toEqual({ error: 'unknown-template' })
   })
@@ -229,12 +282,7 @@ describe('buildCancellationEmailPreview', () => {
       })
     )
 
-    const preview = await buildCancellationEmailPreview({
-      organisationId: mockPendingItems[0].organisationId,
-      id: mockPendingItems[0].id,
-      reasonKey: 'producer-request',
-      traceId: 'trace-preview'
-    })
+    const preview = await previewFor('Howco Producers Ltd')
 
     expect(preview).toEqual({ error: 'notify-not-configured' })
   })
@@ -244,13 +292,8 @@ describe('buildCancellationEmailPreview', () => {
       new Error('Notify failed')
     )
 
-    await expect(
-      buildCancellationEmailPreview({
-        organisationId: mockPendingItems[0].organisationId,
-        id: mockPendingItems[0].id,
-        reasonKey: 'producer-request',
-        traceId: 'trace-preview'
-      })
-    ).rejects.toThrow('Notify failed')
+    await expect(previewFor('Howco Producers Ltd')).rejects.toThrow(
+      'Notify failed'
+    )
   })
 })

@@ -6,8 +6,7 @@ import { getDeclarationDetail } from '../detail/detail-fetch.service.js'
 export async function getComplianceDeclarationReviewStatus(
   organisationId,
   id,
-  traceId,
-  session
+  traceId
 ) {
   const obligationsApi = createWasteObligationsApiService()
   const organisationsApi = createWasteOrganisationsApiService()
@@ -18,10 +17,7 @@ export async function getComplianceDeclarationReviewStatus(
     accountApi,
     organisationId,
     id,
-    {
-      traceId,
-      session
-    }
+    { traceId }
   )
 
   return detail.reviewStatus

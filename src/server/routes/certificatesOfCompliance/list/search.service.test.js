@@ -27,11 +27,6 @@ vi.mock('#services/account-api.service.js', () => ({
 import { config } from '#config/config.js'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
 import { getComplianceSearchResults } from './search.service.js'
-import {
-  mockAcceptedItems,
-  mockComplianceSchemePendingItems,
-  mockPendingItems
-} from '../certificates-of-compliance.mock.js'
 
 function buildDeclaration(overrides = {}) {
   return {
@@ -219,57 +214,6 @@ describe('#getComplianceSearchResults', () => {
       const result = await getComplianceSearchResults(
         'direct-producers',
         'zzzz'
-      )
-
-      expect(result).toEqual({ items: [], total: 0, truncated: false })
-    })
-  })
-
-  describe('with the mock API', () => {
-    beforeEach(() => {
-      config.get.mockImplementation((key) => (key === 'useMockApi' ? true : ''))
-    })
-
-    test('Should match a fixture organisation name regardless of case', async () => {
-      const { items, total } = await getComplianceSearchResults(
-        'direct-producers',
-        mockPendingItems[0].organisationName.toLowerCase()
-      )
-
-      expect(total).toBe(1)
-      expect(items[0].organisationName).toBe(
-        mockPendingItems[0].organisationName
-      )
-      expect(items[0].submissionStatus).toBe('Pending')
-      expect(listComplianceDeclarations).not.toHaveBeenCalled()
-    })
-
-    test('Should match a fixture organisation reference number', async () => {
-      const { items } = await getComplianceSearchResults(
-        'direct-producers',
-        mockAcceptedItems[0].organisationReferenceNumber
-      )
-
-      expect(items).toHaveLength(1)
-      expect(items[0].submissionStatus).toBe('Accepted')
-    })
-
-    test('Should search the compliance scheme fixtures on that page', async () => {
-      const { items } = await getComplianceSearchResults(
-        'compliance-schemes',
-        mockComplianceSchemePendingItems[0].organisationName
-      )
-
-      expect(items).toHaveLength(1)
-      expect(items[0].organisationName).toBe(
-        mockComplianceSchemePendingItems[0].organisationName
-      )
-    })
-
-    test('Should return no items for a term that matches nothing', async () => {
-      const result = await getComplianceSearchResults(
-        'direct-producers',
-        'zzzznomatchzzzz'
       )
 
       expect(result).toEqual({ items: [], total: 0, truncated: false })

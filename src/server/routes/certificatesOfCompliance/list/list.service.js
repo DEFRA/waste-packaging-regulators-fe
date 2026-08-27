@@ -2,11 +2,6 @@ import { config } from '#config/config.js'
 import { createAccountApiService } from '#services/account-api.service.js'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
-import {
-  mockSummary,
-  mockSummaryByOrganisationType,
-  mockListByOrganisationType
-} from '../certificates-of-compliance.mock.js'
 import { deriveRecyclingObligationsMet } from '../detail/detail-mapping.js'
 import {
   registrationTypeByOrganisationType,
@@ -21,7 +16,6 @@ import {
 import { mapOrganisationName } from '../common/organisation.js'
 import { resolveSchemeOperators } from '../common/scheme-operator.js'
 import { calculateObligationCoveragePercentage } from '../common/display.js'
-import { throwIfMockErrorConfigured } from '#server/common/helpers/mock-api-error.js'
 import pMap from 'p-map'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 
@@ -284,11 +278,6 @@ async function getComplianceSummary(
   organisationType,
   traceId
 ) {
-  if (config.get('useMockApi')) {
-    throwIfMockErrorConfigured('waste-obligations-api')
-    return mockSummaryByOrganisationType[organisationType] ?? mockSummary
-  }
-
   const registrationType = registrationTypeByOrganisationType[organisationType]
 
   const [
@@ -446,23 +435,6 @@ async function getComplianceList({
   page,
   traceId
 }) {
-  if (config.get('useMockApi')) {
-    throwIfMockErrorConfigured('waste-obligations-api')
-    const listByTab = mockListByOrganisationType[organisationType] ?? {}
-    const items = [...(listByTab[tab] ?? [])]
-
-    sortItems(items, sortColumn, sortDirection)
-
-    const totalPages = Math.ceil(items.length / PAGE_SIZE) || 1
-    const start = (page - 1) * PAGE_SIZE
-
-    return {
-      items: items.slice(start, start + PAGE_SIZE),
-      totalPages,
-      currentPage: page
-    }
-  }
-
   const registrationType = registrationTypeByOrganisationType[organisationType]
 
   if (tab === 'not-submitted') {

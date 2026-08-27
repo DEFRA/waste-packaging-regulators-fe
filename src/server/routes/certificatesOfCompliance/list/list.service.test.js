@@ -36,27 +36,20 @@ import {
   sortItems
 } from './list.service.js'
 import { getCertificateOfComplianceDetailViewModel } from '../detail/detail.service.js'
-import { setMockDeclarationStatusOverride } from '../actions/session.service.js'
-import {
-  mockSummary,
-  mockPendingItems,
-  mockAcceptedItems,
-  mockNotSubmittedItems,
-  mockDetailData,
-  mockObligationData,
-  mockComplianceSchemePendingItems,
-  mockComplianceSchemeDetailData,
-  mockDirectProducerAcceptedDetailData,
-  mockDirectProducerCancelledDetailData,
-  mockComplianceSchemeAcceptedDetailData,
-  mockComplianceSchemeCancelledDetailData,
-  mockSummaryByOrganisationType,
-  mockQueriedDetailData,
-  mockCancelledDetailData,
-  mockSubmittedAuditEntry,
-  mockDirectProducerPendingNotMetDetailData
-} from '../certificates-of-compliance.mock.js'
+import { complianceRecords } from '#mocks/waste-obligations/fixtures.js'
+import { toDeclaration } from '#mocks/backends.js'
 import { PAGE_SIZE, DECLARATIONS_BATCH_SIZE } from '../common/constants.js'
+
+// Canonical declaration shapes projected from the default records, fed to the fake
+// API services in the tests below and asserted against.
+const byKey = (key) => complianceRecords.find((record) => record.key === key)
+const declarationByKey = (key) => toDeclaration(byKey(key))
+const mockDetailData = declarationByKey('howco-pending')
+const mockComplianceSchemeDetailData = declarationByKey('ecopack-pending')
+const mockSubmittedAuditEntry = byKey('howco-pending').audit[0]
+const mockObligationData = {
+  obligations: byKey('redwood-not-submitted').obligations
+}
 
 // waste-organisations records carry no registrationType — it is derived from
 // the registrations they do carry, so fixtures must supply those instead.
@@ -87,424 +80,7 @@ const makeDeclaration = ({
 })
 
 describe('getCertificatesOfComplianceViewModel', () => {
-  describe('with mock API (useMockApi=true)', () => {
-    beforeEach(() => {
-      config.get.mockReturnValue(true)
-      createAccountApiService.mockReturnValue({
-        getAccountDetailsById: vi
-          .fn()
-          .mockResolvedValue({ telephone: '01234 567890' })
-      })
-    })
-
-    test('returns correct view model shape', async () => {
-      const vm = await getCertificatesOfComplianceViewModel(
-        'compliance-schemes',
-        'pending',
-        2
-      )
-      expect(vm).toMatchObject({
-        heading: 'View certificates and statements of compliance',
-        backlink: './',
-        organisationType: 'compliance-schemes',
-        activeTab: 'pending',
-        pagination: {
-          currentPage: 2,
-          totalPages: 1,
-          baseUrl:
-            '/certificates-of-compliance?type=compliance-schemes&tab=pending'
-        },
-        sort: {
-          column: undefined,
-          direction: undefined,
-          baseUrl:
-            '/certificates-of-compliance?type=compliance-schemes&tab=pending&page=1'
-        }
-      })
-    })
-
-    test('returns mock summary data', async () => {
-      const vm = await getCertificatesOfComplianceViewModel(
-        'direct-producers',
-        'pending',
-        1
-      )
-      expect(vm.complianceYear).toBe(mockSummary.complianceYear)
-      expect(vm.totalPending).toBe(mockSummary.totalPending)
-      expect(vm.totalAccepted).toBe(mockSummary.totalAccepted)
-      expect(vm.totalNotSubmitted).toBe(mockSummary.totalNotSubmitted)
-    })
-
-    test('returns mock pending items for pending tab', async () => {
-      const vm = await getCertificatesOfComplianceViewModel(
-        'direct-producers',
-        'pending',
-        1
-      )
-      expect(vm.items).toEqual(
-        sortItems([...mockPendingItems], undefined, undefined)
-      )
-    })
-
-    test('returns mock accepted items for accepted tab', async () => {
-      const vm = await getCertificatesOfComplianceViewModel(
-        'direct-producers',
-        'accepted',
-        1
-      )
-      expect(vm.items).toEqual(
-        sortItems([...mockAcceptedItems], undefined, undefined)
-      )
-    })
-
-    test('returns mock not-submitted items for not-submitted tab', async () => {
-      const vm = await getCertificatesOfComplianceViewModel(
-        'direct-producers',
-        'not-submitted',
-        1
-      )
-
-      expect(vm.items).toEqual(
-        sortItems([...mockNotSubmittedItems], undefined, undefined)
-      )
-    })
-
-    test('returns compliance-schemes mock summary data', async () => {
-      const vm = await getCertificatesOfComplianceViewModel(
-        'compliance-schemes',
-        'pending',
-        1
-      )
-      expect(vm.totalPending).toBe(
-        mockSummaryByOrganisationType['compliance-schemes'].totalPending
-      )
-      expect(vm.totalAccepted).toBe(
-        mockSummaryByOrganisationType['compliance-schemes'].totalAccepted
-      )
-    })
-
-    test('returns compliance-schemes mock pending items', async () => {
-      const vm = await getCertificatesOfComplianceViewModel(
-        'compliance-schemes',
-        'pending',
-        1
-      )
-      const sortedItems = sortItems(
-        [...mockComplianceSchemePendingItems],
-        undefined,
-        undefined
-      )
-      expect(vm.items[0].organisationName).toBe(sortedItems[0].organisationName)
-      expect(vm.items[0].regulation43Met).toBe(sortedItems[0].regulation43Met)
-      expect(vm.items[0].obligationCoveragePercentage).toBe(
-        sortedItems[0].obligationCoveragePercentage
-      )
-    })
-
-    test('returns emptyTabMessage for the active tab', async () => {
-      const vm = await getCertificatesOfComplianceViewModel(
-        'direct-producers',
-        'accepted',
-        1,
-        'dateSubmitted',
-        'asc'
-      )
-      expect(vm.emptyTabMessage).toBe(
-        'No accepted submissions yet. Submissions you accept will be listed here.'
-      )
-    })
-
-    test('returns empty array for unknown tab', async () => {
-      const vm = await getCertificatesOfComplianceViewModel(
-        'direct-producers',
-        'unknown-tab',
-        1
-      )
-      expect(vm.items).toEqual([])
-    })
-
-    test('getCertificateOfComplianceDetailViewModel returns mapped mock detail', async () => {
-      const vm = await getCertificateOfComplianceDetailViewModel(
-        'org-abc',
-        'decl-1'
-      )
-      expect(vm.complianceYear).toBe(String(mockDetailData.obligationYear))
-      expect(vm.complianceTypeLabel).toBe('2026 certificate of compliance')
-      expect(vm.companyName).toBe(mockDetailData.organisation.name)
-      expect(vm.nameOnAccount).toBe(mockSubmittedAuditEntry.user.name)
-      expect(vm.declarationEmailAddress).toBe(
-        mockSubmittedAuditEntry.user.email
-      )
-      expect(vm.companyPhoneNumber).toBe('01234 567890')
-      expect(vm.declarationSignedBy).toBe(mockDetailData.submitterName)
-      expect(vm.heading).toBe('Certificate of compliance')
-      expect(vm.backlink).toBe('/certificates-of-compliance')
-      expect(vm.reviewStatus).toBe('Pending')
-      expect(vm.showDeclaration).toBe(true)
-      expect(vm.showSubmittedOn).toBe(true)
-      expect(vm.showNameOnAccount).toBe(true)
-      expect(vm.complianceDocumentNoun).toBe('certificate of compliance')
-      expect(vm.actions).toMatchObject({
-        showAccept: true,
-        showCancel: true,
-        labels: {
-          accept: 'Accept certificate',
-          cancel: 'Cancel certificate'
-        },
-        urls: {
-          accept: '/org-abc/certificates-of-compliance/decl-1/accept',
-          cancel: '/org-abc/certificates-of-compliance/decl-1/cancel/reason'
-        }
-      })
-      expect(vm.successBanner).toBeNull()
-    })
-
-    test('getCertificateOfComplianceDetailViewModel returns compliance-schemes mock detail', async () => {
-      const item = mockComplianceSchemePendingItems[0]
-      const vm = await getCertificateOfComplianceDetailViewModel(
-        item.organisationId,
-        item.id
-      )
-      expect(vm.companyName).toBe(
-        mockComplianceSchemeDetailData.organisation.schemeOperatorName
-      )
-      expect(vm.organisationType).toBe('Compliance scheme')
-      expect(vm.actions.labels).toEqual({
-        accept: 'Accept statement',
-        cancel: 'Cancel statement'
-      })
-      expect(vm.complianceTypeLabel).toBe('2026 statement of compliance')
-      expect(vm.showDeclaration).toBe(true)
-      expect(vm.complianceDocumentNoun).toBe('statement of compliance')
-      expect(vm.companiesHouseNumber).toBe('CS_GENERATED_0923795')
-    })
-
-    test('getCertificateOfComplianceDetailViewModel returns not-submitted mock detail with organisation name', async () => {
-      const item = mockNotSubmittedItems[2]
-      const vm = await getCertificateOfComplianceDetailViewModel(
-        item.organisationId,
-        undefined,
-        { obligationYear: 2026 }
-      )
-
-      expect(vm.companyName).toBe(item.organisationName)
-      expect(vm.organisationRef).toBe(item.organisationReferenceNumber)
-      expect(vm.companiesHouseNumber).toBe('17121895')
-      expect(vm.organisationType).toBe('Direct producer')
-      expect(vm.nameOnAccount).toBe('No data')
-      expect(vm.declarationEmailAddress).toBe('olivia.hart@redwood.test')
-      expect(vm.companyPhoneNumber).toBe('020 7946 0101')
-      expect(vm.declarationStatus).toBe('Unsubmitted')
-      expect(vm.showDeclaration).toBe(false)
-      expect(vm.showSubmittedOn).toBe(false)
-      expect(vm.showNameOnAccount).toBe(false)
-      expect(vm.recyclingObligationsMet).toBeNull()
-      expect(vm.complianceTypeLabel).toBe('2026 certificate of compliance')
-    })
-
-    test('getCertificateOfComplianceDetailViewModel returns not-submitted mock detail for org without waste-organisations mock', async () => {
-      const item = mockNotSubmittedItems[4]
-      const vm = await getCertificateOfComplianceDetailViewModel(
-        item.organisationId,
-        undefined,
-        { obligationYear: 2026 }
-      )
-
-      expect(vm.companyName).toBe('Coastal Bottling Co')
-      expect(vm.organisationRef).toBe('627148')
-      expect(vm.companiesHouseNumber).toBe('No data')
-      expect(vm.organisationType).toBe('No data')
-    })
-
-    test('getCertificateOfComplianceDetailViewModel returns No data companyName for unknown not-submitted org', async () => {
-      const vm = await getCertificateOfComplianceDetailViewModel(
-        'unknown-org-id',
-        undefined,
-        { obligationYear: 2026 }
-      )
-
-      expect(vm.companyName).toBe('No data')
-    })
-
-    describe('showObligations', () => {
-      test.each([
-        // Redwood Retail — uses default mockObligationData
-        {
-          obligations: 'obligations',
-          item: mockNotSubmittedItems[2],
-          expected: true
-        },
-        // Pinnacle Containers Ltd — obligations: []
-        {
-          obligations: 'an empty obligations array',
-          item: mockNotSubmittedItems[1],
-          expected: false
-        },
-        // Sterling Packaging Ltd — obligations: null
-        {
-          obligations: 'null obligations',
-          item: mockNotSubmittedItems[0],
-          expected: false
-        }
-      ])(
-        'is $expected when the org has $obligations',
-        async ({ item, expected }) => {
-          const vm = await getCertificateOfComplianceDetailViewModel(
-            item.organisationId,
-            undefined,
-            { obligationYear: 2026 }
-          )
-
-          expect(vm.showObligations).toBe(expected)
-        }
-      )
-    })
-
-    test('getCertificateOfComplianceDetailViewModel returns accepted direct producer detail', async () => {
-      const vm = await getCertificateOfComplianceDetailViewModel(
-        mockDirectProducerAcceptedDetailData.organisation.id,
-        mockDirectProducerAcceptedDetailData.id
-      )
-      expect(vm.companyName).toBe('Acme Compliance Co')
-      expect(vm.reviewStatus).toBe('Approved')
-      expect(vm.actions.showAccept).toBe(false)
-      expect(vm.actions.showCancel).toBe(true)
-      expect(vm.showAcceptedOutcome).toBe(true)
-      expect(vm.acceptedBy).toBe('James Walker')
-      expect(vm.acceptedDate).toBe('15 January 2027 at 14:30')
-    })
-
-    test('getCertificateOfComplianceDetailViewModel returns accepted compliance scheme detail', async () => {
-      const vm = await getCertificateOfComplianceDetailViewModel(
-        mockComplianceSchemeAcceptedDetailData.organisation.id,
-        mockComplianceSchemeAcceptedDetailData.id
-      )
-      expect(vm.companyName).toBe('Nationwide Packaging Group')
-      expect(vm.reviewStatus).toBe('Approved')
-      expect(vm.actions.showAccept).toBe(false)
-      expect(vm.actions.showCancel).toBe(true)
-      expect(vm.actions.labels.accept).toBe('Accept statement')
-      expect(vm.showAcceptedOutcome).toBe(true)
-      expect(vm.acceptedBy).toBe('James Walker')
-      expect(vm.acceptedDate).toBe('12 January 2027 at 12:05')
-    })
-
-    test('getCertificateOfComplianceDetailViewModel returns cancelled direct producer detail', async () => {
-      const vm = await getCertificateOfComplianceDetailViewModel(
-        mockDirectProducerCancelledDetailData.organisation.id,
-        mockDirectProducerCancelledDetailData.id
-      )
-      expect(vm.companyName).toBe('Greenfield Packaging Ltd')
-      expect(vm.reviewStatus).toBe('Cancelled')
-      expect(vm.showDeclaration).toBe(true)
-      expect(vm.actions.showAccept).toBe(false)
-      expect(vm.actions.showCancel).toBe(false)
-      expect(vm.showCancelledOutcome).toBe(true)
-      expect(vm.cancelledBy).toBe('James Walker')
-      expect(vm.cancellationReason).toBe('Submitted after the deadline.')
-    })
-
-    test('getCertificateOfComplianceDetailViewModel returns cancelled compliance scheme detail', async () => {
-      const vm = await getCertificateOfComplianceDetailViewModel(
-        mockComplianceSchemeCancelledDetailData.organisation.id,
-        mockComplianceSchemeCancelledDetailData.id
-      )
-      expect(vm.companyName).toBe('GreenCircle Group')
-      expect(vm.reviewStatus).toBe('Cancelled')
-      expect(vm.actions.showAccept).toBe(false)
-      expect(vm.actions.showCancel).toBe(false)
-      expect(vm.showCancelledOutcome).toBe(true)
-      expect(vm.cancellationReason).toBe('Incomplete member data submitted.')
-    })
-
-    test('getCertificateOfComplianceDetailViewModel returns success banner when flagged', async () => {
-      const vm = await getCertificateOfComplianceDetailViewModel(
-        'org-abc',
-        'decl-1',
-        {
-          bannerFlags: {
-            showApprovalBanner: true,
-            showQueryBanner: false,
-            showCancelBanner: false
-          }
-        }
-      )
-      expect(vm.successBanner).toEqual({
-        heading: 'Certificate accepted',
-        text: 'Certificate has been accepted.',
-        type: 'accepted'
-      })
-    })
-
-    test('getCertificateOfComplianceDetailViewModel shows Accepted and Cancelled rows after mock accept then cancel', async () => {
-      config.get.mockReturnValue(true)
-      createAccountApiService.mockReturnValue({
-        getAccountDetailsById: vi.fn().mockResolvedValue({ telephone: null })
-      })
-
-      const session = {
-        data: {},
-        get(key) {
-          return this.data[key]
-        },
-        set(key, value) {
-          this.data[key] = value
-        }
-      }
-
-      session.set('user', {
-        id: 'user-oid-1',
-        email: 'regulator@example.com',
-        name: 'Jane Regulator'
-      })
-
-      const declarationKey = `${mockDirectProducerPendingNotMetDetailData.organisation.id}/${mockDirectProducerPendingNotMetDetailData.id}`
-      setMockDeclarationStatusOverride(session, declarationKey, 'Approved')
-      setMockDeclarationStatusOverride(session, declarationKey, 'Cancelled')
-
-      const vm = await getCertificateOfComplianceDetailViewModel(
-        mockDirectProducerPendingNotMetDetailData.organisation.id,
-        mockDirectProducerPendingNotMetDetailData.id,
-        { session }
-      )
-
-      expect(vm.reviewStatus).toBe('Cancelled')
-      expect(vm.currentYearActions.map((row) => row.action)).toEqual([
-        'Cancelled',
-        'Accepted'
-      ])
-      expect(vm.currentYearActions[0].by).toBe('Jane Regulator')
-      expect(vm.currentYearActions[1].by).toBe('Jane Regulator')
-      const expectedUrl = `/b1e2c3d4-e5f6-7890-abcd-ef1234567890/certificates-of-compliance/${mockDirectProducerPendingNotMetDetailData.id}`
-      expect(vm.currentYearActions[0].viewSubmissionUrl).toBe(expectedUrl)
-      expect(vm.currentYearActions[1].viewSubmissionUrl).toBe(expectedUrl)
-    })
-
-    test('getCertificateOfComplianceDetailViewModel applies mock status override from session', async () => {
-      config.get.mockReturnValue(true)
-      const session = {
-        data: { 'certificate-mock-status:org-abc/decl-1': 'Accepted' },
-        get(key) {
-          return this.data[key]
-        }
-      }
-
-      const vm = await getCertificateOfComplianceDetailViewModel(
-        'org-abc',
-        'decl-1',
-        {
-          traceId: 'trace-1',
-          session
-        }
-      )
-
-      expect(vm.reviewStatus).toBe('Approved')
-      expect(vm.actions.showAccept).toBe(false)
-      expect(vm.actions.showCancel).toBe(true)
-    })
-  })
-
-  describe('with real API (useMockApi=false)', () => {
+  describe('with the API services faked', () => {
     let mockObligationsApi
     let mockOrganisationsApi
     let mockAccountApi
@@ -1376,7 +952,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
     })
 
-    describe('getCertificateOfComplianceDetailViewModel — real API', () => {
+    describe('getCertificateOfComplianceDetailViewModel', () => {
       beforeEach(() => {
         mockObligationsApi.getComplianceDeclarationOrNull = vi
           .fn()
@@ -1908,9 +1484,15 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
 
       test('maps Queried status with query details', async () => {
-        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue(
-          mockQueriedDetailData
-        )
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          status: 'Queried',
+          queryDetails: {
+            queriedMaterials: 'Plastic, Steel',
+            reason: 'Tonnage figures do not match submitted evidence.',
+            dateQueried: '2026-03-17T00:00:00Z'
+          }
+        })
 
         const vm = await getCertificateOfComplianceDetailViewModel(
           'org-abc',
@@ -1923,16 +1505,25 @@ describe('getCertificatesOfComplianceViewModel', () => {
           showCancel: true
         })
         expect(vm.queryDetails).toEqual({
-          queriedMaterials: mockQueriedDetailData.queryDetails.queriedMaterials,
-          reason: mockQueriedDetailData.queryDetails.reason,
+          queriedMaterials: 'Plastic, Steel',
+          reason: 'Tonnage figures do not match submitted evidence.',
           dateQueried: '17 March 2026'
         })
       })
 
       test('maps the Cancelled outcome from the cancellation audit entry', async () => {
-        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue(
-          mockCancelledDetailData
-        )
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          status: 'Cancelled',
+          audit: [
+            {
+              action: 'Cancelled',
+              timestamp: '2026-03-10T09:15:00Z',
+              user: { name: 'James Walker' },
+              reason: 'Submitted after the deadline.'
+            }
+          ]
+        })
 
         const vm = await getCertificateOfComplianceDetailViewModel(
           'org-abc',
