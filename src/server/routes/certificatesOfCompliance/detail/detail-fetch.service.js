@@ -118,7 +118,7 @@ async function fetchOrganisationContact(accountApi, externalId, traceId) {
   return mapOrganisationContact(organisationWithPersons)
 }
 
-async function getNotSubmittedDeclarationDetail(
+async function getNotSubmittedDeclarationDetail({
   obligationsApi,
   organisationsApi,
   accountApi,
@@ -126,7 +126,7 @@ async function getNotSubmittedDeclarationDetail(
   obligationYear,
   traceId,
   locale = 'en'
-) {
+}) {
   // The waste-organisations record is needed before the Account lookup so we
   // know whether to resolve by external id (direct producers) or Companies
   // House number (compliance schemes).
@@ -155,7 +155,7 @@ async function getNotSubmittedDeclarationDetail(
   })
 }
 
-async function getSubmittedDeclarationDetail(
+async function getSubmittedDeclarationDetail({
   obligationsApi,
   organisationsApi,
   accountApi,
@@ -164,7 +164,7 @@ async function getSubmittedDeclarationDetail(
   obligationYear,
   traceId,
   locale = 'en'
-) {
+}) {
   const declaration = await obligationsApi.getComplianceDeclarationOrNull(
     { id, organisationId },
     traceId
@@ -210,7 +210,7 @@ export async function getDeclarationDetail(
   { traceId, obligationYear, locale = 'en' } = {}
 ) {
   if (!id) {
-    return getNotSubmittedDeclarationDetail(
+    return getNotSubmittedDeclarationDetail({
       obligationsApi,
       organisationsApi,
       accountApi,
@@ -218,10 +218,10 @@ export async function getDeclarationDetail(
       obligationYear,
       traceId,
       locale
-    )
+    })
   }
 
-  return getSubmittedDeclarationDetail(
+  return getSubmittedDeclarationDetail({
     obligationsApi,
     organisationsApi,
     accountApi,
@@ -230,5 +230,5 @@ export async function getDeclarationDetail(
     obligationYear,
     traceId,
     locale
-  )
+  })
 }

@@ -1,4 +1,5 @@
 import {
+  buildPageViewModel,
   clearLocaleCacheForTests,
   pageI18n,
   translate,
@@ -50,5 +51,26 @@ describe('translate', () => {
         'met'
       )
     ).toBe('Met')
+  })
+
+  test('pageI18n ct and ck resolve component keys', () => {
+    const i18n = pageI18n('en', 'certificatesOfCompliance.list')
+
+    expect(i18n.ct('statusTag', 'met')).toBe('Met')
+    expect(i18n.ck('statusTag', 'met')).toBe(
+      'compliance.components.statusTag.met'
+    )
+  })
+
+  test('buildPageViewModel reads page title and heading from locale', () => {
+    const viewModel = buildPageViewModel(
+      { query: { lang: 'en' }, headers: {}, yar: { get: () => null } },
+      'home'
+    )
+
+    expect(viewModel).toEqual({
+      pageTitle: 'Home',
+      heading: 'Home'
+    })
   })
 })

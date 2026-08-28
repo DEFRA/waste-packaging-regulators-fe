@@ -1,4 +1,4 @@
-import { NO_DATA, COMPLIANCE_SCHEMES } from './constants.js'
+import { COMPLIANCE_SCHEMES } from './constants.js'
 import {
   translateComplianceDocumentNoun,
   translateComplianceTypeLabel,
@@ -60,4 +60,4 @@ export function calculateObligationCoveragePercentage(obligations = []) {
 }
 
 /** @deprecated use translateNoData(locale) — kept for tests referencing NO_DATA literal */
-export { NO_DATA }
+export { NO_DATA } from './constants.js'

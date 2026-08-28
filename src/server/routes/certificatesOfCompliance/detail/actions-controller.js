@@ -1,6 +1,8 @@
-import { appendLangQuery } from '#server/common/helpers/i18n/locale-url.js'
+import {
+  appendLangQuery,
+  persistAuthLocale
+} from '#server/common/helpers/i18n/locale-url.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
-import { persistAuthLocale } from '#server/common/helpers/i18n/locale-url.js'
 
 export function redirectToSignIn(request, h) {
   const locale = getLocale(request)
