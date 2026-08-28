@@ -1,85 +1,41 @@
-import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import {
-  mockPendingItems,
-  mockComplianceSchemePendingItems,
-  mockAcceptedItems,
-  mockDetailData,
-  mockComplianceSchemeDetailData
-} from '../certificates-of-compliance.mock.js'
-import {
-  authCookiesFromResponse,
-  csrfTokenCookieFromResponse,
-  crumbTokenFromCookie,
-  mergeCookiesFromResponse
-} from '#test-helpers/cookies.js'
+import { setupRegulatorsApp } from '#test-helpers/msw/harness.js'
 
-const DP_ITEM = mockPendingItems[0]
-const CS_ITEM = mockComplianceSchemePendingItems[0]
-const ACCEPTED_ITEM = mockAcceptedItems[0]
+// The declarations this controller acts on are declared inline, so the org
+// wording each assertion checks traces back to this input.
+const ORGS = [
+  { name: 'Halvern Producers Ltd' },
+  { name: 'Marisco Compliance Operators', type: 'compliance-scheme' },
+  { name: 'Ashvale Producers Ltd', status: 'accepted' }
+]
+const itemOf = (org) => ({
+  organisationId: org.organisationId,
+  id: org.declarationId,
+  name: org.name
+})
 
 const acceptUrlFor = (item) =>
   `/${item.organisationId}/certificates-of-compliance/${item.id}/accept`
 const detailUrlFor = (item) =>
   `/${item.organisationId}/certificates-of-compliance/${item.id}`
 
-// hapi/yar stores the session in the cookie itself by default, so each
-// response carries an updated Set-Cookie that the next request must use.
-function nextCookie(response, fallback) {
-  return mergeCookiesFromResponse(fallback, response)
-}
-
 describe('#certificatesOfComplianceAcceptController', () => {
-  let server
-  // A crumb minted without signing in, mirroring a real browser that still
-  // holds the form's crumb after its session has lapsed.
-  let anonCrumbCookie
+  const app = setupRegulatorsApp()
+  let DP_ITEM
+  let CS_ITEM
+  let ACCEPTED_ITEM
 
-  beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-
-    const anonResponse = await server.inject({
-      method: 'GET',
-      url: '/certificates-of-compliance'
-    })
-    anonCrumbCookie = csrfTokenCookieFromResponse(anonResponse)
+  // Fresh scenario per test so an approve in one test never leaks into the next.
+  beforeEach(() => {
+    const scenario = app.given(ORGS)
+    DP_ITEM = itemOf(scenario.byName('Halvern Producers Ltd'))
+    CS_ITEM = itemOf(scenario.byName('Marisco Compliance Operators'))
+    ACCEPTED_ITEM = itemOf(scenario.byName('Ashvale Producers Ltd'))
   })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
-  // Returns a cookie header carrying both the yar `session` and the `CSRFToken`
-  // crumb, so authenticated POSTs can echo the token back to satisfy CSRF.
-  async function signIn() {
-    const response = await server.inject({
-      method: 'GET',
-      url: '/signin-oidc'
-    })
-    return authCookiesFromResponse(response)
-  }
-
-  const get = (url, cookie) =>
-    server.inject({ method: 'GET', url, headers: { cookie } })
-
-  const post = (url, payload, cookie) => {
-    const crumb = crumbTokenFromCookie(cookie)
-    const body = [payload, `CSRFToken=${crumb}`].filter(Boolean).join('&')
-    return server.inject({
-      method: 'POST',
-      url,
-      payload: body,
-      headers: {
-        cookie,
-        'content-type': 'application/x-www-form-urlencoded'
-      }
-    })
-  }
 
   describe('GET', () => {
     it('redirects unauthenticated users to /signin-oidc', async () => {
-      const response = await server.inject({
+      const response = await app.server.inject({
         method: 'GET',
         url: acceptUrlFor(DP_ITEM)
       })
@@ -88,11 +44,11 @@ describe('#certificatesOfComplianceAcceptController', () => {
     })
 
     it('renders the confirmation form with certificate wording for a Direct Producer', async () => {
-      const cookie = await signIn()
-      const response = await get(acceptUrlFor(DP_ITEM), cookie)
+      const cookie = await app.signIn()
+      const response = await app.get(acceptUrlFor(DP_ITEM), cookie)
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(response.payload).toContain(
-        `Are you sure you want to accept this certificate for ${mockDetailData.organisation.name}?`
+        `Are you sure you want to accept this certificate for ${DP_ITEM.name}?`
       )
       expect(response.payload).toContain('name="confirm-accept"')
       expect(response.payload).toContain('value="yes"')
@@ -101,25 +57,25 @@ describe('#certificatesOfComplianceAcceptController', () => {
     })
 
     it('renders a CSRF token in the confirmation form', async () => {
-      const cookie = await signIn()
-      const response = await get(acceptUrlFor(DP_ITEM), cookie)
+      const cookie = await app.signIn()
+      const response = await app.get(acceptUrlFor(DP_ITEM), cookie)
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(response.payload).toContain('name="CSRFToken"')
       expect(response.payload).toContain('id="csrf-crumb"')
     })
 
     it('renders the confirmation form with statement wording for a Compliance Scheme', async () => {
-      const cookie = await signIn()
-      const response = await get(acceptUrlFor(CS_ITEM), cookie)
+      const cookie = await app.signIn()
+      const response = await app.get(acceptUrlFor(CS_ITEM), cookie)
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(response.payload).toContain(
-        `Are you sure you want to accept this statement for ${mockComplianceSchemeDetailData.organisation.schemeOperatorName}?`
+        `Are you sure you want to accept this statement for ${CS_ITEM.name}?`
       )
     })
 
     it('redirects to the detail page when the declaration is no longer pending', async () => {
-      const cookie = await signIn()
-      const response = await get(acceptUrlFor(ACCEPTED_ITEM), cookie)
+      const cookie = await app.signIn()
+      const response = await app.get(acceptUrlFor(ACCEPTED_ITEM), cookie)
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe(detailUrlFor(ACCEPTED_ITEM))
     })
@@ -127,17 +83,17 @@ describe('#certificatesOfComplianceAcceptController', () => {
 
   describe('POST', () => {
     it('redirects unauthenticated users to /signin-oidc', async () => {
-      const response = await post(
+      const response = await app.post(
         acceptUrlFor(DP_ITEM),
         'confirm-accept=yes',
-        anonCrumbCookie
+        await app.anonCrumb()
       )
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe('/signin-oidc')
     })
 
     it('rejects a request with no CSRF token', async () => {
-      const response = await server.inject({
+      const response = await app.server.inject({
         method: 'POST',
         url: acceptUrlFor(DP_ITEM),
         payload: 'confirm-accept=yes',
@@ -147,8 +103,8 @@ describe('#certificatesOfComplianceAcceptController', () => {
     })
 
     it('re-renders the form with an error summary when no choice is made', async () => {
-      const cookie = await signIn()
-      const response = await post(acceptUrlFor(DP_ITEM), '', cookie)
+      const cookie = await app.signIn()
+      const response = await app.post(acceptUrlFor(DP_ITEM), '', cookie)
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(response.payload).toContain('There is a problem')
       expect(response.payload).toContain('Select yes or no')
@@ -156,8 +112,8 @@ describe('#certificatesOfComplianceAcceptController', () => {
     })
 
     it('re-renders the form when an invalid choice is sent', async () => {
-      const cookie = await signIn()
-      const response = await post(
+      const cookie = await app.signIn()
+      const response = await app.post(
         acceptUrlFor(DP_ITEM),
         'confirm-accept=maybe',
         cookie
@@ -167,8 +123,8 @@ describe('#certificatesOfComplianceAcceptController', () => {
     })
 
     it('redirects to the detail page when "no" is chosen and shows no banner', async () => {
-      const cookie = await signIn()
-      const noResponse = await post(
+      const cookie = await app.signIn()
+      const noResponse = await app.post(
         acceptUrlFor(DP_ITEM),
         'confirm-accept=no',
         cookie
@@ -176,17 +132,17 @@ describe('#certificatesOfComplianceAcceptController', () => {
       expect(noResponse.statusCode).toBe(302)
       expect(noResponse.headers.location).toBe(detailUrlFor(DP_ITEM))
 
-      const detailResponse = await get(
+      const detailResponse = await app.get(
         detailUrlFor(DP_ITEM),
-        nextCookie(noResponse, cookie)
+        app.nextCookie(noResponse, cookie)
       )
       expect(detailResponse.statusCode).toBe(statusCodes.ok)
       expect(detailResponse.payload).not.toContain('govuk-notification-banner')
     })
 
     it('redirects to the detail page when "yes" is chosen and shows the accepted banner', async () => {
-      const cookie = await signIn()
-      const yesResponse = await post(
+      const cookie = await app.signIn()
+      const yesResponse = await app.post(
         acceptUrlFor(DP_ITEM),
         'confirm-accept=yes',
         cookie
@@ -194,9 +150,9 @@ describe('#certificatesOfComplianceAcceptController', () => {
       expect(yesResponse.statusCode).toBe(302)
       expect(yesResponse.headers.location).toBe(detailUrlFor(DP_ITEM))
 
-      const detailResponse = await get(
+      const detailResponse = await app.get(
         detailUrlFor(DP_ITEM),
-        nextCookie(yesResponse, cookie)
+        app.nextCookie(yesResponse, cookie)
       )
       expect(detailResponse.statusCode).toBe(statusCodes.ok)
       expect(detailResponse.payload).toContain('Certificate accepted')
@@ -204,17 +160,17 @@ describe('#certificatesOfComplianceAcceptController', () => {
     })
 
     it('shows "Statement accepted" banner copy for a Compliance Scheme after "yes"', async () => {
-      const cookie = await signIn()
-      const yesResponse = await post(
+      const cookie = await app.signIn()
+      const yesResponse = await app.post(
         acceptUrlFor(CS_ITEM),
         'confirm-accept=yes',
         cookie
       )
       expect(yesResponse.statusCode).toBe(302)
 
-      const detailResponse = await get(
+      const detailResponse = await app.get(
         detailUrlFor(CS_ITEM),
-        nextCookie(yesResponse, cookie)
+        app.nextCookie(yesResponse, cookie)
       )
       expect(detailResponse.payload).toContain('Statement accepted')
       expect(detailResponse.payload).toContain('Statement has been accepted.')

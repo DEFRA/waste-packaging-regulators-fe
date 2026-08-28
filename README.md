@@ -122,6 +122,27 @@ npm run dev
 
 This uses mock API responses and a stub auth strategy (no backends required, no B2C round-trip). Routes that check for a signed-in user see a fixed `mock-user` automatically.
 
+### Mock API
+
+With `MOCK_API=true` (the default outside production), the backend calls to the
+waste-obligations, waste-organisations and Account APIs are intercepted in-process
+by [Mock Service Worker](https://mswjs.io/) and answered from local fixtures. The
+production code makes ordinary `fetch` calls and is unaware of the mock — nothing
+is branched on `MOCK_API` outside the mock layer.
+
+The default data deliberately covers every variation (met / not met / no data, each
+submission status, direct producers and compliance schemes), so you can eyeball them
+all locally — visit the certificates-of-compliance pages after `npm run dev`.
+Approving or cancelling a certificate persists in-memory for the process, so the UI
+reflects the new status on the redirect (the store resets on restart).
+
+Set `MOCK_ERROR_STATUS=<http status>` alongside `MOCK_API=true` to make every
+mocked call return that status instead of data, so you can walk a journey into the
+real error pages without a failing backend.
+
+The mock layer's design, structure and how to work with it: see
+[`src/mocks/README.md`](./src/mocks/README.md).
+
 ### Alternate backend API profiles
 
 #### Run against dev environment

@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
 import { mapSessionUserToApiUser } from './approve.service.js'
 import { buildCancellationNotificationParameters } from './cancellation-notification-parameters.js'
@@ -11,10 +10,6 @@ export async function cancelComplianceDeclaration(
   traceId,
   { registrationType, environmentalRegulator } = {}
 ) {
-  if (config.get('useMockApi')) {
-    return null
-  }
-
   const api = createWasteObligationsApiService()
   const notificationParameters = buildCancellationNotificationParameters({
     registrationType,

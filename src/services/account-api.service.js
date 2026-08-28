@@ -1,19 +1,7 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { getMockPersonEmails } from '#server/routes/certificatesOfCompliance/certificates-of-compliance.mock.js'
 import { ApiError } from './apiBaseClient/api-error.js'
 import { BaseApiService } from './apiBaseClient/base-api.service.js'
-
-export const mockAccountDetails = {
-  firstName: 'John',
-  lastName: 'Doe',
-  contactEmail: 'john.doe@example.org',
-  telephone: '01234 567890',
-  serviceRoleId: 4,
-  serviceRole: 'Regulator Admin',
-  organisationName: 'Example Environment Agency',
-  nationId: 1
-}
 
 export class AccountApiService extends BaseApiService {
   constructor(options = {}) {
@@ -72,14 +60,6 @@ export class AccountApiService extends BaseApiService {
   }
 
   async getPersonEmails(organisationId, entityTypeCode, traceId) {
-    if (config.get('useMockApi')) {
-      this.logger?.debug?.(
-        { organisationId, entityTypeCode },
-        'Returning mock person emails (MOCK_API)'
-      )
-      return getMockPersonEmails(organisationId, entityTypeCode)
-    }
-
     const params = new URLSearchParams({
       organisationId,
       entityTypeCode
@@ -118,13 +98,6 @@ export class AccountApiService extends BaseApiService {
   }
 
   async getAccountDetailsById(userId, traceId) {
-    if (config.get('useMockApi')) {
-      this.logger?.debug?.(
-        { userId },
-        'Returning mock account details (MOCK_API)'
-      )
-      return mockAccountDetails
-    }
     const raw = await this.getJson(
       `/api/users/user-organisations?userId=${encodeURIComponent(userId)}`,
       this.getTracingHeader(traceId)

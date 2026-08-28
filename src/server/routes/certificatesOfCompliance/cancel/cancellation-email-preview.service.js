@@ -1,12 +1,7 @@
-import { config } from '#config/config.js'
 import { previewCancellationTemplate } from '#services/govuk-notify.service.js'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
 import { buildCancellationNotificationParameters } from '../actions/cancellation-notification-parameters.js'
-import {
-  getMockDetailDataById,
-  getMockOrganisationById
-} from '../certificates-of-compliance.mock.js'
 import { getCancelReasonLabel } from './reasons.js'
 import {
   isWelshOrganisation,
@@ -35,10 +30,6 @@ export function buildCancellationEmailPersonalisation(
 }
 
 async function fetchDeclaration(organisationId, id, traceId) {
-  if (config.get('useMockApi')) {
-    return getMockDetailDataById(id)
-  }
-
   const obligationsApi = createWasteObligationsApiService()
   return obligationsApi.getComplianceDeclarationOrNull(
     { organisationId, id },
@@ -47,10 +38,6 @@ async function fetchDeclaration(organisationId, id, traceId) {
 }
 
 async function fetchWasteOrganisation(organisationId, traceId) {
-  if (config.get('useMockApi')) {
-    return getMockOrganisationById(organisationId)
-  }
-
   const organisationsApi = createWasteOrganisationsApiService()
   return organisationsApi.getOrganisation({ organisationId }, traceId)
 }

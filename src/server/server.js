@@ -146,6 +146,15 @@ function createHapiServer(tls) {
 }
 
 export async function createServer() {
+  // Dev-only: intercept backend calls with MSW so the app runs without live
+  // waste-obligations / waste-organisations / Account services. The dynamic
+  // import keeps msw (a devDependency) out of the production module graph — no
+  // deployed environment runs with MOCK_API=true.
+  if (config.get('useMockApi')) {
+    const { startMockApi } = await import('#mocks/server.js')
+    await startMockApi()
+  }
+
   setupProxy()
   const isDevelopment = config.get('isDevelopment')
   const certsDir = path.resolve(config.get('root'), 'certs')

@@ -1,18 +1,5 @@
 import { ApiError } from '#services/apiBaseClient/api-error.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { config } from '#config/config.js'
-import {
-  mockSummary,
-  getMockObligationData,
-  getMockDetailDataById,
-  getMockDeclarationsByOrgYear,
-  getMockOrganisationById,
-  getMockAccountOrganisationByExternalId
-} from '../certificates-of-compliance.mock.js'
-import {
-  applyMockDeclarationStatusOverride,
-  getDeclarationSessionKey
-} from '../actions/session.service.js'
 import { findSubmittedAuditUser } from './audit.js'
 import { mapOrganisationContact } from '../common/organisation-contact.js'
 import {
@@ -22,7 +9,6 @@ import {
 import { deriveRegistrationType } from '../common/registration-type.js'
 import { isComplianceSchemeRegistrationType } from '../common/display.js'
 import { resolveSchemeOperators } from '../common/scheme-operator.js'
-import { throwIfMockErrorConfigured } from '#server/common/helpers/mock-api-error.js'
 
 export { findSubmittedAuditUser } from './audit.js'
 
@@ -132,59 +118,6 @@ async function fetchOrganisationContact(accountApi, externalId, traceId) {
   return mapOrganisationContact(organisationWithPersons)
 }
 
-function resolveMockAccountOrganisation(organisationId) {
-  const organisation = getMockAccountOrganisationByExternalId(organisationId)
-  return {
-    ...mapAccountOrganisationDetails(organisation),
-    contact: mapOrganisationContact(organisation)
-  }
-}
-
-async function getMockDeclarationDetail(
-  accountApi,
-  organisationId,
-  id,
-  { traceId, session, obligationYear } = {}
-) {
-  const resolvedObligationYear =
-    obligationYear ?? Number(mockSummary.complianceYear)
-
-  if (!id) {
-    const accountOrganisation = resolveMockAccountOrganisation(organisationId)
-    return mapObligationToDetail(getMockObligationData(organisationId), {
-      organisationId,
-      obligationYear: resolvedObligationYear,
-      organisation: getMockOrganisationById(organisationId),
-      accountOrganisationName: accountOrganisation.name,
-      accountOrganisationReferenceNumber: accountOrganisation.referenceNumber,
-      accountOrganisationContact: accountOrganisation.contact
-    })
-  }
-
-  const mockData = applyMockDeclarationStatusOverride(
-    getMockDetailDataById(id),
-    getDeclarationSessionKey(organisationId, id),
-    session
-  )
-  const declarationsForYear = getMockDeclarationsByOrgYear(
-    mockData?.organisation?.id ?? organisationId,
-    mockData?.obligationYear
-  )
-  const submitterPhoneNumber = await fetchSubmitterPhoneNumber(
-    accountApi,
-    mockData.audit,
-    traceId
-  )
-  const resolvedOrganisationId = mockData?.organisation?.id ?? organisationId
-  return mapDeclarationToDetail(mockData, {
-    organisationId,
-    id,
-    declarationsForYear,
-    submitterPhoneNumber,
-    wasteOrganisation: getMockOrganisationById(resolvedOrganisationId)
-  })
-}
-
 async function getNotSubmittedDeclarationDetail(
   obligationsApi,
   organisationsApi,
@@ -269,17 +202,8 @@ export async function getDeclarationDetail(
   accountApi,
   organisationId,
   id,
-  { traceId, session, obligationYear } = {}
+  { traceId, obligationYear } = {}
 ) {
-  if (config.get('useMockApi')) {
-    throwIfMockErrorConfigured('waste-obligations-api')
-    return getMockDeclarationDetail(accountApi, organisationId, id, {
-      traceId,
-      session,
-      obligationYear
-    })
-  }
-
   if (!id) {
     return getNotSubmittedDeclarationDetail(
       obligationsApi,
