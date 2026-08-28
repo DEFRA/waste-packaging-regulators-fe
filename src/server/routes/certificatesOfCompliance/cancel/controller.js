@@ -1,6 +1,6 @@
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
-import { appendLangQuery } from '#server/common/helpers/i18n/locale-url.js'
+import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { config } from '#config/config.js'
 import { cancelComplianceDeclaration } from '../actions/cancel.service.js'
 import { getComplianceDeclarationReviewStatus } from '../actions/review-status.service.js'
@@ -20,7 +20,7 @@ import {
 import { buildCancellationEmailPreview } from './cancellation-email-preview.service.js'
 
 function detailPath(organisationId, id, locale) {
-  return appendLangQuery(
+  return localeUrl(
     `/${organisationId}/certificates-of-compliance/${id}`,
     locale
   )

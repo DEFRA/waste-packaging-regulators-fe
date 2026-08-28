@@ -5,6 +5,7 @@ import { config } from '#config/config.js'
 import { buildLanguageSwitcherUrls } from './build-language-switcher.js'
 import { buildNavigation } from './build-navigation.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+import { bindLocaleUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
 
@@ -31,6 +32,7 @@ export function context(request) {
   return {
     assetPath: `${assetPath}/assets`,
     locale,
+    localeUrl: bindLocaleUrl(locale),
     serviceName: translate(locale, 'common.serviceName'),
     serviceUrl: '/',
     helpDeskEmail: config.get('helpDeskEmail'),

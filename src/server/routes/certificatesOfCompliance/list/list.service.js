@@ -3,7 +3,7 @@ import { createAccountApiService } from '#services/account-api.service.js'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
 import { deriveRecyclingObligationsMet } from '../detail/detail-mapping.js'
-import { appendLangQuery } from '#server/common/helpers/i18n/locale-url.js'
+import { bindLocaleUrl } from '#server/common/helpers/i18n/locale-url.js'
 import {
   cocPageI18n,
   translateEmptyTabMessage,
@@ -526,10 +526,11 @@ export async function getCertificatesOfComplianceViewModel(
   }
 
   const i18n = cocPageI18n(locale, 'list')
+  const url = bindLocaleUrl(locale)
 
   return {
     heading: translate(locale, 'certificatesOfCompliance.list.heading'),
-    backlink: appendLangQuery('./', locale),
+    backlink: url('./'),
     complianceYear: summary.complianceYear,
     totalPending: summary.totalPending,
     totalAccepted: summary.totalAccepted,
@@ -549,12 +550,12 @@ export async function getCertificatesOfComplianceViewModel(
     pagination: {
       currentPage,
       totalPages: list.totalPages,
-      baseUrl: appendLangQuery(paginationBaseUrl, locale)
+      baseUrl: url(paginationBaseUrl)
     },
     sort: {
       column: sortColumn,
       direction: sortDirection,
-      baseUrl: appendLangQuery(`${baseUrl}&page=1`, locale)
+      baseUrl: url(`${baseUrl}&page=1`)
     },
     i18n
   }

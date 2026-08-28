@@ -1,4 +1,4 @@
-import { appendLangQuery } from '#server/common/helpers/i18n/locale-url.js'
+import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
 
@@ -16,7 +16,7 @@ export const aboutController = {
       breadcrumbs: [
         {
           text: translate(locale, 'common.nav.home'),
-          href: appendLangQuery('/', locale)
+          href: localeUrl('/', locale)
         },
         {
           text: translate(locale, 'about.heading')

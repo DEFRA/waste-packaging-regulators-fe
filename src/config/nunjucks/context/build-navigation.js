@@ -1,4 +1,4 @@
-import { appendLangQuery } from '#server/common/helpers/i18n/locale-url.js'
+import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
 
 export function buildNavigation(request, locale = 'en') {
@@ -7,12 +7,12 @@ export function buildNavigation(request, locale = 'en') {
   return [
     {
       text: translate(locale, 'common.nav.home'),
-      href: appendLangQuery('/', locale),
+      href: localeUrl('/', locale),
       current: path === '/'
     },
     {
       text: translate(locale, 'common.nav.about'),
-      href: appendLangQuery('/about', locale),
+      href: localeUrl('/about', locale),
       current: path === '/about'
     }
   ]

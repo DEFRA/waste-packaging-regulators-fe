@@ -1,26 +1,51 @@
+import { vi } from 'vitest'
+
 import {
-  appendLangQuery,
+  bindLocaleUrl,
   clearAuthLocale,
-  persistAuthLocale
+  localeUrl,
+  persistAuthLocale,
+  redirectWithLocale
 } from './locale-url.js'
 
-describe('appendLangQuery', () => {
+describe('localeUrl', () => {
   test('appends lang=cy for Welsh locale', () => {
-    expect(appendLangQuery('/foo', 'cy')).toBe('/foo?lang=cy')
+    expect(localeUrl('/foo', 'cy')).toBe('/foo?lang=cy')
   })
 
   test('does not append lang for English', () => {
-    expect(appendLangQuery('/foo', 'en')).toBe('/foo')
+    expect(localeUrl('/foo', 'en')).toBe('/foo')
   })
 
   test('preserves existing query params', () => {
-    expect(appendLangQuery('/foo?tab=pending', 'cy')).toBe(
-      '/foo?tab=pending&lang=cy'
-    )
+    expect(localeUrl('/foo?tab=pending', 'cy')).toBe('/foo?tab=pending&lang=cy')
   })
 
   test('does not duplicate lang when already present', () => {
-    expect(appendLangQuery('/foo?lang=cy', 'cy')).toBe('/foo?lang=cy')
+    expect(localeUrl('/foo?lang=cy', 'cy')).toBe('/foo?lang=cy')
+  })
+})
+
+describe('bindLocaleUrl', () => {
+  test('returns a function bound to the locale', () => {
+    const url = bindLocaleUrl('cy')
+    expect(url('/foo')).toBe('/foo?lang=cy')
+  })
+})
+
+describe('redirectWithLocale', () => {
+  test('redirects with lang query for Welsh requests', () => {
+    const request = {
+      query: { lang: 'cy' },
+      headers: {},
+      yar: { get: () => null }
+    }
+    const redirect = vi.fn()
+    const h = { redirect }
+
+    redirectWithLocale(h, request, '/certificates-of-compliance')
+
+    expect(redirect).toHaveBeenCalledWith('/certificates-of-compliance?lang=cy')
   })
 })
 

@@ -75,7 +75,7 @@
   {% elseif backlink.length >1 %}
     {{ govukBackLink({
       text: backlinkText | default(t(locale, "common.nav.back")),
-      href: localeUrl(backlink, locale)
+      href: localeUrl(backlink)
     }) }}
   {% endif %}
 {% endblock %}

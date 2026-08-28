@@ -40,7 +40,7 @@
         ]
       }) }}
 
-      <form method="post" action="{{ localeUrl('/' ~ organisationId ~ '/certificates-of-compliance/' ~ id ~ '/cancel', locale) }}" novalidate>
+      <form method="post" action="{{ localeUrl('/' ~ organisationId ~ '/certificates-of-compliance/' ~ id ~ '/cancel') }}" novalidate>
         {{ appCsrfField(CSRFToken) }}
         <input type="hidden" name="cancel-reason" value="{{ reason }}">
 

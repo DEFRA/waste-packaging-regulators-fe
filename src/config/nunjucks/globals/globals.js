@@ -1,4 +1,3 @@
-import { appendLangQuery } from '#server/common/helpers/i18n/locale-url.js'
 import {
   pageI18n as createPageI18n,
   translate
@@ -14,8 +13,4 @@ function pageI18n(locale, pageLocaleBase) {
   return createPageI18n(locale, pageLocaleBase)
 }
 
-function localeUrl(href, locale) {
-  return appendLangQuery(href, locale)
-}
-
-export { govukRebrand, localeUrl, pageI18n, t }
+export { govukRebrand, pageI18n, t }

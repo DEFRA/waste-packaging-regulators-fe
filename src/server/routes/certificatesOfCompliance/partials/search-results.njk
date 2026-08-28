@@ -36,7 +36,7 @@
         {% for item in searchItems %}
           <tr class="govuk-table__row">
             <th scope="row" class="govuk-table__header govuk-!-width-one-quarter">
-              <a href="{{ localeUrl('./' ~ item.organisationId ~ '/certificates-of-compliance/' ~ item.id, locale) }}" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
+              <a href="{{ localeUrl('./' ~ item.organisationId ~ '/certificates-of-compliance/' ~ item.id) }}" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
             </th>
             <td class="govuk-table__cell">{{ item.organisationReferenceNumber }}</td>
             <td class="govuk-table__cell">

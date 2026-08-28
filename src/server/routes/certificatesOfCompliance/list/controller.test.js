@@ -808,6 +808,26 @@ describe('#certificatesOfComplianceController', () => {
       expect($('body').text()).not.toContain('result for')
       expect($('a:contains("Clear search")')).toHaveLength(0)
     })
+
+    test('Should retain Welsh locale when searching', async () => {
+      const { result } = await inject(
+        `/certificates-of-compliance?lang=cy&type=direct-producers&search=${encodeURIComponent(pendingItem.organisationName)}`
+      )
+      const $ = load(result)
+
+      expect($('html').attr('lang')).toBe('cy')
+      expect($('input[name="lang"]').attr('value')).toBe('cy')
+      expect($('a:contains("Clear search")').attr('href')).toBe(
+        '/certificates-of-compliance?type=direct-producers&tab=pending&lang=cy'
+      )
+      expect(
+        $('table')
+          .first()
+          .find(
+            `a[href="./${pendingItem.organisationId}/certificates-of-compliance/${pendingItem.id}?lang=cy"]`
+          )
+      ).toHaveLength(1)
+    })
   })
 
   describe('Pagination', () => {

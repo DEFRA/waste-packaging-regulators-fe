@@ -1,3 +1,4 @@
+import { getLocale } from './get-locale.js'
 import { isSupportedLocale, normaliseLocale } from './locales.js'
 
 function pathHasLangQuery(pathOrUrl) {
@@ -21,7 +22,7 @@ function pathHasLangQuery(pathOrUrl) {
  * @param {string} locale
  * @returns {string}
  */
-export function appendLangQuery(pathOrUrl, locale) {
+export function localeUrl(pathOrUrl, locale) {
   const normalised = normaliseLocale(locale)
 
   if (
@@ -34,6 +35,23 @@ export function appendLangQuery(pathOrUrl, locale) {
 
   const separator = pathOrUrl.includes('?') ? '&' : '?'
   return `${pathOrUrl}${separator}lang=${normalised}`
+}
+
+/**
+ * @param {string} locale
+ * @returns {(pathOrUrl: string) => string}
+ */
+export function bindLocaleUrl(locale) {
+  return (pathOrUrl) => localeUrl(pathOrUrl, locale)
+}
+
+/**
+ * @param {import('@hapi/hapi').ResponseToolkit} h
+ * @param {import('@hapi/hapi').Request} request
+ * @param {string} path
+ */
+export function redirectWithLocale(h, request, path) {
+  return h.redirect(localeUrl(path, getLocale(request)))
 }
 
 /**

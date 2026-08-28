@@ -1,10 +1,10 @@
 <nav class="moj-sub-navigation govuk-!-margin-bottom-5 govuk-!-margin-top-6" aria-label="{{ t(locale, 'certificatesOfCompliance.common.producerTypeNav.ariaLabel') }}">
   <ul class="moj-sub-navigation__list">
     <li class="moj-sub-navigation__item">
-      <a class="moj-sub-navigation__link" {% if organisationType == 'direct-producers' %} aria-current="page" {% endif %} href="{{ localeUrl('/certificates-of-compliance?type=direct-producers&tab=' ~ activeTab, locale) }}">{{ t(locale, 'certificatesOfCompliance.common.producerTypeNav.directProducers') }}</a>
+      <a class="moj-sub-navigation__link" {% if organisationType == 'direct-producers' %} aria-current="page" {% endif %} href="{{ localeUrl('/certificates-of-compliance?type=direct-producers&tab=' ~ activeTab) }}">{{ t(locale, 'certificatesOfCompliance.common.producerTypeNav.directProducers') }}</a>
     </li>
     <li class="moj-sub-navigation__item">
-      <a class="moj-sub-navigation__link" {% if organisationType == 'compliance-schemes' %} aria-current="page" {% endif %} href="{{ localeUrl('/certificates-of-compliance?type=compliance-schemes&tab=' ~ activeTab, locale) }}">{{ t(locale, 'certificatesOfCompliance.common.producerTypeNav.complianceSchemes') }}</a>
+      <a class="moj-sub-navigation__link" {% if organisationType == 'compliance-schemes' %} aria-current="page" {% endif %} href="{{ localeUrl('/certificates-of-compliance?type=compliance-schemes&tab=' ~ activeTab) }}">{{ t(locale, 'certificatesOfCompliance.common.producerTypeNav.complianceSchemes') }}</a>
     </li>
   </ul>
 </nav>

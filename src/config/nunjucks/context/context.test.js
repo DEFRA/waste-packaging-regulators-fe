@@ -70,6 +70,7 @@ describe('context and cache', () => {
           breadcrumbs: [],
           getAssetPath: expect.any(Function),
           locale: 'en',
+          localeUrl: expect.any(Function),
           languageSwitcher: expect.objectContaining({
             en: expect.any(String),
             cy: expect.any(String)
@@ -172,6 +173,7 @@ describe('context and cache', () => {
           breadcrumbs: [],
           getAssetPath: expect.any(Function),
           locale: 'en',
+          localeUrl: expect.any(Function),
           languageSwitcher: expect.objectContaining({
             en: expect.any(String),
             cy: expect.any(String)

@@ -9,7 +9,7 @@
     <a
       class="govuk-link"
       data-module="app-table-download"
-      href="{{ localeUrl('/certificates-of-compliance/download?organisation_type=' ~ organisationType ~ '&submission_status=' ~ activeTab, locale) }}">
+      href="{{ localeUrl('/certificates-of-compliance/download?organisation_type=' ~ organisationType ~ '&submission_status=' ~ activeTab) }}">
       {{ i18n.t('downloadLink') }}
     </a>
   </p>
@@ -37,11 +37,11 @@
             <th scope="row" class="govuk-table__header govuk-!-width-one-quarter">
               {% if item.id == null %}
                 <a
-                  href="{{ localeUrl('./' ~ item.organisationId ~ '/certificates-of-compliance?obligationYear=' ~ complianceYear, locale) }}"
+                  href="{{ localeUrl('./' ~ item.organisationId ~ '/certificates-of-compliance?obligationYear=' ~ complianceYear) }}"
                   class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
               {% else %}
                 <a
-                  href="{{ localeUrl('./' ~ item.organisationId ~ '/certificates-of-compliance/' ~ item.id, locale) }}"
+                  href="{{ localeUrl('./' ~ item.organisationId ~ '/certificates-of-compliance/' ~ item.id) }}"
                   class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
               {% endif %}
             </th>

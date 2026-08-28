@@ -1,7 +1,7 @@
 import { createAccountApiService } from '#services/account-api.service.js'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
-import { appendLangQuery } from '#server/common/helpers/i18n/locale-url.js'
+import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
 import { buildCertificateSuccessBanner } from '../actions/detail-actions.js'
 import { cocPageI18n } from '../common/locale-strings.js'
@@ -30,7 +30,7 @@ export async function getCertificateOfComplianceDetailViewModel(
   return {
     pageTitle: detail.companyName,
     heading: detail.companyName,
-    backlink: appendLangQuery('/certificates-of-compliance', locale),
+    backlink: localeUrl('/certificates-of-compliance', locale),
     backlinkText: translate(
       locale,
       'certificatesOfCompliance.detail.backlinkText'

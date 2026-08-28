@@ -9,8 +9,8 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { createAccountApiService } from '#services/account-api.service.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import {
-  appendLangQuery,
-  clearAuthLocale
+  clearAuthLocale,
+  redirectWithLocale
 } from '#server/common/helpers/i18n/locale-url.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
 
@@ -71,10 +71,9 @@ function resetAuthSession(request, h) {
 }
 
 function buildSignOutRedirect(h, azure, request) {
-  const locale = getLocale(request)
   const prefix = getB2cAuthorityPrefix(azure)
   if (!prefix) {
-    return h.redirect(appendLangQuery('/signed-out', locale))
+    return redirectWithLocale(h, request, '/signed-out')
   }
 
   const pathOrUrl = azure.postLogoutRedirectPath || '/signed-out'
@@ -84,8 +83,6 @@ function buildSignOutRedirect(h, azure, request) {
 
 export const signinOidcController = {
   async handler(request, h) {
-    const locale = getLocale(request)
-
     if (request.auth?.credentials) {
       const apiAccount = createAccountApiService()
       const user = await apiAccount.getAccountDetailsById(
@@ -99,7 +96,7 @@ export const signinOidcController = {
     const returnTo = request.yar.get('returnTo') || '/'
     request.yar.clear('returnTo')
     clearAuthLocale(request)
-    return h.redirect(appendLangQuery(returnTo, locale))
+    return redirectWithLocale(h, request, returnTo)
   }
 }
 export const signOutController = {

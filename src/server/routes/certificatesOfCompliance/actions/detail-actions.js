@@ -1,11 +1,11 @@
-import { appendLangQuery } from '#server/common/helpers/i18n/locale-url.js'
+import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
 import {
   translateActionLabels,
   translateSuccessBanner
 } from '../common/locale-strings.js'
 
 export function buildCertificateDetailPath(organisationId, id, locale = 'en') {
-  return appendLangQuery(
+  return localeUrl(
     `/${organisationId}/certificates-of-compliance/${id}`,
     locale
   )

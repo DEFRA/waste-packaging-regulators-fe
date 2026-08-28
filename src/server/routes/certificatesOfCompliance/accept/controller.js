@@ -1,7 +1,7 @@
 import { config } from '#config/config.js'
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
-import { appendLangQuery } from '#server/common/helpers/i18n/locale-url.js'
+import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { approveComplianceDeclaration } from '../actions/approve.service.js'
 import { getComplianceDeclarationReviewStatus } from '../actions/review-status.service.js'
 import {
@@ -25,7 +25,7 @@ function buildErrors(locale) {
 }
 
 function detailPath(organisationId, id, locale) {
-  return appendLangQuery(
+  return localeUrl(
     `/${organisationId}/certificates-of-compliance/${id}`,
     locale
   )

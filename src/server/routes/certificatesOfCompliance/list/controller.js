@@ -3,8 +3,9 @@ import { config } from '#config/config.js'
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import {
-  appendLangQuery,
-  persistAuthLocale
+  bindLocaleUrl,
+  persistAuthLocale,
+  redirectWithLocale
 } from '#server/common/helpers/i18n/locale-url.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
 import { SEARCH_TERM_MAX_LENGTH } from '../common/constants.js'
@@ -90,7 +91,7 @@ export const certificatesOfComplianceController = {
     if (!request.yar.get('user')) {
       persistAuthLocale(request, locale)
       request.yar.set('returnTo', request.url.pathname + request.url.search)
-      return h.redirect(appendLangQuery('/signin-oidc', locale))
+      return redirectWithLocale(h, request, '/signin-oidc')
     }
 
     const {
@@ -135,6 +136,8 @@ export const certificatesOfComplianceController = {
     const i18n = cocPageI18n(locale, 'list')
     const errorPrefix = translate(locale, 'common.errorPrefix')
 
+    const url = bindLocaleUrl(locale)
+
     return h.view('certificatesOfCompliance/list/index', {
       ...viewModel,
       locale,
@@ -145,9 +148,8 @@ export const certificatesOfComplianceController = {
       searchItems: search?.items ?? [],
       searchResultCount: search?.total ?? 0,
       searchTruncated: search?.truncated ?? false,
-      clearSearchUrl: appendLangQuery(
-        `/certificates-of-compliance?type=${type}&tab=${submissionStatus}`,
-        locale
+      clearSearchUrl: url(
+        `/certificates-of-compliance?type=${type}&tab=${submissionStatus}`
       ),
       pageTitle: errors
         ? `${errorPrefix}${viewModel.heading}`

@@ -25,7 +25,10 @@
          for the hidden inputs that keep the user on the same type and tab. #}
       <div class="v3-search-panel govuk-!-margin-bottom-4">
         <div class="moj-search">
-          <form action="{{ localeUrl('/certificates-of-compliance', locale) }}" method="get" novalidate>
+          <form action="{{ localeUrl('/certificates-of-compliance') }}" method="get" novalidate>
+            {% if locale == 'cy' %}
+              <input type="hidden" name="lang" value="cy">
+            {% endif %}
             <input type="hidden" name="type" value="{{ organisationType }}">
             <input type="hidden" name="tab" value="{{ activeTab }}">
             <input type="hidden" name="sort" value="{{ sort.column }}[{{ sort.direction }}]">
@@ -60,17 +63,17 @@
   <div class="govuk-tabs">
     <ul class="govuk-tabs__list">
       <li class="govuk-tabs__list-item{% if activeTab == 'pending' %} govuk-tabs__list-item--selected{% endif %}">
-        <a class="govuk-tabs__tab" href="{{ localeUrl('?type=' ~ organisationType ~ '&tab=pending', locale) }}" {% if activeTab == 'pending' %} aria-current="page" {% endif %}>
+        <a class="govuk-tabs__tab" href="{{ localeUrl('?type=' ~ organisationType ~ '&tab=pending') }}" {% if activeTab == 'pending' %} aria-current="page" {% endif %}>
           {{ tabLabels.pending }}
         </a>
       </li>
       <li class="govuk-tabs__list-item{% if activeTab == 'accepted' %} govuk-tabs__list-item--selected{% endif %}">
-        <a class="govuk-tabs__tab" href="{{ localeUrl('?type=' ~ organisationType ~ '&tab=accepted', locale) }}" {% if activeTab == 'accepted' %} aria-current="page" {% endif %}>
+        <a class="govuk-tabs__tab" href="{{ localeUrl('?type=' ~ organisationType ~ '&tab=accepted') }}" {% if activeTab == 'accepted' %} aria-current="page" {% endif %}>
           {{ tabLabels.accepted }}
         </a>
       </li>
       <li class="govuk-tabs__list-item{% if activeTab == 'not-submitted' %} govuk-tabs__list-item--selected{% endif %}">
-        <a class="govuk-tabs__tab" href="{{ localeUrl('?type=' ~ organisationType ~ '&tab=not-submitted', locale) }}" {% if activeTab == 'not-submitted' %} aria-current="page" {% endif %}>
+        <a class="govuk-tabs__tab" href="{{ localeUrl('?type=' ~ organisationType ~ '&tab=not-submitted') }}" {% if activeTab == 'not-submitted' %} aria-current="page" {% endif %}>
           {{ tabLabels.notSubmitted }}
         </a>
       </li>

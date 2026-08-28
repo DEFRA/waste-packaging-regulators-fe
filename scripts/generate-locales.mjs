@@ -1,3 +1,10 @@
+/**
+ * Generates `src/server/locales/en.json` and `cy.json` from the English source
+ * object below plus a hand-maintained Welsh override map. Run
+ * `node scripts/generate-locales.mjs` when adding new translation keys — edit
+ * the `en` tree here, add Welsh strings to `cyOverrides`, then regenerate the JSON files
+ * consumed at runtime by `translate.js`.
+ */
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
