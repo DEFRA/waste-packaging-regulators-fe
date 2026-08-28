@@ -21,6 +21,29 @@ export function submissionStatusesForQuery(statusParam) {
     .filter(Boolean)
 }
 
+// Builds the predicate for a `status` query param. Submitted and Accepted name
+// listings, so they match on the listing a record surfaces in. Cancelled has no
+// listing of its own — a cancelled declaration belongs to no tab and is only
+// reachable through search — so it matches on the declaration status instead,
+// which also picks up records cancelled through the mock at runtime.
+export function statusMatcherForQuery(statusParam) {
+  const requested = (statusParam ?? '')
+    .split(',')
+    .map((status) => status.trim())
+    .filter(Boolean)
+
+  const submissionStatuses = requested
+    .map((status) => SUBMISSION_STATUS_BY_DECLARATION_STATUS[status])
+    .filter(Boolean)
+  const declarationStatuses = requested.filter(
+    (status) => !SUBMISSION_STATUS_BY_DECLARATION_STATUS[status]
+  )
+
+  return (record) =>
+    submissionStatuses.includes(record.submissionStatus) ||
+    declarationStatuses.includes(record.declarationStatus)
+}
+
 export function recordSearchText(record) {
   return [
     listOrganisationName(record),

@@ -697,6 +697,66 @@ describe('#certificatesOfComplianceController', () => {
       )
     })
 
+    // A cancelled declaration belongs to no tab, so search is the only place it
+    // is visible. A producer that cancelled one submission and made another
+    // gets a row for each, rather than being collapsed to one row per
+    // organisation.
+    describe('An organisation with more than one submission', () => {
+      const MULTI = [
+        {
+          name: 'Marlow Producers Ltd',
+          organisationId: 'org-marlow',
+          reference: '100910',
+          status: 'cancelled',
+          dateSubmitted: '2027-01-05'
+        },
+        {
+          name: 'Marlow Producers Ltd',
+          organisationId: 'org-marlow',
+          reference: '100910',
+          status: 'pending',
+          dateSubmitted: '2027-01-20'
+        }
+      ]
+
+      test('Should return a row per submission, newest first', async () => {
+        app.given(MULTI)
+        const { result } = await searchFor('Marlow Producers Ltd')
+        const $ = load(result)
+        const rows = $('table').first().find('tbody tr')
+
+        expect($('body').text()).toContain('2 results for')
+        expect(rows).toHaveLength(2)
+        expect(rows.eq(0).text()).toContain('Pending')
+        expect(rows.eq(1).text()).toContain('Cancelled')
+      })
+
+      test('Should link each row to its own submission', async () => {
+        app.given(MULTI)
+        const { result } = await searchFor('Marlow Producers Ltd')
+        const $ = load(result)
+        const hrefs = $('table')
+          .first()
+          .find('tbody tr a')
+          .map((_, el) => $(el).attr('href'))
+          .get()
+
+        expect(hrefs).toHaveLength(2)
+        expect(new Set(hrefs).size).toBe(2)
+      })
+
+      test('Should show the Cancelled tag in grey', async () => {
+        app.given(MULTI)
+        const { result } = await searchFor('Marlow Producers Ltd')
+
+        expect(result).toEqual(
+          expect.stringContaining(
+            '<strong class="govuk-tag govuk-tag--grey">Cancelled</strong>'
+          )
+        )
+      })
+    })
+
     test('Should show Percentage met and no Date submitted for direct producers', async () => {
       const { result } = await searchFor(pendingItem.organisationName)
       const $ = load(result)

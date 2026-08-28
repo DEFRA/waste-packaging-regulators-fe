@@ -12,7 +12,7 @@ import { defaultObligations } from './obligation-data.js'
 import { isSubmittedRecord, toDeclaration } from './declaration.js'
 import {
   SUBMISSION_STATUS_BY_DECLARATION_STATUS,
-  submissionStatusesForQuery,
+  statusMatcherForQuery,
   recordSearchText,
   sortRecords,
   parsePositiveInt
@@ -117,16 +117,14 @@ export function createObligationsStore(records = []) {
   // same way the real backend the frontend talks to does.
   function queryDeclarations(searchParams) {
     const registrationType = searchParams.get('registrationType')
-    const submissionStatuses = submissionStatusesForQuery(
-      searchParams.get('status')
-    )
+    const matchesStatus = statusMatcherForQuery(searchParams.get('status'))
     const search = searchParams.get('search')?.trim().toLowerCase()
 
     let matched = records
       .map(effectiveRecord)
       .filter(
         (record) =>
-          submissionStatuses.includes(record.submissionStatus) &&
+          matchesStatus(record) &&
           (registrationType == null ||
             record.registrationType === registrationType)
       )
