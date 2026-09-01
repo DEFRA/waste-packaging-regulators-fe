@@ -128,7 +128,7 @@ Locale support follows the same approach as [waste-obligations-frontend](https:/
 
 When the active locale is Welsh, internal links append `?lang=cy` (English omits the param). Templates receive a request-scoped `localeUrl(href)` helper from the Nunjucks context; server-side code uses `localeUrl(href, locale)`, `bindLocaleUrl(locale)`, or `redirectWithLocale(h, request, path)` from `src/server/common/helpers/i18n/locale-url.js`.
 
-Add or change strings in `src/server/locales/en.json` and Welsh translations in `cy.json`. Missing or untranslated `cy` keys fall back to English at runtime via `translate.js`.
+Add or change strings in `src/server/locales/en.json`. Add Welsh translations only in `cy.json` — omit keys that are not yet translated. Missing or blank `cy` keys fall back to English at runtime via `translate.js`.
 
 Switch language locally with the Cymraeg / English toggle in the service navigation, or append `?lang=cy` to any URL.
 

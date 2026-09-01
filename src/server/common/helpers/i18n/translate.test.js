@@ -2,6 +2,7 @@ import {
   buildPageViewModel,
   clearLocaleCacheForTests,
   pageI18n,
+  seedLocaleDictionaryForTests,
   translate,
   translateComponent
 } from './translate.js'
@@ -29,6 +30,21 @@ describe('translate', () => {
     expect(translate('cy', 'common.serviceName')).toBe(
       'waste-packaging-regulators-fe'
     )
+  })
+
+  test('falls back to English when Welsh value is blank', () => {
+    clearLocaleCacheForTests()
+    seedLocaleDictionaryForTests('cy', {
+      common: { serviceName: '   ' }
+    })
+
+    expect(translate('cy', 'common.serviceName')).toBe(
+      'waste-packaging-regulators-fe'
+    )
+  })
+
+  test('uses Welsh translation when present in cy.json', () => {
+    expect(translate('cy', 'common.nav.home')).toBe('Hafan')
   })
 
   test('returns raw key when missing from both locales', () => {

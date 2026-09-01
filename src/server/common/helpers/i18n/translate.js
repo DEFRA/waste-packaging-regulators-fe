@@ -27,6 +27,16 @@ function getNestedValue(obj, key) {
     )
 }
 
+function getLocaleString(dictionary, key) {
+  const value = getNestedValue(dictionary, key)
+
+  if (typeof value === 'string' && value.trim() === '') {
+    return undefined
+  }
+
+  return value
+}
+
 export function hasLocaleKey(locale, key) {
   const requestedDictionary = loadDictionary(locale)
   const defaultDictionary =
@@ -35,8 +45,8 @@ export function hasLocaleKey(locale, key) {
       : loadDictionary(DEFAULT_LOCALE)
 
   return (
-    getNestedValue(requestedDictionary, key) !== undefined ||
-    getNestedValue(defaultDictionary, key) !== undefined
+    getLocaleString(requestedDictionary, key) !== undefined ||
+    getLocaleString(defaultDictionary, key) !== undefined
   )
 }
 
@@ -54,8 +64,8 @@ export function translate(locale, key, params = {}) {
       : loadDictionary(DEFAULT_LOCALE)
 
   const value =
-    getNestedValue(requestedDictionary, key) ??
-    getNestedValue(defaultDictionary, key) ??
+    getLocaleString(requestedDictionary, key) ??
+    getLocaleString(defaultDictionary, key) ??
     key
 
   if (typeof value !== 'string') {
@@ -136,4 +146,9 @@ export function clearLocaleCacheForTests() {
   for (const key of Object.keys(dictionariesCache)) {
     delete dictionariesCache[key]
   }
+}
+
+/** Seeds a cached dictionary — for tests only. */
+export function seedLocaleDictionaryForTests(locale, dictionary) {
+  dictionariesCache[locale] = dictionary
 }
