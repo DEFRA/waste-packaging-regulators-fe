@@ -17,8 +17,8 @@ export function getLocale(request) {
     if (isSupportedLocale(sessionLocale)) {
       return sessionLocale
     }
-  } catch {
-    // Session may be unavailable during error handling
+  } catch (error) {
+    console.warn('Failed to read authLocale from session', error)
   }
 
   const headerLocale = normaliseLocale(

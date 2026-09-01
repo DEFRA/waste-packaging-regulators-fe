@@ -1,7 +1,14 @@
+import { vi } from 'vitest'
+
 import { getLocale } from './get-locale.js'
 
-function mockRequest({ query = {}, headers = {}, sessionLocale = null } = {}) {
-  const yar = {
+function mockRequest({
+  query = {},
+  headers = {},
+  sessionLocale = null,
+  yar
+} = {}) {
+  const defaultYar = {
     get(key) {
       if (key === 'authLocale') {
         return sessionLocale
@@ -10,7 +17,7 @@ function mockRequest({ query = {}, headers = {}, sessionLocale = null } = {}) {
     }
   }
 
-  return { query, headers, yar }
+  return { query, headers, yar: yar ?? defaultYar }
 }
 
 describe('getLocale', () => {
@@ -44,5 +51,21 @@ describe('getLocale', () => {
 
   test('does not throw when session is unavailable', () => {
     expect(getLocale({ query: {}, headers: {} })).toBe('en')
+  })
+
+  test('logs when reading authLocale from session fails', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const yar = {
+      get() {
+        throw new Error('session unavailable')
+      }
+    }
+
+    expect(getLocale(mockRequest({ yar }))).toBe('en')
+    expect(warnSpy).toHaveBeenCalledWith(
+      'Failed to read authLocale from session',
+      expect.any(Error)
+    )
+    warnSpy.mockRestore()
   })
 })
