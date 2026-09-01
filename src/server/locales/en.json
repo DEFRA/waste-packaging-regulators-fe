@@ -210,7 +210,6 @@
         "intro": "{{signedBy}} signed the declaration to verify that:",
         "bulletEligibleBefore": "they are an approved or delegated person who is eligible to submit this ",
         "bulletEligibleAfter": " on behalf of {{companyName}}",
-        "bulletEligible": "they are an approved or delegated person who is eligible to submit this {{documentNoun}} on behalf of {{companyName}}",
         "bulletAccurate": "the information they submitted is accurate",
         "bulletEnforcement": "they understand that they may face enforcement action if they submit false or misleading information"
       },

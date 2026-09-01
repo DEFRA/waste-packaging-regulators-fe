@@ -229,8 +229,9 @@ const en = {
       declaration: {
         heading: 'Declaration',
         intro: '{{signedBy}} signed the declaration to verify that:',
-        bulletEligible:
-          'they are an approved or delegated person who is eligible to submit this {{documentNoun}} on behalf of {{companyName}}',
+        bulletEligibleBefore:
+          'they are an approved or delegated person who is eligible to submit this ',
+        bulletEligibleAfter: ' on behalf of {{companyName}}',
         bulletAccurate: 'the information they submitted is accurate',
         bulletEnforcement:
           'they understand that they may face enforcement action if they submit false or misleading information'
@@ -390,5 +391,11 @@ for (const [key, value] of Object.entries(welshOverrides)) {
 }
 
 fs.mkdirSync(localesDir, { recursive: true })
-fs.writeFileSync(path.join(localesDir, 'en.json'), JSON.stringify(en, null, 2))
-fs.writeFileSync(path.join(localesDir, 'cy.json'), JSON.stringify(cy, null, 2))
+fs.writeFileSync(
+  path.join(localesDir, 'en.json'),
+  `${JSON.stringify(en, null, 2)}\n`
+)
+fs.writeFileSync(
+  path.join(localesDir, 'cy.json'),
+  `${JSON.stringify(cy, null, 2)}\n`
+)
