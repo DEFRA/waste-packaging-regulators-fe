@@ -95,8 +95,9 @@ export const signinOidcController = {
     }
     const returnTo = request.yar.get('returnTo') || '/'
     request.yar.clear('returnTo')
+    const response = redirectWithLocale(h, request, returnTo)
     clearAuthLocale(request)
-    return redirectWithLocale(h, request, returnTo)
+    return response
   }
 }
 export const signOutController = {

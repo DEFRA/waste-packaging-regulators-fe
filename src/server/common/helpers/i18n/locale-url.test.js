@@ -47,6 +47,22 @@ describe('redirectWithLocale', () => {
 
     expect(redirect).toHaveBeenCalledWith('/certificates-of-compliance?lang=cy')
   })
+
+  test('redirects with lang query from authLocale when query param is absent', () => {
+    const request = {
+      query: {},
+      headers: { 'accept-language': 'en-GB' },
+      yar: { get: (key) => (key === 'authLocale' ? 'cy' : null) }
+    }
+    const redirect = vi.fn()
+    const h = { redirect }
+
+    redirectWithLocale(h, request, '/certificates-of-compliance/download')
+
+    expect(redirect).toHaveBeenCalledWith(
+      '/certificates-of-compliance/download?lang=cy'
+    )
+  })
 })
 
 describe('auth locale session helpers', () => {
