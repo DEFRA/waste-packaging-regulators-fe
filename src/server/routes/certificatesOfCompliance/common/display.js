@@ -58,6 +58,3 @@ export function calculateObligationCoveragePercentage(obligations = []) {
   const percentage = (totalAccepted / totalObligated) * 100
   return Math.round(Math.min(percentage, 100))
 }
-
-/** @deprecated use translateNoData(locale) — kept for tests referencing NO_DATA literal */
-export { NO_DATA } from './constants.js'
