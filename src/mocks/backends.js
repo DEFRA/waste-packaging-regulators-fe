@@ -34,6 +34,15 @@ export function createBackends({
   return { obligations, organisations: registry, account }
 }
 
+// Clears any in-session mutations (the approve/cancel overrides held in the
+// obligations store), returning the backends to their base fixture state. The
+// store is a process singleton, so a journey test that accepts or cancels a
+// declaration leaves it mutated for every later test; the mock-only reset route
+// calls this so each test starts from the same pending records.
+export function resetBackends(backends) {
+  backends.obligations.resetOverrides()
+}
+
 export function backendHandlers(backends) {
   return [
     ...obligationsHandlers(backends.obligations),

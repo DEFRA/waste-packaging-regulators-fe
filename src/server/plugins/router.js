@@ -12,6 +12,7 @@ import { certificatesOfComplianceDetail } from '../routes/certificatesOfComplian
 import { certificatesOfComplianceAccept } from '../routes/certificatesOfCompliance/accept/index.js'
 import { certificatesOfComplianceCancel } from '../routes/certificatesOfCompliance/cancel/index.js'
 import { errorExamples } from '../routes/error/examples/index.js'
+import { mockRoutes } from '../routes/mock/index.js'
 
 export const router = {
   plugin: {
@@ -39,6 +40,12 @@ export const router = {
       // Error page previews for design and QA — never exposed in production
       if (!config.get('isProduction')) {
         await server.register([errorExamples])
+      }
+
+      // Mock-only control routes (e.g. /mock/reset) — registered only when the
+      // in-process backend mocks are in use, never in a deployed environment.
+      if (config.get('useMockApi')) {
+        await server.register([mockRoutes])
       }
 
       // Static assets

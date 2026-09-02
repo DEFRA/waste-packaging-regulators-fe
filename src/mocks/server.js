@@ -2,7 +2,7 @@ import { setupServer } from 'msw/node'
 
 import { config } from '#config/config.js'
 
-import { backendHandlers, defaultBackends } from './backends.js'
+import { backendHandlers, defaultBackends, resetBackends } from './backends.js'
 
 let mockServer
 
@@ -47,4 +47,10 @@ export async function startMockApi() {
 
 export function getMockServer() {
   return mockServer
+}
+
+// Restores the default mock backends to their base fixture state, discarding any
+// approve/cancel mutations made during the process's lifetime.
+export function resetMockData() {
+  resetBackends(defaultBackends)
 }

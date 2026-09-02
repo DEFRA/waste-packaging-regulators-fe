@@ -144,7 +144,19 @@ The default data deliberately covers every variation (met / not met / no data, e
 submission status, direct producers and compliance schemes), so you can eyeball them
 all locally — visit the certificates-of-compliance pages after `npm run dev`.
 Approving or cancelling a certificate persists in-memory for the process, so the UI
-reflects the new status on the redirect (the store resets on restart).
+reflects the new status on the redirect. The store resets on restart, or on demand
+via the mock-only reset endpoint:
+
+```bash
+# `npm run dev` serves HTTPS with a self-signed cert, so -k skips verification:
+curl -k -X POST https://localhost:3000/mock/reset   # 204 No Content
+# (the containerised mock used by the journey tests serves plain HTTP instead)
+```
+
+`POST /mock/reset` discards all approve/cancel mutations and restores the base
+fixtures, responding `204 No Content` with an empty body. It exists only when
+`MOCK_API=true` (never in a deployed environment) and is unauthenticated, so the
+journey-test harness can reset between tests.
 
 Set `MOCK_ERROR_STATUS=<http status>` alongside `MOCK_API=true` to make every
 mocked call return that status instead of data, so you can walk a journey into the
