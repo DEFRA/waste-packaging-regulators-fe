@@ -77,11 +77,11 @@
     }) }}
   {% elseif backlink.length >1 %}
     {{ govukBackLink({
-      text: backlinkText | default("Back"),
-      href: backlink,
+      text: backlinkText | default(t(locale, "common.nav.back")),
+      href: localeUrl(backlink),
       attributes: {
         'role' : 'complementary',
-        'aria-label' : 'Back to previous page'
+        'aria-label' : t(locale, "common.nav.backDescription")
       }
     }) }}
   {% endif %}
