@@ -70,12 +70,19 @@
 {% block beforeContent %}
   {% if breadcrumbs.length > 1 %}
     {{ govukBreadcrumbs({
-      items: breadcrumbs
+      items: breadcrumbs,
+      attributes: {
+        'role' : 'complementary'
+      }
     }) }}
   {% elseif backlink.length >1 %}
     {{ govukBackLink({
-      text: backlinkText | default(t(locale, "common.nav.back")),
-      href: localeUrl(backlink)
+      text: backlinkText | default("Back"),
+      href: backlink,
+      attributes: {
+        'role' : 'complementary',
+        'aria-label' : 'Back to previous page'
+      }
     }) }}
   {% endif %}
 {% endblock %}
