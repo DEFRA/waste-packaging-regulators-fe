@@ -1,30 +1,52 @@
 import { localeToBcp47 } from '#server/common/helpers/i18n/locales.js'
+import { translate } from '#server/common/helpers/i18n/translate.js'
 import { isDate, parseISO } from 'date-fns'
 
-export function formatSubmissionDate(isoString, locale = 'en') {
+const DATE_TIME_AT_KEY = 'common.dateTime.at'
+
+function formatDateTime(
+  isoString,
+  locale,
+  { timeZone, useParseIso = false } = {}
+) {
   if (!isoString) {
     return null
   }
+
   const bcp47 = localeToBcp47(locale)
-  const d = isDate(isoString) ? isoString : parseISO(isoString)
+  const d =
+    useParseIso && isDate(isoString)
+      ? isoString
+      : useParseIso
+        ? parseISO(isoString)
+        : new Date(isoString)
+  const localeOptions = timeZone ? { timeZone } : {}
   const datePart = d.toLocaleDateString(bcp47, {
     day: 'numeric',
     month: 'long',
-    year: 'numeric'
+    year: 'numeric',
+    ...localeOptions
   })
   const timePart = d.toLocaleTimeString(bcp47, {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false
+    hour12: false,
+    ...localeOptions
   })
-  const atWord = locale === 'cy' ? 'am' : 'at'
+  const atWord = translate(locale, DATE_TIME_AT_KEY)
+
   return `${datePart} ${atWord} ${timePart}`
+}
+
+export function formatSubmissionDate(isoString, locale = 'en') {
+  return formatDateTime(isoString, locale, { useParseIso: true })
 }
 
 export function formatDate(isoString, locale = 'en') {
   if (!isoString) {
     return null
   }
+
   return new Date(isoString).toLocaleDateString(localeToBcp47(locale), {
     day: 'numeric',
     month: 'long',
@@ -33,23 +55,5 @@ export function formatDate(isoString, locale = 'en') {
 }
 
 export function formatHistoryDate(isoString, locale = 'en') {
-  if (!isoString) {
-    return null
-  }
-  const bcp47 = localeToBcp47(locale)
-  const d = new Date(isoString)
-  const datePart = d.toLocaleDateString(bcp47, {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC'
-  })
-  const timePart = d.toLocaleTimeString(bcp47, {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: 'UTC'
-  })
-  const atWord = locale === 'cy' ? 'am' : 'at'
-  return `${datePart} ${atWord} ${timePart}`
+  return formatDateTime(isoString, locale, { timeZone: 'UTC' })
 }

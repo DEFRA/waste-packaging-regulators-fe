@@ -1,7 +1,5 @@
 import {
   cocPageI18n,
-  formatLocaleDate,
-  formatLocaleHistoryDate,
   translateActionLabels,
   translateComplianceDocumentNoun,
   translateComplianceTypeLabel,
@@ -109,31 +107,5 @@ describe('locale-strings', () => {
     expect(translateRegulation43Statement(false, 'Acme Ltd', 'en')).toContain(
       'not complied'
     )
-  })
-
-  test('formatLocaleDate returns null for empty input', () => {
-    expect(formatLocaleDate(null, 'en')).toBeNull()
-  })
-
-  test('formatLocaleDate formats English dates', () => {
-    expect(formatLocaleDate('2026-01-15T00:00:00.000Z', 'en')).toContain('2026')
-  })
-
-  test('formatLocaleDate formats Welsh month names', () => {
-    expect(formatLocaleDate('2026-01-15T00:00:00.000Z', 'cy')).toMatch(
-      /Ionawr|2026/
-    )
-  })
-
-  test('formatLocaleHistoryDate returns null for empty input', () => {
-    expect(formatLocaleHistoryDate(null, 'en')).toBeNull()
-  })
-
-  test('formatLocaleHistoryDate uses at for English and am for Welsh', () => {
-    const english = formatLocaleHistoryDate('2026-01-15T14:30:00.000Z', 'en')
-    const welsh = formatLocaleHistoryDate('2026-01-15T14:30:00.000Z', 'cy')
-
-    expect(english).toContain(' at ')
-    expect(welsh).toContain(' am ')
   })
 })

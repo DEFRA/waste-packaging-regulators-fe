@@ -1,4 +1,3 @@
-import { localeToBcp47 } from '#server/common/helpers/i18n/locales.js'
 import { pageI18n, translate } from '#server/common/helpers/i18n/translate.js'
 
 const BASE = 'certificatesOfCompliance'
@@ -114,38 +113,4 @@ export function translateRegulation43Statement(
     organisationName,
     compliance
   })
-}
-
-export function formatLocaleDate(isoString, locale, options = {}) {
-  if (!isoString) {
-    return null
-  }
-  return new Date(isoString).toLocaleDateString(localeToBcp47(locale), {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    ...options
-  })
-}
-
-export function formatLocaleHistoryDate(isoString, locale) {
-  if (!isoString) {
-    return null
-  }
-  const bcp47 = localeToBcp47(locale)
-  const d = new Date(isoString)
-  const datePart = d.toLocaleDateString(bcp47, {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC'
-  })
-  const timePart = d.toLocaleTimeString(bcp47, {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: 'UTC'
-  })
-  const atWord = locale === 'cy' ? 'am' : 'at'
-  return `${datePart} ${atWord} ${timePart}`
 }

@@ -26,6 +26,9 @@
       "privacy": "Privacy",
       "cookies": "Cookies",
       "accessibility": "Accessibility statement"
+    },
+    "dateTime": {
+      "at": "at"
     }
   },
   "home": {
