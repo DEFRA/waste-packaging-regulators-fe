@@ -8,48 +8,48 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <h1 class="govuk-heading-l">Confirm and send cancellation email</h1>
+      <h1 class="govuk-heading-l">{{ i18n.t('check.heading') }}</h1>
 
       {% set emailLinkHtml %}
-        <a class="govuk-link" href="{{ emailPreviewUrl }}" target="_blank" rel="noreferrer noopener">View the cancellation email (opens in new tab)</a>
+        <a class="govuk-link" href="{{ emailPreviewUrl }}" target="_blank" rel="noreferrer noopener">{{ i18n.t('check.emailPreviewLink') }}</a>
       {% endset %}
 
       {{ govukSummaryList({
         rows: [
           {
-            key: { text: "Organisation" },
+            key: { text: i18n.t('check.organisation') },
             value: { text: companyName }
           },
           {
-            key: { text: "Cancel reason" },
+            key: { text: i18n.t('check.cancelReason') },
             value: { text: reasonLabel },
             actions: {
               items: [
                 {
                   href: reasonPath,
                   text: "Change",
-                  visuallyHiddenText: "reason for cancelling"
+                  visuallyHiddenText: i18n.t('check.changeReasonHidden')
                 }
               ]
             }
           },
           {
-            key: { text: "Email" },
+            key: { text: i18n.t('check.email') },
             value: { html: emailLinkHtml }
           }
         ]
       }) }}
 
-      <form method="post" action="/{{ organisationId }}/certificates-of-compliance/{{ id }}/cancel" novalidate>
+      <form method="post" action="{{ localeUrl('/' ~ organisationId ~ '/certificates-of-compliance/' ~ id ~ '/cancel') }}" novalidate>
         {{ appCsrfField(CSRFToken) }}
         <input type="hidden" name="cancel-reason" value="{{ reason }}">
 
         {{ govukInsetText({
-          text: "When you confirm and send, we'll cancel the " + docTypeLower + " and email the person who submitted it."
+          text: i18n.t('check.inset', { docTypeLower: docTypeLower })
         }) }}
 
         {{ govukButton({
-          text: "Confirm and send",
+          text: i18n.t('check.confirmButton'),
           preventDoubleClick: true
         }) }}
       </form>

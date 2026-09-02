@@ -1,0 +1,42 @@
+{
+  "common": {
+    "nav": {
+      "home": "Hafan",
+      "about": "Ynghylch",
+      "back": "Yn ôl",
+      "signIn": "Mewngofnodi",
+      "signOut": "Allgofnodi"
+    },
+    "languageSwitcher": {
+      "label": "Iaith"
+    },
+    "footer": {
+      "privacy": "Preifatrwydd",
+      "cookies": "Cwcis",
+      "accessibility": "Datganiad hygyrchedd"
+    },
+    "dateTime": {
+      "at": "am"
+    }
+  },
+  "home": {
+    "pageTitle": "Hafan",
+    "heading": "Hafan"
+  },
+  "about": {
+    "pageTitle": "Ynghylch",
+    "heading": "Ynghylch"
+  },
+  "compliance": {
+    "components": {
+      "statusTag": {
+        "met": "Wedi bodloni",
+        "notMet": "Heb fodloni"
+      },
+      "pagination": {
+        "previous": "Blaenorol",
+        "next": "Nesaf"
+      }
+    }
+  }
+}

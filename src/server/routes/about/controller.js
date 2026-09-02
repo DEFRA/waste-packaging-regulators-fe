@@ -1,19 +1,25 @@
+import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
+import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
+import { translate } from '#server/common/helpers/i18n/translate.js'
+
 /**
  * A GDS styled example about page controller.
  * Provided as an example, remove or modify as required.
  */
 export const aboutController = {
-  handler(_request, h) {
+  handler(request, h) {
+    const locale = getLocale(request)
     return h.view('about/index', {
-      pageTitle: 'About',
-      heading: 'About',
+      pageTitle: translate(locale, 'about.pageTitle'),
+      heading: translate(locale, 'about.heading'),
+      caption: translate(locale, 'about.caption'),
       breadcrumbs: [
         {
-          text: 'Home',
-          href: '/'
+          text: translate(locale, 'common.nav.home'),
+          href: localeUrl('/', locale)
         },
         {
-          text: 'About'
+          text: translate(locale, 'about.heading')
         }
       ]
     })

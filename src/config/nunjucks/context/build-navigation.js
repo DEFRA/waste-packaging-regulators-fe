@@ -1,14 +1,19 @@
-export function buildNavigation(request) {
+import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
+import { translate } from '#server/common/helpers/i18n/translate.js'
+
+export function buildNavigation(request, locale = 'en') {
+  const path = request?.path ?? ''
+
   return [
     {
-      text: 'Home',
-      href: '/',
-      current: request?.path === '/'
+      text: translate(locale, 'common.nav.home'),
+      href: localeUrl('/', locale),
+      current: path === '/'
     },
     {
-      text: 'About',
-      href: '/about',
-      current: request?.path === '/about'
+      text: translate(locale, 'common.nav.about'),
+      href: localeUrl('/about', locale),
+      current: path === '/about'
     }
   ]
 }

@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
+import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import {
   getDeclarationSessionKey,
   readAndClearCertificateActionBannerFlags
@@ -28,6 +29,7 @@ export const certificatesOfComplianceDetailController = {
       id == null
         ? parseObligationYearQuery(request.query.obligationYear)
         : undefined
+    const locale = getLocale(request)
     const declarationKey = getDeclarationSessionKey(organisationId, id)
     const bannerFlags = readAndClearCertificateActionBannerFlags(
       request.yar,
@@ -40,7 +42,8 @@ export const certificatesOfComplianceDetailController = {
       {
         traceId,
         bannerFlags,
-        obligationYear
+        obligationYear,
+        locale
       }
     ).catch((error) => {
       handleApiError(request, error)

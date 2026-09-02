@@ -134,9 +134,7 @@ describe('#certificatesOfComplianceController', () => {
         '/certificates-of-compliance?type=direct-producers&tab=accepted'
       )
 
-      expect(result).toEqual(
-        expect.stringContaining('type=direct-producers&tab=accepted')
-      )
+      expect(result).toMatch(/type=direct-producers(?:&amp;|&)tab=accepted/)
     })
 
     test('Should include the current tab in the non-active organisation type nav link', async () => {
@@ -144,9 +142,7 @@ describe('#certificatesOfComplianceController', () => {
         '/certificates-of-compliance?type=compliance-schemes&tab=accepted'
       )
 
-      expect(result).toEqual(
-        expect.stringContaining('type=direct-producers&tab=accepted')
-      )
+      expect(result).toMatch(/type=direct-producers(?:&amp;|&)tab=accepted/)
     })
   })
 
@@ -630,16 +626,12 @@ describe('#certificatesOfComplianceController', () => {
         `/certificates-of-compliance?type=${type}&search=${encodeURIComponent(term)}`
       )
 
-    test('Should show the result count with the term in bold and a Clear search link', async () => {
+    test('Should show the result count with the search term and a Clear search link', async () => {
       const { result } = await searchFor(pendingItem.organisationName)
       const $ = load(result)
 
       expect($('body').text()).toContain('1 result for')
-      expect(result).toEqual(
-        expect.stringContaining(
-          `<strong>"${pendingItem.organisationName}"</strong>`
-        )
-      )
+      expect($('body').text()).toContain(pendingItem.organisationName)
       expect($('a:contains("Clear search")').attr('href')).toBe(
         '/certificates-of-compliance?type=direct-producers&tab=pending'
       )
@@ -816,6 +808,26 @@ describe('#certificatesOfComplianceController', () => {
       expect($('body').text()).not.toContain('result for')
       expect($('a:contains("Clear search")')).toHaveLength(0)
     })
+
+    test('Should retain Welsh locale when searching', async () => {
+      const { result } = await inject(
+        `/certificates-of-compliance?lang=cy&type=direct-producers&search=${encodeURIComponent(pendingItem.organisationName)}`
+      )
+      const $ = load(result)
+
+      expect($('html').attr('lang')).toBe('cy')
+      expect($('input[name="lang"]').attr('value')).toBe('cy')
+      expect($('a:contains("Clear search")').attr('href')).toBe(
+        '/certificates-of-compliance?type=direct-producers&tab=pending&lang=cy'
+      )
+      expect(
+        $('table')
+          .first()
+          .find(
+            `a[href="./${pendingItem.organisationId}/certificates-of-compliance/${pendingItem.id}?lang=cy"]`
+          )
+      ).toHaveLength(1)
+    })
   })
 
   describe('Pagination', () => {
@@ -824,10 +836,8 @@ describe('#certificatesOfComplianceController', () => {
         '/certificates-of-compliance?type=direct-producers&tab=pending&page=1'
       )
 
-      expect(result).toEqual(
-        expect.stringContaining(
-          '/certificates-of-compliance?type=direct-producers&tab=pending'
-        )
+      expect(result).toMatch(
+        /\/certificates-of-compliance\?type=direct-producers(?:&amp;|&)tab=pending/
       )
     })
   })

@@ -1,6 +1,6 @@
 {# Standalone preview — no layouts/page.njk; centred GOV.UK Notify chrome like the regulator prototype. #}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale | default('en') }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,11 +8,11 @@
   <link rel="stylesheet" href="{{ assetPath }}/stylesheets/email-preview.css">
 </head>
 <body>
-  <div class="email" role="article" aria-label="Cancellation email preview">
+  <div class="email" role="article" aria-label="{{ i18n.t('emailPreview.ariaLabel') }}">
     <div class="email__client-meta">
-      <p><strong>From:</strong> Extended Producer Responsibility for Packaging (pEPR) &lt;noreply@notifications.service.gov.uk&gt;</p>
-      <p><strong>To:</strong> {{ toAddresses | join(', ') }}</p>
-      <p><strong>Subject:</strong> {{ subject }}</p>
+      <p><strong>{{ i18n.t('emailPreview.fromLabel') }}</strong> {{ i18n.t('emailPreview.fromValue') }}</p>
+      <p><strong>{{ i18n.t('emailPreview.toLabel') }}</strong> {{ toAddresses | join(', ') }}</p>
+      <p><strong>{{ i18n.t('emailPreview.subjectLabel') }}</strong> {{ subject }}</p>
     </div>
 
     <div class="email__header">
@@ -24,7 +24,7 @@
     <div class="email__org">
       <span class="email__org-logo">
         <img src="{{ assetPath }}/images/gov-crest.png" alt="" width="36">
-        <span>Department for Environment, Food &amp; Rural Affairs</span>
+        <span>{{ i18n.t('emailPreview.defraName') }}</span>
       </span>
     </div>
 

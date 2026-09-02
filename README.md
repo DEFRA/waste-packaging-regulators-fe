@@ -122,6 +122,16 @@ npm run dev
 
 This uses mock API responses and a stub auth strategy (no backends required, no B2C round-trip). Routes that check for a signed-in user see a fixed `mock-user` automatically.
 
+### Welsh / English (i18n)
+
+Locale support follows the same approach as [waste-obligations-frontend](https://github.com/DEFRA/waste-obligations-frontend): translations live in `src/server/locales/en.json` and `cy.json`, resolved via `getLocale(request)` (`?lang=` query param, then OAuth session `authLocale`, then `Accept-Language`, default `en`).
+
+When the active locale is Welsh, internal links append `?lang=cy` (English omits the param). Templates receive a request-scoped `localeUrl(href)` helper from the Nunjucks context; server-side code uses `localeUrl(href, locale)`, `bindLocaleUrl(locale)`, or `redirectWithLocale(h, request, path)` from `src/server/common/helpers/i18n/locale-url.js`.
+
+Add or change strings in `src/server/locales/en.json`. Add Welsh translations only in `cy.json` — omit keys that are not yet translated. Missing or blank `cy` keys fall back to English at runtime via `translate.js`.
+
+Switch language locally with the Cymraeg / English toggle in the service navigation, or append `?lang=cy` to any URL.
+
 ### Mock API
 
 With `MOCK_API=true` (the default outside production), the backend calls to the

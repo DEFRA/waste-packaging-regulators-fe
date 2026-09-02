@@ -8,7 +8,12 @@ vi.mock('node:fs', async () => {
 
   return {
     ...nodeFs,
-    readFileSync: () => mockReadFileSync()
+    readFileSync: (filePath, ...args) => {
+      if (String(filePath).includes('manifest.json')) {
+        return mockReadFileSync()
+      }
+      return nodeFs.readFileSync(filePath, ...args)
+    }
   }
 })
 vi.mock('../../../server/common/helpers/logging/logger.js', () => ({
@@ -34,7 +39,12 @@ describe('context and cache', () => {
   })
 
   describe('#context', () => {
-    const mockRequest = { path: '/' }
+    const mockRequest = {
+      path: '/',
+      query: {},
+      headers: {},
+      yar: { get: () => null }
+    }
 
     describe('When Vite manifest file read succeeds', () => {
       let contextImport
@@ -59,6 +69,13 @@ describe('context and cache', () => {
           assetPath: '/public/assets',
           breadcrumbs: [],
           getAssetPath: expect.any(Function),
+          locale: 'en',
+          localeUrl: expect.any(Function),
+          languageSwitcher: expect.objectContaining({
+            en: expect.any(String),
+            cy: expect.any(String)
+          }),
+          backlinkText: 'Back',
           navigation: [
             {
               current: true,
@@ -117,7 +134,12 @@ describe('context and cache', () => {
   })
 
   describe('#context cache', () => {
-    const mockRequest = { path: '/' }
+    const mockRequest = {
+      path: '/',
+      query: {},
+      headers: {},
+      yar: { get: () => null }
+    }
     let contextResult
 
     describe('Vite manifest file cache', () => {
@@ -150,6 +172,13 @@ describe('context and cache', () => {
           assetPath: '/public/assets',
           breadcrumbs: [],
           getAssetPath: expect.any(Function),
+          locale: 'en',
+          localeUrl: expect.any(Function),
+          languageSwitcher: expect.objectContaining({
+            en: expect.any(String),
+            cy: expect.any(String)
+          }),
+          backlinkText: 'Back',
           navigation: [
             {
               current: true,

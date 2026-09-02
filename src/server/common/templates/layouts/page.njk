@@ -1,5 +1,7 @@
 {% extends "moj/template.njk" %}
 
+{% set htmlLang = locale %}
+
 {# Import GOVUK components globally #}
 {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
@@ -21,7 +23,6 @@
 {% endblock %}
 
 {% block govukHeader %}
-  {# serviceName being used in govukHeader will be @deprecated in v6. It has moved to govukServiceNavigation - https://github.com/alphagov/govuk-frontend/blob/main/CHANGELOG.md#move-service-name-and-navigation-links-from-the-govuk-header-to-service-navigation-component #}
   {{ govukHeader({
     homepageUrl: "https://www.gov.uk/",
     classes: "app-header",
@@ -33,8 +34,32 @@
 {% endblock %}
 
 {% block govukServiceNavigation %}
+  {% set languageSwitcherEnd %}
+    <nav class="language-toggle-nav" aria-label="{{ t(locale, 'common.languageSwitcher.label') }}">
+      <ul class="language-toggle">
+        <li class="language-toggle__option">
+          {% if locale == 'cy' %}
+            <a class="govuk-link govuk-link--no-visited-state" href="{{ languageSwitcher.en }}" lang="en">{{ t(locale, "common.languageSwitcher.english") }}</a>
+          {% else %}
+            <span class="language-toggle__active" lang="en">{{ t(locale, "common.languageSwitcher.english") }}</span>
+          {% endif %}
+        </li>
+        <li class="language-toggle__option">
+          {% if locale == 'cy' %}
+            <span class="language-toggle__active" lang="cy">{{ t(locale, "common.languageSwitcher.welsh") }}</span>
+          {% else %}
+            <a class="govuk-link govuk-link--no-visited-state" href="{{ languageSwitcher.cy }}" lang="cy">{{ t(locale, "common.languageSwitcher.welsh") }}</a>
+          {% endif %}
+        </li>
+      </ul>
+    </nav>
+  {% endset %}
+
   {{ govukServiceNavigation({
-    navigation: navigation
+    navigation: navigation,
+    slots: {
+      end: languageSwitcherEnd
+    }
   }) }}
 {% endblock %}
 
@@ -49,8 +74,8 @@
     }) }}
   {% elseif backlink.length >1 %}
     {{ govukBackLink({
-      text: backlinkText | default("Back"),
-      href: backlink
+      text: backlinkText | default(t(locale, "common.nav.back")),
+      href: localeUrl(backlink)
     }) }}
   {% endif %}
 {% endblock %}
@@ -63,15 +88,15 @@
       items: [
         {
           href: "https://www.gov.uk/help/privacy-notice",
-          text: "Privacy"
+          text: t(locale, "common.footer.privacy")
         },
         {
           href: "https://www.gov.uk/help/cookies",
-          text: "Cookies"
+          text: t(locale, "common.footer.cookies")
         },
         {
           href: "https://www.gov.uk/help/accessibility-statement",
-          text: "Accessibility statement"
+          text: t(locale, "common.footer.accessibility")
         }
       ]
     }

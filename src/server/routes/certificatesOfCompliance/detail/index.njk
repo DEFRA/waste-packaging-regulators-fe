@@ -7,11 +7,11 @@
 {% macro materialStatusTag(status) %}
   {% switch status %}
     {% case 'met' %}
-      <strong class="govuk-tag govuk-tag--green govuk-!-font-size-16">Met</strong>
+      <strong class="govuk-tag govuk-tag--green govuk-!-font-size-16">{{ i18n.ct('statusTag', 'met') }}</strong>
     {% case 'not-met' %}
-      <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">Not met</strong>
+      <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">{{ i18n.ct('statusTag', 'notMet') }}</strong>
     {% case 'no-data' %}
-      <strong class="govuk-tag govuk-tag--grey govuk-!-font-size-16">No data</strong>
+      <strong class="govuk-tag govuk-tag--grey govuk-!-font-size-16">{{ i18n.ct('statusTag', 'noData') }}</strong>
   {% endswitch %}
 {% endmacro %}
 
@@ -34,15 +34,15 @@
       <div class="govuk-inset-text govuk-!-margin-top-0 govuk-!-margin-bottom-6">
         {% if registrationType == 'ComplianceScheme' %}
           {% if declarationStatus == 'Unsubmitted' %}
-            <p class="govuk-body">This statement is not submitted so the information will update if changed by the compliance scheme.</p>
+            <p class="govuk-body">{{ i18n.t('inset.statementNotSubmitted') }}</p>
           {% else %}
-            <p class="govuk-body">The information on this statement was correct at the time of submission.</p>
+            <p class="govuk-body">{{ i18n.t('inset.statementSubmitted') }}</p>
           {% endif %}
         {% else %}
           {% if declarationStatus == 'Unsubmitted' %}
-            <p class="govuk-body">This certificate is not submitted so the information will update if changed by the producer.</p>
+            <p class="govuk-body">{{ i18n.t('inset.certificateNotSubmitted') }}</p>
           {% else %}
-            <p class="govuk-body">The information on this certificate was correct at the time of submission.</p>
+            <p class="govuk-body">{{ i18n.t('inset.certificateSubmitted') }}</p>
           {% endif %}
         {% endif %}
       </div>
@@ -52,59 +52,59 @@
           <dl class="govuk-summary-list">
             {% if registrationType == 'ComplianceScheme' %}
               <div class="govuk-summary-list__row">
-                <dt class="govuk-summary-list__key">Regulation 43</dt>
+                <dt class="govuk-summary-list__key">{{ i18n.t('summary.regulation43') }}</dt>
                 <dd class="govuk-summary-list__value">
-                  {{ appStatusTag({ value: regulation43Met, trueText: 'Compliant', falseText: 'Not compliant', fontSize:'' }) }}
+                  {{ appStatusTag({ value: regulation43Met, trueText: i18n.ct('statusTag', 'compliant'), falseText: i18n.ct('statusTag', 'notCompliant'), fontSize:'', locale: locale, i18n: i18n }) }}
                 </dd>
               </div>
             {% endif %}
             <div class="govuk-summary-list__row">
-              <dt class="govuk-summary-list__key">Recycling obligations</dt>
+              <dt class="govuk-summary-list__key">{{ i18n.t('summary.recyclingObligations') }}</dt>
               <dd class="govuk-summary-list__value">
-                {{ appStatusTag({ value: recyclingObligationsMet, trueText: 'Met', falseText: 'Not met', fontSize:'' }) }}
+                {{ appStatusTag({ value: recyclingObligationsMet, trueText: i18n.ct('statusTag', 'met'), falseText: i18n.ct('statusTag', 'notMet'), fontSize:'', locale: locale, i18n: i18n }) }}
               </dd>
             </div>
             <div class="govuk-summary-list__row">
-              <dt class="govuk-summary-list__key">Submission status</dt>
+              <dt class="govuk-summary-list__key">{{ i18n.t('summary.submissionStatus') }}</dt>
               <dd class="govuk-summary-list__value">
                 {% if declarationStatus == 'Unsubmitted' %}
-                  <strong class="govuk-tag govuk-tag--grey">Not submitted</strong>
+                  <strong class="govuk-tag govuk-tag--grey">{{ t(locale, 'certificatesOfCompliance.common.submissionStatus.notSubmitted') }}</strong>
                 {% elseif reviewStatus == 'Pending' %}
-                  <strong class="govuk-tag govuk-tag--blue">Pending</strong>
+                  <strong class="govuk-tag govuk-tag--blue">{{ t(locale, 'certificatesOfCompliance.common.submissionStatus.pending') }}</strong>
                 {% elseif reviewStatus == 'Cancelled' %}
-                  <strong class="govuk-tag govuk-tag--yellow">Cancelled</strong>
+                  <strong class="govuk-tag govuk-tag--yellow">{{ t(locale, 'certificatesOfCompliance.common.submissionStatus.cancelled') }}</strong>
                 {% else %}
-                  <strong class="govuk-tag govuk-tag--teal">Accepted</strong>
+                  <strong class="govuk-tag govuk-tag--teal">{{ t(locale, 'certificatesOfCompliance.common.submissionStatus.accepted') }}</strong>
                 {% endif %}
               </dd>
             </div>
             {% if showSubmittedOn %}
               <div class="govuk-summary-list__row">
-                <dt class="govuk-summary-list__key">Submitted on</dt>
+                <dt class="govuk-summary-list__key">{{ i18n.t('summary.submittedOn') }}</dt>
                 <dd class="govuk-summary-list__value">{{ dateDeclarationSubmitted }}</dd>
               </div>
             {% endif %}
             {% if showAcceptedOutcome %}
               <div class="govuk-summary-list__row">
-                <dt class="govuk-summary-list__key">Accepted by</dt>
+                <dt class="govuk-summary-list__key">{{ i18n.t('summary.acceptedBy') }}</dt>
                 <dd class="govuk-summary-list__value">{{ acceptedBy }}</dd>
               </div>
               <div class="govuk-summary-list__row">
-                <dt class="govuk-summary-list__key">Accepted date</dt>
+                <dt class="govuk-summary-list__key">{{ i18n.t('summary.acceptedDate') }}</dt>
                 <dd class="govuk-summary-list__value">{{ acceptedDate }}</dd>
               </div>
             {% endif %}
             {% if showCancelledOutcome %}
               <div class="govuk-summary-list__row">
-                <dt class="govuk-summary-list__key">Cancelled by</dt>
+                <dt class="govuk-summary-list__key">{{ i18n.t('summary.cancelledBy') }}</dt>
                 <dd class="govuk-summary-list__value">{{ cancelledBy }}</dd>
               </div>
               <div class="govuk-summary-list__row">
-                <dt class="govuk-summary-list__key">Cancelled date</dt>
+                <dt class="govuk-summary-list__key">{{ i18n.t('summary.cancelledDate') }}</dt>
                 <dd class="govuk-summary-list__value">{{ cancelledDate }}</dd>
               </div>
               <div class="govuk-summary-list__row">
-                <dt class="govuk-summary-list__key">Reason for cancellation</dt>
+                <dt class="govuk-summary-list__key">{{ i18n.t('summary.reasonForCancellation') }}</dt>
                 <dd class="govuk-summary-list__value">{{ cancellationReason }}</dd>
               </div>
             {% endif %}
@@ -116,32 +116,32 @@
         <div class="govuk-grid-column-three-quarters">
           <dl class="govuk-summary-list govuk-!-margin-bottom-0">
             <div class="govuk-summary-list__row">
-              <dt class="govuk-summary-list__key">Organisation type</dt>
+              <dt class="govuk-summary-list__key">{{ i18n.t('summary.organisationType') }}</dt>
               <dd class="govuk-summary-list__value">{{ organisationType }}</dd>
             </div>
             <div class="govuk-summary-list__row">
-              <dt class="govuk-summary-list__key">Organisation ID</dt>
+              <dt class="govuk-summary-list__key">{{ i18n.t('summary.organisationId') }}</dt>
               <dd class="govuk-summary-list__value">{{ organisationRef }}</dd>
             </div>
             <div class="govuk-summary-list__row">
-              <dt class="govuk-summary-list__key">Company number</dt>
+              <dt class="govuk-summary-list__key">{{ i18n.t('summary.companyNumber') }}</dt>
               <dd class="govuk-summary-list__value">
-                {{ companiesHouseNumber }}{% if companiesHouseNumber != 'No data' %}<br>
-                <a href="https://find-and-update.company-information.service.gov.uk/company/{{ companiesHouseNumber }}" class="govuk-link govuk-link--no-visited-state" target="_blank" rel="noopener noreferrer">View on Companies House<span class="govuk-visually-hidden"> (opens in new tab)</span></a>{% endif %}
+                {{ companiesHouseNumber }}{% if companiesHouseNumber != t(locale, 'certificatesOfCompliance.common.noData') %}<br>
+                <a href="https://find-and-update.company-information.service.gov.uk/company/{{ companiesHouseNumber }}" class="govuk-link govuk-link--no-visited-state" target="_blank" rel="noopener noreferrer">{{ t(locale, 'certificatesOfCompliance.common.companiesHouse.viewLink') }}<span class="govuk-visually-hidden"> ({{ t(locale, 'common.opensInNewTab') }})</span></a>{% endif %}
               </dd>
             </div>
             {% if showNameOnAccount %}
               <div class="govuk-summary-list__row">
-                <dt class="govuk-summary-list__key">Name on account</dt>
+                <dt class="govuk-summary-list__key">{{ i18n.t('summary.nameOnAccount') }}</dt>
                 <dd class="govuk-summary-list__value">{{ nameOnAccount }}</dd>
               </div>
             {% endif %}
             <div class="govuk-summary-list__row">
-              <dt class="govuk-summary-list__key">Email address</dt>
+              <dt class="govuk-summary-list__key">{{ i18n.t('summary.emailAddress') }}</dt>
               <dd class="govuk-summary-list__value">{{ declarationEmailAddress }}</dd>
             </div>
             <div class="govuk-summary-list__row">
-              <dt class="govuk-summary-list__key">Phone number</dt>
+              <dt class="govuk-summary-list__key">{{ i18n.t('summary.phoneNumber') }}</dt>
               <dd class="govuk-summary-list__value">{{ companyPhoneNumber }}</dd>
             </div>
           </dl>
@@ -152,9 +152,9 @@
 
       {% if registrationType == 'ComplianceScheme' %}
         <div data-testid="regulation-43">
-          <h2 class="govuk-heading-m govuk-!-margin-bottom-2">Regulation 43</h2>
+          <h2 class="govuk-heading-m govuk-!-margin-bottom-2">{{ i18n.t('summary.regulation43') }}</h2>
           {% if regulation43Met == null %}
-            <p class="govuk-hint">No data</p>
+            <p class="govuk-hint">{{ i18n.ct('statusTag', 'noData') }}</p>
           {% else %}
             <p class="govuk-body">{{ regulation43Statement }}</p>
           {% endif %}
@@ -165,12 +165,12 @@
 
       {% if showDeclaration %}
         <div data-testid="declaration">
-          <h2 class="govuk-heading-m govuk-!-margin-bottom-2">Declaration</h2>
-          <p class="govuk-body">{{ declarationSignedBy }} signed the declaration to verify that:</p>
+          <h2 class="govuk-heading-m govuk-!-margin-bottom-2">{{ i18n.t('declaration.heading') }}</h2>
+          <p class="govuk-body">{{ i18n.t('declaration.intro', { signedBy: declarationSignedBy }) }}</p>
           <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-            <li>they are an approved or delegated person who is eligible to submit this <span data-testid="declaration-noun">{{ complianceDocumentNoun }}</span> on behalf of {{ companyName }}</li>
-            <li>the information they submitted is accurate</li>
-            <li>they understand that they may face enforcement action if they submit false or misleading information</li>
+            <li>{{ i18n.t('declaration.bulletEligibleBefore') }}<span data-testid="declaration-noun">{{ complianceDocumentNoun }}</span>{{ i18n.t('declaration.bulletEligibleAfter', { companyName: companyName }) }}</li>
+            <li>{{ i18n.t('declaration.bulletAccurate') }}</li>
+            <li>{{ i18n.t('declaration.bulletEnforcement') }}</li>
           </ul>
         </div>
 
@@ -178,39 +178,39 @@
       {% endif %}
 
       {% if queryDetails %}
-        <h2 class="govuk-heading-m">Query details</h2>
+        <h2 class="govuk-heading-m">{{ i18n.t('queryDetails.heading') }}</h2>
         {{ govukSummaryList({
           rows: [
             {
-              key: { text: "Queried materials" },
+              key: { text: i18n.t('queryDetails.queriedMaterials') },
               value: { text: queryDetails.queriedMaterials }
             },
             {
-              key: { text: "Reason" },
+              key: { text: i18n.t('queryDetails.reason') },
               value: { text: queryDetails.reason }
             },
             {
-              key: { text: "Date queried" },
+              key: { text: i18n.t('queryDetails.dateQueried') },
               value: { text: queryDetails.dateQueried }
             }
           ]
         }) }}
       {% endif %}
 
-      <h2 class="govuk-heading-m">Recycling obligations</h2>
+      <h2 class="govuk-heading-m">{{ i18n.t('obligations.heading') }}</h2>
       {%  if showObligations %}
-        <p class="govuk-body-m govuk-!-margin-bottom-3">All values are in tonnes.</p>
+        <p class="govuk-body-m govuk-!-margin-bottom-3">{{ i18n.t('obligations.valuesInTonnes') }}</p>
 
         <table class="govuk-table" data-testid="obligations-table">
-          <caption class="govuk-table__caption govuk-visually-hidden">Recycling obligations by material, in tonnes</caption>
+          <caption class="govuk-table__caption govuk-visually-hidden">{{ i18n.t('obligations.tableCaption') }}</caption>
           <thead class="govuk-table__head">
             <tr class="govuk-table__row">
-              <th scope="col" class="govuk-table__header">Material</th>
-              <th scope="col" class="govuk-table__header govuk-table__header--numeric">Recycling obligations to meet</th>
-              <th scope="col" class="govuk-table__header govuk-table__header--numeric">Tonnage awaiting acceptance</th>
-              <th scope="col" class="govuk-table__header govuk-table__header--numeric">Tonnage accepted</th>
-              <th scope="col" class="govuk-table__header govuk-table__header--numeric">Tonnage outstanding</th>
-              <th scope="col" class="govuk-table__header">Status</th>
+              <th scope="col" class="govuk-table__header">{{ i18n.t('obligations.material') }}</th>
+              <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.obligationToMeet') }}</th>
+              <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.awaitingAcceptance') }}</th>
+              <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.accepted') }}</th>
+              <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.outstanding') }}</th>
+              <th scope="col" class="govuk-table__header">{{ i18n.t('obligations.status') }}</th>
             </tr>
           </thead>
           <tbody class="govuk-table__body">
@@ -229,7 +229,7 @@
           </tbody>
           <tfoot class="govuk-table__foot">
             <tr class="govuk-table__row">
-              <th scope="row" class="govuk-table__header">Totals</th>
+              <th scope="row" class="govuk-table__header">{{ i18n.t('obligations.totals') }}</th>
               <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.obligationToMeet }}</td>
               <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.awaitingAcceptance }}</td>
               <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.accepted }}</td>
@@ -241,18 +241,18 @@
           </tfoot>
         </table>
 
-        <h3 class="govuk-heading-s govuk-!-margin-top-8">Glass recycling obligation breakdown</h3>
+        <h3 class="govuk-heading-s govuk-!-margin-top-8">{{ i18n.t('obligations.glassBreakdownHeading') }}</h3>
 
         <table class="govuk-table" data-testid="glass-breakdown-table">
-          <caption class="govuk-table__caption govuk-visually-hidden">Glass recycling obligation breakdown by material, in tonnes</caption>
+          <caption class="govuk-table__caption govuk-visually-hidden">{{ i18n.t('obligations.glassBreakdownCaption') }}</caption>
           <thead class="govuk-table__head">
             <tr class="govuk-table__row">
-              <th scope="col" class="govuk-table__header">Material</th>
-              <th scope="col" class="govuk-table__header govuk-table__header--numeric">Recycling obligations to meet</th>
-              <th scope="col" class="govuk-table__header govuk-table__header--numeric">Tonnage awaiting acceptance</th>
-              <th scope="col" class="govuk-table__header govuk-table__header--numeric">Tonnage accepted</th>
-              <th scope="col" class="govuk-table__header govuk-table__header--numeric">Tonnage outstanding</th>
-              <th scope="col" class="govuk-table__header">Status</th>
+              <th scope="col" class="govuk-table__header">{{ i18n.t('obligations.material') }}</th>
+              <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.obligationToMeet') }}</th>
+              <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.awaitingAcceptance') }}</th>
+              <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.accepted') }}</th>
+              <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.outstanding') }}</th>
+              <th scope="col" class="govuk-table__header">{{ i18n.t('obligations.status') }}</th>
             </tr>
           </thead>
           <tbody class="govuk-table__body">
@@ -271,7 +271,7 @@
           </tbody>
           <tfoot class="govuk-table__foot">
             <tr class="govuk-table__row">
-              <th scope="row" class="govuk-table__header">Totals</th>
+              <th scope="row" class="govuk-table__header">{{ i18n.t('obligations.totals') }}</th>
               <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.obligationToMeet }}</td>
               <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.awaitingAcceptance }}</td>
               <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.accepted }}</td>
@@ -283,23 +283,23 @@
           </tfoot>
         </table>
       {% else %}
-        <p class="govuk-body-m" data-testid="obligations-no-data">No data</p>
+        <p class="govuk-body-m" data-testid="obligations-no-data">{{ i18n.t('obligations.noData') }}</p>
       {% endif %}
       <hr class="govuk-section-break govuk-section-break--l">
 
-      <h2 class="govuk-heading-m">Current year</h2>
+      <h2 class="govuk-heading-m">{{ i18n.t('currentYear.heading') }}</h2>
       {% if currentYearActions.length === 0 %}
-        <p class="govuk-body">No previous submissions</p>
+        <p class="govuk-body">{{ i18n.t('currentYear.noPreviousSubmissions') }}</p>
       {% else %}
         <table class="govuk-table" data-testid="current-year-table">
-          <caption class="govuk-table__caption govuk-visually-hidden">Current year submission history</caption>
+          <caption class="govuk-table__caption govuk-visually-hidden">{{ i18n.t('currentYear.tableCaption') }}</caption>
           <thead class="govuk-table__head">
             <tr class="govuk-table__row">
-              <th scope="col" class="govuk-table__header">Date</th>
-              <th scope="col" class="govuk-table__header">Action</th>
-              <th scope="col" class="govuk-table__header">By</th>
-              <th scope="col" class="govuk-table__header">Reason</th>
-              <th scope="col" class="govuk-table__header"><span class="govuk-visually-hidden">View submission</span></th>
+              <th scope="col" class="govuk-table__header">{{ i18n.t('currentYear.date') }}</th>
+              <th scope="col" class="govuk-table__header">{{ i18n.t('currentYear.action') }}</th>
+              <th scope="col" class="govuk-table__header">{{ i18n.t('currentYear.by') }}</th>
+              <th scope="col" class="govuk-table__header">{{ i18n.t('currentYear.reason') }}</th>
+              <th scope="col" class="govuk-table__header"><span class="govuk-visually-hidden">{{ i18n.t('currentYear.viewSubmissionHidden') }}</span></th>
             </tr>
           </thead>
           <tbody class="govuk-table__body">
@@ -308,15 +308,15 @@
                 <td class="govuk-table__cell">{{ row.date }}</td>
                 <td class="govuk-table__cell">
                   {% if row.action === 'Accepted' %}
-                    <strong class="govuk-tag govuk-tag--blue govuk-!-font-size-16">Accepted</strong>
+                    <strong class="govuk-tag govuk-tag--blue govuk-!-font-size-16">{{ i18n.t('currentYear.actionAccepted') }}</strong>
                   {% elif row.action === 'Cancelled' %}
-                    <strong class="govuk-tag govuk-tag--grey govuk-!-font-size-16">Cancelled</strong>
+                    <strong class="govuk-tag govuk-tag--grey govuk-!-font-size-16">{{ i18n.t('currentYear.actionCancelled') }}</strong>
                   {% endif %}
                 </td>
                 <td class="govuk-table__cell">{{ row.by }}</td>
                 <td class="govuk-table__cell">{{ row.reason if row.reason else '' }}</td>
                 <td class="govuk-table__cell">
-                  <a href="{{ row.viewSubmissionUrl }}" class="govuk-link">View submission</a>
+                  <a href="{{ row.viewSubmissionUrl }}" class="govuk-link">{{ i18n.t('currentYear.viewSubmissionLink') }}</a>
                 </td>
               </tr>
             {% endfor %}
