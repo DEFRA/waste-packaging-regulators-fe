@@ -4,6 +4,18 @@ import { isDate, parseISO } from 'date-fns'
 
 const DATE_TIME_AT_KEY = 'common.dateTime.at'
 
+function parseDateTimeInput(isoString, useParseIso) {
+  if (useParseIso && isDate(isoString)) {
+    return isoString
+  }
+
+  if (useParseIso) {
+    return parseISO(isoString)
+  }
+
+  return new Date(isoString)
+}
+
 function formatDateTime(
   isoString,
   locale,
@@ -14,12 +26,7 @@ function formatDateTime(
   }
 
   const bcp47 = localeToBcp47(locale)
-  const d =
-    useParseIso && isDate(isoString)
-      ? isoString
-      : useParseIso
-        ? parseISO(isoString)
-        : new Date(isoString)
+  const d = parseDateTimeInput(isoString, useParseIso)
   const localeOptions = timeZone ? { timeZone } : {}
   const datePart = d.toLocaleDateString(bcp47, {
     day: 'numeric',
