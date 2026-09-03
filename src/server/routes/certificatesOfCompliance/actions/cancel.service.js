@@ -8,12 +8,13 @@ export async function cancelComplianceDeclaration(
   sessionUser,
   reason,
   traceId,
-  { registrationType, environmentalRegulator } = {}
+  { registrationType, environmentalRegulator, businessCountry } = {}
 ) {
   const api = createWasteObligationsApiService()
   const notificationParameters = buildCancellationNotificationParameters({
     registrationType,
-    environmentalRegulator
+    environmentalRegulator,
+    businessCountry
   })
 
   return api.updateComplianceDeclaration(

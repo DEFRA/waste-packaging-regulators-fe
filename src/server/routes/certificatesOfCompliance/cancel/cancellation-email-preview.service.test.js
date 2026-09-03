@@ -64,7 +64,7 @@ describe('cancellation-email-preview.service helpers', () => {
       {
         certOrStatement: 'certificate',
         certOrStatement_cy: 'tystysgrif',
-        regulator_cy: 'Asiantaeth yr Amgylchedd'
+        regulator: 'The Environment Agency'
       },
       {
         firstName: 'Catherine',
@@ -75,11 +75,10 @@ describe('cancellation-email-preview.service helpers', () => {
 
     expect(personalisation).toEqual({
       year: 2027,
-      regulator: 'EA',
+      regulator: 'The Environment Agency',
       regulatorEmail: 'ea@environment-agency.gov.uk',
       certOrStatement: 'certificate',
       certOrStatement_cy: 'tystysgrif',
-      regulator_cy: 'Asiantaeth yr Amgylchedd',
       firstName: 'Catherine',
       lastName: 'Morris'
     })
@@ -96,7 +95,7 @@ describe('cancellation-email-preview.service helpers', () => {
       {
         certOrStatement: 'statement',
         certOrStatement_cy: 'datganiad',
-        regulator_cy: 'Asiantaeth yr Amgylchedd'
+        regulator: 'The Environment Agency'
       },
       {
         firstName: 'Jane',
@@ -222,6 +221,7 @@ describe('buildCancellationEmailPreview', () => {
           year: 2027,
           firstName,
           lastName,
+          regulator: 'The Environment Agency',
           regulatorEmail: 'ea@environment-agency.gov.uk',
           certOrStatement
         })
