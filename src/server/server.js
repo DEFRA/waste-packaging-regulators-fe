@@ -189,7 +189,13 @@ export async function createServer() {
     router // Register all the controllers/routes defined in src/server/plugins/router.js
   ])
 
-  server.ext('onPreResponse', catchAll)
+  server.ext({
+    type: 'onPreResponse',
+    method: catchAll,
+    options: {
+      before: 'blankie'
+    }
+  })
 
   return server
 }

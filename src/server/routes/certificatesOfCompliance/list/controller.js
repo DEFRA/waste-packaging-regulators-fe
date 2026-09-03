@@ -138,22 +138,24 @@ export const certificatesOfComplianceController = {
 
     const url = bindLocaleUrl(locale)
 
-    return h.view('certificatesOfCompliance/list/index', {
-      ...viewModel,
-      locale,
-      i18n,
-      searchTerm,
-      errors,
-      isSearch: search !== null,
-      searchItems: search?.items ?? [],
-      searchResultCount: search?.total ?? 0,
-      searchTruncated: search?.truncated ?? false,
-      clearSearchUrl: url(
-        `/certificates-of-compliance?type=${type}&tab=${submissionStatus}`
-      ),
-      pageTitle: errors
-        ? `${errorPrefix}${viewModel.heading}`
-        : viewModel.heading
-    })
+    return h
+      .view('certificatesOfCompliance/list/index', {
+        ...viewModel,
+        locale,
+        i18n,
+        searchTerm,
+        errors,
+        isSearch: search !== null,
+        searchItems: search?.items ?? [],
+        searchResultCount: search?.total ?? 0,
+        searchTruncated: search?.truncated ?? false,
+        clearSearchUrl: url(
+          `/certificates-of-compliance?type=${type}&tab=${submissionStatus}`
+        ),
+        pageTitle: errors
+          ? `${errorPrefix}${viewModel.heading}`
+          : viewModel.heading
+      })
+      .header('Cache-Control', 'no-cache, no-store, must-revalidate')
   }
 }
