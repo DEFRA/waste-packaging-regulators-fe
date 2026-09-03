@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale | default('en') }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cancellation email preview unavailable</title>
+  <title>{{ i18n.t('emailPreviewUnavailable.pageTitle') }}</title>
   <style>
     body {
       margin: 0;
@@ -33,7 +33,7 @@
 </head>
 <body>
   <div class="panel">
-    <h1>Cancellation email preview unavailable</h1>
+    <h1>{{ i18n.t('emailPreviewUnavailable.heading') }}</h1>
     <p>{{ message }}</p>
   </div>
 </body>

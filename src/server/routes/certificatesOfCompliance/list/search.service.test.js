@@ -63,7 +63,7 @@ describe('#getComplianceSearchResults', () => {
       )
     })
 
-    test('Should request pending and accepted together for the page organisation type', async () => {
+    test('Should request pending, accepted and cancelled together for the page organisation type', async () => {
       listComplianceDeclarations.mockResolvedValue({
         complianceDeclarations: [],
         total: 0
@@ -74,7 +74,7 @@ describe('#getComplianceSearchResults', () => {
       expect(listComplianceDeclarations).toHaveBeenCalledWith(
         {
           obligationYear: 2026,
-          status: 'Submitted,Accepted',
+          status: 'Submitted,Accepted,Cancelled',
           registrationType: 'ComplianceScheme',
           search: 'zeina',
           sortColumn: 'DateSubmitted',
@@ -86,13 +86,14 @@ describe('#getComplianceSearchResults', () => {
       )
     })
 
-    test('Should label Submitted as Pending and Accepted as Accepted', async () => {
+    test('Should label Submitted as Pending, and pass Accepted and Cancelled through', async () => {
       listComplianceDeclarations.mockResolvedValue({
         complianceDeclarations: [
           buildDeclaration({ id: 'a', status: 'Submitted' }),
-          buildDeclaration({ id: 'b', status: 'Accepted' })
+          buildDeclaration({ id: 'b', status: 'Accepted' }),
+          buildDeclaration({ id: 'c', status: 'Cancelled' })
         ],
-        total: 2
+        total: 3
       })
 
       const { items } = await getComplianceSearchResults(
@@ -102,8 +103,27 @@ describe('#getComplianceSearchResults', () => {
 
       expect(items.map((item) => item.submissionStatus)).toEqual([
         'Pending',
-        'Accepted'
+        'Accepted',
+        'Cancelled'
       ])
+    })
+
+    // Only Submitted, Accepted and Cancelled are requested, so this is a guard
+    // against the API returning something else rather than an expected path.
+    test('Should fall back to the raw status when it has no label', async () => {
+      listComplianceDeclarations.mockResolvedValue({
+        complianceDeclarations: [
+          buildDeclaration({ id: 'a', status: 'Queried' })
+        ],
+        total: 1
+      })
+
+      const { items } = await getComplianceSearchResults(
+        'direct-producers',
+        'zeina'
+      )
+
+      expect(items[0].submissionStatus).toBe('Queried')
     })
 
     // Ordering is delegated to the API via the sort parameter, so the rows are

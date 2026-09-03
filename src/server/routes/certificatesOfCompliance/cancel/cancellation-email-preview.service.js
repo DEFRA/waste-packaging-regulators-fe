@@ -21,7 +21,6 @@ export function buildCancellationEmailPersonalisation(
   // Notify templates render "31 January ((year))" — year is the submission deadline year.
   return {
     year: declaration.obligationYear + 1,
-    regulator: organisation.regulator,
     regulatorEmail: organisation.regulatorEmail,
     ...notificationParameters,
     firstName: recipient.firstName,
@@ -54,7 +53,8 @@ export async function buildCancellationEmailPreview({
   organisationId,
   id,
   reasonKey,
-  traceId
+  traceId,
+  locale = 'en'
 }) {
   const declaration = await fetchDeclaration(organisationId, id, traceId)
   if (declaration == null) {
@@ -62,7 +62,7 @@ export async function buildCancellationEmailPreview({
   }
 
   const registrationType = declaration.organisation?.registrationType
-  const reasonLabel = getCancelReasonLabel(registrationType, reasonKey)
+  const reasonLabel = getCancelReasonLabel(registrationType, reasonKey, locale)
   if (!reasonLabel) {
     return { error: 'invalid-reason' }
   }
@@ -85,7 +85,8 @@ export async function buildCancellationEmailPreview({
 
   const notificationParameters = buildCancellationNotificationParameters({
     registrationType,
-    environmentalRegulator: declaration.organisation?.regulator
+    environmentalRegulator: declaration.organisation?.regulator,
+    businessCountry: wasteOrganisation?.businessCountry
   })
   const personalisation = buildCancellationEmailPersonalisation(
     declaration,

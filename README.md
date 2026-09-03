@@ -122,6 +122,16 @@ npm run dev
 
 This uses mock API responses and a stub auth strategy (no backends required, no B2C round-trip). Routes that check for a signed-in user see a fixed `mock-user` automatically.
 
+### Welsh / English (i18n)
+
+Locale support follows the same approach as [waste-obligations-frontend](https://github.com/DEFRA/waste-obligations-frontend): translations live in `src/server/locales/en.json` and `cy.json`, resolved via `getLocale(request)` (`?lang=` query param, then OAuth session `authLocale`, then `Accept-Language`, default `en`).
+
+When the active locale is Welsh, internal links append `?lang=cy` (English omits the param). Templates receive a request-scoped `localeUrl(href)` helper from the Nunjucks context; server-side code uses `localeUrl(href, locale)`, `bindLocaleUrl(locale)`, or `redirectWithLocale(h, request, path)` from `src/server/common/helpers/i18n/locale-url.js`.
+
+Add or change strings in `src/server/locales/en.json`. Add Welsh translations only in `cy.json` — omit keys that are not yet translated. Missing or blank `cy` keys fall back to English at runtime via `translate.js`.
+
+Switch language locally with the Cymraeg / English toggle in the service navigation, or append `?lang=cy` to any URL.
+
 ### Mock API
 
 With `MOCK_API=true` (the default outside production), the backend calls to the
@@ -134,7 +144,19 @@ The default data deliberately covers every variation (met / not met / no data, e
 submission status, direct producers and compliance schemes), so you can eyeball them
 all locally — visit the certificates-of-compliance pages after `npm run dev`.
 Approving or cancelling a certificate persists in-memory for the process, so the UI
-reflects the new status on the redirect (the store resets on restart).
+reflects the new status on the redirect. The store resets on restart, or on demand
+via the mock-only reset endpoint:
+
+```bash
+# `npm run dev` serves HTTPS with a self-signed cert, so -k skips verification:
+curl -k -X POST https://localhost:3000/mock/reset   # 204 No Content
+# (the containerised mock used by the journey tests serves plain HTTP instead)
+```
+
+`POST /mock/reset` discards all approve/cancel mutations and restores the base
+fixtures, responding `204 No Content` with an empty body. It exists only when
+`MOCK_API=true` (never in a deployed environment) and is unauthenticated, so the
+journey-test harness can reset between tests.
 
 Set `MOCK_ERROR_STATUS=<http status>` alongside `MOCK_API=true` to make every
 mocked call return that status instead of data, so you can walk a journey into the

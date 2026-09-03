@@ -1,14 +1,22 @@
+import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
 import {
-  certificateActionLabelsByRegistrationType,
-  certificateSuccessBannerCopyByRegistrationType
-} from '../common/constants.js'
+  translateActionLabels,
+  translateSuccessBanner
+} from '../common/locale-strings.js'
 
-export function buildCertificateDetailPath(organisationId, id) {
-  return `/${organisationId}/certificates-of-compliance/${id}`
+export function buildCertificateDetailPath(organisationId, id, locale = 'en') {
+  return localeUrl(
+    `/${organisationId}/certificates-of-compliance/${id}`,
+    locale
+  )
 }
 
-export function buildCertificateDetailActionUrls(organisationId, id) {
-  const base = buildCertificateDetailPath(organisationId, id)
+export function buildCertificateDetailActionUrls(
+  organisationId,
+  id,
+  locale = 'en'
+) {
+  const base = buildCertificateDetailPath(organisationId, id, locale)
   return {
     accept: `${base}/accept`,
     query: `${base}/query`,
@@ -20,12 +28,11 @@ export function buildCertificateDetailActions(
   reviewStatus,
   organisationId,
   id,
-  registrationType
+  registrationType,
+  locale = 'en'
 ) {
-  const urls = buildCertificateDetailActionUrls(organisationId, id)
-  const labels =
-    certificateActionLabelsByRegistrationType[registrationType] ??
-    certificateActionLabelsByRegistrationType.DirectProducer
+  const urls = buildCertificateDetailActionUrls(organisationId, id, locale)
+  const labels = translateActionLabels(registrationType, locale)
   const showAccept = reviewStatus === 'Pending' || reviewStatus === 'Queried'
   const showCancel = showAccept || reviewStatus === 'Approved'
 
@@ -42,22 +49,23 @@ export function buildCertificateDetailActions(
 
 export function buildCertificateSuccessBanner(
   { showApprovalBanner, showQueryBanner, showCancelBanner },
-  registrationType
+  registrationType,
+  locale = 'en'
 ) {
-  const copyByType =
-    certificateSuccessBannerCopyByRegistrationType[registrationType] ??
-    certificateSuccessBannerCopyByRegistrationType.DirectProducer
-
   if (showApprovalBanner) {
-    return { ...copyByType.accepted, type: 'accepted' }
+    return {
+      ...translateSuccessBanner(registrationType, 'accepted', locale),
+      type: 'accepted'
+    }
   }
   if (showCancelBanner) {
-    return { ...copyByType.cancelled, type: 'cancelled' }
+    return {
+      ...translateSuccessBanner(registrationType, 'cancelled', locale),
+      type: 'cancelled'
+    }
   }
   if (showQueryBanner) {
     return null
   }
   return null
 }
-
-export { certificateActionLabelsByRegistrationType }

@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url'
 import path from 'path'
 import nunjucks from 'nunjucks'
 import { load } from 'cheerio'
+import { translate } from '#server/common/helpers/i18n/translate.js'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 const nunjucksEnv = nunjucks.configure(
@@ -9,8 +10,14 @@ const nunjucksEnv = nunjucks.configure(
   { trimBlocks: true, lstripBlocks: true }
 )
 
-function renderPagination(pagination) {
-  return load(nunjucksEnv.render('pagination/template.njk', { pagination }))
+nunjucksEnv.addGlobal('t', (locale, key, params = {}) =>
+  translate(locale ?? 'en', key, params)
+)
+
+function renderPagination(pagination, locale = 'en') {
+  return load(
+    nunjucksEnv.render('pagination/template.njk', { pagination, locale })
+  )
 }
 
 describe('Pagination component', () => {

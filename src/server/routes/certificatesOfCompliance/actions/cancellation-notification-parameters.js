@@ -1,34 +1,55 @@
 import { isComplianceSchemeRegistrationType } from '../common/display.js'
+import { isWelshOrganisation } from '../cancel/cancellation-email-templates.js'
 
-const ENVIRONMENTAL_REGULATOR_WELSH_BY_REGULATOR = {
-  'Natural Resources Wales': 'Cyfoeth Naturiol Cymru (CNC)',
-  NRW: 'Cyfoeth Naturiol Cymru (CNC)',
-  'Environment Agency': 'Asiantaeth yr Amgylchedd',
-  EA: 'Asiantaeth yr Amgylchedd'
+const THE_ENVIRONMENT_AGENCY = 'The Environment Agency'
+const THE_SCOTTISH_ENVIRONMENT_PROTECTION_AGENCY =
+  'The Scottish Environment Protection Agency'
+const THE_NORTHERN_IRELAND_ENVIRONMENT_AGENCY =
+  'The Northern Ireland Environment Agency'
+const NATURAL_RESOURCES_WALES = 'Natural Resources Wales'
+const REGULATOR_DISPLAY_CY_NRW = 'Cyfoeth Naturiol Cymru'
+
+const REGULATOR_DISPLAY_EN = {
+  EA: THE_ENVIRONMENT_AGENCY,
+  SEPA: THE_SCOTTISH_ENVIRONMENT_PROTECTION_AGENCY,
+  NIEA: THE_NORTHERN_IRELAND_ENVIRONMENT_AGENCY,
+  NRW: NATURAL_RESOURCES_WALES
 }
 
-const DEFAULT_ENVIRONMENTAL_REGULATOR_WELSH = 'Regulator'
-
-export function mapEnvironmentalRegulatorWelsh(environmentalRegulator) {
+export function mapEnvironmentalRegulatorDisplay(environmentalRegulator) {
   if (environmentalRegulator == null || environmentalRegulator === '') {
-    return DEFAULT_ENVIRONMENTAL_REGULATOR_WELSH
+    return environmentalRegulator
   }
 
   return (
-    ENVIRONMENTAL_REGULATOR_WELSH_BY_REGULATOR[environmentalRegulator] ??
-    DEFAULT_ENVIRONMENTAL_REGULATOR_WELSH
+    REGULATOR_DISPLAY_EN[environmentalRegulator.trim()] ??
+    environmentalRegulator
+  )
+}
+
+function shouldIncludeRegulatorCy(businessCountry, environmentalRegulator) {
+  return (
+    isWelshOrganisation(businessCountry) &&
+    environmentalRegulator?.trim() === 'NRW'
   )
 }
 
 export function buildCancellationNotificationParameters({
   registrationType,
-  environmentalRegulator
+  environmentalRegulator,
+  businessCountry
 } = {}) {
   const complianceScheme = isComplianceSchemeRegistrationType(registrationType)
 
-  return {
+  const parameters = {
     certOrStatement: complianceScheme ? 'statement' : 'certificate',
     certOrStatement_cy: complianceScheme ? 'datganiad' : 'tystysgrif',
-    regulator_cy: mapEnvironmentalRegulatorWelsh(environmentalRegulator)
+    regulator: mapEnvironmentalRegulatorDisplay(environmentalRegulator)
   }
+
+  if (shouldIncludeRegulatorCy(businessCountry, environmentalRegulator)) {
+    parameters.regulator_cy = REGULATOR_DISPLAY_CY_NRW
+  }
+
+  return parameters
 }

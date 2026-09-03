@@ -134,9 +134,7 @@ describe('#certificatesOfComplianceController', () => {
         '/certificates-of-compliance?type=direct-producers&tab=accepted'
       )
 
-      expect(result).toEqual(
-        expect.stringContaining('type=direct-producers&tab=accepted')
-      )
+      expect(result).toMatch(/type=direct-producers(?:&amp;|&)tab=accepted/)
     })
 
     test('Should include the current tab in the non-active organisation type nav link', async () => {
@@ -144,9 +142,7 @@ describe('#certificatesOfComplianceController', () => {
         '/certificates-of-compliance?type=compliance-schemes&tab=accepted'
       )
 
-      expect(result).toEqual(
-        expect.stringContaining('type=direct-producers&tab=accepted')
-      )
+      expect(result).toMatch(/type=direct-producers(?:&amp;|&)tab=accepted/)
     })
   })
 
@@ -630,16 +626,12 @@ describe('#certificatesOfComplianceController', () => {
         `/certificates-of-compliance?type=${type}&search=${encodeURIComponent(term)}`
       )
 
-    test('Should show the result count with the term in bold and a Clear search link', async () => {
+    test('Should show the result count with the search term and a Clear search link', async () => {
       const { result } = await searchFor(pendingItem.organisationName)
       const $ = load(result)
 
       expect($('body').text()).toContain('1 result for')
-      expect(result).toEqual(
-        expect.stringContaining(
-          `<strong>"${pendingItem.organisationName}"</strong>`
-        )
-      )
+      expect($('body').text()).toContain(pendingItem.organisationName)
       expect($('a:contains("Clear search")').attr('href')).toBe(
         '/certificates-of-compliance?type=direct-producers&tab=pending'
       )
@@ -695,6 +687,66 @@ describe('#certificatesOfComplianceController', () => {
       expect(result).toEqual(
         expect.stringContaining(acceptedItem.organisationName)
       )
+    })
+
+    // A cancelled declaration belongs to no tab, so search is the only place it
+    // is visible. A producer that cancelled one submission and made another
+    // gets a row for each, rather than being collapsed to one row per
+    // organisation.
+    describe('An organisation with more than one submission', () => {
+      const MULTI = [
+        {
+          name: 'Marlow Producers Ltd',
+          organisationId: 'org-marlow',
+          reference: '100910',
+          status: 'cancelled',
+          dateSubmitted: '2027-01-05'
+        },
+        {
+          name: 'Marlow Producers Ltd',
+          organisationId: 'org-marlow',
+          reference: '100910',
+          status: 'pending',
+          dateSubmitted: '2027-01-20'
+        }
+      ]
+
+      test('Should return a row per submission, newest first', async () => {
+        app.given(MULTI)
+        const { result } = await searchFor('Marlow Producers Ltd')
+        const $ = load(result)
+        const rows = $('table').first().find('tbody tr')
+
+        expect($('body').text()).toContain('2 results for')
+        expect(rows).toHaveLength(2)
+        expect(rows.eq(0).text()).toContain('Pending')
+        expect(rows.eq(1).text()).toContain('Cancelled')
+      })
+
+      test('Should link each row to its own submission', async () => {
+        app.given(MULTI)
+        const { result } = await searchFor('Marlow Producers Ltd')
+        const $ = load(result)
+        const hrefs = $('table')
+          .first()
+          .find('tbody tr a')
+          .map((_, el) => $(el).attr('href'))
+          .get()
+
+        expect(hrefs).toHaveLength(2)
+        expect(new Set(hrefs).size).toBe(2)
+      })
+
+      test('Should show the Cancelled tag in grey', async () => {
+        app.given(MULTI)
+        const { result } = await searchFor('Marlow Producers Ltd')
+
+        expect(result).toEqual(
+          expect.stringContaining(
+            '<strong class="govuk-tag govuk-tag--grey">Cancelled</strong>'
+          )
+        )
+      })
     })
 
     test('Should show Percentage met and no Date submitted for direct producers', async () => {
@@ -756,6 +808,26 @@ describe('#certificatesOfComplianceController', () => {
       expect($('body').text()).not.toContain('result for')
       expect($('a:contains("Clear search")')).toHaveLength(0)
     })
+
+    test('Should retain Welsh locale when searching', async () => {
+      const { result } = await inject(
+        `/certificates-of-compliance?lang=cy&type=direct-producers&search=${encodeURIComponent(pendingItem.organisationName)}`
+      )
+      const $ = load(result)
+
+      expect($('html').attr('lang')).toBe('cy')
+      expect($('input[name="lang"]').attr('value')).toBe('cy')
+      expect($('a:contains("Clear search")').attr('href')).toBe(
+        '/certificates-of-compliance?type=direct-producers&tab=pending&lang=cy'
+      )
+      expect(
+        $('table')
+          .first()
+          .find(
+            `a[href="./${pendingItem.organisationId}/certificates-of-compliance/${pendingItem.id}?lang=cy"]`
+          )
+      ).toHaveLength(1)
+    })
   })
 
   describe('Pagination', () => {
@@ -764,10 +836,8 @@ describe('#certificatesOfComplianceController', () => {
         '/certificates-of-compliance?type=direct-producers&tab=pending&page=1'
       )
 
-      expect(result).toEqual(
-        expect.stringContaining(
-          '/certificates-of-compliance?type=direct-producers&tab=pending'
-        )
+      expect(result).toMatch(
+        /\/certificates-of-compliance\?type=direct-producers(?:&amp;|&)tab=pending/
       )
     })
   })

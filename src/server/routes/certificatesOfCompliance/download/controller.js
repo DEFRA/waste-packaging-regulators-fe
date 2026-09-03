@@ -1,5 +1,7 @@
 import { config } from '#config/config.js'
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
+import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
+import { persistAuthLocale } from '#server/common/helpers/i18n/locale-url.js'
 import { getComplianceDownload } from './download.service.js'
 import Boom from '@hapi/boom'
 
@@ -16,6 +18,8 @@ const VALID_SUBMISSION_STATUSES = new Set([
 export const certificatesOfComplianceDownloadController = {
   async handler(request, h) {
     if (!request.yar.get('user')) {
+      const locale = getLocale(request)
+      persistAuthLocale(request, locale)
       request.yar.set('returnTo', request.url.pathname + request.url.search)
       return h.redirect('/signin-oidc')
     }

@@ -50,8 +50,11 @@ const credentials = {
   }
 }
 
-function makeYar({ returnTo = null } = {}) {
-  const store = { ...(returnTo ? { returnTo } : {}) }
+function makeYar({ returnTo = null, authLocale = null } = {}) {
+  const store = {
+    ...(returnTo ? { returnTo } : {}),
+    ...(authLocale ? { authLocale } : {})
+  }
   return {
     get: vi.fn((key) => store[key] ?? null),
     set: vi.fn((key, val) => {
@@ -163,6 +166,41 @@ describe('signinOidcController', () => {
       )
 
       expect(yar.clear).toHaveBeenCalledWith('returnTo')
+    })
+
+    it('appends lang=cy to returnTo from authLocale after OAuth sign-in', async () => {
+      const h = makeH()
+      await signinOidcController.handler(
+        {
+          auth: { credentials },
+          query: {},
+          headers: { 'accept-language': 'en-GB' },
+          yar: makeYar({
+            returnTo: '/certificates-of-compliance/download',
+            authLocale: 'cy'
+          })
+        },
+        h
+      )
+
+      expect(h.redirect).toHaveBeenCalledWith(
+        '/certificates-of-compliance/download?lang=cy'
+      )
+    })
+
+    it('clears authLocale from the session after redirecting', async () => {
+      const yar = makeYar({ authLocale: 'cy' })
+      await signinOidcController.handler(
+        {
+          auth: { credentials },
+          query: {},
+          headers: {},
+          yar
+        },
+        makeH()
+      )
+
+      expect(yar.clear).toHaveBeenCalledWith('authLocale')
     })
   })
 

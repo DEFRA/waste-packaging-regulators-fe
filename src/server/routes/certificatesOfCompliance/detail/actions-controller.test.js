@@ -42,7 +42,9 @@ describe('redirectToSignIn', () => {
   it('redirects to /signin-oidc', () => {
     const request = {
       yar: { set: vi.fn() },
-      url: { pathname: '/some/path', search: '' }
+      url: { pathname: '/some/path', search: '' },
+      query: {},
+      headers: {}
     }
     const h = { redirect: vi.fn((url) => `redirect:${url}`) }
 
@@ -50,6 +52,26 @@ describe('redirectToSignIn', () => {
 
     expect(h.redirect).toHaveBeenCalledWith('/signin-oidc')
     expect(result).toBe('redirect:/signin-oidc')
+  })
+
+  it('persists Welsh locale and appends lang query when redirecting to sign in', () => {
+    const store = new Map()
+    const request = {
+      yar: {
+        set: vi.fn((key, value) => {
+          store.set(key, value)
+        })
+      },
+      url: { pathname: '/some/path', search: '?lang=cy' },
+      query: { lang: 'cy' },
+      headers: {}
+    }
+    const h = { redirect: vi.fn((url) => `redirect:${url}`) }
+
+    redirectToSignIn(request, h)
+
+    expect(store.get('authLocale')).toBe('cy')
+    expect(h.redirect).toHaveBeenCalledWith('/signin-oidc?lang=cy')
   })
 })
 

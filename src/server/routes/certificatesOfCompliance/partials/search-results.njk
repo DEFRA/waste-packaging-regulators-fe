@@ -2,52 +2,58 @@
 
 <div id="search-results" class="govuk-!-margin-bottom-6">
   <p class="govuk-body govuk-!-margin-bottom-4">
-    <strong>{{ searchResultCount }}</strong> {{ "result" if searchResultCount == 1 else "results" }} for <strong>"{{ searchTerm }}"</strong>.
-    <a href="{{ clearSearchUrl }}" class="govuk-link govuk-link--no-visited-state govuk-!-margin-left-2">Clear search</a>
+    {% if searchResultCount == 1 %}
+      {{ i18n.t('searchResults.resultSingular', { count: searchResultCount, searchTerm: searchTerm }) }}
+    {% else %}
+      {{ i18n.t('searchResults.resultPlural', { count: searchResultCount, searchTerm: searchTerm }) }}
+    {% endif %}
+    <a href="{{ clearSearchUrl }}" class="govuk-link govuk-link--no-visited-state govuk-!-margin-left-2">{{ i18n.t('searchResults.clearSearch') }}</a>
   </p>
 
   {% if searchItems.length %}
     {% if searchTruncated %}
       <p class="govuk-body govuk-!-margin-bottom-4">
-        Showing the first {{ searchItems.length }} results. Refine your search to narrow them down.
+        {{ i18n.t('searchResults.truncated', { count: searchItems.length }) }}
       </p>
     {% endif %}
 
     <table class="govuk-table v3-compact-table">
-      <caption class="govuk-table__caption govuk-visually-hidden">Search results</caption>
+      <caption class="govuk-table__caption govuk-visually-hidden">{{ i18n.t('searchResults.caption') }}</caption>
       <thead class="govuk-table__head">
         <tr class="govuk-table__row">
-          <th class="govuk-table__header govuk-!-width-one-quarter" scope="col">Organisation name</th>
-          <th class="govuk-table__header" scope="col">Organisation ID</th>
-          <th class="govuk-table__header" scope="col">Submission status</th>
-          <th class="govuk-table__header" scope="col">Recycling obligations</th>
+          <th class="govuk-table__header govuk-!-width-one-quarter" scope="col">{{ t(locale, 'certificatesOfCompliance.common.columns.organisationName') }}</th>
+          <th class="govuk-table__header" scope="col">{{ t(locale, 'certificatesOfCompliance.common.columns.organisationId') }}</th>
+          <th class="govuk-table__header" scope="col">{{ t(locale, 'certificatesOfCompliance.common.columns.submissionStatus') }}</th>
+          <th class="govuk-table__header" scope="col">{{ t(locale, 'certificatesOfCompliance.common.columns.recyclingObligations') }}</th>
           {% if organisationType == 'compliance-schemes' %}
-            <th class="govuk-table__header" scope="col">Regulation 43</th>
+            <th class="govuk-table__header" scope="col">{{ t(locale, 'certificatesOfCompliance.common.columns.regulation43') }}</th>
           {% else %}
-            <th class="govuk-table__header" scope="col">Percentage met</th>
+            <th class="govuk-table__header" scope="col">{{ t(locale, 'certificatesOfCompliance.common.columns.percentageMet') }}</th>
           {% endif %}
         </tr>
       </thead>
       <tbody class="govuk-table__body">
         {% for item in searchItems %}
           <tr class="govuk-table__row">
-            <td class="govuk-table__cell">
-              <a href="./{{ item.organisationId }}/certificates-of-compliance/{{ item.id }}" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
-            </td>
+            <th scope="row" class="govuk-table__header govuk-!-width-one-quarter">
+              <a href="{{ localeUrl('./' ~ item.organisationId ~ '/certificates-of-compliance/' ~ item.id) }}" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
+            </th>
             <td class="govuk-table__cell">{{ item.organisationReferenceNumber }}</td>
             <td class="govuk-table__cell">
               {% if item.submissionStatus == 'Accepted' %}
-                <strong class="govuk-tag govuk-tag--teal">Accepted</strong>
+                <strong class="govuk-tag govuk-tag--teal">{{ t(locale, 'certificatesOfCompliance.common.submissionStatus.accepted') }}</strong>
+              {% elif item.submissionStatus == 'Cancelled' %}
+                <strong class="govuk-tag govuk-tag--grey">{{ t(locale, 'certificatesOfCompliance.common.submissionStatus.cancelled') }}</strong>
               {% else %}
                 <strong class="govuk-tag govuk-tag--blue">{{ item.submissionStatus }}</strong>
               {% endif %}
             </td>
             <td class="govuk-table__cell">
-              {{ appStatusTag({ value: item.recyclingObligationsMet, trueText: 'Met', falseText: 'Not met' }) }}
+              {{ appStatusTag({ value: item.recyclingObligationsMet, trueText: i18n.ct('statusTag', 'met'), falseText: i18n.ct('statusTag', 'notMet'), locale: locale, i18n: i18n }) }}
             </td>
             {% if organisationType == 'compliance-schemes' %}
               <td class="govuk-table__cell">
-                {{ appStatusTag({ value: item.regulation43Met, trueText: 'Compliant', falseText: 'Not compliant' }) }}
+                {{ appStatusTag({ value: item.regulation43Met, trueText: i18n.ct('statusTag', 'compliant'), falseText: i18n.ct('statusTag', 'notCompliant'), locale: locale, i18n: i18n }) }}
               </td>
             {% else %}
               <td class="govuk-table__cell">{% if item.obligationCoveragePercentage != null %}{{ item.obligationCoveragePercentage }}%{% else %}—{% endif %}</td>
@@ -57,6 +63,6 @@
       </tbody>
     </table>
   {% else %}
-    <p class="govuk-body">Check the spelling, or search for part of the organisation name or ID</p>
+    <p class="govuk-body">{{ i18n.t('searchResults.noResults') }}</p>
   {% endif %}
 </div>
