@@ -50,6 +50,8 @@ export const certificatesOfComplianceDetailController = {
       throw error
     })
 
-    return h.view('certificatesOfCompliance/detail/index', viewModel)
+    return h
+      .view('certificatesOfCompliance/detail/index', viewModel)
+      .header('Cache-Control', 'no-cache, no-store, must-revalidate')
   }
 }
