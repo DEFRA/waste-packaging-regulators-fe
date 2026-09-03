@@ -365,7 +365,8 @@ describe('certificate detail action helpers', () => {
         'trace-1',
         {
           registrationType: 'DirectProducer',
-          environmentalRegulator: 'EA'
+          environmentalRegulator: 'EA',
+          businessCountry: 'GB-ENG'
         }
       )
 
@@ -384,7 +385,7 @@ describe('certificate detail action helpers', () => {
             parameters: {
               certOrStatement: 'certificate',
               certOrStatement_cy: 'tystysgrif',
-              regulator_cy: 'Asiantaeth yr Amgylchedd'
+              regulator: 'The Environment Agency'
             }
           }
         },

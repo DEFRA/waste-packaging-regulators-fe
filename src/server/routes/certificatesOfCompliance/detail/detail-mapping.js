@@ -113,6 +113,7 @@ function mapDeclarationContactFields(
     ),
     registrationType: organisation.registrationType,
     environmentalRegulator: organisation.regulator ?? null,
+    businessCountry: wasteOrganisation?.businessCountry ?? null,
     organisationRef: displayOrNoData(organisation.referenceNumber, locale),
     companiesHouseNumber: mapCompaniesHouseNumberFromWasteOrganisation(
       wasteOrganisation,
