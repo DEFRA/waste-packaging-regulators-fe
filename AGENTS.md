@@ -86,16 +86,16 @@ Two properties are load-bearing — keep them true:
 1. **One source of truth.** The list, detail, search and CSV surfaces are all
    projections of one canonical set of compliance records. A record is described
    once; the surfaces cannot disagree. Do **not** hand-author per-surface data.
-2. **Statefulness.** The obligations store holds in-memory approve/cancel overrides,
-   so approving or cancelling a certificate in the local UI moves it between the
-   Pending, Accepted and history views for the life of the process (it resets on
-   restart) — the same behaviour the deleted session-service mock gave.
+2. **Stateless.** The store is a read-only projection — no approve/cancel
+   transitions are persisted. The success banner after an accept/cancel is driven
+   by the session flag, not by mutated mock data. This makes every request
+   deterministic and parallel test runs safe — no reset-between-test bookkeeping.
 
 The fixtures are JavaScript, not flat JSON, on purpose: coverage %, recycling
 status, the tab a record lists under and the audit trail are **derived** from the
-one record set at request time, and the store applies transitions live. Static JSON
-would mean hand-writing each surface's response and keeping them in sync by hand —
-the drift the single source of truth exists to prevent.
+one record set at request time. Static JSON would mean hand-writing each surface's
+response and keeping them in sync by hand — the drift the single source of truth
+exists to prevent.
 
 ### Layout
 
@@ -106,7 +106,7 @@ mocks/
   backends.js            assembles the three backends + their combined handlers
   server.js              starts the in-process MSW server (startMockApi)
   <api>/fixtures.js      the raw data for that backend
-  <api>/store.js         in-memory store: query/lookup (+ approve/cancel for obligations)
+  <api>/store.js         read-only store: query/lookup — no mutations
   <api>/handlers.js      the MSW HTTP handlers, thin over the store
 ```
 
