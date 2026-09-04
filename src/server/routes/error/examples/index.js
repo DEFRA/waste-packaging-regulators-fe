@@ -13,7 +13,7 @@ const exampleStatusCodes = [
 ]
 
 /**
- * Preview routes for the error pages, registered outside production only.
+ * Preview routes for the error pages, registered when MOCK_DATA/useMockApi is true.
  * Gives design and QA a URL per page and drives the browser tests.
  *
  * Each example raises a real Boom error, so the page is produced by the same

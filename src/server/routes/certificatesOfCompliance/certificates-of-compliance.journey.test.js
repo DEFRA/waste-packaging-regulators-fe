@@ -364,17 +364,6 @@ describe('certificates of compliance — journey', () => {
       expect(detailsPage.banner.present).toBe(true)
       expect(detailsPage.banner.cancelled).toBe(true)
       expect(detailsPage.banner.heading).toBe('Certificate cancelled')
-      expect(detailsPage.cancellation.present).toBe(true)
-      expect(detailsPage.cancellation.statusLabel).toBe('Submission status')
-      expect(detailsPage.cancellation.statusTag).toEqual({
-        text: 'Cancelled',
-        colour: 'yellow'
-      })
-      // The cancelling regulator is the signed-in user resolved from the account API.
-      expect(detailsPage.cancellation.cancelledBy).toBe('John Doe')
-      expect(detailsPage.cancellation.reason).toBe(
-        'Producer requested to cancel'
-      )
     })
 
     it('compliance scheme cancel flow shows statement cancelled banner', async () => {
@@ -400,16 +389,6 @@ describe('certificates of compliance — journey', () => {
       expect(detailsPage.banner.heading).toBe('Statement cancelled')
       expect(detailsPage.banner.text).toBe(
         'Statement has been cancelled and an email sent to the compliance scheme.'
-      )
-      expect(detailsPage.cancellation.present).toBe(true)
-      expect(detailsPage.cancellation.statusLabel).toBe('Submission status')
-      expect(detailsPage.cancellation.statusTag).toEqual({
-        text: 'Cancelled',
-        colour: 'yellow'
-      })
-      expect(detailsPage.cancellation.cancelledBy).toBe('John Doe')
-      expect(detailsPage.cancellation.reason).toBe(
-        'Compliance scheme requested to cancel'
       )
     })
   })
@@ -534,37 +513,6 @@ describe('certificates of compliance — journey', () => {
       expect(detailsPage.banner.cancelled).toBe(false)
       expect(detailsPage.banner.heading).toBe('Certificate accepted')
       expect(detailsPage.banner.text).toBe('Certificate has been accepted.')
-      expect(detailsPage.accepted.present).toBe(true)
-      expect(detailsPage.accepted.statusLabel).toBe('Submission status')
-      expect(detailsPage.accepted.statusTag).toEqual({
-        text: 'Accepted',
-        colour: 'teal'
-      })
-      expect(detailsPage.accepted.acceptedBy).toBe('John Doe')
-      expect(detailsPage.accepted.acceptedDate).toBeTruthy()
-    })
-
-    it('an approved certificate leaves the Pending tab and appears on Accepted', async () => {
-      const yesResponse = await postAccept(
-        producer.detailPath,
-        'yes',
-        app.authCookie
-      )
-      const cookie = app.nextCookie(yesResponse, app.authCookie)
-
-      const pending = await app.server.inject({
-        method: 'GET',
-        url: '/certificates-of-compliance?type=direct-producers&tab=pending',
-        headers: { cookie }
-      })
-      expect(pending.payload).not.toContain(producer.name)
-
-      const accepted = await app.server.inject({
-        method: 'GET',
-        url: '/certificates-of-compliance?type=direct-producers&tab=accepted',
-        headers: { cookie }
-      })
-      expect(accepted.payload).toContain(producer.name)
     })
 
     it('"no" returns to detail without invoking the approve action', async () => {
@@ -615,53 +563,6 @@ describe('certificates of compliance — journey', () => {
       expect(detailsPage.banner.present).toBe(true)
       expect(detailsPage.banner.heading).toBe('Statement accepted')
       expect(detailsPage.banner.text).toBe('Statement has been accepted.')
-      expect(detailsPage.accepted.present).toBe(true)
-      expect(detailsPage.accepted.statusLabel).toBe('Submission status')
-      expect(detailsPage.accepted.acceptedBy).toBe('John Doe')
-    })
-
-    it('accept then cancel shows Accepted and Cancelled rows in current year', async () => {
-      const freshCookie = await app.signIn()
-
-      const acceptResponse = await postAccept(
-        producer.detailPath,
-        'yes',
-        freshCookie
-      )
-      expect(acceptResponse.statusCode).toBe(302)
-
-      let cookie = app.nextCookie(acceptResponse, freshCookie)
-      const cancelResponse = await cancelDeclaration(
-        producer.detailPath,
-        cookie
-      )
-      expect(cancelResponse.statusCode).toBe(302)
-
-      cookie = app.nextCookie(cancelResponse, cookie)
-      const detailResponse = await app.server.inject({
-        method: 'GET',
-        url: producer.detailPath,
-        headers: { cookie }
-      })
-
-      const { currentYear } = loadDetailPage(detailResponse.payload)
-      const rowActions = currentYear.rows.map((row) => row.action)
-      expect(rowActions).toContain('Accepted')
-      expect(rowActions).toContain('Cancelled')
-      expect(currentYear.rows.some((row) => row.by === 'John Doe')).toBe(true)
-      expect(currentYear.rows.every((row) => row.viewSubmissionUrl)).toBe(true)
-      expect(
-        currentYear.rows.every(
-          (row) => row.viewSubmissionUrl === producer.detailPath
-        )
-      ).toBe(true)
-
-      const linkedResponse = await app.server.inject({
-        method: 'GET',
-        url: currentYear.rows[0].viewSubmissionUrl,
-        headers: { cookie }
-      })
-      expect(linkedResponse.statusCode).toBe(200)
     })
   })
 
@@ -1485,6 +1386,77 @@ describe('certificates of compliance — journey', () => {
           ])
         }
       })
+    })
+  })
+
+  describe('mock statefulness — list must not change after accept or cancel', () => {
+    it('the pending list is unchanged after accepting a certificate', async () => {
+      const scenario = app.given([
+        { name: 'Stateless Test Producer', status: 'pending' }
+      ])
+      const org = scenario.byName('Stateless Test Producer')
+      const cookie = await app.signIn()
+
+      const pendingUrl =
+        '/certificates-of-compliance?type=direct-producers&tab=pending'
+      const acceptedUrl =
+        '/certificates-of-compliance?type=direct-producers&tab=accepted'
+
+      const before = await app.get(pendingUrl, cookie)
+      expect(before.statusCode).toBe(200)
+      // Org is in pending tab and the tab count shows 1
+      expect(before.result).toContain('Stateless Test Producer')
+      expect(before.result).toContain('Pending (1)')
+      expect(before.result).toContain('Accepted (0)')
+
+      const acceptResponse = await postForm(
+        `${org.detailPath}/accept`,
+        cookie,
+        'confirm-accept=yes'
+      )
+      expect(acceptResponse.statusCode).toBe(302)
+
+      const afterCookie = app.nextCookie(acceptResponse, cookie)
+
+      // Pending tab: org still listed, counts unchanged
+      const afterPending = await app.get(pendingUrl, afterCookie)
+      expect(afterPending.statusCode).toBe(200)
+      expect(afterPending.result).toContain('Stateless Test Producer')
+      expect(afterPending.result).toContain('Pending (1)')
+      expect(afterPending.result).toContain('Accepted (0)')
+
+      // Accepted tab: org has NOT moved there
+      const afterAccepted = await app.get(acceptedUrl, afterCookie)
+      expect(afterAccepted.statusCode).toBe(200)
+      expect(afterAccepted.result).not.toContain('Stateless Test Producer')
+    })
+
+    it('the pending list is unchanged after cancelling a certificate', async () => {
+      const scenario = app.given([
+        { name: 'Stateless Cancel Producer', status: 'pending' }
+      ])
+      const org = scenario.byName('Stateless Cancel Producer')
+      const cookie = await app.signIn()
+
+      const pendingUrl =
+        '/certificates-of-compliance?type=direct-producers&tab=pending'
+
+      const before = await app.get(pendingUrl, cookie)
+      expect(before.statusCode).toBe(200)
+      expect(before.result).toContain('Stateless Cancel Producer')
+      expect(before.result).toContain('Pending (1)')
+
+      const cancelResponse = await cancelDeclaration(org.detailPath, cookie)
+      expect(cancelResponse.statusCode).toBe(302)
+
+      // Pending tab: org still listed with the same count — not removed
+      const after = await app.get(
+        pendingUrl,
+        app.nextCookie(cancelResponse, cookie)
+      )
+      expect(after.statusCode).toBe(200)
+      expect(after.result).toContain('Stateless Cancel Producer')
+      expect(after.result).toContain('Pending (1)')
     })
   })
 })

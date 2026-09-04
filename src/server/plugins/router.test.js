@@ -11,6 +11,7 @@ import { certificatesOfComplianceDownload } from '../routes/certificatesOfCompli
 import { certificatesOfComplianceDetail } from '../routes/certificatesOfCompliance/detail/index.js'
 import { certificatesOfComplianceAccept } from '../routes/certificatesOfCompliance/accept/index.js'
 import { certificatesOfComplianceCancel } from '../routes/certificatesOfCompliance/cancel/index.js'
+import { errorExamples } from '../routes/error/examples/index.js'
 import { serveStaticFiles } from './serve-static-files.js'
 import { router } from './router.js'
 
@@ -29,11 +30,12 @@ function makeServer() {
  * All other keys fall through to the real config so module
  * initialisation (e.g. logger-options) is unaffected.
  */
-function spyConfig({ isProduction = false, isTest = false } = {}) {
+function spyConfig({ isProduction = false, isTest = false, useMockApi } = {}) {
   const real = config.get.bind(config)
   return vi.spyOn(config, 'get').mockImplementation((key) => {
     if (key === 'isProduction') return isProduction
     if (key === 'isTest') return isTest
+    if (key === 'useMockApi' && useMockApi !== undefined) return useMockApi
     return real(key)
   })
 }
@@ -84,6 +86,22 @@ describe('router plugin', () => {
       certificatesOfComplianceAccept,
       certificatesOfComplianceCancel
     ])
+  })
+
+  describe('error examples', () => {
+    it('registers errorExamples when useMockApi is true', async () => {
+      configSpy = spyConfig({ isTest: true, useMockApi: true })
+      const server = makeServer()
+      await router.plugin.register(server)
+      expect(server.register).toHaveBeenCalledWith([errorExamples])
+    })
+
+    it('does not register errorExamples when useMockApi is false', async () => {
+      configSpy = spyConfig({ isTest: true, useMockApi: false })
+      const server = makeServer()
+      await router.plugin.register(server)
+      expect(server.register).not.toHaveBeenCalledWith([errorExamples])
+    })
   })
 
   describe('static asset serving', () => {

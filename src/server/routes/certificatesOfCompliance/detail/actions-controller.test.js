@@ -108,27 +108,7 @@ describe('certificates of compliance detail action buttons', () => {
   }
 
   describe('approval (via the accept confirmation)', () => {
-    it('does not show the accepted banner when the declaration is already cancelled', async () => {
-      const cancelResponse = await cancelDeclaration()
-      const cookieAfterCancel = app.nextCookie(cancelResponse, app.authCookie)
-
-      const acceptResponse = await acceptDeclaration(cookieAfterCancel)
-
-      expect(acceptResponse.statusCode).toBe(302)
-      expect(acceptResponse.headers.location).toBe(detailUrl)
-
-      const detailResponse = await app.get(
-        detailUrl,
-        app.nextCookie(acceptResponse, cookieAfterCancel)
-      )
-
-      expect(detailResponse.payload).not.toContain('Certificate accepted')
-      expect(detailResponse.payload).not.toContain(
-        'Certificate has been accepted'
-      )
-    })
-
-    it('redirects to the detail page, shows the accepted banner, and hides accept based on API status', async () => {
+    it('redirects to the detail page and shows the accepted banner', async () => {
       const acceptResponse = await acceptDeclaration()
 
       expect(acceptResponse.statusCode).toBe(302)
@@ -142,14 +122,11 @@ describe('certificates of compliance detail action buttons', () => {
       expect(detailResponse.statusCode).toBe(statusCodes.ok)
       expect(detailResponse.payload).toContain('Certificate accepted')
       expect(detailResponse.payload).toContain('Certificate has been accepted.')
-      expect(detailResponse.payload).not.toContain('Accept certificate')
-      expect(detailResponse.payload).toContain('Cancel certificate')
-      expect(detailResponse.payload).toContain(`${detailUrl}/cancel/reason`)
     })
   })
 
   describe('cancel', () => {
-    it('redirects to the detail page, shows the cancelled banner, and hides the action buttons', async () => {
+    it('redirects to the detail page and shows the cancelled banner', async () => {
       const cancelResponse = await cancelDeclaration()
 
       expect(cancelResponse.statusCode).toBe(302)
@@ -168,29 +145,10 @@ describe('certificates of compliance detail action buttons', () => {
       expect(detailResponse.payload).toContain(
         'app-notification-banner--cancelled'
       )
-      expect(detailResponse.payload).not.toContain('Accept certificate')
-      expect(detailResponse.payload).not.toContain('Cancel certificate')
     })
   })
 
-  it('reflects API status on reload after the banner clears', async () => {
-    const approveResponse = await acceptDeclaration()
-    const cookieAfterApprove = app.nextCookie(approveResponse, app.authCookie)
-
-    const firstDetailResponse = await app.get(detailUrl, cookieAfterApprove)
-    expect(firstDetailResponse.payload).toContain('Certificate accepted')
-    expect(firstDetailResponse.payload).not.toContain('Accept certificate')
-
-    const secondDetailResponse = await app.get(
-      detailUrl,
-      app.nextCookie(firstDetailResponse, cookieAfterApprove)
-    )
-    expect(secondDetailResponse.payload).not.toContain('Certificate accepted')
-    expect(secondDetailResponse.payload).not.toContain('Accept certificate')
-    expect(secondDetailResponse.payload).toContain('Cancel certificate')
-  })
-
-  it('handles repeat approval idempotently without showing accept again', async () => {
+  it('handles repeat approval idempotently and still shows the accepted banner', async () => {
     const firstApproveResponse = await acceptDeclaration()
     const cookieAfterFirstApprove = app.nextCookie(
       firstApproveResponse,
@@ -211,7 +169,6 @@ describe('certificates of compliance detail action buttons', () => {
     )
 
     expect(detailResponse.payload).toContain('Certificate accepted')
-    expect(detailResponse.payload).not.toContain('Accept certificate')
   })
 
   it('clears the banner flag after it has been shown once', async () => {

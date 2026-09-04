@@ -20,12 +20,12 @@ This file explains the thinking, the structure, and how to work with it.
   search and CSV surfaces are all pure _projections_ of it, so they cannot disagree
   with each other. There is no per-surface data to keep in sync.
 
-- **Stateful, not static.** The store keeps approve/cancel transitions in memory,
-  so running the app locally is _interactive_: accept or cancel a certificate and
-  watch it move between states — Pending, Accepted, current-year history — within
-  the session, exactly as a live backend would. That cross-state local testing is
-  the whole reason the mock is a store rather than flat JSON fixtures. (State
-  resets on restart, or on demand via `POST /mock/reset` — see below.)
+- **Stateless, not static.** The store is a read-only projection of the fixture
+  records — no approve/cancel transitions are persisted. Accept or cancel a
+  certificate and the response returns the same fixture data; the session flag
+  drives the success banner, but the mock data does not change. This keeps the
+  mock deterministic: every request sees the same records, which makes parallel
+  test runs safe and eliminates reset-between-test bookkeeping.
 
 - **Dev-only, and scoped as such.** The layer is excluded from the production build
   and from SonarCloud analysis — its fixtures use "magic" numbers and repeated
@@ -43,7 +43,7 @@ mocks/
   server.js            starts the in-process MSW server (startMockApi)
   <api>/
     fixtures.js        the canonical records/data for that backend
-    store.js           in-memory store: lookup, history, listing query + approve/cancel state
+    store.js           read-only store: lookup, history query, and listing query — no mutations
     handlers.js        the MSW HTTP handlers, thin over the store
 
   waste-obligations/   additionally splits the store's supporting concerns into
@@ -57,8 +57,8 @@ mocks/
 
 1. `fixtures.js` holds one record per organisation-declaration.
 2. `declaration.js` projects a record into the raw API declaration shape.
-3. `store.js` composes those projections with the `query.js` semantics and its
-   in-memory approve/cancel state.
+3. `store.js` composes those projections with the `query.js` semantics into
+   read-only lookup, history and listing operations.
 4. `handlers.js` exposes the store over the backend's HTTP routes.
 5. `backends.js` assembles the three backends; `server.js` starts MSW with them.
 
@@ -68,28 +68,6 @@ mocks/
 - `MOCK_ERROR_STATUS=<http status>` makes every mocked call return that status
   instead of data, to walk a journey into the real error pages without a failing
   backend.
-
-## Resetting state
-
-The store is a single process-wide instance, so approve/cancel mutations persist
-across requests for the life of the process. A mock-only route clears them:
-
-```bash
-# `npm run dev` serves HTTPS with a self-signed cert, so -k skips verification
-# (the containerised mock used by the journey tests serves plain HTTP instead):
-curl -k -X POST https://localhost:3000/mock/reset   # 204 No Content
-```
-
-`POST /mock/reset` (registered by the router only under `MOCK_API=true`,
-unauthenticated and CSRF-exempt) restores the base fixtures and responds
-`204 No Content`. The journey-test suite calls it before each mutating test so every
-test starts from the same pending records; because the reset is process-wide, those
-tests must run serially.
-
-This reset hook is an interim measure. The process-wide store fundamentally fights
-parallel testing, and the intended direction is a fully stateless mock — see
-https://github.com/DEFRA/waste-packaging-regulators-fe/pull/84 — after which the
-reset endpoint and the per-test reset can be removed.
 
 ## Changing the data and writing tests
 

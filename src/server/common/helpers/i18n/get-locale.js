@@ -11,14 +11,16 @@ export function getLocale(request) {
     return queryLocale
   }
 
-  try {
-    const sessionLocale = normaliseLocale(request?.yar?.get('authLocale'))
+  if (request?.yar?._store !== null) {
+    try {
+      const sessionLocale = normaliseLocale(request.yar.get('authLocale'))
 
-    if (isSupportedLocale(sessionLocale)) {
-      return sessionLocale
+      if (isSupportedLocale(sessionLocale)) {
+        return sessionLocale
+      }
+    } catch (error) {
+      console.warn('Failed to read authLocale from session', error)
     }
-  } catch (error) {
-    console.warn('Failed to read authLocale from session', error)
   }
 
   const headerLocale = normaliseLocale(
