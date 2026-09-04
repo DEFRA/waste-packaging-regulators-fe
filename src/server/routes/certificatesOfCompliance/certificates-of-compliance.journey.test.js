@@ -1388,4 +1388,75 @@ describe('certificates of compliance — journey', () => {
       })
     })
   })
+
+  describe('mock statefulness — list must not change after accept or cancel', () => {
+    it('the pending list is unchanged after accepting a certificate', async () => {
+      const scenario = app.given([
+        { name: 'Stateless Test Producer', status: 'pending' }
+      ])
+      const org = scenario.byName('Stateless Test Producer')
+      const cookie = await app.signIn()
+
+      const pendingUrl =
+        '/certificates-of-compliance?type=direct-producers&tab=pending'
+      const acceptedUrl =
+        '/certificates-of-compliance?type=direct-producers&tab=accepted'
+
+      const before = await app.get(pendingUrl, cookie)
+      expect(before.statusCode).toBe(200)
+      // Org is in pending tab and the tab count shows 1
+      expect(before.result).toContain('Stateless Test Producer')
+      expect(before.result).toContain('Pending (1)')
+      expect(before.result).toContain('Accepted (0)')
+
+      const acceptResponse = await postForm(
+        `${org.detailPath}/accept`,
+        cookie,
+        'confirm-accept=yes'
+      )
+      expect(acceptResponse.statusCode).toBe(302)
+
+      const afterCookie = app.nextCookie(acceptResponse, cookie)
+
+      // Pending tab: org still listed, counts unchanged
+      const afterPending = await app.get(pendingUrl, afterCookie)
+      expect(afterPending.statusCode).toBe(200)
+      expect(afterPending.result).toContain('Stateless Test Producer')
+      expect(afterPending.result).toContain('Pending (1)')
+      expect(afterPending.result).toContain('Accepted (0)')
+
+      // Accepted tab: org has NOT moved there
+      const afterAccepted = await app.get(acceptedUrl, afterCookie)
+      expect(afterAccepted.statusCode).toBe(200)
+      expect(afterAccepted.result).not.toContain('Stateless Test Producer')
+    })
+
+    it('the pending list is unchanged after cancelling a certificate', async () => {
+      const scenario = app.given([
+        { name: 'Stateless Cancel Producer', status: 'pending' }
+      ])
+      const org = scenario.byName('Stateless Cancel Producer')
+      const cookie = await app.signIn()
+
+      const pendingUrl =
+        '/certificates-of-compliance?type=direct-producers&tab=pending'
+
+      const before = await app.get(pendingUrl, cookie)
+      expect(before.statusCode).toBe(200)
+      expect(before.result).toContain('Stateless Cancel Producer')
+      expect(before.result).toContain('Pending (1)')
+
+      const cancelResponse = await cancelDeclaration(org.detailPath, cookie)
+      expect(cancelResponse.statusCode).toBe(302)
+
+      // Pending tab: org still listed with the same count — not removed
+      const after = await app.get(
+        pendingUrl,
+        app.nextCookie(cancelResponse, cookie)
+      )
+      expect(after.statusCode).toBe(200)
+      expect(after.result).toContain('Stateless Cancel Producer')
+      expect(after.result).toContain('Pending (1)')
+    })
+  })
 })

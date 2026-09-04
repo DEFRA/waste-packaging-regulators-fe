@@ -36,8 +36,8 @@ export const router = {
         certificatesOfComplianceCancel
       ])
 
-      // Error page previews for design and QA — never exposed in production
-      if (!config.get('isProduction')) {
+      // Error page previews for design and QA — only enabled when mock data is active
+      if (config.get('useMockApi')) {
         await server.register([errorExamples])
       }
 
