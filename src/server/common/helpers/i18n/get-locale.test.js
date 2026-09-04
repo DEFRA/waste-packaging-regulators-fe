@@ -53,6 +53,14 @@ describe('getLocale', () => {
     expect(getLocale({ query: {}, headers: {} })).toBe('en')
   })
 
+  test('skips session read when yar has not been initialised (_store is null)', () => {
+    // Reproduces the maintenance-mode scenario: maintenance plugin intercepts at
+    // onRequest before yar's onPreAuth initialises _store, leaving _store as null.
+    const yar = { _store: null, get: vi.fn() }
+    expect(getLocale(mockRequest({ yar }))).toBe('en')
+    expect(yar.get).not.toHaveBeenCalled()
+  })
+
   test('logs when reading authLocale from session fails', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const yar = {
