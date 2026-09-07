@@ -1,3 +1,4 @@
+import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import {
   BELL_AZURE_AD_B2C_COOKIE,
@@ -5,6 +6,7 @@ import {
   getB2cAuthorityPrefix,
   resolvePostLogoutAbsoluteUri
 } from '#server/auth/azure-ad-b2c.js'
+import { isRegulator } from '#server/auth/regulator-access.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { createAccountApiService } from '#services/account-api.service.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
@@ -88,6 +90,11 @@ export const signinOidcController = {
       const user = await apiAccount.getAccountDetailsById(
         request.auth.credentials.profile.oid
       )
+      if (!isRegulator(user)) {
+        request.yar.clear('returnTo')
+        clearAuthLocale(request)
+        return Boom.forbidden('User does not hold a regulator service role')
+      }
       user.id = request.auth.credentials.profile.oid
       user.email = request.auth.credentials.profile.email
       user.name = `${user.firstName} ${user.lastName}`
