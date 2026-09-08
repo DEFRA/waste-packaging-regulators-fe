@@ -57,6 +57,15 @@ describe('#maintenance', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
+    test('Should keep the health/all check available', async () => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/health/all'
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
     test('Should not shutter static assets', async () => {
       const { statusCode } = await server.inject({
         method: 'GET',
