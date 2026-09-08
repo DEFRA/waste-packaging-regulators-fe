@@ -747,6 +747,72 @@ describe('#certificatesOfComplianceController', () => {
           )
         )
       })
+
+      // A superseded submission keeps a status of its own, and no tab lists it,
+      // so search is the only place it surfaces. Filtering by the tab a record
+      // sits in instead of by its status silently dropped the accepted row here.
+      const WITH_SUPERSEDED = [
+        {
+          name: 'Ashwell Producers Ltd',
+          organisationId: 'org-ashwell',
+          reference: '100911',
+          status: 'accepted',
+          listed: false,
+          dateSubmitted: '2026-02-13'
+        },
+        {
+          name: 'Ashwell Producers Ltd',
+          organisationId: 'org-ashwell',
+          reference: '100911',
+          status: 'cancelled',
+          dateSubmitted: '2026-05-22'
+        },
+        {
+          name: 'Ashwell Producers Ltd',
+          organisationId: 'org-ashwell',
+          reference: '100911',
+          status: 'pending',
+          dateSubmitted: '2027-01-31'
+        }
+      ]
+
+      test('Should include a superseded accepted submission', async () => {
+        app.given(WITH_SUPERSEDED)
+        const { result } = await searchFor('Ashwell Producers Ltd')
+        const $ = load(result)
+        const rows = $('table').first().find('tbody tr')
+
+        expect($('body').text()).toContain('3 results for')
+        expect(rows).toHaveLength(3)
+        expect(rows.eq(0).text()).toContain('Pending')
+        expect(rows.eq(1).text()).toContain('Cancelled')
+        expect(rows.eq(2).text()).toContain('Accepted')
+      })
+
+      // The same producer as the regulator meets it: one live submission, and the
+      // earlier ones behind the detail page's current-year history. Those history
+      // declarations carry only a created timestamp, so they sort on that.
+      test('Should return a row per submission for a producer with history', async () => {
+        app.given([
+          {
+            name: 'Ashwell Producers Ltd',
+            status: 'pending',
+            dateSubmitted: '2027-01-31',
+            history: [
+              { status: 'accepted', at: '2026-02-13T09:42:00Z' },
+              { status: 'cancelled', at: '2026-05-22T14:18:00Z' }
+            ]
+          }
+        ])
+        const { result } = await searchFor('Ashwell Producers Ltd')
+        const $ = load(result)
+        const rows = $('table').first().find('tbody tr')
+
+        expect($('body').text()).toContain('3 results for')
+        expect(rows.eq(0).text()).toContain('Pending')
+        expect(rows.eq(1).text()).toContain('Cancelled')
+        expect(rows.eq(2).text()).toContain('Accepted')
+      })
     })
 
     test('Should show Percentage met and no Date submitted for direct producers', async () => {

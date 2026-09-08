@@ -4,44 +4,18 @@
 
 import { listOrganisationName } from './declaration.js'
 
-export const SUBMISSION_STATUS_BY_DECLARATION_STATUS = {
-  Submitted: 'pending',
-  Accepted: 'accepted'
-}
-
-// The submission-status listings matching a `status` query param, which may be a
-// single declaration status or a comma-separated list (e.g. "Submitted,Accepted").
-export function submissionStatusesForQuery(statusParam) {
-  if (!statusParam) {
-    return []
-  }
-  return statusParam
-    .split(',')
-    .map((status) => SUBMISSION_STATUS_BY_DECLARATION_STATUS[status.trim()])
-    .filter(Boolean)
-}
-
-// Builds the predicate for a `status` query param. Submitted and Accepted name
-// listings, so they match on the listing a record surfaces in. Cancelled has no
-// listing of its own — a cancelled declaration belongs to no tab and is only
-// reachable through search — so it matches on the declaration status instead,
-// which also picks up records cancelled through the mock at runtime.
+// Builds the predicate for a `status` query param, which may be a single
+// declaration status or a comma-separated list (e.g. "Submitted,Accepted"). It
+// matches a declaration's own status, exactly as the real backend filters, so an
+// organisation gets every declaration it holds — a superseded submission that no
+// tab lists is still returned, and a search finds a row per submission.
 export function statusMatcherForQuery(statusParam) {
   const requested = (statusParam ?? '')
     .split(',')
     .map((status) => status.trim())
     .filter(Boolean)
 
-  const submissionStatuses = requested
-    .map((status) => SUBMISSION_STATUS_BY_DECLARATION_STATUS[status])
-    .filter(Boolean)
-  const declarationStatuses = requested.filter(
-    (status) => !SUBMISSION_STATUS_BY_DECLARATION_STATUS[status]
-  )
-
-  return (record) =>
-    submissionStatuses.includes(record.submissionStatus) ||
-    declarationStatuses.includes(record.declarationStatus)
+  return (record) => requested.includes(record.declarationStatus)
 }
 
 export function recordSearchText(record) {
@@ -56,10 +30,13 @@ export function recordSearchText(record) {
     .toLowerCase()
 }
 
+// DateSubmitted sorts on the declaration's created timestamp, which is what the
+// real backend orders by (and the only date toDeclaration projects), so every
+// declaration sorts — including one recorded without a dateSubmitted of its own.
 function sortFieldFor(column, record) {
   switch (column) {
     case 'DateSubmitted':
-      return record.dateSubmitted
+      return record.created
     case 'OrganisationName':
       return listOrganisationName(record)
     case 'OrganisationId':
@@ -71,7 +48,7 @@ function sortFieldFor(column, record) {
     case 'Regulation43':
       return record.isRegulation43Compliant
     default:
-      return record.dateSubmitted
+      return record.created
   }
 }
 
