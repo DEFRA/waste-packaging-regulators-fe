@@ -37,7 +37,7 @@ const mockAccountDetails = {
   lastName: 'Smith',
   organisationName: 'Test Agency',
   serviceRole: 'Regulator Admin',
-  serviceRoleId: 2,
+  serviceRoleId: 4,
   contactEmail: 'jane.smith@test.gov.uk',
   nationId: 1
 }
@@ -201,6 +201,58 @@ describe('signinOidcController', () => {
       )
 
       expect(yar.clear).toHaveBeenCalledWith('authLocale')
+    })
+  })
+
+  describe('without a regulator service role', () => {
+    const nonRegulatorAccount = {
+      firstName: 'Percy',
+      lastName: 'Producer',
+      serviceRole: 'Basic User',
+      serviceRoleId: 3
+    }
+
+    it('responds with 403 forbidden for a non-regulator account', async () => {
+      mockGetAccountDetailsById.mockResolvedValue(nonRegulatorAccount)
+      const result = await signinOidcController.handler(
+        { auth: { credentials }, yar: makeYar() },
+        makeH()
+      )
+
+      expect(result.isBoom).toBe(true)
+      expect(result.output.statusCode).toBe(403)
+    })
+
+    it('responds with 403 forbidden when the account lookup returns no details', async () => {
+      mockGetAccountDetailsById.mockResolvedValue({})
+      const result = await signinOidcController.handler(
+        { auth: { credentials }, yar: makeYar() },
+        makeH()
+      )
+
+      expect(result.output.statusCode).toBe(403)
+    })
+
+    it('does not store a user in the session for a non-regulator', async () => {
+      mockGetAccountDetailsById.mockResolvedValue(nonRegulatorAccount)
+      const yar = makeYar()
+      await signinOidcController.handler(
+        { auth: { credentials }, yar },
+        makeH()
+      )
+
+      expect(yar.set).not.toHaveBeenCalledWith('user', expect.anything())
+    })
+
+    it('does not redirect a non-regulator into the service', async () => {
+      mockGetAccountDetailsById.mockResolvedValue(nonRegulatorAccount)
+      const h = makeH()
+      await signinOidcController.handler(
+        { auth: { credentials }, yar: makeYar() },
+        h
+      )
+
+      expect(h.redirect).not.toHaveBeenCalled()
     })
   })
 
