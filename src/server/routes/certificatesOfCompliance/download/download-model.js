@@ -50,7 +50,7 @@ function dataRow(item, isComplianceScheme, includeDateSubmitted) {
 // Downloads are ordered by organisation name (A-Z), regardless of the order the
 // list and declaration APIs return rows in.
 function byOrganisationName(a, b) {
-  return (a.organisationName ?? '').localeCompare(b.organisationName ?? '')
+  return a.organisationName.localeCompare(b.organisationName)
 }
 
 function documentNounSingular(organisationType) {
