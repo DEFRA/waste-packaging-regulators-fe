@@ -1389,6 +1389,98 @@ describe('certificates of compliance — journey', () => {
     })
   })
 
+  describe('CSV download ordering', () => {
+    // Each type + status group is seeded reverse-alphabetically so a download
+    // that preserved the API order would fail the A-Z assertion.
+    beforeEach(() => {
+      app.given([
+        { name: 'Delta Producers Ltd', status: 'pending' },
+        { name: 'Alpha Producers Ltd', status: 'pending' },
+        { name: 'Sierra Producers Ltd', status: 'accepted' },
+        { name: 'Papa Producers Ltd', status: 'accepted' },
+        { name: 'Zulu Producers Ltd', status: 'not-submitted' },
+        { name: 'Foxtrot Producers Ltd', status: 'not-submitted' },
+        {
+          name: 'Delta Compliance Operators',
+          type: 'compliance-scheme',
+          status: 'pending'
+        },
+        {
+          name: 'Alpha Compliance Operators',
+          type: 'compliance-scheme',
+          status: 'pending'
+        },
+        {
+          name: 'Sierra Compliance Operators',
+          type: 'compliance-scheme',
+          status: 'accepted'
+        },
+        {
+          name: 'Papa Compliance Operators',
+          type: 'compliance-scheme',
+          status: 'accepted'
+        },
+        {
+          name: 'Zulu Compliance Operators',
+          type: 'compliance-scheme',
+          status: 'not-submitted'
+        },
+        {
+          name: 'Foxtrot Compliance Operators',
+          type: 'compliance-scheme',
+          status: 'not-submitted'
+        }
+      ])
+    })
+
+    it.each([
+      [
+        'direct-producers',
+        'pending',
+        ['Alpha Producers Ltd', 'Delta Producers Ltd']
+      ],
+      [
+        'direct-producers',
+        'accepted',
+        ['Papa Producers Ltd', 'Sierra Producers Ltd']
+      ],
+      [
+        'direct-producers',
+        'not-submitted',
+        ['Foxtrot Producers Ltd', 'Zulu Producers Ltd']
+      ],
+      [
+        'compliance-schemes',
+        'pending',
+        ['Alpha Compliance Operators', 'Delta Compliance Operators']
+      ],
+      [
+        'compliance-schemes',
+        'accepted',
+        ['Papa Compliance Operators', 'Sierra Compliance Operators']
+      ],
+      [
+        'compliance-schemes',
+        'not-submitted',
+        ['Foxtrot Compliance Operators', 'Zulu Compliance Operators']
+      ]
+    ])(
+      'orders %s %s rows by organisation name (A-Z)',
+      async (organisationType, submissionStatus, expectedNames) => {
+        const response = await app.get(
+          `/certificates-of-compliance/download?organisation_type=${organisationType}&submission_status=${submissionStatus}`
+        )
+
+        expect(response.statusCode).toBe(statusCodes.ok)
+        const { rows } = loadCsv(response.payload)
+
+        expect(rows.map((row) => row['Organisation name'])).toEqual(
+          expectedNames
+        )
+      }
+    )
+  })
+
   describe('mock statefulness — list must not change after accept or cancel', () => {
     it('the pending list is unchanged after accepting a certificate', async () => {
       const scenario = app.given([
