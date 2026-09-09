@@ -39,5 +39,17 @@
         "next": "Nesaf"
       }
     }
+  },
+  "certificatesOfCompliance": {
+    "cancel": {
+      "notificationParameters": {
+        "directProducer": {
+          "certOrStatement": "tystysgrif"
+        },
+        "complianceScheme": {
+          "certOrStatement": "datganiad"
+        }
+      }
+    }
   }
 }

@@ -328,6 +328,18 @@
           "invalidReason": "The selected cancellation reason is not valid.",
           "notifyNotConfigured": "The cancellation email preview is unavailable because GOV.UK Notify is not configured for this environment."
         }
+      },
+      "notificationParameters": {
+        "directProducer": {
+          "certOrStatement": "certificate",
+          "certOrStatementBullet": "acquire enough packaging waste recycling notes (PRNs) or packaging waste export recycling notes (PERNs) to meet your recycling obligations",
+          "certOrStatementBullet2": "acquire enough packaging waste recycling notes (PRNs) or packaging waste export recycling notes (PERNs) to meet your revised recycling obligations"
+        },
+        "complianceScheme": {
+          "certOrStatement": "statement",
+          "certOrStatementBullet": "meet your recycling obligations",
+          "certOrStatementBullet2": "meet your revised recycling obligations"
+        }
       }
     }
   }

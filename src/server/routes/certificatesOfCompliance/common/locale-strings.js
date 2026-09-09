@@ -98,6 +98,21 @@ export function translateComplianceTypeLabel(
   })
 }
 
+export function translateCancellationNotificationField(
+  registrationType,
+  field,
+  locale
+) {
+  const regKey =
+    registrationType === 'ComplianceScheme'
+      ? 'complianceScheme'
+      : 'directProducer'
+  return translateCoc(
+    locale,
+    `cancel.notificationParameters.${regKey}.${field}`
+  )
+}
+
 export function translateRegulation43Statement(
   regulation43Met,
   organisationName,
