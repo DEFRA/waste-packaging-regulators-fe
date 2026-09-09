@@ -2,7 +2,7 @@
 export const cancellationEmailTemplateIds = {
   notSignedByCorrectPerson: {
     en: '1502cfa2-9758-4410-b189-d1f95a7c774f',
-    cy: 'aeb23548-dcac-48ef-8f2a-431628cf4146'
+    cy: '7cab1c5e-9edf-4139-b3fd-3db4bcf3041d'
   },
   recyclingObligationsChanged: {
     en: 'af2796ff-c322-4c3c-ab46-926a86129abf',
