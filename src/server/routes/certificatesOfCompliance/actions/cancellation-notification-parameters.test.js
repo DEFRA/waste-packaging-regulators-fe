@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest'
 
 import {
+  expectedComplianceSchemeNotifyFields,
+  expectedDirectProducerNotifyFields
+} from '#test-helpers/cancellation-notification-parameters.expected.js'
+import {
   buildCancellationNotificationParameters,
   mapEnvironmentalRegulatorDisplay
 } from './cancellation-notification-parameters.js'
@@ -36,8 +40,7 @@ describe('buildCancellationNotificationParameters', () => {
         businessCountry: 'GB-ENG'
       })
     ).toEqual({
-      certOrStatement: 'certificate',
-      certOrStatement_cy: 'tystysgrif',
+      ...expectedDirectProducerNotifyFields(),
       regulator: 'The Environment Agency'
     })
   })
@@ -50,8 +53,7 @@ describe('buildCancellationNotificationParameters', () => {
         businessCountry: 'GB-SCT'
       })
     ).toEqual({
-      certOrStatement: 'certificate',
-      certOrStatement_cy: 'tystysgrif',
+      ...expectedDirectProducerNotifyFields(),
       regulator: 'The Scottish Environment Protection Agency'
     })
   })
@@ -64,8 +66,7 @@ describe('buildCancellationNotificationParameters', () => {
         businessCountry: 'GB-WLS'
       })
     ).toEqual({
-      certOrStatement: 'certificate',
-      certOrStatement_cy: 'tystysgrif',
+      ...expectedDirectProducerNotifyFields(),
       regulator: 'Natural Resources Wales',
       regulator_cy: 'Cyfoeth Naturiol Cymru'
     })
@@ -79,8 +80,7 @@ describe('buildCancellationNotificationParameters', () => {
         businessCountry: 'GB-WLS'
       })
     ).toEqual({
-      certOrStatement: 'certificate',
-      certOrStatement_cy: 'tystysgrif',
+      ...expectedDirectProducerNotifyFields(),
       regulator: 'The Environment Agency'
     })
   })
@@ -93,8 +93,7 @@ describe('buildCancellationNotificationParameters', () => {
         businessCountry: 'GB-WLS'
       })
     ).toEqual({
-      certOrStatement: 'statement',
-      certOrStatement_cy: 'datganiad',
+      ...expectedComplianceSchemeNotifyFields(),
       regulator: 'Natural Resources Wales',
       regulator_cy: 'Cyfoeth Naturiol Cymru'
     })

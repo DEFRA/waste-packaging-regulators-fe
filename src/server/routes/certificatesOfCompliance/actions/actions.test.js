@@ -33,6 +33,7 @@ import {
   mapSessionUserToApiUser,
   approveComplianceDeclaration
 } from './approve.service.js'
+import { expectedDirectProducerNotifyFields } from '#test-helpers/cancellation-notification-parameters.expected.js'
 import { cancelComplianceDeclaration } from './cancel.service.js'
 
 describe('certificate detail action helpers', () => {
@@ -383,8 +384,7 @@ describe('certificate detail action helpers', () => {
           },
           notification: {
             parameters: {
-              certOrStatement: 'certificate',
-              certOrStatement_cy: 'tystysgrif',
+              ...expectedDirectProducerNotifyFields(),
               regulator: 'The Environment Agency'
             }
           }

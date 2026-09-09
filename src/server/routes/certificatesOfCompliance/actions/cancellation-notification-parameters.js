@@ -1,4 +1,4 @@
-import { isComplianceSchemeRegistrationType } from '../common/display.js'
+import { translateCancellationNotificationField } from '../common/locale-strings.js'
 import { isWelshOrganisation } from '../cancel/cancellation-email-templates.js'
 
 const THE_ENVIRONMENT_AGENCY = 'The Environment Agency'
@@ -15,6 +15,12 @@ const REGULATOR_DISPLAY_EN = {
   NIEA: THE_NORTHERN_IRELAND_ENVIRONMENT_AGENCY,
   NRW: NATURAL_RESOURCES_WALES
 }
+
+const NOTIFY_PERSONALISATION_FIELDS = [
+  'certOrStatement',
+  'certOrStatementBullet',
+  'certOrStatementBullet2'
+]
 
 export function mapEnvironmentalRegulatorDisplay(environmentalRegulator) {
   if (environmentalRegulator == null || environmentalRegulator === '') {
@@ -34,16 +40,32 @@ function shouldIncludeRegulatorCy(businessCountry, environmentalRegulator) {
   )
 }
 
+function buildNotifyPersonalisationFields(registrationType) {
+  const personalisation = {}
+
+  for (const field of NOTIFY_PERSONALISATION_FIELDS) {
+    personalisation[field] = translateCancellationNotificationField(
+      registrationType,
+      field,
+      'en'
+    )
+    personalisation[`${field}_cy`] = translateCancellationNotificationField(
+      registrationType,
+      field,
+      'cy'
+    )
+  }
+
+  return personalisation
+}
+
 export function buildCancellationNotificationParameters({
   registrationType,
   environmentalRegulator,
   businessCountry
 } = {}) {
-  const complianceScheme = isComplianceSchemeRegistrationType(registrationType)
-
   const parameters = {
-    certOrStatement: complianceScheme ? 'statement' : 'certificate',
-    certOrStatement_cy: complianceScheme ? 'datganiad' : 'tystysgrif',
+    ...buildNotifyPersonalisationFields(registrationType),
     regulator: mapEnvironmentalRegulatorDisplay(environmentalRegulator)
   }
 
