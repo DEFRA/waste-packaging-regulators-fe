@@ -47,6 +47,12 @@ function dataRow(item, isComplianceScheme, includeDateSubmitted) {
   return row
 }
 
+// Downloads are ordered by organisation name (A-Z), regardless of the order the
+// list and declaration APIs return rows in.
+function byOrganisationName(a, b) {
+  return a.organisationName.localeCompare(b.organisationName)
+}
+
 function documentNounSingular(organisationType) {
   return organisationType === COMPLIANCE_SCHEMES
     ? 'statement of compliance'
@@ -112,9 +118,9 @@ export function buildComplianceCsv({
     [buildDownloadTitle(organisationType, submissionStatus, now)]
   ]
 
-  const rows = items.map((item) =>
-    dataRow(item, isComplianceScheme, includeDateSubmitted)
-  )
+  const rows = [...items]
+    .sort(byOrganisationName)
+    .map((item) => dataRow(item, isComplianceScheme, includeDateSubmitted))
 
   const csv =
     titleStringifier.stringifyRecords(titleRow) +
