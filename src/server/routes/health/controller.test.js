@@ -6,11 +6,35 @@ vi.mock('./health.service.js', () => ({
   runHealthChecks: vi.fn()
 }))
 
-import { healthController } from './controller.js'
+import { healthAllController } from './controller.js'
 import { runHealthChecks } from './health.service.js'
 import { config } from '#config/config.js'
 
-describe('#healthController', () => {
+describe('/health', () => {
+  let server
+
+  beforeAll(async () => {
+    server = await createServer()
+    await server.initialize()
+  })
+
+  afterAll(async () => {
+    await server.stop({ timeout: 0 })
+  })
+
+  test('returns 200 success without calling any external checks', async () => {
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/health'
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toEqual({ message: 'success' })
+    expect(runHealthChecks).not.toHaveBeenCalled()
+  })
+})
+
+describe('/health/all', () => {
   let server
 
   beforeAll(async () => {
@@ -25,7 +49,7 @@ describe('#healthController', () => {
   test('returns success without running checks when useMockApi is true', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/health'
+      url: '/health/all'
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -34,7 +58,7 @@ describe('#healthController', () => {
   })
 })
 
-describe('healthController handler (non-mock mode)', () => {
+describe('healthAllController handler (non-mock mode)', () => {
   const h = { response: vi.fn() }
 
   beforeEach(() => {
@@ -60,7 +84,7 @@ describe('healthController handler (non-mock mode)', () => {
       checks
     })
 
-    await healthController.handler({}, h)
+    await healthAllController.handler({}, h)
 
     expect(runHealthChecks).toHaveBeenCalledOnce()
     expect(h.response).toHaveBeenCalledWith({ message: 'success', checks })
@@ -80,7 +104,7 @@ describe('healthController handler (non-mock mode)', () => {
     const responseObj = { code: vi.fn().mockReturnThis() }
     h.response.mockReturnValue(responseObj)
 
-    await healthController.handler({}, h)
+    await healthAllController.handler({}, h)
 
     expect(h.response).toHaveBeenCalledWith({ message: 'degraded', checks })
     expect(responseObj.code).toHaveBeenCalledWith(statusCodes.ok)

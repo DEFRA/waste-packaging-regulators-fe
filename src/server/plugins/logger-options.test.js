@@ -16,6 +16,10 @@ describe('loggerOptions', () => {
       expect(loggerOptions.ignorePaths).toContain('/health')
     })
 
+    it('ignores the /health/all path', () => {
+      expect(loggerOptions.ignorePaths).toContain('/health/all')
+    })
+
     it('enables nesting', () => {
       expect(loggerOptions.nesting).toBe(true)
     })
