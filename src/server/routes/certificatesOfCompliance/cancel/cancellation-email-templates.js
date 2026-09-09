@@ -2,19 +2,19 @@
 export const cancellationEmailTemplateIds = {
   notSignedByCorrectPerson: {
     en: '1502cfa2-9758-4410-b189-d1f95a7c774f',
-    cy: '7cab1c5e-9edf-4139-b3fd-3db4bcf3041d'
+    cy: 'aeb23548-dcac-48ef-8f2a-431628cf4146'
   },
   recyclingObligationsChanged: {
-    en: '857808d4-d159-421e-92b6-bf9d59711a9e',
-    cy: '0a966633-b7ad-42dd-b286-af0cb2405ed2'
+    en: 'af2796ff-c322-4c3c-ab46-926a86129abf',
+    cy: '0e041d31-3f21-45b3-8605-ed2ef10a4358'
   },
   canMeetRecyclingObligations: {
-    en: 'aa63e6d0-cea6-4f70-8d0f-266199c6ca45',
-    cy: '308e7224-0ab1-4f54-8e8d-1558c9c57a77'
+    en: '86345150-cb25-4b59-94c3-578bed7e82d4',
+    cy: 'a2662ff5-5663-4d72-9ac2-60c578bf9fb0'
   },
   producerRequested: {
-    en: '42273ea5-a702-4fe1-982f-9e002de2522b',
-    cy: 'e419a544-e1b3-4ea5-b8eb-a074e63aea1a'
+    en: '3e03c93f-955c-4db3-936c-bfa3f7725a5f',
+    cy: 'd2f5f617-db32-4195-a091-de2d3ec29456'
   }
 }
 
