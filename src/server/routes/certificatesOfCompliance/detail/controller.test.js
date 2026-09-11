@@ -166,12 +166,11 @@ describe('#certificatesOfComplianceDetailController', () => {
   })
 
   it('should redirect to /signin-oidc when unauthenticated', async () => {
-    const response = await app.server.inject({
-      method: 'GET',
-      url: pendingDp.detailPath
-    })
+    const response = await app.get(pendingDp.detailPath, null)
     expect(response.statusCode).toBe(302)
-    expect(response.headers.location).toBe('/signin-oidc')
+    expect(response.headers.location).toBe(
+      '/certificates-of-compliance/signin-oidc'
+    )
   })
 
   it.each([

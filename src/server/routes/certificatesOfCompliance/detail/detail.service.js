@@ -10,7 +10,13 @@ import { getDeclarationDetail } from './detail-fetch.service.js'
 export async function getCertificateOfComplianceDetailViewModel(
   organisationId,
   id,
-  { traceId, bannerFlags = {}, obligationYear, locale = 'en' } = {}
+  {
+    traceId,
+    bannerFlags = {},
+    obligationYear,
+    locale = 'en',
+    routePrefix = ''
+  } = {}
 ) {
   const obligationsApi = createWasteObligationsApiService()
   const organisationsApi = createWasteOrganisationsApiService()
@@ -22,7 +28,7 @@ export async function getCertificateOfComplianceDetailViewModel(
     accountApi,
     organisationId,
     id,
-    { traceId, obligationYear, locale }
+    { traceId, obligationYear, locale, routePrefix }
   )
 
   const i18n = cocPageI18n(locale, 'detail')
@@ -30,7 +36,7 @@ export async function getCertificateOfComplianceDetailViewModel(
   return {
     pageTitle: detail.companyName,
     heading: detail.companyName,
-    backlink: localeUrl('/certificates-of-compliance', locale),
+    backlink: localeUrl(routePrefix || '/', locale),
     backlinkText: translate(
       locale,
       'certificatesOfCompliance.detail.backlinkText'

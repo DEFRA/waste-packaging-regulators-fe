@@ -1,7 +1,5 @@
 import inert from '@hapi/inert'
 
-import { home } from '../routes/home/index.js'
-import { about } from '../routes/about/index.js'
 import { health } from '../routes/health/index.js'
 import { auth } from '../routes/auth/index.js'
 import { serveStaticFiles } from './serve-static-files.js'
@@ -25,10 +23,7 @@ export const router = {
       // Auth routes: /signin-oidc, /logout, /signed-out
       await server.register([auth])
 
-      // Application specific routes, add your own routes here
       await server.register([
-        home,
-        about,
         certificatesOfComplianceList,
         certificatesOfComplianceDownload,
         certificatesOfComplianceDetail,

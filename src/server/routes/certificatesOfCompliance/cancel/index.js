@@ -13,35 +13,35 @@ export const certificatesOfComplianceCancel = {
       server.route([
         {
           method: 'GET',
-          path: '/{organisationId}/certificates-of-compliance/{id}/cancel/reason',
+          path: '/{organisationId}/{documentType}/{id}/cancel/reason',
           options: {
             ...certificatesOfComplianceCancelReasonGetController
           }
         },
         {
           method: 'POST',
-          path: '/{organisationId}/certificates-of-compliance/{id}/cancel/reason',
+          path: '/{organisationId}/{documentType}/{id}/cancel/reason',
           options: {
             ...certificatesOfComplianceCancelReasonPostController
           }
         },
         {
           method: 'GET',
-          path: '/{organisationId}/certificates-of-compliance/{id}/cancel/check',
+          path: '/{organisationId}/{documentType}/{id}/cancel/check',
           options: {
             ...certificatesOfComplianceCancelCheckGetController
           }
         },
         {
           method: 'GET',
-          path: '/{organisationId}/certificates-of-compliance/{id}/cancel/email-preview',
+          path: '/{organisationId}/{documentType}/{id}/cancel/email-preview',
           options: {
             ...certificatesOfComplianceCancelEmailPreviewGetController
           }
         },
         {
           method: 'POST',
-          path: '/{organisationId}/certificates-of-compliance/{id}/cancel',
+          path: '/{organisationId}/{documentType}/{id}/cancel',
           options: {
             ...certificatesOfComplianceCancelPostController
           }

@@ -56,11 +56,32 @@ export function setupRegulatorsApp() {
     return scenario
   }
 
+  // Strip the /certificates-of-compliance prefix before hitting the backend
+  // directly — the backend routes don't carry the prefix (the proxy strips it).
+  // This mirrors what the YARP proxy does in production/development.
+  const ROUTE_PREFIX = '/certificates-of-compliance'
+  const stripPrefix = (url) => {
+    if (url.startsWith(ROUTE_PREFIX)) {
+      const rest = url.slice(ROUTE_PREFIX.length)
+      if (rest === '' || rest.startsWith('/') || rest.startsWith('?')) {
+        return rest.startsWith('?') ? `/${rest}` : rest || '/'
+      }
+    }
+    return url
+  }
+
+  const prefixHeaders = (url, extra = {}) => {
+    const stripped = stripPrefix(url)
+    return stripped !== url
+      ? { ...extra, 'x-forwarded-prefix': ROUTE_PREFIX }
+      : extra
+  }
+
   const get = (url, cookie = state.authCookie) =>
     state.server.inject({
       method: 'GET',
-      url,
-      headers: cookie ? { cookie } : {}
+      url: stripPrefix(url),
+      headers: prefixHeaders(url, cookie ? { cookie } : {})
     })
 
   // POST a form-encoded body, echoing the crumb from the cookie so CSRF passes.
@@ -71,11 +92,19 @@ export function setupRegulatorsApp() {
       .join('&')
     return state.server.inject({
       method: 'POST',
-      url,
+      url: stripPrefix(url),
       payload: body,
-      headers: { cookie, 'content-type': 'application/x-www-form-urlencoded' }
+      headers: prefixHeaders(url, {
+        cookie,
+        'content-type': 'application/x-www-form-urlencoded'
+      })
     })
   }
+
+  // Like server.inject but strips the route prefix from the URL first.
+  // Use this for raw requests that must bypass CSRF (e.g. no-token tests).
+  const rawInject = (options) =>
+    state.server.inject({ ...options, url: stripPrefix(options.url) })
 
   // A fresh signed-in session + crumb, for a test that needs a session distinct
   // from the shared one.
@@ -92,7 +121,7 @@ export function setupRegulatorsApp() {
   const anonCrumb = async () => {
     const response = await state.server.inject({
       method: 'GET',
-      url: '/certificates-of-compliance'
+      url: '/'
     })
     return csrfTokenCookieFromResponse(response)
   }
@@ -107,6 +136,7 @@ export function setupRegulatorsApp() {
     given,
     get,
     post,
+    rawInject,
     signIn,
     anonCrumb,
     nextCookie,

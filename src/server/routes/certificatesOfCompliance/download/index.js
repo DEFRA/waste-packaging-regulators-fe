@@ -7,7 +7,7 @@ export const certificatesOfComplianceDownload = {
       server.route([
         {
           method: 'GET',
-          path: '/certificates-of-compliance/download',
+          path: '/download',
           options: {
             auth: false,
             ...certificatesOfComplianceDownloadController

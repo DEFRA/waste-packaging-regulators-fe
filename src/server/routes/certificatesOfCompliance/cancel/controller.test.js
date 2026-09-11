@@ -51,20 +51,21 @@ const ORGS = [
 const itemOf = (org) => ({
   organisationId: org.organisationId,
   id: org.declarationId,
+  documentType: org.type === 'ComplianceScheme' ? 'statement' : 'certificate',
   name: org.name
 })
 
 const reasonUrlFor = (item) =>
-  `/${item.organisationId}/certificates-of-compliance/${item.id}/cancel/reason`
+  `/certificates-of-compliance/${item.organisationId}/${item.documentType}/${item.id}/cancel/reason`
 const checkUrlFor = (item) =>
-  `/${item.organisationId}/certificates-of-compliance/${item.id}/cancel/check`
+  `/certificates-of-compliance/${item.organisationId}/${item.documentType}/${item.id}/cancel/check`
 const emailPreviewUrlFor = (item, reason = 'producer-request') =>
-  `/${item.organisationId}/certificates-of-compliance/${item.id}/cancel/email-preview?reason=${reason}`
+  `/certificates-of-compliance/${item.organisationId}/${item.documentType}/${item.id}/cancel/email-preview?reason=${reason}`
 // The cancellation itself posts to the bare …/cancel resource.
 const actionUrlFor = (item) =>
-  `/${item.organisationId}/certificates-of-compliance/${item.id}/cancel`
+  `/certificates-of-compliance/${item.organisationId}/${item.documentType}/${item.id}/cancel`
 const detailUrlFor = (item) =>
-  `/${item.organisationId}/certificates-of-compliance/${item.id}`
+  `/certificates-of-compliance/${item.organisationId}/${item.documentType}/${item.id}`
 
 describe('certificates of compliance — cancel', () => {
   const app = setupRegulatorsApp()
@@ -89,12 +90,11 @@ describe('certificates of compliance — cancel', () => {
 
   describe('GET reason page', () => {
     it('redirects unauthenticated users to /signin-oidc', async () => {
-      const response = await app.server.inject({
-        method: 'GET',
-        url: reasonUrlFor(DP_ITEM)
-      })
+      const response = await app.get(reasonUrlFor(DP_ITEM), null)
       expect(response.statusCode).toBe(302)
-      expect(response.headers.location).toBe('/signin-oidc')
+      expect(response.headers.location).toBe(
+        '/certificates-of-compliance/signin-oidc'
+      )
     })
 
     it('renders the reason radios with certificate wording for a Direct Producer', async () => {
@@ -171,11 +171,13 @@ describe('certificates of compliance — cancel', () => {
         await app.anonCrumb()
       )
       expect(response.statusCode).toBe(302)
-      expect(response.headers.location).toBe('/signin-oidc')
+      expect(response.headers.location).toBe(
+        '/certificates-of-compliance/signin-oidc'
+      )
     })
 
     it('rejects a request with no CSRF token', async () => {
-      const response = await app.server.inject({
+      const response = await app.rawInject({
         method: 'POST',
         url: reasonUrlFor(DP_ITEM),
         payload: 'cancel-reason=producer-request',
@@ -295,18 +297,17 @@ describe('certificates of compliance — cancel', () => {
 
   describe('GET email preview', () => {
     it('redirects unauthenticated users to /signin-oidc', async () => {
-      const response = await app.server.inject({
-        method: 'GET',
-        url: emailPreviewUrlFor(DP_ITEM)
-      })
+      const response = await app.get(emailPreviewUrlFor(DP_ITEM), null)
       expect(response.statusCode).toBe(302)
-      expect(response.headers.location).toBe('/signin-oidc')
+      expect(response.headers.location).toBe(
+        '/certificates-of-compliance/signin-oidc'
+      )
     })
 
     it('redirects to the reason page when no reason is in the URL', async () => {
       const cookie = await app.signIn()
       const response = await app.get(
-        `/${DP_ITEM.organisationId}/certificates-of-compliance/${DP_ITEM.id}/cancel/email-preview`,
+        `/certificates-of-compliance/${DP_ITEM.organisationId}/${DP_ITEM.documentType}/${DP_ITEM.id}/cancel/email-preview`,
         cookie
       )
       expect(response.statusCode).toBe(302)
@@ -352,11 +353,13 @@ describe('certificates of compliance — cancel', () => {
         await app.anonCrumb()
       )
       expect(response.statusCode).toBe(302)
-      expect(response.headers.location).toBe('/signin-oidc')
+      expect(response.headers.location).toBe(
+        '/certificates-of-compliance/signin-oidc'
+      )
     })
 
     it('rejects a request with no CSRF token', async () => {
-      const response = await app.server.inject({
+      const response = await app.rawInject({
         method: 'POST',
         url: actionUrlFor(DP_ITEM)
       })

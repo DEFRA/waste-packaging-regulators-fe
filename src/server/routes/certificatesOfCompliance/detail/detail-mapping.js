@@ -45,7 +45,8 @@ function resolveDeclarationActions(
   resolvedOrganisationId,
   resolvedId,
   registrationType,
-  locale = 'en'
+  locale = 'en',
+  routePrefix = ''
 ) {
   if (resolvedOrganisationId && resolvedId) {
     return buildCertificateDetailActions(
@@ -53,7 +54,8 @@ function resolveDeclarationActions(
       resolvedOrganisationId,
       resolvedId,
       registrationType,
-      locale
+      locale,
+      routePrefix
     )
   }
 
@@ -134,7 +136,8 @@ export function mapDeclarationToDetail(
     declarationsForYear,
     submitterPhoneNumber,
     wasteOrganisation,
-    locale = 'en'
+    locale = 'en',
+    routePrefix = ''
   } = {}
 ) {
   const {
@@ -192,13 +195,15 @@ export function mapDeclarationToDetail(
       resolvedOrganisationId,
       resolvedId,
       organisation.registrationType,
-      locale
+      locale,
+      routePrefix
     ),
     queryDetails: mapQueriedOutcome(data, locale),
     currentYearActions: mapCurrentYearHistory(
       resolvedOrganisationId,
       historyDeclarations,
-      locale
+      locale,
+      routePrefix
     ),
     showObligations: (obligations ?? []).length !== 0
   }

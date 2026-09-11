@@ -289,12 +289,14 @@ function buildOrganisation(spec, index) {
           }
         : null
 
+  const documentType = isComplianceScheme ? 'statement' : 'certificate'
+
   const detailPath = submitted
-    ? `/${organisationId}/certificates-of-compliance/${record.declarationId}`
-    : `/${organisationId}/certificates-of-compliance?obligationYear=${OBLIGATION_YEAR}`
+    ? `/certificates-of-compliance/${organisationId}/${documentType}/${record.declarationId}`
+    : `/certificates-of-compliance/${organisationId}?obligationYear=${OBLIGATION_YEAR}`
 
   const historyPathFor = (declarationId) =>
-    `/${organisationId}/certificates-of-compliance/${declarationId}`
+    `/certificates-of-compliance/${organisationId}/${documentType}/${declarationId}`
 
   return {
     name: displayName,
