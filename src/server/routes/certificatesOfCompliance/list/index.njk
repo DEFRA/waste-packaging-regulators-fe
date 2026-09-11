@@ -25,7 +25,7 @@
          for the hidden inputs that keep the user on the same type and tab. #}
       <div class="v3-search-panel govuk-!-margin-bottom-4">
         <div class="moj-search">
-          <form action="{{ localeUrl('/certificates-of-compliance') }}" method="get" novalidate>
+          <form action="{{ localeUrl(routePrefix or '/') }}" method="get" novalidate>
             {% if locale == 'cy' %}
               <input type="hidden" name="lang" value="cy">
             {% endif %}

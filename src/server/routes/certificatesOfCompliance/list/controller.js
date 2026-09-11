@@ -8,6 +8,10 @@ import {
   redirectWithLocale
 } from '#server/common/helpers/i18n/locale-url.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
+import {
+  getForwardedPrefix,
+  withForwardedPrefix
+} from '#server/common/helpers/proxy/forwarded-prefix.js'
 import { SEARCH_TERM_MAX_LENGTH } from '../common/constants.js'
 import { cocPageI18n } from '../common/locale-strings.js'
 import { getCertificatesOfComplianceViewModel } from './list.service.js'
@@ -90,8 +94,13 @@ export const certificatesOfComplianceController = {
 
     if (!request.yar.get('user')) {
       persistAuthLocale(request, locale)
-      request.yar.set('returnTo', request.url.pathname + request.url.search)
-      return redirectWithLocale(h, request, '/signin-oidc')
+      const localPath = request.url.pathname + request.url.search
+      request.yar.set('returnTo', withForwardedPrefix(request, localPath))
+      return redirectWithLocale(
+        h,
+        request,
+        withForwardedPrefix(request, '/signin-oidc')
+      )
     }
 
     const {
@@ -117,6 +126,7 @@ export const certificatesOfComplianceController = {
 
     const traceId = request.headers[config.get('tracing.header')]
 
+    const routePrefix = getForwardedPrefix(request)
     const [viewModel, search] = await Promise.all([
       getCertificatesOfComplianceViewModel(
         type,
@@ -125,7 +135,8 @@ export const certificatesOfComplianceController = {
         sortColumn,
         sortDirection,
         traceId,
-        locale
+        locale,
+        routePrefix
       ),
       searchTerm ? getComplianceSearchResults(type, searchTerm, traceId) : null
     ]).catch((error) => {
@@ -150,7 +161,7 @@ export const certificatesOfComplianceController = {
         searchResultCount: search?.total ?? 0,
         searchTruncated: search?.truncated ?? false,
         clearSearchUrl: url(
-          `/certificates-of-compliance?type=${type}&tab=${submissionStatus}`
+          `${routePrefix || '/'}?type=${type}&tab=${submissionStatus}`
         ),
         pageTitle: errors
           ? `${errorPrefix}${viewModel.heading}`

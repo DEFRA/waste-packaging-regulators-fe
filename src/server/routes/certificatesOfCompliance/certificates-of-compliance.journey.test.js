@@ -87,13 +87,12 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('redirects the detail page to /signin-oidc and stores returnTo', async () => {
-      const response = await app.server.inject({
-        method: 'GET',
-        url: detailPath
-      })
+      const response = await app.get(detailPath, null)
 
       expect(response.statusCode).toBe(302)
-      expect(response.headers.location).toBe('/signin-oidc')
+      expect(response.headers.location).toBe(
+        '/certificates-of-compliance/signin-oidc'
+      )
     })
 
     it('redirects back to the originally requested page after sign in', async () => {
@@ -149,7 +148,7 @@ describe('certificates of compliance — journey', () => {
       for (const item of scenario.rowsFor('DirectProducer', 'pending')) {
         expect(response.payload).toContain(item.organisationName)
         expect(response.payload).toContain(
-          `./${item.organisationId}/certificates-of-compliance/${item.id}`
+          `/certificates-of-compliance/${item.organisationId}/certificate/${item.id}`
         )
       }
     })
@@ -163,10 +162,10 @@ describe('certificates of compliance — journey', () => {
       for (const item of scenario.rowsFor('DirectProducer', 'not-submitted')) {
         expect(response.payload).toContain(item.organisationName)
         expect(response.payload).toContain(
-          `./${item.organisationId}/certificates-of-compliance?obligationYear=2026`
+          `/certificates-of-compliance/${item.organisationId}?obligationYear=2026`
         )
         expect(response.payload).not.toContain(
-          `./${item.organisationId}/certificates-of-compliance/null`
+          `/certificates-of-compliance/${item.organisationId}/null`
         )
       }
     })
@@ -197,12 +196,12 @@ describe('certificates of compliance — journey', () => {
 
       const match = listResponse.payload.match(
         new RegExp(
-          `href="(\\.\\/[^"]+\\/certificates-of-compliance\\/${org.declarationId})"`
+          `href="(\\/certificates-of-compliance\\/[^"]+\\/${org.declarationId})"`
         )
       )
       expect(match, 'Should extract detail link').not.toBeNull()
 
-      const detailPath = match[1].replace('./', '/')
+      const detailPath = match[1]
       const detailResponse = await app.get(detailPath)
 
       expect(
@@ -230,12 +229,12 @@ describe('certificates of compliance — journey', () => {
 
       const match = listResponse.payload.match(
         new RegExp(
-          `href="(\\.\\/[^"]+\\/certificates-of-compliance\\/${org.declarationId})"`
+          `href="(\\/certificates-of-compliance\\/[^"]+\\/${org.declarationId})"`
         )
       )
       expect(match).not.toBeNull()
 
-      const detailPath = match[1].replace('./', '/')
+      const detailPath = match[1]
       const detailResponse = await app.get(detailPath)
 
       expect(
@@ -352,13 +351,10 @@ describe('certificates of compliance — journey', () => {
       expect(cancelResponse.statusCode).toBe(302)
       expect(cancelResponse.headers.location).toBe(org.detailPath)
 
-      const detailResponse = await app.server.inject({
-        method: 'GET',
-        url: org.detailPath,
-        headers: {
-          cookie: app.nextCookie(cancelResponse, app.authCookie)
-        }
-      })
+      const detailResponse = await app.get(
+        org.detailPath,
+        app.nextCookie(cancelResponse, app.authCookie)
+      )
 
       const detailsPage = loadDetailPage(detailResponse.payload)
       expect(detailsPage.banner.present).toBe(true)
@@ -375,13 +371,10 @@ describe('certificates of compliance — journey', () => {
 
       expect(cancelResponse.statusCode).toBe(302)
 
-      const detailResponse = await app.server.inject({
-        method: 'GET',
-        url: org.detailPath,
-        headers: {
-          cookie: app.nextCookie(cancelResponse, app.authCookie)
-        }
-      })
+      const detailResponse = await app.get(
+        org.detailPath,
+        app.nextCookie(cancelResponse, app.authCookie)
+      )
 
       const detailsPage = loadDetailPage(detailResponse.payload)
       expect(detailsPage.banner.present).toBe(true)
@@ -409,7 +402,9 @@ describe('certificates of compliance — journey', () => {
       )
 
       expect(response.statusCode).toBe(302)
-      expect(response.headers.location).toBe('/signin-oidc')
+      expect(response.headers.location).toBe(
+        '/certificates-of-compliance/signin-oidc'
+      )
     })
 
     it('cancel action succeeds after sign-in populates user from account API', async () => {
@@ -432,7 +427,9 @@ describe('certificates of compliance — journey', () => {
         'confirm-accept=yes'
       )
       expect(unauthResponse.statusCode).toBe(302)
-      expect(unauthResponse.headers.location).toBe('/signin-oidc')
+      expect(unauthResponse.headers.location).toBe(
+        '/certificates-of-compliance/signin-oidc'
+      )
       const afterUnauth = app.nextCookie(unauthResponse, anonCrumbCookie)
 
       // Sign in — account API populates user in session, redirects back to acceptUrl
@@ -501,13 +498,10 @@ describe('certificates of compliance — journey', () => {
       expect(yesResponse.statusCode).toBe(302)
       expect(yesResponse.headers.location).toBe(producer.detailPath)
 
-      const detailResponse = await app.server.inject({
-        method: 'GET',
-        url: producer.detailPath,
-        headers: {
-          cookie: app.nextCookie(yesResponse, app.authCookie)
-        }
-      })
+      const detailResponse = await app.get(
+        producer.detailPath,
+        app.nextCookie(yesResponse, app.authCookie)
+      )
       const detailsPage = loadDetailPage(detailResponse.payload)
       expect(detailsPage.banner.present).toBe(true)
       expect(detailsPage.banner.cancelled).toBe(false)
@@ -524,13 +518,10 @@ describe('certificates of compliance — journey', () => {
       expect(noResponse.statusCode).toBe(302)
       expect(noResponse.headers.location).toBe(producer.detailPath)
 
-      const detailResponse = await app.server.inject({
-        method: 'GET',
-        url: producer.detailPath,
-        headers: {
-          cookie: app.nextCookie(noResponse, app.authCookie)
-        }
-      })
+      const detailResponse = await app.get(
+        producer.detailPath,
+        app.nextCookie(noResponse, app.authCookie)
+      )
       expect(detailResponse.statusCode).toBe(statusCodes.ok)
       const { banner } = loadDetailPage(detailResponse.payload)
       expect(banner.present).toBe(false)
@@ -552,13 +543,10 @@ describe('certificates of compliance — journey', () => {
       )
       expect(yesResponse.statusCode).toBe(302)
 
-      const detailResponse = await app.server.inject({
-        method: 'GET',
-        url: scheme.detailPath,
-        headers: {
-          cookie: app.nextCookie(yesResponse, app.authCookie)
-        }
-      })
+      const detailResponse = await app.get(
+        scheme.detailPath,
+        app.nextCookie(yesResponse, app.authCookie)
+      )
       const detailsPage = loadDetailPage(detailResponse.payload)
       expect(detailsPage.banner.present).toBe(true)
       expect(detailsPage.banner.heading).toBe('Statement accepted')
@@ -819,7 +807,7 @@ describe('certificates of compliance — journey', () => {
         const { heading, summaryRows } = loadDetailPage(
           (
             await app.get(
-              `/${item.organisationId}/certificates-of-compliance?obligationYear=2026`
+              `/certificates-of-compliance/${item.organisationId}?obligationYear=2026`
             )
           ).payload
         )
@@ -1269,10 +1257,7 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('redirects to /signin-oidc when unauthenticated', async () => {
-      const response = await app.server.inject({
-        method: 'GET',
-        url: pendingDownloadUrl
-      })
+      const response = await app.get(pendingDownloadUrl, null)
 
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe('/signin-oidc')

@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
+import { getForwardedPrefix } from '#server/common/helpers/proxy/forwarded-prefix.js'
 import { approveComplianceDeclaration } from '../actions/approve.service.js'
 import { getComplianceDeclarationReviewStatus } from '../actions/review-status.service.js'
 import {
@@ -24,9 +25,9 @@ function buildErrors(locale) {
   }
 }
 
-function detailPath(organisationId, id, locale) {
+function detailPath(request, organisationId, id, documentType, locale) {
   return localeUrl(
-    `/${organisationId}/certificates-of-compliance/${id}`,
+    `${getForwardedPrefix(request)}/${organisationId}/${documentType}/${id}`,
     locale
   )
 }
@@ -37,12 +38,13 @@ function getTraceIdFromRequest(request) {
 
 async function renderForm(request, h, { errors = null, locale } = {}) {
   const resolvedLocale = locale ?? getLocale(request)
-  const { organisationId, id } = request.params
+  const { organisationId, id, documentType } = request.params
   const traceId = getTraceIdFromRequest(request)
   const { companyName, registrationType } =
     await getCertificateOfComplianceDetailViewModel(organisationId, id, {
       traceId,
-      locale: resolvedLocale
+      locale: resolvedLocale,
+      routePrefix: getForwardedPrefix(request)
     })
 
   const i18n = cocPageI18n(resolvedLocale, 'accept')
@@ -56,9 +58,10 @@ async function renderForm(request, h, { errors = null, locale } = {}) {
 
   return h.view('certificatesOfCompliance/accept/index', {
     pageTitle: `${titleVerb} ${docTypeLower} — ${companyName}`,
-    backlink: detailPath(organisationId, id, resolvedLocale),
+    backlink: detailPath(organisationId, id, documentType, resolvedLocale),
     organisationId,
     id,
+    documentType,
     companyName,
     registrationType,
     docTypeLower,
@@ -69,7 +72,7 @@ async function renderForm(request, h, { errors = null, locale } = {}) {
 }
 
 async function approveDeclaration(request, h, locale) {
-  const { organisationId, id } = request.params
+  const { organisationId, id, documentType } = request.params
   const traceId = request.headers[config.get('tracing.header')]
   const declarationKey = getDeclarationSessionKey(organisationId, id)
   const reviewStatus = await getComplianceDeclarationReviewStatus(
@@ -80,11 +83,15 @@ async function approveDeclaration(request, h, locale) {
 
   if (reviewStatus === 'Approved') {
     request.yar.set(certificateActionSessionKeys.justApproved, declarationKey)
-    return h.redirect(detailPath(organisationId, id, locale))
+    return h.redirect(
+      detailPath(request, organisationId, id, documentType, locale)
+    )
   }
 
   if (!canApproveComplianceDeclaration(reviewStatus)) {
-    return h.redirect(detailPath(organisationId, id, locale))
+    return h.redirect(
+      detailPath(request, organisationId, id, documentType, locale)
+    )
   }
 
   try {
@@ -100,7 +107,9 @@ async function approveDeclaration(request, h, locale) {
 
   request.yar.set(certificateActionSessionKeys.justApproved, declarationKey)
 
-  return h.redirect(detailPath(organisationId, id, locale))
+  return h.redirect(
+    detailPath(request, organisationId, id, documentType, locale)
+  )
 }
 
 export const certificatesOfComplianceAcceptGetController = {
@@ -110,7 +119,7 @@ export const certificatesOfComplianceAcceptGetController = {
     }
 
     const locale = getLocale(request)
-    const { organisationId, id } = request.params
+    const { organisationId, id, documentType } = request.params
     const traceId = getTraceIdFromRequest(request)
     const reviewStatus = await getComplianceDeclarationReviewStatus(
       organisationId,
@@ -119,7 +128,9 @@ export const certificatesOfComplianceAcceptGetController = {
     )
 
     if (!canApproveComplianceDeclaration(reviewStatus)) {
-      return h.redirect(detailPath(organisationId, id, locale))
+      return h.redirect(
+        detailPath(request, organisationId, id, documentType, locale)
+      )
     }
 
     return renderForm(request, h, { locale })
@@ -134,11 +145,13 @@ export const certificatesOfComplianceAcceptPostController = {
 
     const locale = getLocale(request)
     const choice = request.payload?.['confirm-accept']
-    const { organisationId, id } = request.params
+    const { organisationId, id, documentType } = request.params
 
     switch (choice) {
       case 'no':
-        return h.redirect(detailPath(organisationId, id, locale))
+        return h.redirect(
+          detailPath(request, organisationId, id, documentType, locale)
+        )
       case 'yes':
         return approveDeclaration(request, h, locale)
       default:

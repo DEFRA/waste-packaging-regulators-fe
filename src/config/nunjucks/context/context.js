@@ -8,6 +8,10 @@ import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { bindLocaleUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
+import {
+  getForwardedPrefix,
+  withForwardedPrefix
+} from '#server/common/helpers/proxy/forwarded-prefix.js'
 
 const logger = createLogger()
 const assetPath = config.get('assetPath')
@@ -28,13 +32,15 @@ export function context(request) {
   }
 
   const locale = getLocale(request)
+  const externalAssetPath = withForwardedPrefix(request, assetPath)
 
   return {
-    assetPath: `${assetPath}/assets`,
+    assetPath: `${externalAssetPath}/assets`,
+    routePrefix: getForwardedPrefix(request),
     locale,
     localeUrl: bindLocaleUrl(locale),
     serviceName: translate(locale, 'common.serviceName'),
-    serviceUrl: '/',
+    serviceUrl: withForwardedPrefix(request, '/'),
     helpDeskEmail: config.get('helpDeskEmail'),
     breadcrumbs: [],
     backlinkText: translate(locale, 'common.nav.back'),
@@ -42,11 +48,11 @@ export function context(request) {
     navigation: buildNavigation(request, locale),
     getAssetPath(asset) {
       if (!config.get('isProduction')) {
-        return `${assetPath}/${asset}`
+        return `${externalAssetPath}/${asset}`
       }
 
       const viteAssetPath = viteManifest?.[asset]?.file
-      return `${assetPath}/${viteAssetPath ?? asset}`
+      return `${externalAssetPath}/${viteAssetPath ?? asset}`
     }
   }
 }

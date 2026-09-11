@@ -653,7 +653,7 @@ describe('#certificatesOfComplianceController', () => {
       const link = $('table')
         .first()
         .find(
-          `a[href="./${pendingItem.organisationId}/certificates-of-compliance/${pendingItem.id}"]`
+          `a[href="/certificates-of-compliance/${pendingItem.organisationId}/certificate/${pendingItem.id}"]`
         )
 
       expect(link.text().trim()).toBe(pendingItem.organisationName)
@@ -890,7 +890,7 @@ describe('#certificatesOfComplianceController', () => {
         $('table')
           .first()
           .find(
-            `a[href="./${pendingItem.organisationId}/certificates-of-compliance/${pendingItem.id}?lang=cy"]`
+            `a[href="/certificates-of-compliance/${pendingItem.organisationId}/certificate/${pendingItem.id}?lang=cy"]`
           )
       ).toHaveLength(1)
     })

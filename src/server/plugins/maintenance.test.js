@@ -22,7 +22,10 @@ describe('#maintenance', () => {
 
   describe('When maintenance mode is off', () => {
     test('Should serve the application as normal', async () => {
-      const { statusCode } = await server.inject({ method: 'GET', url: '/' })
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/health'
+      })
 
       expect(statusCode).toBe(statusCodes.ok)
     })

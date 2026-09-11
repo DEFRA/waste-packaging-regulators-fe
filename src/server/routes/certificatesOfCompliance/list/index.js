@@ -7,7 +7,7 @@ export const certificatesOfComplianceList = {
       server.route([
         {
           method: 'GET',
-          path: '/certificates-of-compliance',
+          path: '/',
           options: {
             auth: false,
             ...certificatesOfComplianceController

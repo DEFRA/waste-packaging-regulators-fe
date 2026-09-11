@@ -31,7 +31,7 @@ describe('#errors', () => {
   test('Should provide expected Not Found page', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/non-existent-path'
+      url: '/this/path/does/not/match/any/route'
     })
 
     expect(result).toEqual(
