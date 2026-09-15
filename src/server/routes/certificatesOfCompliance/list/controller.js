@@ -10,6 +10,7 @@ import {
 import { translate } from '#server/common/helpers/i18n/translate.js'
 import {
   getForwardedPrefix,
+  getProxyPrefix,
   withForwardedPrefix
 } from '#server/common/helpers/proxy/forwarded-prefix.js'
 import { SEARCH_TERM_MAX_LENGTH } from '../common/constants.js'
@@ -99,7 +100,9 @@ export const certificatesOfComplianceController = {
       return redirectWithLocale(
         h,
         request,
-        withForwardedPrefix(request, '/signin-oidc')
+        getProxyPrefix(request)
+          ? withForwardedPrefix(request, '/signin-oidc')
+          : '/signin-oidc'
       )
     }
 

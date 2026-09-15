@@ -3,7 +3,10 @@ import {
   redirectWithLocale
 } from '#server/common/helpers/i18n/locale-url.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
-import { withForwardedPrefix } from '#server/common/helpers/proxy/forwarded-prefix.js'
+import {
+  getProxyPrefix,
+  withForwardedPrefix
+} from '#server/common/helpers/proxy/forwarded-prefix.js'
 
 export function redirectToSignIn(request, h) {
   const locale = getLocale(request)
@@ -13,6 +16,8 @@ export function redirectToSignIn(request, h) {
   return redirectWithLocale(
     h,
     request,
-    withForwardedPrefix(request, '/signin-oidc')
+    getProxyPrefix(request)
+      ? withForwardedPrefix(request, '/signin-oidc')
+      : '/signin-oidc'
   )
 }

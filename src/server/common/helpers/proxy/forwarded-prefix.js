@@ -1,21 +1,5 @@
-/**
- * Returns the external path prefix supplied by a trusted reverse proxy.
- *
- * The proxy must remove any client-supplied X-Forwarded-Prefix header and set
- * a single value of its own. Invalid values are ignored so they cannot alter
- * a redirect target.
- *
- * @param {import('@hapi/hapi').Request} request
- * @returns {string}
- */
-export function getForwardedPrefix(request) {
-  const rawPrefix = request?.headers?.['x-forwarded-prefix']
-
-  if (typeof rawPrefix !== 'string') {
-    return ''
-  }
-
-  const prefix = removeTrailingSlashes(rawPrefix.trim())
+function validatePrefix(raw) {
+  const prefix = removeTrailingSlashes(raw.trim())
 
   if (!prefix || prefix === '/') {
     return ''
@@ -33,6 +17,54 @@ export function getForwardedPrefix(request) {
     )
 
   return isValid ? prefix : ''
+}
+
+/**
+ * Returns the external path prefix, either from the X-Forwarded-Prefix header
+ * set by a trusted reverse proxy, or inferred from the request path when the
+ * app is accessed directly without a proxy.
+ *
+ * The proxy must remove any client-supplied X-Forwarded-Prefix header and set
+ * a single value of its own. Invalid values are ignored so they cannot alter
+ * a redirect target.
+ *
+ * @param {import('@hapi/hapi').Request} request
+ * @returns {string}
+ */
+export function getForwardedPrefix(request) {
+  const rawHeader = request?.headers?.['x-forwarded-prefix']
+
+  if (typeof rawHeader === 'string') {
+    return validatePrefix(rawHeader)
+  }
+
+  // No proxy header — the app is being accessed directly without a YARP proxy
+  // in front. Infer the prefix from the request path so URL generation stays
+  // correct whether tests run against the app directly or through the proxy.
+  const path = request?.path ?? ''
+  if (
+    path === '/certificates-of-compliance' ||
+    path.startsWith('/certificates-of-compliance/')
+  ) {
+    return '/certificates-of-compliance'
+  }
+
+  return ''
+}
+
+/**
+ * Returns the prefix from the X-Forwarded-Prefix header only, with no path
+ * inference fallback. Use this when the prefix must only be applied for
+ * requests that genuinely passed through the reverse proxy — for example,
+ * auth redirect URLs that are only reachable via the proxied path and have no
+ * alias under the prefix when the app is accessed directly.
+ *
+ * @param {import('@hapi/hapi').Request} request
+ * @returns {string}
+ */
+export function getProxyPrefix(request) {
+  const rawHeader = request?.headers?.['x-forwarded-prefix']
+  return typeof rawHeader === 'string' ? validatePrefix(rawHeader) : ''
 }
 
 /**
@@ -70,6 +102,27 @@ export function withForwardedPrefix(request, pathOrUrl) {
     pathOrUrl.startsWith('//')
   ) {
     return pathOrUrl
+  }
+
+  // Idempotency: path already carries the prefix (direct-access scenario where
+  // the full prefixed path is the request path). Return unchanged to avoid a
+  // double-prefix such as /certificates-of-compliance/certificates-of-compliance.
+  if (
+    pathOrUrl === prefix ||
+    pathOrUrl.startsWith(`${prefix}/`) ||
+    pathOrUrl.startsWith(`${prefix}?`) ||
+    pathOrUrl.startsWith(`${prefix}#`)
+  ) {
+    return pathOrUrl
+  }
+
+  // Root path (optionally with query/hash): collapse /prefix/ → /prefix.
+  if (
+    pathOrUrl === '/' ||
+    pathOrUrl.startsWith('/?') ||
+    pathOrUrl.startsWith('/#')
+  ) {
+    return prefix + pathOrUrl.slice(1)
   }
 
   return `${prefix}${pathOrUrl}`
