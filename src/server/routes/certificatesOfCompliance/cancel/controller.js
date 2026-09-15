@@ -241,31 +241,41 @@ export const certificatesOfComplianceCancelReasonPostController = {
   }
 }
 
-export const certificatesOfComplianceCancelCheckGetController = {
-  async handler(request, h) {
-    if (!request.yar.get('user')) {
-      return redirectToSignIn(request, h)
-    }
+async function guardCancelWithReason(request, h) {
+  if (!request.yar.get('user')) {
+    return { earlyResponse: redirectToSignIn(request, h) }
+  }
 
-    const locale = getLocale(request)
-    const { organisationId, id, documentType } = request.params
-    const { response } = await guardCancelAllowed(request, h, {
-      organisationId,
-      id,
-      documentType,
-      locale
-    })
-    if (response) {
-      return response
-    }
+  const locale = getLocale(request)
+  const { organisationId, id, documentType } = request.params
+  const { response } = await guardCancelAllowed(request, h, {
+    organisationId,
+    id,
+    documentType,
+    locale
+  })
+  if (response) {
+    return { earlyResponse: response }
+  }
 
-    const { reason } = request.query
-
-    if (!isValidCancelReason(reason)) {
-      return h.redirect(
+  const { reason } = request.query
+  if (!isValidCancelReason(reason)) {
+    return {
+      earlyResponse: h.redirect(
         reasonPath(request, organisationId, id, documentType, null, locale)
       )
     }
+  }
+
+  return { locale, organisationId, id, documentType, reason }
+}
+
+export const certificatesOfComplianceCancelCheckGetController = {
+  async handler(request, h) {
+    const ctx = await guardCancelWithReason(request, h)
+    if (ctx.earlyResponse) return ctx.earlyResponse
+
+    const { locale, organisationId, id, documentType, reason } = ctx
 
     const { companyName, registrationType } = await fetchCancelViewModel(
       organisationId,
@@ -318,28 +328,10 @@ export const certificatesOfComplianceCancelCheckGetController = {
 
 export const certificatesOfComplianceCancelEmailPreviewGetController = {
   async handler(request, h) {
-    if (!request.yar.get('user')) {
-      return redirectToSignIn(request, h)
-    }
+    const ctx = await guardCancelWithReason(request, h)
+    if (ctx.earlyResponse) return ctx.earlyResponse
 
-    const locale = getLocale(request)
-    const { organisationId, id, documentType } = request.params
-    const { response } = await guardCancelAllowed(request, h, {
-      organisationId,
-      id,
-      documentType,
-      locale
-    })
-    if (response) {
-      return response
-    }
-
-    const { reason } = request.query
-    if (!isValidCancelReason(reason)) {
-      return h.redirect(
-        reasonPath(request, organisationId, id, documentType, null, locale)
-      )
-    }
+    const { locale, organisationId, id, reason } = ctx
 
     try {
       return await renderCancellationEmailPreview(request, h, {
@@ -362,6 +354,7 @@ export const certificatesOfComplianceCancelPostController = {
 
     const locale = getLocale(request)
     const { organisationId, id, documentType } = request.params
+    const detail = detailPath(request, organisationId, id, documentType, locale)
     const declarationKey = getDeclarationSessionKey(organisationId, id)
     const reviewStatus = await getComplianceDeclarationReviewStatus(
       organisationId,
@@ -374,9 +367,7 @@ export const certificatesOfComplianceCancelPostController = {
         certificateActionSessionKeys.justCancelled,
         declarationKey
       )
-      return h.redirect(
-        detailPath(request, organisationId, id, documentType, locale)
-      )
+      return h.redirect(detail)
     }
 
     const reason = request.payload?.['cancel-reason']
@@ -405,8 +396,6 @@ export const certificatesOfComplianceCancelPostController = {
 
     request.yar.set(certificateActionSessionKeys.justCancelled, declarationKey)
 
-    return h.redirect(
-      detailPath(request, organisationId, id, documentType, locale)
-    )
+    return h.redirect(detail)
   }
 }

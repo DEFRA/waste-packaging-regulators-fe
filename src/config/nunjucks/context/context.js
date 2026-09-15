@@ -10,6 +10,7 @@ import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
 import {
   getForwardedPrefix,
+  getProxyPrefix,
   withForwardedPrefix
 } from '#server/common/helpers/proxy/forwarded-prefix.js'
 
@@ -32,7 +33,10 @@ export function context(request) {
   }
 
   const locale = getLocale(request)
-  const externalAssetPath = withForwardedPrefix(request, assetPath)
+  const proxyPrefix = getProxyPrefix(request)
+  const externalAssetPath = proxyPrefix
+    ? `${proxyPrefix}${assetPath}`
+    : assetPath
 
   return {
     assetPath: `${externalAssetPath}/assets`,

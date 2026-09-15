@@ -150,17 +150,17 @@ function resolveDeclarationContext(
   }
 }
 
-export function mapDeclarationToDetail(
+function buildDeclarationViewModel(
   data,
   {
-    organisationId,
-    id,
-    declarationsForYear,
-    submitterPhoneNumber,
-    wasteOrganisation,
-    locale = 'en',
-    routePrefix = ''
-  } = {}
+    resolvedOrganisationId,
+    resolvedId,
+    reviewStatus,
+    companyName,
+    submittedUser,
+    historyDeclarations
+  },
+  { wasteOrganisation, submitterPhoneNumber, locale, routePrefix }
 ) {
   const {
     organisation,
@@ -171,19 +171,6 @@ export function mapDeclarationToDetail(
     submitterName,
     created
   } = data
-
-  const {
-    reviewStatus,
-    resolvedOrganisationId,
-    resolvedId,
-    companyName,
-    submittedUser,
-    historyDeclarations
-  } = resolveDeclarationContext(data, {
-    organisationId,
-    id,
-    declarationsForYear
-  })
 
   return {
     organisationId: resolvedOrganisationId,
@@ -229,6 +216,31 @@ export function mapDeclarationToDetail(
     ),
     showObligations: (obligations ?? []).length !== 0
   }
+}
+
+export function mapDeclarationToDetail(
+  data,
+  {
+    organisationId,
+    id,
+    declarationsForYear,
+    submitterPhoneNumber,
+    wasteOrganisation,
+    locale = 'en',
+    routePrefix = ''
+  } = {}
+) {
+  const ctx = resolveDeclarationContext(data, {
+    organisationId,
+    id,
+    declarationsForYear
+  })
+  return buildDeclarationViewModel(data, ctx, {
+    wasteOrganisation,
+    submitterPhoneNumber,
+    locale,
+    routePrefix
+  })
 }
 
 export function mapObligationToDetail(
