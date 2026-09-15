@@ -421,7 +421,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           1,
           undefined,
           undefined,
-          'trace-xyz'
+          { traceId: 'trace-xyz' }
         )
 
         expect(
@@ -2732,7 +2732,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           1,
           undefined,
           undefined,
-          'trace-acct'
+          { traceId: 'trace-acct' }
         )
 
         expect(
@@ -2834,7 +2834,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
             1,
             undefined,
             undefined,
-            'trace-cs'
+            { traceId: 'trace-cs' }
           )
 
           expect(
@@ -3076,7 +3076,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           1,
           undefined,
           undefined,
-          'trace-obl'
+          { traceId: 'trace-obl' }
         )
 
         expect(

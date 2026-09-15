@@ -134,9 +134,7 @@ export const certificatesOfComplianceController = {
         Number.parseInt(page, 10),
         sortColumn,
         sortDirection,
-        traceId,
-        locale,
-        routePrefix
+        { traceId, locale, routePrefix }
       ),
       searchTerm ? getComplianceSearchResults(type, searchTerm, traceId) : null
     ]).catch((error) => {

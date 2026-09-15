@@ -492,9 +492,7 @@ export async function getCertificatesOfComplianceViewModel(
   currentPage,
   sortColumn,
   sortDirection,
-  traceId,
-  locale = 'en',
-  routePrefix = ''
+  { traceId, locale = 'en', routePrefix = '' } = {}
 ) {
   const apiWasteObligation = createWasteObligationsApiService()
   const apiWasteOrganisation = createWasteOrganisationsApiService()
