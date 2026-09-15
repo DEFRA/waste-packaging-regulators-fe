@@ -1,12 +1,10 @@
-function validatePrefix(raw) {
-  const prefix = removeTrailingSlashes(raw.trim())
+function isEmptyOrRootPrefix(prefix) {
+  return !prefix || prefix === '/'
+}
 
-  if (!prefix || prefix === '/') {
-    return ''
-  }
-
+function isValidPrefixFormat(prefix) {
   const segments = prefix.slice(1).split('/')
-  const isValid =
+  return (
     prefix.startsWith('/') &&
     !prefix.startsWith('//') &&
     segments.every(
@@ -15,8 +13,28 @@ function validatePrefix(raw) {
         segment !== '.' &&
         segment !== '..'
     )
+  )
+}
 
-  return isValid ? prefix : ''
+function validatePrefix(raw) {
+  const prefix = removeTrailingSlashes(raw.trim())
+
+  if (isEmptyOrRootPrefix(prefix)) {
+    return ''
+  }
+
+  return isValidPrefixFormat(prefix) ? prefix : ''
+}
+
+function hasForwardedPrefixHeader(request) {
+  return typeof request?.headers?.['x-forwarded-prefix'] === 'string'
+}
+
+function isCertificatesOfCompliancePath(path) {
+  return (
+    path === '/certificates-of-compliance' ||
+    path.startsWith('/certificates-of-compliance/')
+  )
 }
 
 /**
@@ -32,20 +50,14 @@ function validatePrefix(raw) {
  * @returns {string}
  */
 export function getForwardedPrefix(request) {
-  const rawHeader = request?.headers?.['x-forwarded-prefix']
-
-  if (typeof rawHeader === 'string') {
-    return validatePrefix(rawHeader)
+  if (hasForwardedPrefixHeader(request)) {
+    return validatePrefix(request.headers['x-forwarded-prefix'])
   }
 
   // No proxy header — the app is being accessed directly without a YARP proxy
   // in front. Infer the prefix from the request path so URL generation stays
   // correct whether tests run against the app directly or through the proxy.
-  const path = request?.path ?? ''
-  if (
-    path === '/certificates-of-compliance' ||
-    path.startsWith('/certificates-of-compliance/')
-  ) {
+  if (isCertificatesOfCompliancePath(request?.path ?? '')) {
     return '/certificates-of-compliance'
   }
 
@@ -63,8 +75,10 @@ export function getForwardedPrefix(request) {
  * @returns {string}
  */
 export function getProxyPrefix(request) {
-  const rawHeader = request?.headers?.['x-forwarded-prefix']
-  return typeof rawHeader === 'string' ? validatePrefix(rawHeader) : ''
+  if (hasForwardedPrefixHeader(request)) {
+    return validatePrefix(request.headers['x-forwarded-prefix'])
+  }
+  return ''
 }
 
 /**
@@ -84,6 +98,32 @@ function removeTrailingSlashes(path) {
   return path.slice(0, end)
 }
 
+function shouldSkipPrefix(prefix, pathOrUrl) {
+  return (
+    !prefix ||
+    typeof pathOrUrl !== 'string' ||
+    !pathOrUrl.startsWith('/') ||
+    pathOrUrl.startsWith('//')
+  )
+}
+
+function alreadyHasPrefix(pathOrUrl, prefix) {
+  return (
+    pathOrUrl === prefix ||
+    pathOrUrl.startsWith(`${prefix}/`) ||
+    pathOrUrl.startsWith(`${prefix}?`) ||
+    pathOrUrl.startsWith(`${prefix}#`)
+  )
+}
+
+function isRootPath(pathOrUrl) {
+  return (
+    pathOrUrl === '/' ||
+    pathOrUrl.startsWith('/?') ||
+    pathOrUrl.startsWith('/#')
+  )
+}
+
 /**
  * Adds the proxy's external path prefix to an application-local rooted URL.
  * Absolute and protocol-relative URLs are deliberately left unchanged.
@@ -95,33 +135,19 @@ function removeTrailingSlashes(path) {
 export function withForwardedPrefix(request, pathOrUrl) {
   const prefix = getForwardedPrefix(request)
 
-  if (
-    !prefix ||
-    typeof pathOrUrl !== 'string' ||
-    !pathOrUrl.startsWith('/') ||
-    pathOrUrl.startsWith('//')
-  ) {
+  if (shouldSkipPrefix(prefix, pathOrUrl)) {
     return pathOrUrl
   }
 
   // Idempotency: path already carries the prefix (direct-access scenario where
   // the full prefixed path is the request path). Return unchanged to avoid a
   // double-prefix such as /certificates-of-compliance/certificates-of-compliance.
-  if (
-    pathOrUrl === prefix ||
-    pathOrUrl.startsWith(`${prefix}/`) ||
-    pathOrUrl.startsWith(`${prefix}?`) ||
-    pathOrUrl.startsWith(`${prefix}#`)
-  ) {
+  if (alreadyHasPrefix(pathOrUrl, prefix)) {
     return pathOrUrl
   }
 
   // Root path (optionally with query/hash): collapse /prefix/ → /prefix.
-  if (
-    pathOrUrl === '/' ||
-    pathOrUrl.startsWith('/?') ||
-    pathOrUrl.startsWith('/#')
-  ) {
+  if (isRootPath(pathOrUrl)) {
     return prefix + pathOrUrl.slice(1)
   }
 
