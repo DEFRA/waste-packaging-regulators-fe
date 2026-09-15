@@ -273,7 +273,9 @@ async function guardCancelWithReason(request, h) {
 export const certificatesOfComplianceCancelCheckGetController = {
   async handler(request, h) {
     const ctx = await guardCancelWithReason(request, h)
-    if (ctx.earlyResponse) return ctx.earlyResponse
+    if (ctx.earlyResponse) {
+      return ctx.earlyResponse
+    }
 
     const { locale, organisationId, id, documentType, reason } = ctx
 
@@ -329,7 +331,9 @@ export const certificatesOfComplianceCancelCheckGetController = {
 export const certificatesOfComplianceCancelEmailPreviewGetController = {
   async handler(request, h) {
     const ctx = await guardCancelWithReason(request, h)
-    if (ctx.earlyResponse) return ctx.earlyResponse
+    if (ctx.earlyResponse) {
+      return ctx.earlyResponse
+    }
 
     const { locale, organisationId, id, reason } = ctx
 
