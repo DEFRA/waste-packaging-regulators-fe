@@ -1030,4 +1030,72 @@ describe('#certificatesOfComplianceController', () => {
       }
     )
   })
+
+  // These rules used to live in the frontend's own diff and were unit-tested
+  // against it. The unsubmitted endpoint owns them now, so they are asserted
+  // through the whole stack — store, handler, client, mapper, template — which is
+  // the only place left that can honestly exercise them.
+  describe('not-submitted membership', () => {
+    test('Should list an organisation whose only declaration was cancelled', async () => {
+      app.given([
+        { name: 'Cancelled Only Ltd', status: 'cancelled' },
+        { name: 'Never Submitted Ltd', status: 'not-submitted' },
+        { name: 'Pending Ltd', status: 'pending' }
+      ])
+
+      const { payload } = await inject(
+        '/certificates-of-compliance?type=direct-producers&tab=not-submitted'
+      )
+
+      expect(payload).toContain('Cancelled Only Ltd')
+      expect(payload).toContain('Never Submitted Ltd')
+      expect(payload).not.toContain('Pending Ltd')
+    })
+
+    test('Should count an organisation once even when it holds several declarations', async () => {
+      app.given([
+        {
+          name: 'Resubmitted Ltd',
+          status: 'pending',
+          history: [{ status: 'cancelled' }]
+        },
+        { name: 'Never Submitted Ltd', status: 'not-submitted' }
+      ])
+
+      const { payload } = await inject(
+        '/certificates-of-compliance?type=direct-producers&tab=not-submitted'
+      )
+      const $ = load(payload)
+
+      expect($('table tbody tr')).toHaveLength(1)
+      expect(payload).toContain('Never Submitted Ltd')
+    })
+  })
+
+  // The page number and sort column now travel to the API instead of being
+  // applied to an in-memory list, so a junk value has to be resolved before it
+  // gets there or the tab 500s.
+  describe('not-submitted request hardening', () => {
+    test.each(['abc', '0', '-1'])(
+      'Should fall back to page 1 for the invalid page value %s',
+      async (page) => {
+        const { statusCode } = await inject(
+          `/certificates-of-compliance?type=direct-producers&tab=not-submitted&page=${page}`
+        )
+
+        expect(statusCode).toBe(statusCodes.ok)
+      }
+    )
+
+    test.each(['DateSubmitted[desc]', 'Regulation43[asc]', 'Nonsense[asc]'])(
+      'Should fall back to the default sort for the unsupported column %s',
+      async (sort) => {
+        const { statusCode } = await inject(
+          `/certificates-of-compliance?type=direct-producers&tab=not-submitted&sort=${sort}`
+        )
+
+        expect(statusCode).toBe(statusCodes.ok)
+      }
+    )
+  })
 })

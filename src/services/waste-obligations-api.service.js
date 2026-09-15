@@ -64,6 +64,54 @@ export class WasteObligationsApiService extends BaseApiService {
     )
   }
 
+  // Eligible organisations with no Submitted or Accepted declaration for the
+  // year. The backend materialises this set, including each organisation's name,
+  // reference number and obligation metrics, so a caller needs no follow-up
+  // lookups. `sort` is passed through already formatted, in the endpoint's own
+  // field vocabulary (Name, ReferenceNumber, RecyclingObligationsMet,
+  // ObligationCoveragePercentage) — mapping the frontend's column names onto it
+  // is the caller's job, not the transport's.
+  async listUnsubmittedComplianceDeclarations(
+    {
+      obligationYear,
+      registrationType,
+      country,
+      search,
+      sort,
+      page,
+      pageSize
+    } = {},
+    traceId
+  ) {
+    const params = new URLSearchParams()
+    if (obligationYear != null) {
+      params.set('obligationYear', String(obligationYear))
+    }
+    if (registrationType != null) {
+      params.set('registrationType', registrationType)
+    }
+    if (country != null) {
+      params.set('country', country)
+    }
+    if (search) {
+      params.set('search', search)
+    }
+    if (sort != null) {
+      params.set('sort', sort)
+    }
+    if (page != null) {
+      params.set('page', String(page))
+    }
+    if (pageSize != null) {
+      params.set('pageSize', String(pageSize))
+    }
+    const qs = params.toString()
+    return this.getJson(
+      buildPathWithQuery('/compliance-declarations/unsubmitted', qs),
+      this.getTracingHeader(traceId)
+    )
+  }
+
   async getComplianceDeclaration({ id, organisationId } = {}, traceId) {
     return this.getJson(
       `/organisations/${organisationId}/compliance-declarations/${id}`,
@@ -132,23 +180,6 @@ export class WasteObligationsApiService extends BaseApiService {
       buildPathWithQuery(`/organisations/${organisationId}/obligations`, qs),
       this.getTracingHeader(traceId)
     )
-  }
-
-  async getComplianceObligationOrNull(
-    { organisationId, obligationYear } = {},
-    traceId
-  ) {
-    try {
-      return await this.getComplianceObligation(
-        { organisationId, obligationYear },
-        traceId
-      )
-    } catch (err) {
-      if (err instanceof ApiError && err.status === statusCodes.notFound) {
-        return null
-      }
-      throw err
-    }
   }
 }
 

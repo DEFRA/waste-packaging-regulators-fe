@@ -32,13 +32,19 @@ import { createWasteOrganisationsApiService } from '#services/waste-organisation
 import { createAccountApiService } from '#services/account-api.service.js'
 import {
   getCertificatesOfComplianceViewModel,
-  compareValues,
-  sortItems
+  fetchAllDeclarations,
+  mapUnsubmittedToItem,
+  resolveUnsubmittedSort
 } from './list.service.js'
 import { getCertificateOfComplianceDetailViewModel } from '../detail/detail.service.js'
 import { complianceRecords } from '#mocks/waste-obligations/fixtures.js'
 import { toDeclaration } from '#mocks/backends.js'
-import { PAGE_SIZE, DECLARATIONS_BATCH_SIZE } from '../common/constants.js'
+import {
+  PAGE_SIZE,
+  DECLARATIONS_BATCH_SIZE,
+  COMPLIANCE_YEAR,
+  NO_DATA
+} from '../common/constants.js'
 
 // Canonical declaration shapes projected from the default records, fed to the fake
 // API services in the tests below and asserted against.
@@ -86,16 +92,16 @@ describe('getCertificatesOfComplianceViewModel', () => {
     let mockAccountApi
 
     beforeEach(() => {
-      config.get.mockImplementation((key) =>
-        key === 'csvExport.obligationConcurrency' ? 20 : false
-      )
+      config.get.mockReturnValue(false)
       mockObligationsApi = {
         listComplianceDeclarations: vi.fn(),
-        getComplianceObligation: vi.fn().mockResolvedValue({ obligations: [] }),
-        getComplianceObligationOrNull: vi
+        listUnsubmittedComplianceDeclarations: vi
           .fn()
-          .mockResolvedValue({ obligations: [] })
+          .mockResolvedValue({ unsubmittedOrganisations: [], total: 0 }),
+        getComplianceObligation: vi.fn().mockResolvedValue({ obligations: [] })
       }
+      // The list path no longer touches these two; the detail view model
+      // covered further down this file still does.
       mockOrganisationsApi = { listComplianceOrganisations: vi.fn() }
       mockAccountApi = {
         getOrganisationsByExternalIds: vi
@@ -113,97 +119,38 @@ describe('getCertificatesOfComplianceViewModel', () => {
     })
 
     describe('getComplianceSummary', () => {
-      test('builds summary from API results', async () => {
+      // All three tab counts are now a `total` from a pageSize=1 probe. The
+      // not-submitted count used to mean repeating the whole submitted/accepted
+      // diff a second time per render.
+      const stubCounts = ({ pending, accepted, notSubmitted }) => {
         mockObligationsApi.listComplianceDeclarations.mockImplementation(
-          ({ status, pageSize }) => {
-            if (pageSize === 1 && status === 'Submitted') {
-              return Promise.resolve({ total: 10, complianceDeclarations: [] })
-            }
-            if (pageSize === 1 && status === 'Accepted') {
-              return Promise.resolve({ total: 5, complianceDeclarations: [] })
-            }
-            if (
-              pageSize === DECLARATIONS_BATCH_SIZE &&
-              status === 'Submitted'
-            ) {
-              return Promise.resolve({
-                total: 10,
-                complianceDeclarations: Array.from({ length: 10 }, (_, i) => ({
-                  organisation: { id: `org-${i}` }
-                }))
-              })
-            }
-            if (pageSize === DECLARATIONS_BATCH_SIZE && status === 'Accepted') {
-              return Promise.resolve({
-                total: 5,
-                complianceDeclarations: Array.from({ length: 5 }, (_, i) => ({
-                  organisation: { id: `org-${i + 10}` }
-                }))
-              })
-            }
-            return Promise.resolve({ total: 0, complianceDeclarations: [] })
-          }
+          ({ status }) =>
+            Promise.resolve({
+              total: status === 'Submitted' ? pending : accepted,
+              complianceDeclarations: []
+            })
         )
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: Array.from({ length: 20 }, (_, i) => ({
-            id: `org-${i}`
-          }))
-        })
+        mockObligationsApi.listUnsubmittedComplianceDeclarations.mockResolvedValue(
+          { unsubmittedOrganisations: [], total: notSubmitted }
+        )
+      }
+
+      test('builds summary from API results', async () => {
+        stubCounts({ pending: 10, accepted: 5, notSubmitted: 5 })
 
         const vm = await getCertificatesOfComplianceViewModel(
           'compliance-schemes',
           'pending',
           1
         )
+
         expect(vm.totalPending).toBe(10)
         expect(vm.totalAccepted).toBe(5)
         expect(vm.totalNotSubmitted).toBe(5)
       })
 
-      test('totalNotSubmitted uses org-level dedup when one org has pending and accepted declarations', async () => {
-        const sharedOrgId = 'org-both'
-        mockObligationsApi.listComplianceDeclarations.mockImplementation(
-          ({ status, pageSize }) => {
-            if (pageSize === 1 && status === 'Submitted') {
-              return Promise.resolve({ total: 1, complianceDeclarations: [] })
-            }
-            if (pageSize === 1 && status === 'Accepted') {
-              return Promise.resolve({ total: 1, complianceDeclarations: [] })
-            }
-            if (
-              pageSize === DECLARATIONS_BATCH_SIZE &&
-              status === 'Submitted'
-            ) {
-              return Promise.resolve({
-                total: 1,
-                complianceDeclarations: [{ organisation: { id: sharedOrgId } }]
-              })
-            }
-            if (pageSize === DECLARATIONS_BATCH_SIZE && status === 'Accepted') {
-              return Promise.resolve({
-                total: 1,
-                complianceDeclarations: [{ organisation: { id: sharedOrgId } }]
-              })
-            }
-            return Promise.resolve({ total: 0, complianceDeclarations: [] })
-          }
-        )
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: [
-            {
-              id: sharedOrgId,
-              name: 'Both statuses',
-              companiesHouseNumber: 'CH001',
-              registrationType: 'DirectProducer'
-            },
-            {
-              id: 'org-not-submitted',
-              name: 'Not Submitted',
-              companiesHouseNumber: 'CH002',
-              registrationType: 'DirectProducer'
-            }
-          ]
-        })
+      test('takes totalNotSubmitted from the unsubmitted endpoint total', async () => {
+        stubCounts({ pending: 0, accepted: 0, notSubmitted: 42 })
 
         const vm = await getCertificatesOfComplianceViewModel(
           'direct-producers',
@@ -211,162 +158,55 @@ describe('getCertificatesOfComplianceViewModel', () => {
           1
         )
 
-        expect(vm.totalNotSubmitted).toBe(1)
+        expect(vm.totalNotSubmitted).toBe(42)
+        expect(
+          mockObligationsApi.listUnsubmittedComplianceDeclarations
+        ).toHaveBeenCalledWith(
+          expect.objectContaining({ pageSize: 1 }),
+          undefined
+        )
       })
 
-      test('pending badge count equals total rows across all pages', async () => {
-        const total = 45
-        const allDeclarations = Array.from({ length: total }, (_, i) =>
-          makeDeclaration({
-            id: `decl-${i}`,
-            organisation: { id: `org-${i}` }
-          })
-        )
-        mockObligationsApi.listComplianceDeclarations.mockImplementation(
-          ({ status, pageSize, page }) => {
-            if (pageSize === 1 && status === 'Submitted') {
-              return Promise.resolve({ total, complianceDeclarations: [] })
-            }
-            if (pageSize === 1) {
-              return Promise.resolve({ total: 0, complianceDeclarations: [] })
-            }
-            if (pageSize === DECLARATIONS_BATCH_SIZE) {
-              return Promise.resolve({ total: 0, complianceDeclarations: [] })
-            }
-            if (pageSize === PAGE_SIZE && status === 'Submitted') {
-              const start = (page - 1) * PAGE_SIZE
-              return Promise.resolve({
-                total,
-                complianceDeclarations: allDeclarations.slice(
-                  start,
-                  start + PAGE_SIZE
-                )
-              })
-            }
-            return Promise.resolve({ total: 0, complianceDeclarations: [] })
-          }
-        )
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: []
-        })
+      test('counts the tabs without draining any declaration pages', async () => {
+        stubCounts({ pending: 500, accepted: 500, notSubmitted: 500 })
 
-        const firstPage = await getCertificatesOfComplianceViewModel(
+        await getCertificatesOfComplianceViewModel(
           'direct-producers',
           'pending',
           1
         )
-        expect(firstPage.totalPending).toBe(total)
 
-        let rowCount = firstPage.items.length
-        for (let page = 2; page <= firstPage.pagination.totalPages; page += 1) {
-          const vm = await getCertificatesOfComplianceViewModel(
-            'direct-producers',
-            'pending',
-            page
+        const batchDrains =
+          mockObligationsApi.listComplianceDeclarations.mock.calls.filter(
+            ([params]) => params.pageSize === DECLARATIONS_BATCH_SIZE
           )
-          rowCount += vm.items.length
-        }
-
-        expect(rowCount).toBe(firstPage.totalPending)
+        expect(batchDrains).toHaveLength(0)
       })
 
-      test('cancelled-only org appears on not-submitted tab only', async () => {
-        const cancelledOrgId = 'org-cancelled-only'
-        mockObligationsApi.listComplianceDeclarations.mockImplementation(
-          ({ pageSize }) => {
-            if (pageSize === 1) {
-              return Promise.resolve({ total: 0, complianceDeclarations: [] })
-            }
-            return Promise.resolve({ total: 0, complianceDeclarations: [] })
-          }
-        )
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: [
-            {
-              id: cancelledOrgId,
-              name: 'Cancelled Only Org',
-              companiesHouseNumber: 'CH999',
-              registrationType: 'DirectProducer'
-            }
-          ]
-        })
+      test.each([
+        ['compliance-schemes', 'ComplianceScheme'],
+        ['direct-producers', 'DirectProducer']
+      ])('maps %s to %s registrationType', async (type, registrationType) => {
+        stubCounts({ pending: 0, accepted: 0, notSubmitted: 0 })
 
-        const vm = await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'not-submitted',
-          1
-        )
-
-        expect(vm.items).toHaveLength(1)
-        expect(vm.items[0].organisationId).toBe(cancelledOrgId)
-      })
-
-      test('accepted declaration is exclusive to accepted tab', async () => {
-        const acceptedDeclaration = makeDeclaration({
-          organisation: { id: 'org-accepted-only' }
-        })
-        mockObligationsApi.listComplianceDeclarations.mockImplementation(
-          ({ status, pageSize, page }) => {
-            if (pageSize === 1 && status === 'Accepted') {
-              return Promise.resolve({ total: 1, complianceDeclarations: [] })
-            }
-            if (pageSize === 1) {
-              return Promise.resolve({ total: 0, complianceDeclarations: [] })
-            }
-            if (pageSize === PAGE_SIZE && status === 'Accepted') {
-              return Promise.resolve({
-                total: 1,
-                complianceDeclarations: [acceptedDeclaration]
-              })
-            }
-            return Promise.resolve({ total: 0, complianceDeclarations: [] })
-          }
-        )
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: [{ id: 'org-accepted-only' }]
-        })
-
-        const vm = await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'accepted',
-          1
-        )
-
-        expect(vm.items).toHaveLength(1)
-        expect(vm.items[0].organisationId).toBe('org-accepted-only')
-      })
-
-      test('maps compliance-schemes to ComplianceScheme registrationType', async () => {
-        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
-          total: 0,
-          complianceDeclarations: []
-        })
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: []
-        })
-
-        await getCertificatesOfComplianceViewModel(
-          'compliance-schemes',
-          'pending',
-          1
-        )
+        await getCertificatesOfComplianceViewModel(type, 'pending', 1)
 
         expect(
           mockObligationsApi.listComplianceDeclarations
         ).toHaveBeenCalledWith(
-          expect.objectContaining({ registrationType: 'ComplianceScheme' }),
+          expect.objectContaining({ registrationType }),
+          undefined
+        )
+        expect(
+          mockObligationsApi.listUnsubmittedComplianceDeclarations
+        ).toHaveBeenCalledWith(
+          expect.objectContaining({ registrationType }),
           undefined
         )
       })
 
-      test('maps direct-producers to DirectProducer registrationType', async () => {
-        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
-          total: 0,
-          complianceDeclarations: []
-        })
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: []
-        })
+      test('scopes every count to the compliance year', async () => {
+        stubCounts({ pending: 0, accepted: 0, notSubmitted: 0 })
 
         await getCertificatesOfComplianceViewModel(
           'direct-producers',
@@ -375,44 +215,15 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
 
         expect(
-          mockObligationsApi.listComplianceDeclarations
+          mockObligationsApi.listUnsubmittedComplianceDeclarations
         ).toHaveBeenCalledWith(
-          expect.objectContaining({ registrationType: 'DirectProducer' }),
-          undefined
-        )
-      })
-
-      test('passes complianceYear as registrationYears to listComplianceOrganisations', async () => {
-        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
-          total: 0,
-          complianceDeclarations: []
-        })
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: []
-        })
-
-        await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'pending',
-          1
-        )
-
-        expect(
-          mockOrganisationsApi.listComplianceOrganisations
-        ).toHaveBeenCalledWith(
-          expect.objectContaining({ registrationYears: 2026 }),
+          expect.objectContaining({ obligationYear: COMPLIANCE_YEAR }),
           undefined
         )
       })
 
       test('forwards traceId to API calls', async () => {
-        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
-          total: 0,
-          complianceDeclarations: []
-        })
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: []
-        })
+        stubCounts({ pending: 0, accepted: 0, notSubmitted: 0 })
 
         await getCertificatesOfComplianceViewModel(
           'direct-producers',
@@ -427,7 +238,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           mockObligationsApi.listComplianceDeclarations
         ).toHaveBeenCalledWith(expect.any(Object), 'trace-xyz')
         expect(
-          mockOrganisationsApi.listComplianceOrganisations
+          mockObligationsApi.listUnsubmittedComplianceDeclarations
         ).toHaveBeenCalledWith(expect.any(Object), 'trace-xyz')
       })
     })
@@ -563,149 +374,88 @@ describe('getCertificatesOfComplianceViewModel', () => {
     })
 
     describe('getComplianceList — not-submitted tab', () => {
-      test('returns organisations not present in any declaration', async () => {
-        const orgs = [
-          {
-            id: 'org-1',
-            name: 'Submitted Org',
-            companiesHouseNumber: 'CH001',
-            registrationType: 'DirectProducer'
-          },
-          {
-            id: 'org-2',
-            name: 'Not Submitted A',
-            companiesHouseNumber: 'CH002',
-            registrationType: 'DirectProducer'
-          },
-          {
-            id: 'org-3',
-            name: 'Not Submitted B',
-            companiesHouseNumber: 'CH003',
-            registrationType: 'DirectProducer'
-          }
-        ]
-        mockObligationsApi.listComplianceDeclarations.mockImplementation(
-          ({ pageSize, status }) => {
-            if (pageSize === 1) {
-              return Promise.resolve({ total: 0, complianceDeclarations: [] })
-            }
-            if (
-              pageSize === DECLARATIONS_BATCH_SIZE &&
-              status === 'Submitted'
-            ) {
-              return Promise.resolve({
-                total: 1,
-                complianceDeclarations: [{ organisation: { id: 'org-1' } }]
-              })
-            }
-            return Promise.resolve({ total: 0, complianceDeclarations: [] })
-          }
-        )
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: orgs
-        })
-
-        const vm = await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'not-submitted',
-          1
-        )
-        expect(vm.items).toHaveLength(2)
-        expect(vm.items.map((i) => i.organisationId)).toEqual([
-          'org-2',
-          'org-3'
-        ])
-      })
-
-      test('excludes organisations present in accepted declarations', async () => {
-        const orgs = [
-          {
-            id: 'org-1',
-            name: 'Accepted Org',
-            companiesHouseNumber: 'CH001',
-            registrationType: 'DirectProducer'
-          },
-          {
-            id: 'org-2',
-            name: 'Not Submitted',
-            companiesHouseNumber: 'CH002',
-            registrationType: 'DirectProducer'
-          }
-        ]
-        mockObligationsApi.listComplianceDeclarations.mockImplementation(
-          ({ pageSize, status }) => {
-            if (pageSize === 1) {
-              return Promise.resolve({ total: 0, complianceDeclarations: [] })
-            }
-            if (pageSize === DECLARATIONS_BATCH_SIZE && status === 'Accepted') {
-              return Promise.resolve({
-                total: 1,
-                complianceDeclarations: [{ organisation: { id: 'org-1' } }]
-              })
-            }
-            return Promise.resolve({ total: 0, complianceDeclarations: [] })
-          }
-        )
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: orgs
-        })
-
-        const vm = await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'not-submitted',
-          1
-        )
-        expect(vm.items).toHaveLength(1)
-        expect(vm.items[0].organisationId).toBe('org-2')
-      })
-
-      test('paginates not-submitted results correctly', async () => {
-        const orgs = Array.from({ length: 25 }, (_, i) => ({
-          id: `org-${i}`,
-          name: `Org ${i}`,
-          companiesHouseNumber: `CH${String(i).padStart(3, '0')}`,
-          registrationType: 'DirectProducer'
+      const rows = (count, from = 1) =>
+        Array.from({ length: count }, (_, i) => ({
+          organisationId: `org-${from + i}`,
+          obligationYear: 2026,
+          registrationType: 'DirectProducer',
+          name: `Org ${from + i}`,
+          referenceNumber: `10000${from + i}`,
+          recyclingObligationsMet: true,
+          obligationCoveragePercentage: 90
         }))
-        mockObligationsApi.listComplianceDeclarations.mockImplementation(
-          ({ pageSize }) => {
-            if (pageSize === 1) {
-              return Promise.resolve({ total: 0, complianceDeclarations: [] })
-            }
-            return Promise.resolve({ total: 0, complianceDeclarations: [] })
-          }
-        )
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: orgs
+
+      const stubUnsubmitted = ({ total, page }) => {
+        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
+          total: 0,
+          complianceDeclarations: []
         })
+        mockObligationsApi.listUnsubmittedComplianceDeclarations.mockImplementation(
+          ({ pageSize }) =>
+            Promise.resolve(
+              pageSize === 1
+                ? { unsubmittedOrganisations: [], total }
+                : { unsubmittedOrganisations: page, total }
+            )
+        )
+      }
+
+      test('maps the endpoint rows to list items', async () => {
+        stubUnsubmitted({ total: 2, page: rows(2) })
+
+        const vm = await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'not-submitted',
+          1
+        )
+
+        expect(vm.items).toHaveLength(2)
+        expect(vm.items[0]).toMatchObject({
+          id: null,
+          organisationId: 'org-1',
+          organisationName: 'Org 1',
+          organisationReferenceNumber: '100001'
+        })
+      })
+
+      // Paging is the endpoint's job now; the frontend only derives the page
+      // count from the total it reports.
+      test('asks for the requested page at the list page size', async () => {
+        stubUnsubmitted({ total: 45, page: rows(20, 21) })
 
         const vm = await getCertificatesOfComplianceViewModel(
           'direct-producers',
           'not-submitted',
           2
         )
-        expect(vm.pagination.totalPages).toBe(2) // ceil(25/20)
-        expect(vm.items).toHaveLength(5) // page 2 remainder
+
+        expect(
+          mockObligationsApi.listUnsubmittedComplianceDeclarations
+        ).toHaveBeenCalledWith(
+          expect.objectContaining({ page: 2, pageSize: PAGE_SIZE }),
+          undefined
+        )
+        expect(vm.pagination.totalPages).toBe(3)
         expect(vm.pagination.currentPage).toBe(2)
       })
 
-      test('enriches only the current page of not-submitted items', async () => {
-        const orgs = Array.from({ length: 25 }, (_, i) => ({
-          id: `org-${i}`,
-          name: `Org ${i}`,
-          companiesHouseNumber: `CH${String(i).padStart(3, '0')}`,
-          registrationType: 'DirectProducer'
-        }))
-        mockObligationsApi.listComplianceDeclarations.mockImplementation(
-          ({ pageSize }) => {
-            if (pageSize === 1) {
-              return Promise.resolve({ total: 0, complianceDeclarations: [] })
-            }
-            return Promise.resolve({ total: 0, complianceDeclarations: [] })
-          }
+      test('returns totalPages=1 when there are no not-submitted organisations', async () => {
+        stubUnsubmitted({ total: 0, page: [] })
+
+        const vm = await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'not-submitted',
+          1
         )
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: orgs
-        })
+
+        expect(vm.items).toEqual([])
+        expect(vm.pagination.totalPages).toBe(1)
+      })
+
+      // The regression guard for the incident this change removes: rendering the
+      // tab must cost one call to the endpoint and nothing per row.
+      test('resolves the tab without any per-organisation or cross-service lookups', async () => {
+        stubUnsubmitted({ total: 20, page: rows(20) })
 
         await getCertificatesOfComplianceViewModel(
           'direct-producers',
@@ -714,28 +464,59 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
 
         expect(
-          mockObligationsApi.getComplianceObligationOrNull
-        ).toHaveBeenCalledTimes(PAGE_SIZE)
+          mockObligationsApi.getComplianceObligation
+        ).not.toHaveBeenCalled()
+        expect(
+          mockOrganisationsApi.listComplianceOrganisations
+        ).not.toHaveBeenCalled()
+        expect(
+          mockAccountApi.getOrganisationsByExternalIds
+        ).not.toHaveBeenCalled()
+        expect(
+          mockAccountApi.getOrganisationsByCompaniesHouseNumbers
+        ).not.toHaveBeenCalled()
       })
 
-      test('returns totalPages=1 when there are no not-submitted organisations', async () => {
-        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
-          total: 0,
-          complianceDeclarations: []
-        })
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: []
-        })
+      test('scopes the request to the compliance year and the page organisation type', async () => {
+        stubUnsubmitted({ total: 0, page: [] })
 
-        const vm = await getCertificatesOfComplianceViewModel(
+        await getCertificatesOfComplianceViewModel(
+          'compliance-schemes',
+          'not-submitted',
+          1,
+          undefined,
+          undefined,
+          'trace-9'
+        )
+
+        expect(
+          mockObligationsApi.listUnsubmittedComplianceDeclarations
+        ).toHaveBeenCalledWith(
+          expect.objectContaining({
+            obligationYear: COMPLIANCE_YEAR,
+            registrationType: 'ComplianceScheme'
+          }),
+          'trace-9'
+        )
+      })
+
+      test('sends the default sort when the tab has none of its own', async () => {
+        stubUnsubmitted({ total: 0, page: [] })
+
+        await getCertificatesOfComplianceViewModel(
           'direct-producers',
           'not-submitted',
           1
         )
-        expect(vm.pagination.totalPages).toBe(1)
+
+        expect(
+          mockObligationsApi.listUnsubmittedComplianceDeclarations
+        ).toHaveBeenCalledWith(
+          expect.objectContaining({ sort: 'Name[asc]' }),
+          undefined
+        )
       })
     })
-
     describe('getComplianceList — unknown tab', () => {
       test('returns empty items and totalPages=1 for unknown tab', async () => {
         mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
@@ -756,64 +537,44 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
     })
 
+    // Still the pending/accepted CSV's page drain; the not-submitted tab no
+    // longer reaches it.
     describe('fetchAllDeclarations — multi-page', () => {
-      test('fetches all pages when total exceeds batch size (100)', async () => {
-        // 150 total → 2 pages, used by not-submitted tab
-        mockObligationsApi.listComplianceDeclarations.mockImplementation(
-          ({ pageSize, page, status }) => {
-            if (pageSize === 1) {
-              return Promise.resolve({ total: 0, complianceDeclarations: [] })
-            }
-            if (
-              pageSize === DECLARATIONS_BATCH_SIZE &&
-              status === 'Submitted'
-            ) {
-              if (page === 1) {
-                return Promise.resolve({
-                  total: 150,
-                  complianceDeclarations: Array.from(
-                    { length: 100 },
-                    (_, i) => ({
-                      organisation: { id: `sub-${i}` }
-                    })
-                  )
-                })
-              }
-              return Promise.resolve({
-                total: 150,
-                complianceDeclarations: Array.from({ length: 50 }, (_, i) => ({
-                  organisation: { id: `sub-${i + 100}` }
-                }))
-              })
-            }
-            return Promise.resolve({ total: 0, complianceDeclarations: [] })
-          }
-        )
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: [
-            {
-              id: 'sub-0',
-              name: 'Already Submitted',
-              companiesHouseNumber: 'CH000',
-              registrationType: 'DirectProducer'
-            },
-            {
-              id: 'not-submitted-1',
-              name: 'Not Submitted',
-              companiesHouseNumber: 'CH999',
-              registrationType: 'DirectProducer'
-            }
-          ]
-        })
+      test('fetches every page when the total exceeds the batch size', async () => {
+        const api = {
+          listComplianceDeclarations: vi.fn(({ page }) =>
+            Promise.resolve({
+              total: 150,
+              complianceDeclarations: Array.from(
+                { length: page === 1 ? DECLARATIONS_BATCH_SIZE : 50 },
+                (_, i) => ({ organisation: { id: `decl-${page}-${i}` } })
+              )
+            })
+          )
+        }
 
-        const vm = await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'not-submitted',
-          1
+        const declarations = await fetchAllDeclarations(
+          api,
+          { status: 'Submitted' },
+          'trace-1'
         )
-        // sub-0 is in page 1 of submitted declarations, so only not-submitted-1 should appear
-        expect(vm.items).toHaveLength(1)
-        expect(vm.items[0].organisationId).toBe('not-submitted-1')
+
+        expect(api.listComplianceDeclarations).toHaveBeenCalledTimes(2)
+        expect(declarations).toHaveLength(150)
+      })
+
+      test('makes a single call when one page covers the total', async () => {
+        const api = {
+          listComplianceDeclarations: vi.fn().mockResolvedValue({
+            total: 3,
+            complianceDeclarations: [{}, {}, {}]
+          })
+        }
+
+        const declarations = await fetchAllDeclarations(api, {}, undefined)
+
+        expect(api.listComplianceDeclarations).toHaveBeenCalledTimes(1)
+        expect(declarations).toHaveLength(3)
       })
     })
 
@@ -2592,645 +2353,168 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
     })
 
-    describe('not-submitted — Account API organisation resolution', () => {
-      const setupNotSubmittedTab = (orgs) => {
-        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
-          total: 0,
-          complianceDeclarations: []
-        })
-        mockObligationsApi.getComplianceObligationOrNull = vi
-          .fn()
-          .mockResolvedValue({ obligations: [] })
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: orgs
-        })
-      }
-
-      test('defaults reference number to "No data" and keeps the organisation name', async () => {
-        setupNotSubmittedTab([
-          {
-            id: 'org-guid-1',
-            name: 'Redwood Retail Group',
-            registrationType: 'DirectProducer'
-          }
-        ])
-        mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
-          organisations: [],
-          notFoundExternalIds: ['org-guid-1']
+    // The reference number now arrives materialised on the endpoint row, so the
+    // Account API lookups this tab used to make are gone. What survives is the
+    // mapping contract the template depends on.
+    describe('not-submitted — row mapping', () => {
+      test('sets id to null so the template links to the organisation, not a declaration', () => {
+        const item = mapUnsubmittedToItem({
+          organisationId: 'org-1',
+          name: 'Acme Ltd',
+          referenceNumber: '100001',
+          recyclingObligationsMet: true,
+          obligationCoveragePercentage: 92
         })
 
-        const vm = await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'not-submitted',
-          1
-        )
-
-        expect(vm.items[0]).toMatchObject({
-          organisationId: 'org-guid-1',
-          organisationReferenceNumber: 'No data',
-          organisationName: 'Redwood Retail Group'
-        })
+        expect(item.id).toBeNull()
+        expect(item.organisationId).toBe('org-1')
       })
 
-      test('resolves the reference number from the Account API; name comes from the organisation record', async () => {
-        setupNotSubmittedTab([
-          {
-            id: 'org-guid-1',
-            name: 'Redwood Retail Group',
-            registrationType: 'DirectProducer'
-          },
-          {
-            id: 'org-guid-2',
-            name: 'Maple Manufacturing',
-            registrationType: 'DirectProducer'
-          }
-        ])
-        mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
-          organisations: [
-            {
-              externalId: 'org-guid-1',
-              name: 'Ignored Account Name',
-              referenceNumber: '518293'
-            },
-            {
-              externalId: 'org-guid-2',
-              name: 'Ignored Account Name',
-              referenceNumber: '600124'
-            }
-          ],
-          notFoundExternalIds: []
+      test('takes the organisation name and reference number from the endpoint row', () => {
+        const item = mapUnsubmittedToItem({
+          organisationId: 'org-1',
+          name: 'Acme Ltd',
+          referenceNumber: '100001'
         })
 
-        const vm = await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'not-submitted',
-          1
-        )
-
-        expect(vm.items).toEqual([
-          expect.objectContaining({
-            organisationId: 'org-guid-2',
-            organisationReferenceNumber: '600124',
-            organisationName: 'Maple Manufacturing'
-          }),
-          expect.objectContaining({
-            organisationId: 'org-guid-1',
-            organisationReferenceNumber: '518293',
-            organisationName: 'Redwood Retail Group'
-          })
-        ])
+        expect(item.organisationName).toBe('Acme Ltd')
+        expect(item.organisationReferenceNumber).toBe('100001')
       })
 
-      test('shows "No data" reference number for unresolved ids while other rows render', async () => {
-        setupNotSubmittedTab([
-          {
-            id: 'org-guid-1',
-            name: 'Redwood Retail Group',
-            registrationType: 'DirectProducer'
-          },
-          {
-            id: 'org-guid-2',
-            name: 'Maple Manufacturing',
-            registrationType: 'DirectProducer'
-          }
-        ])
-        mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
-          organisations: [
-            {
-              externalId: 'org-guid-1',
-              name: 'Ignored Account Name',
-              referenceNumber: '518293'
-            }
-          ],
-          notFoundExternalIds: ['org-guid-2']
+      // The endpoint only returns organisations whose reference number resolved,
+      // so this is a guard against ever rendering 'undefined' in the ID column —
+      // not a fallback the contract is expected to exercise.
+      test('falls back to "No data" rather than undefined when a reference number is missing', () => {
+        const item = mapUnsubmittedToItem({
+          organisationId: 'org-1',
+          name: 'Acme Ltd'
         })
 
-        const vm = await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'not-submitted',
-          1
-        )
-
-        expect(vm.items[0]).toMatchObject({
-          organisationId: 'org-guid-2',
-          organisationReferenceNumber: 'No data',
-          organisationName: 'Maple Manufacturing'
-        })
-        expect(vm.items[1]).toMatchObject({
-          organisationReferenceNumber: '518293',
-          organisationName: 'Redwood Retail Group'
-        })
+        expect(item.organisationReferenceNumber).toBe(NO_DATA)
       })
 
-      test('calls the Account API with the page slice external ids and the traceId', async () => {
-        setupNotSubmittedTab([{ id: 'org-guid-1' }, { id: 'org-guid-2' }])
-
-        await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'not-submitted',
-          1,
-          undefined,
-          undefined,
-          'trace-acct'
-        )
-
-        expect(
-          mockAccountApi.getOrganisationsByExternalIds
-        ).toHaveBeenCalledWith(['org-guid-1', 'org-guid-2'], 'trace-acct')
-      })
-
-      test('does not call the Account API when there are no not-submitted organisations', async () => {
-        setupNotSubmittedTab([])
-
-        await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'not-submitted',
-          1
-        )
-
-        expect(
-          mockAccountApi.getOrganisationsByExternalIds
-        ).not.toHaveBeenCalled()
-      })
-
-      test('propagates Account API failures so the error page is shown', async () => {
-        setupNotSubmittedTab([{ id: 'org-guid-1' }])
-        const apiError = Object.assign(new Error('account API failed'), {
-          name: 'ApiError',
-          status: 500
-        })
-        mockAccountApi.getOrganisationsByExternalIds.mockRejectedValue(apiError)
-
-        await expect(
-          getCertificatesOfComplianceViewModel(
-            'direct-producers',
-            'not-submitted',
-            1
-          )
-        ).rejects.toMatchObject({ name: 'ApiError', status: 500 })
-      })
-
-      test('does not call the Account API for the pending tab', async () => {
-        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
-          total: 0,
-          complianceDeclarations: []
-        })
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: []
+      test('leaves Regulation 43 and date submitted empty — neither applies without a declaration', () => {
+        const item = mapUnsubmittedToItem({
+          organisationId: 'org-1',
+          name: 'Acme Ltd',
+          referenceNumber: '100001'
         })
 
-        await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'pending',
-          1
-        )
-
-        expect(
-          mockAccountApi.getOrganisationsByExternalIds
-        ).not.toHaveBeenCalled()
-      })
-
-      test('sets id to null and organisationId to org id for not-submitted items', async () => {
-        setupNotSubmittedTab([
-          {
-            id: 'org-1',
-            name: 'Org',
-            companiesHouseNumber: 'CH12345678',
-            registrationType: 'DirectProducer'
-          }
-        ])
-
-        const vm = await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'not-submitted',
-          1
-        )
-
-        expect(vm.items[0].id).toBeNull()
-        expect(vm.items[0].organisationId).toBe('org-1')
-      })
-
-      describe('compliance-schemes — reference number by Companies House number', () => {
-        test('calls the Account API with the compliance-scheme Companies House numbers and traceId, not external ids', async () => {
-          setupNotSubmittedTab([
-            {
-              id: 'cs-guid-1',
-              name: 'Org record name',
-              companiesHouseNumber: 'CHN-CS-1',
-              registrationType: 'ComplianceScheme'
-            },
-            {
-              id: 'cs-guid-2',
-              name: 'Org record name',
-              companiesHouseNumber: 'CHN-CS-2',
-              registrationType: 'ComplianceScheme'
-            }
-          ])
-
-          await getCertificatesOfComplianceViewModel(
-            'compliance-schemes',
-            'not-submitted',
-            1,
-            undefined,
-            undefined,
-            'trace-cs'
-          )
-
-          expect(
-            mockAccountApi.getOrganisationsByCompaniesHouseNumbers
-          ).toHaveBeenCalledWith(['CHN-CS-1', 'CHN-CS-2'], 'trace-cs')
-          expect(
-            mockAccountApi.getOrganisationsByExternalIds
-          ).not.toHaveBeenCalled()
-        })
-
-        test('ignores a non-compliance-scheme organisation that shares a Companies House number', async () => {
-          setupNotSubmittedTab([
-            {
-              id: 'cs-guid-1',
-              name: 'Scheme record',
-              companiesHouseNumber: 'CHN-SHARED',
-              registrationType: 'ComplianceScheme'
-            }
-          ])
-          mockAccountApi.getOrganisationsByCompaniesHouseNumbers.mockResolvedValue(
-            [
-              {
-                companiesHouseNumber: 'CHN-SHARED',
-                name: 'Producer',
-                referenceNumber: '111111',
-                isComplianceScheme: false
-              },
-              {
-                companiesHouseNumber: 'CHN-SHARED',
-                name: 'Scheme Operator',
-                referenceNumber: '530009',
-                isComplianceScheme: true
-              }
-            ]
-          )
-
-          const vm = await getCertificatesOfComplianceViewModel(
-            'compliance-schemes',
-            'not-submitted',
-            1
-          )
-
-          expect(vm.items[0].organisationReferenceNumber).toBe('530009')
-        })
-
-        test('displays the waste-organisations record name and the Account API reference number for each row', async () => {
-          setupNotSubmittedTab([
-            {
-              id: 'cs-guid-1',
-              name: 'Org record name 1',
-              companiesHouseNumber: 'CHN-CS-1',
-              registrationType: 'ComplianceScheme'
-            },
-            {
-              id: 'cs-guid-2',
-              name: 'Org record name 2',
-              companiesHouseNumber: 'CHN-CS-2',
-              registrationType: 'ComplianceScheme'
-            }
-          ])
-          mockAccountApi.getOrganisationsByCompaniesHouseNumbers.mockResolvedValue(
-            [
-              {
-                companiesHouseNumber: 'CHN-CS-1',
-                name: 'Ignored Account Name',
-                referenceNumber: '530001',
-                isComplianceScheme: true
-              },
-              {
-                companiesHouseNumber: 'CHN-CS-2',
-                name: 'Ignored Account Name',
-                referenceNumber: '530002',
-                isComplianceScheme: true
-              }
-            ]
-          )
-
-          const vm = await getCertificatesOfComplianceViewModel(
-            'compliance-schemes',
-            'not-submitted',
-            1
-          )
-
-          expect(vm.items).toEqual([
-            expect.objectContaining({
-              organisationId: 'cs-guid-1',
-              organisationReferenceNumber: '530001',
-              organisationName: 'Org record name 1'
-            }),
-            expect.objectContaining({
-              organisationId: 'cs-guid-2',
-              organisationReferenceNumber: '530002',
-              organisationName: 'Org record name 2'
-            })
-          ])
-        })
-
-        test('displays the scheme operator name, not the scheme trading name', async () => {
-          setupNotSubmittedTab([
-            {
-              id: 'cs-guid-1',
-              name: 'Scheme Operator Co',
-              tradingName: 'GreenCircle Compliance Scheme',
-              companiesHouseNumber: 'CHN-CS-1',
-              registrations: complianceSchemeRegistrations
-            }
-          ])
-          mockAccountApi.getOrganisationsByCompaniesHouseNumbers.mockResolvedValue(
-            [
-              {
-                companiesHouseNumber: 'CHN-CS-1',
-                name: 'Ignored Account Name',
-                referenceNumber: '530001',
-                isComplianceScheme: true
-              }
-            ]
-          )
-
-          const vm = await getCertificatesOfComplianceViewModel(
-            'compliance-schemes',
-            'not-submitted',
-            1
-          )
-
-          expect(vm.items[0].organisationName).toBe('Scheme Operator Co')
-        })
-
-        test('shows "No data" reference number for an unmatched Companies House number while keeping the record name', async () => {
-          setupNotSubmittedTab([
-            {
-              id: 'cs-guid-1',
-              name: 'Org record name 1',
-              companiesHouseNumber: 'CHN-CS-1',
-              registrationType: 'ComplianceScheme'
-            },
-            {
-              id: 'cs-guid-2',
-              name: 'Org record name 2',
-              companiesHouseNumber: 'CHN-CS-2',
-              registrationType: 'ComplianceScheme'
-            }
-          ])
-          mockAccountApi.getOrganisationsByCompaniesHouseNumbers.mockResolvedValue(
-            [
-              {
-                companiesHouseNumber: 'CHN-CS-1',
-                name: 'Ignored Account Name',
-                referenceNumber: '530001',
-                isComplianceScheme: true
-              }
-            ]
-          )
-
-          const vm = await getCertificatesOfComplianceViewModel(
-            'compliance-schemes',
-            'not-submitted',
-            1
-          )
-
-          expect(vm.items[0]).toMatchObject({
-            organisationId: 'cs-guid-1',
-            organisationReferenceNumber: '530001',
-            organisationName: 'Org record name 1'
-          })
-          expect(vm.items[1]).toMatchObject({
-            organisationId: 'cs-guid-2',
-            organisationReferenceNumber: 'No data',
-            organisationName: 'Org record name 2'
-          })
-        })
-
-        test('propagates a 5xx so the error page is shown', async () => {
-          setupNotSubmittedTab([
-            {
-              id: 'cs-guid-1',
-              name: 'Org record name',
-              companiesHouseNumber: 'CHN-CS-1',
-              registrationType: 'ComplianceScheme'
-            }
-          ])
-
-          const apiError = Object.assign(new Error('account API failed'), {
-            name: 'ApiError',
-            status: 500
-          })
-          mockAccountApi.getOrganisationsByCompaniesHouseNumbers.mockRejectedValue(
-            apiError
-          )
-
-          await expect(
-            getCertificatesOfComplianceViewModel(
-              'compliance-schemes',
-              'not-submitted',
-              1
-            )
-          ).rejects.toMatchObject({ name: 'ApiError', status: 500 })
-        })
+        expect(item.regulation43Met).toBeNull()
+        expect(item.dateSubmitted).toBeNull()
       })
     })
 
-    describe('not-submitted — obligation coverage percentage', () => {
-      const setupNotSubmittedDirectProducerTab = (
-        orgs,
-        obligationByOrgId = {}
-      ) => {
+    describe('resolveUnsubmittedSort', () => {
+      test.each([
+        ['OrganisationName', 'asc', 'Name[asc]'],
+        ['OrganisationId', 'desc', 'ReferenceNumber[desc]'],
+        ['RecyclingObligations', 'asc', 'RecyclingObligationsMet[asc]'],
+        ['PercentageMet', 'desc', 'ObligationCoveragePercentage[desc]']
+      ])(
+        'maps %s[%s] to the endpoint vocabulary',
+        (column, direction, expected) => {
+          expect(resolveUnsubmittedSort(column, direction)).toBe(expected)
+        }
+      )
+
+      // The controller persists whatever ?sort= it is given per tab, so a column
+      // belonging to another tab can arrive here from the session. Falling back
+      // keeps it away from the endpoint, which would reject it.
+      test.each(['DateSubmitted', 'Regulation43', 'Nonsense', undefined])(
+        'falls back to the default sort for the unsupported column %s',
+        (column) => {
+          expect(resolveUnsubmittedSort(column, 'asc')).toBe('Name[asc]')
+        }
+      )
+
+      test('falls back to the default sort for an invalid direction', () => {
+        expect(resolveUnsubmittedSort('OrganisationName', 'sideways')).toBe(
+          'Name[asc]'
+        )
+      })
+    })
+    // The endpoint serves both metrics materialised, so these are mapping tests
+    // over its payload rather than tests of a frontend calculation.
+    describe('not-submitted — obligation metrics', () => {
+      const unsubmittedRow = (overrides = {}) => ({
+        organisationId: 'org-1',
+        obligationYear: 2026,
+        registrationType: 'DirectProducer',
+        name: 'Acme Ltd',
+        referenceNumber: '100001',
+        recyclingObligationsMet: true,
+        obligationCoveragePercentage: 92,
+        ...overrides
+      })
+
+      const notSubmittedItems = async (rows, type = 'direct-producers') => {
         mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
           total: 0,
           complianceDeclarations: []
         })
-        mockObligationsApi.getComplianceObligationOrNull = vi
-          .fn()
-          .mockImplementation(({ organisationId }) =>
+        mockObligationsApi.listUnsubmittedComplianceDeclarations.mockImplementation(
+          ({ pageSize }) =>
             Promise.resolve(
-              obligationByOrgId[organisationId] ?? { obligations: [] }
+              pageSize === 1
+                ? { unsubmittedOrganisations: [], total: rows.length }
+                : { unsubmittedOrganisations: rows, total: rows.length }
             )
-          )
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: orgs
-        })
+        )
+        const vm = await getCertificatesOfComplianceViewModel(
+          type,
+          'not-submitted',
+          1
+        )
+        return vm.items
       }
 
-      test('calls getComplianceObligationOrNull for each direct producer on the page', async () => {
-        setupNotSubmittedDirectProducerTab([
-          {
-            id: 'org-1',
-            name: 'Org One',
-            registrationType: 'DirectProducer'
-          },
-          {
-            id: 'org-2',
-            name: 'Org Two',
-            registrationType: 'DirectProducer'
-          }
+      test('passes the materialised percentage through unchanged', async () => {
+        const items = await notSubmittedItems([
+          unsubmittedRow({ obligationCoveragePercentage: 92 })
         ])
 
-        await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'not-submitted',
-          1,
-          undefined,
-          undefined,
-          'trace-obl'
-        )
-
-        expect(
-          mockObligationsApi.getComplianceObligationOrNull
-        ).toHaveBeenCalledTimes(2)
-        expect(
-          mockObligationsApi.getComplianceObligationOrNull
-        ).toHaveBeenCalledWith(
-          { organisationId: 'org-1', obligationYear: 2026 },
-          'trace-obl'
-        )
-        expect(
-          mockObligationsApi.getComplianceObligationOrNull
-        ).toHaveBeenCalledWith(
-          { organisationId: 'org-2', obligationYear: 2026 },
-          'trace-obl'
-        )
+        expect(items[0].obligationCoveragePercentage).toBe(92)
       })
 
-      test('maps calculated obligationCoveragePercentage from obligations', async () => {
-        setupNotSubmittedDirectProducerTab(
-          [
-            {
-              id: 'org-1',
-              name: 'Org One',
-              registrationType: 'DirectProducer'
-            }
-          ],
-          {
-            'org-1': {
-              obligations: [{ tonnages: { accepted: 850, obligated: 925 } }]
-            }
-          }
-        )
-
-        const vm = await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'not-submitted',
-          1
-        )
-
-        expect(vm.items[0].obligationCoveragePercentage).toBe(92)
-      })
-
-      test('returns 0% when obligations are empty', async () => {
-        setupNotSubmittedDirectProducerTab([
-          {
-            id: 'org-1',
-            name: 'Org One',
-            registrationType: 'DirectProducer'
-          }
+      test('passes the materialised recycling status through unchanged', async () => {
+        const items = await notSubmittedItems([
+          unsubmittedRow({ recyclingObligationsMet: false })
         ])
 
-        const vm = await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'not-submitted',
-          1
-        )
-
-        expect(vm.items[0].obligationCoveragePercentage).toBe(0)
+        expect(items[0].recyclingObligationsMet).toBe(false)
       })
 
-      test('returns 0% when obligations API responds with 404', async () => {
-        setupNotSubmittedDirectProducerTab([
-          {
-            id: 'org-1',
-            name: 'Org One',
-            registrationType: 'DirectProducer'
-          }
-        ])
-        mockObligationsApi.getComplianceObligationOrNull.mockResolvedValue(null)
-
-        const vm = await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'not-submitted',
-          1
-        )
-
-        expect(vm.items[0].obligationCoveragePercentage).toBe(0)
-      })
-
-      test('resolves recycling status for compliance-schemes not-submitted tab', async () => {
-        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
-          total: 0,
-          complianceDeclarations: []
-        })
-        mockObligationsApi.getComplianceObligationOrNull = vi
-          .fn()
-          .mockResolvedValue({
-            obligations: [
-              {
-                material: 'Plastic',
-                status: 'NotMet',
-                tonnages: { obligated: 100, accepted: 0 }
-              }
-            ]
+      // A null metric means the backend holds no successful calculation for that
+      // organisation yet. It must not be coerced to 0, which the template and CSV
+      // would render as a genuine "0% of obligations met".
+      test('keeps a null percentage null rather than coercing it to 0', async () => {
+        const items = await notSubmittedItems([
+          unsubmittedRow({
+            recyclingObligationsMet: null,
+            obligationCoveragePercentage: null
           })
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: [
-            {
-              id: 'cs-1',
-              name: 'Scheme',
-              companiesHouseNumber: 'CH001',
-              registrationType: 'ComplianceScheme'
-            }
-          ]
-        })
+        ])
 
-        const vm = await getCertificatesOfComplianceViewModel(
-          'compliance-schemes',
-          'not-submitted',
-          1
-        )
-
-        expect(
-          mockObligationsApi.getComplianceObligationOrNull
-        ).toHaveBeenCalled()
-        expect(vm.items[0].recyclingObligationsMet).toBe(false)
+        expect(items[0].obligationCoveragePercentage).toBeNull()
+        expect(items[0].recyclingObligationsMet).toBeNull()
       })
 
-      test('does not call getComplianceObligationOrNull for pending tab', async () => {
-        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
-          total: 0,
-          complianceDeclarations: []
-        })
-        mockOrganisationsApi.listComplianceOrganisations.mockResolvedValue({
-          organisations: []
-        })
-        mockObligationsApi.getComplianceObligationOrNull.mockClear()
-
-        await getCertificatesOfComplianceViewModel(
-          'direct-producers',
-          'pending',
-          1
-        )
+      test('never asks the obligations route for a not-submitted row', async () => {
+        await notSubmittedItems([unsubmittedRow()])
 
         expect(
-          mockObligationsApi.getComplianceObligationOrNull
+          mockObligationsApi.getComplianceObligation
         ).not.toHaveBeenCalled()
       })
 
-      test('propagates obligations API failures', async () => {
-        setupNotSubmittedDirectProducerTab([
-          {
-            id: 'org-1',
-            name: 'Org One',
-            registrationType: 'DirectProducer'
-          }
-        ])
-        const apiError = Object.assign(new Error('obligations API failed'), {
-          name: 'ApiError',
-          status: 500
+      test('propagates an unsubmitted endpoint failure so the error page is shown', async () => {
+        mockObligationsApi.listComplianceDeclarations.mockResolvedValue({
+          total: 0,
+          complianceDeclarations: []
         })
-        mockObligationsApi.getComplianceObligationOrNull.mockRejectedValue(
-          apiError
+        mockObligationsApi.listUnsubmittedComplianceDeclarations.mockRejectedValue(
+          new ApiError({ message: 'Boom', status: 500 })
         )
 
         await expect(
@@ -3239,65 +2523,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
             'not-submitted',
             1
           )
-        ).rejects.toMatchObject({ name: 'ApiError', status: 500 })
+        ).rejects.toThrow('Boom')
       })
     })
-  })
-})
-
-describe('compareValues', () => {
-  test('returns 0 when both are null', () => {
-    expect(compareValues(null, null)).toBe(0)
-  })
-
-  test('returns 1 when valA is null', () => {
-    expect(compareValues(null, 'test')).toBe(1)
-  })
-
-  test('returns -1 when valB is null', () => {
-    expect(compareValues('test', null)).toBe(-1)
-  })
-
-  test('compares booleans correctly', () => {
-    expect(compareValues(true, true)).toBe(0)
-    expect(compareValues(false, false)).toBe(0)
-    expect(compareValues(true, false)).toBe(1)
-    expect(compareValues(false, true)).toBe(-1)
-  })
-
-  test('compares numbers correctly', () => {
-    expect(compareValues(1, 1)).toBe(0)
-    expect(compareValues(1, 2)).toBe(-1)
-    expect(compareValues(2, 1)).toBe(1)
-  })
-
-  test('compares strings correctly', () => {
-    expect(compareValues('apple', 'apple')).toBe(0)
-    expect(compareValues('apple', 'banana')).toBe(-1)
-    expect(compareValues('banana', 'apple')).toBe(1)
-  })
-
-  test('returns 0 for unhandled types', () => {
-    expect(compareValues({}, {})).toBe(0)
-  })
-})
-
-describe('sortItems', () => {
-  const items = [
-    { id: 1, name: 'B', organisationName: 'Z Org' },
-    { id: 2, name: 'A', organisationName: 'M Org' },
-    { id: 3, name: 'A', organisationName: 'A Org' },
-    { id: 4, name: null, organisationName: 'Y Org' },
-    { id: 5, name: null, organisationName: 'B Org' }
-  ]
-
-  test('sorts by primary column ascending with secondary sort on organisationName', () => {
-    const result = sortItems([...items], 'name', 'asc')
-    expect(result.map((i) => i.id)).toEqual([3, 2, 1, 5, 4])
-  })
-
-  test('sorts by primary column descending with secondary sort on organisationName ascending', () => {
-    const result = sortItems([...items], 'name', 'desc')
-    expect(result.map((i) => i.id)).toEqual([5, 4, 1, 3, 2])
   })
 })

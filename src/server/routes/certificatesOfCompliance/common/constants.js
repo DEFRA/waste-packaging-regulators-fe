@@ -8,6 +8,23 @@ export const statusBySubmissionStatus = {
   accepted: 'Accepted'
 }
 
+// The unsubmitted endpoint has its own sort vocabulary, distinct from the
+// declaration search's. Anything absent from this map — Regulation43 and
+// DateSubmitted, neither of which the endpoint knows — falls back to the default
+// rather than reaching the API, which would reject it.
+export const UNSUBMITTED_SORT_FIELD_BY_COLUMN = {
+  OrganisationName: 'Name',
+  OrganisationId: 'ReferenceNumber',
+  ReferenceNumber: 'ReferenceNumber',
+  RecyclingObligations: 'RecyclingObligationsMet',
+  PercentageMet: 'ObligationCoveragePercentage'
+}
+
+export const UNSUBMITTED_DEFAULT_SORT = 'Name[asc]'
+
+// DECLARATIONS_BATCH_SIZE is also the unsubmitted endpoint's maximum pageSize.
+export const DOWNLOAD_PAGE_CONCURRENCY = 5
+
 export const PAGE_SIZE = 20
 export const DECLARATIONS_BATCH_SIZE = 100
 export const SEARCH_TERM_MAX_LENGTH = 100

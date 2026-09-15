@@ -83,9 +83,13 @@ import in `server.js`, so it never enters the production module graph.
 
 Two properties are load-bearing — keep them true:
 
-1. **One source of truth.** The list, detail, search and CSV surfaces are all
-   projections of one canonical set of compliance records. A record is described
-   once; the surfaces cannot disagree. Do **not** hand-author per-surface data.
+1. **One source of truth.** The list, detail, search, not-submitted and CSV
+   surfaces are all projections of one canonical set of compliance records. A
+   record is described once; the surfaces cannot disagree. Do **not** hand-author
+   per-surface data. The unsubmitted listing derives its set the way the real
+   backend does — an organisation with no Submitted or Accepted declaration —
+   rather than reading the `submissionStatus` marker, so a cancelled-only
+   organisation still appears on the not-submitted tab.
 2. **Stateless.** The store is a read-only projection — no approve/cancel
    transitions are persisted. The success banner after an accept/cancel is driven
    by the session flag, not by mutated mock data. This makes every request
@@ -107,6 +111,7 @@ mocks/
   server.js              starts the in-process MSW server (startMockApi)
   <api>/fixtures.js      the raw data for that backend
   <api>/store.js         read-only store: query/lookup — no mutations
+  waste-obligations/unsubmitted.js  projection for the unsubmitted listing
   <api>/handlers.js      the MSW HTTP handlers, thin over the store
 ```
 

@@ -37,6 +37,14 @@ export const parseSearchTerm = (rawSearch, locale = 'en') => {
   return { searchTerm, errors: null }
 }
 
+// The page number now reaches the API rather than being applied to an in-memory
+// slice, so a junk value has to be resolved here. `?page=abc` used to slice to
+// an empty array and render an empty page; unguarded it would become a 400.
+export const parsePageNumber = (raw) => {
+  const page = Number.parseInt(raw, 10)
+  return Number.isFinite(page) && page >= 1 ? page : 1
+}
+
 const complianceListSortKey = (organisationType) =>
   `complianceListSort:${organisationType}`
 
@@ -121,7 +129,7 @@ export const certificatesOfComplianceController = {
       getCertificatesOfComplianceViewModel(
         type,
         submissionStatus,
-        Number.parseInt(page, 10),
+        parsePageNumber(page),
         sortColumn,
         sortDirection,
         traceId,

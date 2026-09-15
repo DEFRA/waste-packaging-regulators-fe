@@ -269,23 +269,45 @@ function buildOrganisation(spec, index) {
     persons
   }
 
+  // The unsubmitted endpoint derives its set the same way: an organisation is
+  // unsubmitted when it holds no Submitted or Accepted declaration, whether or
+  // not it has a submissionStatus marker. So a cancelled-only organisation is
+  // unsubmitted, which is exactly the case the not-submitted tab must show.
+  const declarationStatuses = [
+    record.declarationStatus,
+    ...historyRecords.map((entry) => entry.declarationStatus)
+  ]
+  const isUnsubmitted = !declarationStatuses.some(
+    (declarationStatus) =>
+      declarationStatus === 'Submitted' || declarationStatus === 'Accepted'
+  )
+
+  // The endpoint serves materialised metrics, so an organisation whose
+  // obligations have not been calculated reports null rather than a computed
+  // zero. Mirrors metricsFor in src/mocks/waste-obligations/unsubmitted.js.
+  const unsubmittedMetrics = obligations?.length
+    ? {
+        recyclingObligationsMet: deriveRecyclingObligationsMet(obligations),
+        obligationCoveragePercentage:
+          calculateObligationCoveragePercentage(obligations)
+      }
+    : {
+        recyclingObligationsMet: null,
+        obligationCoveragePercentage: null
+      }
+
   const expectedRow =
     listed && submitted
       ? mapDeclarationToItem(toDeclaration(record))
-      : submissionStatus === 'not-submitted'
+      : isUnsubmitted
         ? {
             id: null,
             organisationId,
             organisationReferenceNumber: reference,
             organisationName: listOrganisationName(record),
-            recyclingObligationsMet: deriveRecyclingObligationsMet(
-              obligations ?? []
-            ),
             regulation43Met: null,
-            obligationCoveragePercentage: calculateObligationCoveragePercentage(
-              obligations ?? []
-            ),
-            dateSubmitted: null
+            dateSubmitted: null,
+            ...unsubmittedMetrics
           }
         : null
 
@@ -301,6 +323,7 @@ function buildOrganisation(spec, index) {
     type: registrationType,
     status,
     submissionStatus,
+    isUnsubmitted,
     organisationId,
     declarationId: record.declarationId ?? null,
     reference,
@@ -344,7 +367,11 @@ export function mockScenario({ organisations = [] } = {}) {
 
   const rowsFor = (type, submissionStatus) =>
     built
-      .filter((o) => o.type === type && o.submissionStatus === submissionStatus)
+      .filter((o) =>
+        submissionStatus === 'not-submitted'
+          ? o.type === type && o.isUnsubmitted
+          : o.type === type && o.submissionStatus === submissionStatus
+      )
       .map((o) => o.expectedRow)
 
   return { organisations: built, handlers, backends, byName, rowsFor }

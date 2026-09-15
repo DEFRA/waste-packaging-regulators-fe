@@ -30,6 +30,13 @@ function configuredErrorResponse() {
   )
 }
 
+export function badRequest(errors) {
+  return HttpResponse.json(
+    { title: 'One or more validation errors occurred.', status: 400, errors },
+    { status: 400, headers: { 'content-type': 'application/problem+json' } }
+  )
+}
+
 // Wraps a resolver so MOCK_ERROR_STATUS short-circuits it with the configured
 // error before any data is served.
 export const dataHandler = (resolver) => (info) =>
