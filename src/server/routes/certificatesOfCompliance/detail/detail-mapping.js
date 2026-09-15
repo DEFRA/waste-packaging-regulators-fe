@@ -128,6 +128,28 @@ function mapDeclarationContactFields(
   }
 }
 
+function resolveDeclarationContext(
+  data,
+  { organisationId, id, declarationsForYear }
+) {
+  const { organisation, status } = data
+  const resolvedOrganisationId = organisationId ?? organisation?.id ?? null
+  const resolvedId = id ?? data.id ?? null
+  return {
+    reviewStatus: mapDeclarationStatusToReviewStatus(status),
+    resolvedOrganisationId,
+    resolvedId,
+    companyName: mapOrganisationName(organisation),
+    submittedUser: findSubmittedAuditUser(data.audit),
+    historyDeclarations: buildCurrentYearDeclarations(
+      declarationsForYear,
+      data,
+      status,
+      resolvedId
+    )
+  }
+}
+
 export function mapDeclarationToDetail(
   data,
   {
@@ -147,21 +169,21 @@ export function mapDeclarationToDetail(
     obligationStatus,
     isRegulation43Compliant,
     submitterName,
-    created,
-    status
+    created
   } = data
 
-  const reviewStatus = mapDeclarationStatusToReviewStatus(status)
-  const resolvedOrganisationId = organisationId ?? organisation?.id ?? null
-  const resolvedId = id ?? data.id ?? null
-  const companyName = mapOrganisationName(organisation)
-  const submittedUser = findSubmittedAuditUser(data.audit)
-  const historyDeclarations = buildCurrentYearDeclarations(
-    declarationsForYear,
-    data,
-    status,
-    resolvedId
-  )
+  const {
+    reviewStatus,
+    resolvedOrganisationId,
+    resolvedId,
+    companyName,
+    submittedUser,
+    historyDeclarations
+  } = resolveDeclarationContext(data, {
+    organisationId,
+    id,
+    declarationsForYear
+  })
 
   return {
     organisationId: resolvedOrganisationId,
