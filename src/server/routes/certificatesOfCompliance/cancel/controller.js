@@ -206,7 +206,9 @@ export const certificatesOfComplianceCancelReasonGetController = {
       documentType,
       locale
     })
-    if (response) return response
+    if (response) {
+      return response
+    }
 
     const { reason } = request.query
     const selected = isValidCancelReason(reason) ? reason : null
@@ -253,7 +255,9 @@ export const certificatesOfComplianceCancelCheckGetController = {
       documentType,
       locale
     })
-    if (response) return response
+    if (response) {
+      return response
+    }
 
     const { reason } = request.query
 
@@ -326,7 +330,9 @@ export const certificatesOfComplianceCancelEmailPreviewGetController = {
       documentType,
       locale
     })
-    if (response) return response
+    if (response) {
+      return response
+    }
 
     const { reason } = request.query
     if (!isValidCancelReason(reason)) {
