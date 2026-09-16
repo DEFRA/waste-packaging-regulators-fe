@@ -10,6 +10,7 @@ import { pulse } from './plugins/pulse.js'
 import { catchAll } from './common/helpers/errors.js'
 import { nunjucksConfig } from '#config/nunjucks/nunjucks.js'
 import { setupProxy } from './common/helpers/proxy/setup-proxy.js'
+import { applyForwardedPrefixToCookiePath } from './common/helpers/proxy/forwarded-prefix.js'
 import { requestTracing } from './plugins/request-tracing.js'
 import { requestLogger } from './plugins/request-logger.js'
 import { boomErrorLogger } from './plugins/boom-error-logger.js'
@@ -25,7 +26,7 @@ import { metrics } from '@defra/cdp-metrics'
  * Bell `location` must be the app origin (see `@hapi/bell`: redirect_uri = location + request.path).
  * `AZURE_AD_B2C_REDIRECT_URI` may be a full URL or a path.
  */
-function bellRedirectOrigin(redirectUri, tls) {
+export function bellRedirectOrigin(redirectUri, tls) {
   if (!redirectUri) {
     return undefined
   }
@@ -34,7 +35,7 @@ function bellRedirectOrigin(redirectUri, tls) {
     if (tls && u.protocol === 'http:') {
       u.protocol = 'https:'
     }
-    return u.origin
+    return u.origin + u.pathname.slice(0, u.pathname.lastIndexOf('/'))
   }
   const scheme = tls ? 'https' : 'http'
   const host = config.get('host')
@@ -140,7 +141,8 @@ function createHapiServer(tls) {
       }
     ],
     state: {
-      strictHeader: false
+      strictHeader: false,
+      contextualize: applyForwardedPrefixToCookiePath
     }
   })
 }
