@@ -1,7 +1,5 @@
 import inert from '@hapi/inert'
 
-import { home } from '../routes/home/index.js'
-import { about } from '../routes/about/index.js'
 import { health } from '../routes/health/index.js'
 import { auth } from '../routes/auth/index.js'
 import { serveStaticFiles } from './serve-static-files.js'
@@ -25,16 +23,28 @@ export const router = {
       // Auth routes: /signin-oidc, /logout, /signed-out
       await server.register([auth])
 
-      // Application specific routes, add your own routes here
-      await server.register([
-        home,
-        about,
+      const cocPlugins = [
         certificatesOfComplianceList,
         certificatesOfComplianceDownload,
         certificatesOfComplianceDetail,
         certificatesOfComplianceAccept,
         certificatesOfComplianceCancel
-      ])
+      ]
+
+      // Routes at / — matched when running behind the YARP proxy, which strips
+      // the /certificates-of-compliance prefix before forwarding the request.
+      await server.register(cocPlugins)
+
+      // Same routes at /certificates-of-compliance — matched when the app is
+      // accessed directly without a proxy (e.g. journey-test docker compose).
+      // Hapi requires a unique plugin name per registration, so a suffix is
+      // added to each name to avoid the "already registered" error.
+      await server.register(
+        cocPlugins.map(({ plugin }) => ({
+          plugin: { ...plugin, name: `${plugin.name}:direct` }
+        })),
+        { routes: { prefix: '/certificates-of-compliance' } }
+      )
 
       // Error page previews for design and QA — only enabled when mock data is active
       if (config.get('useMockApi')) {

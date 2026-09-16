@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
+import { getForwardedPrefix } from '#server/common/helpers/proxy/forwarded-prefix.js'
 import {
   getDeclarationSessionKey,
   readAndClearCertificateActionBannerFlags
@@ -43,7 +44,8 @@ export const certificatesOfComplianceDetailController = {
         traceId,
         bannerFlags,
         obligationYear,
-        locale
+        locale,
+        routePrefix: getForwardedPrefix(request)
       }
     ).catch((error) => {
       handleApiError(request, error)

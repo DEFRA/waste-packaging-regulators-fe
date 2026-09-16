@@ -15,7 +15,7 @@
         }) }}
       {% endif %}
 
-      <form method="post" action="{{ localeUrl('/' ~ organisationId ~ '/certificates-of-compliance/' ~ id ~ '/accept') }}" novalidate>
+      <form method="post" action="{{ localeUrl(routePrefix ~ '/' ~ organisationId ~ '/' ~ documentType ~ '/' ~ id ~ '/accept') }}" novalidate>
         {{ appCsrfField(CSRFToken) }}
         {{ govukRadios({
           name: "confirm-accept",

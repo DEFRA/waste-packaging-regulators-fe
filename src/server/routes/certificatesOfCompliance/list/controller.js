@@ -8,6 +8,11 @@ import {
   redirectWithLocale
 } from '#server/common/helpers/i18n/locale-url.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
+import {
+  getForwardedPrefix,
+  getProxyPrefix,
+  withForwardedPrefix
+} from '#server/common/helpers/proxy/forwarded-prefix.js'
 import { SEARCH_TERM_MAX_LENGTH } from '../common/constants.js'
 import { cocPageI18n } from '../common/locale-strings.js'
 import { getCertificatesOfComplianceViewModel } from './list.service.js'
@@ -84,14 +89,55 @@ export function resolveSortForSubmissionStatus(
   }
 }
 
+function redirectUnauthenticated(request, h, locale) {
+  persistAuthLocale(request, locale)
+  const localPath = request.url.pathname + request.url.search
+  request.yar.set('returnTo', withForwardedPrefix(request, localPath))
+  const signinUrl = getProxyPrefix(request)
+    ? withForwardedPrefix(request, '/signin-oidc')
+    : '/signin-oidc'
+  return redirectWithLocale(h, request, signinUrl)
+}
+
+function validateListParams(type, submissionStatus) {
+  if (!['direct-producers', 'compliance-schemes'].includes(type)) {
+    throw Boom.badRequest(`Invalid organisation type: ${type}`)
+  }
+  if (!['pending', 'accepted', 'not-submitted'].includes(submissionStatus)) {
+    throw Boom.badRequest(`Invalid submission status: ${submissionStatus}`)
+  }
+}
+
+function buildListViewData(
+  viewModel,
+  search,
+  { locale, i18n, searchTerm, errors, type, submissionStatus, routePrefix }
+) {
+  const url = bindLocaleUrl(locale)
+  const errorPrefix = translate(locale, 'common.errorPrefix')
+  return {
+    ...viewModel,
+    locale,
+    i18n,
+    searchTerm,
+    errors,
+    isSearch: search !== null,
+    searchItems: search?.items ?? [],
+    searchResultCount: search?.total ?? 0,
+    searchTruncated: search?.truncated ?? false,
+    clearSearchUrl: url(
+      `${routePrefix || '/'}?type=${type}&tab=${submissionStatus}`
+    ),
+    pageTitle: errors ? `${errorPrefix}${viewModel.heading}` : viewModel.heading
+  }
+}
+
 export const certificatesOfComplianceController = {
   async handler(request, h) {
     const locale = getLocale(request)
 
     if (!request.yar.get('user')) {
-      persistAuthLocale(request, locale)
-      request.yar.set('returnTo', request.url.pathname + request.url.search)
-      return redirectWithLocale(h, request, '/signin-oidc')
+      return redirectUnauthenticated(request, h, locale)
     }
 
     const {
@@ -100,13 +146,8 @@ export const certificatesOfComplianceController = {
       page = '1'
     } = request.query
 
-    if (!['direct-producers', 'compliance-schemes'].includes(type)) {
-      throw Boom.badRequest(`Invalid organisation type: ${type}`)
-    }
+    validateListParams(type, submissionStatus)
 
-    if (!['pending', 'accepted', 'not-submitted'].includes(submissionStatus)) {
-      throw Boom.badRequest(`Invalid submission status: ${submissionStatus}`)
-    }
     const { sortColumn, sortDirection } = resolveSortForSubmissionStatus(
       request,
       submissionStatus,
@@ -114,8 +155,8 @@ export const certificatesOfComplianceController = {
     )
 
     const { searchTerm, errors } = parseSearchTerm(request.query.search, locale)
-
     const traceId = request.headers[config.get('tracing.header')]
+    const routePrefix = getForwardedPrefix(request)
 
     const [viewModel, search] = await Promise.all([
       getCertificatesOfComplianceViewModel(
@@ -124,8 +165,7 @@ export const certificatesOfComplianceController = {
         Number.parseInt(page, 10),
         sortColumn,
         sortDirection,
-        traceId,
-        locale
+        { traceId, locale, routePrefix }
       ),
       searchTerm ? getComplianceSearchResults(type, searchTerm, traceId) : null
     ]).catch((error) => {
@@ -134,28 +174,20 @@ export const certificatesOfComplianceController = {
     })
 
     const i18n = cocPageI18n(locale, 'list')
-    const errorPrefix = translate(locale, 'common.errorPrefix')
-
-    const url = bindLocaleUrl(locale)
 
     return h
-      .view('certificatesOfCompliance/list/index', {
-        ...viewModel,
-        locale,
-        i18n,
-        searchTerm,
-        errors,
-        isSearch: search !== null,
-        searchItems: search?.items ?? [],
-        searchResultCount: search?.total ?? 0,
-        searchTruncated: search?.truncated ?? false,
-        clearSearchUrl: url(
-          `/certificates-of-compliance?type=${type}&tab=${submissionStatus}`
-        ),
-        pageTitle: errors
-          ? `${errorPrefix}${viewModel.heading}`
-          : viewModel.heading
-      })
+      .view(
+        'certificatesOfCompliance/list/index',
+        buildListViewData(viewModel, search, {
+          locale,
+          i18n,
+          searchTerm,
+          errors,
+          type,
+          submissionStatus,
+          routePrefix
+        })
+      )
       .header('Cache-Control', 'no-cache, no-store, must-revalidate')
   }
 }

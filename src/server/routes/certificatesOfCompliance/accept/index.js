@@ -10,7 +10,7 @@ export const certificatesOfComplianceAccept = {
       server.route([
         {
           method: 'GET',
-          path: '/{organisationId}/certificates-of-compliance/{id}/accept',
+          path: '/{organisationId}/{documentType}/{id}/accept',
           options: {
             auth: false,
             ...certificatesOfComplianceAcceptGetController
@@ -18,7 +18,7 @@ export const certificatesOfComplianceAccept = {
         },
         {
           method: 'POST',
-          path: '/{organisationId}/certificates-of-compliance/{id}/accept',
+          path: '/{organisationId}/{documentType}/{id}/accept',
           options: {
             auth: false,
             ...certificatesOfComplianceAcceptPostController

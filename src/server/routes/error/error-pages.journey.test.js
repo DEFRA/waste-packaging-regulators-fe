@@ -5,9 +5,9 @@ import { errorPageFor } from '#server/common/helpers/errors.js'
 import { authCookiesFromResponse } from '#test-helpers/cookies.js'
 
 const HELP_DESK_EMAIL = 'eprcustomerservice@defra.gov.uk'
-const LIST_URL = '/certificates-of-compliance?type=direct-producers&tab=pending'
+const LIST_URL = '/?type=direct-producers&tab=pending'
 const DETAIL_URL =
-  '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-101411'
+  '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificate/decl-101411'
 
 // These are journey tests: they check a request reaches the right page, not
 // what that page says. The exact copy is pinned in errors.test.js, so the
@@ -113,7 +113,7 @@ describe('error pages — journey', () => {
 
   describe('an unknown address', () => {
     it('shows the page not found page', async () => {
-      const response = await inject('/no-such-page')
+      const response = await inject('/this/path/does/not/match/any/route')
 
       expect(response.statusCode).toBe(statusCodes.notFound)
       expect(response.payload).toContain(titleFor(statusCodes.notFound))

@@ -11,13 +11,14 @@ const ORGS = [
 const itemOf = (org) => ({
   organisationId: org.organisationId,
   id: org.declarationId,
+  documentType: org.type === 'ComplianceScheme' ? 'statement' : 'certificate',
   name: org.name
 })
 
 const acceptUrlFor = (item) =>
-  `/${item.organisationId}/certificates-of-compliance/${item.id}/accept`
+  `/certificates-of-compliance/${item.organisationId}/${item.documentType}/${item.id}/accept`
 const detailUrlFor = (item) =>
-  `/${item.organisationId}/certificates-of-compliance/${item.id}`
+  `/certificates-of-compliance/${item.organisationId}/${item.documentType}/${item.id}`
 
 describe('#certificatesOfComplianceAcceptController', () => {
   const app = setupRegulatorsApp()
@@ -35,12 +36,11 @@ describe('#certificatesOfComplianceAcceptController', () => {
 
   describe('GET', () => {
     it('redirects unauthenticated users to /signin-oidc', async () => {
-      const response = await app.server.inject({
-        method: 'GET',
-        url: acceptUrlFor(DP_ITEM)
-      })
+      const response = await app.get(acceptUrlFor(DP_ITEM), null)
       expect(response.statusCode).toBe(302)
-      expect(response.headers.location).toBe('/signin-oidc')
+      expect(response.headers.location).toBe(
+        '/certificates-of-compliance/signin-oidc'
+      )
     })
 
     it('renders the confirmation form with certificate wording for a Direct Producer', async () => {
@@ -89,11 +89,13 @@ describe('#certificatesOfComplianceAcceptController', () => {
         await app.anonCrumb()
       )
       expect(response.statusCode).toBe(302)
-      expect(response.headers.location).toBe('/signin-oidc')
+      expect(response.headers.location).toBe(
+        '/certificates-of-compliance/signin-oidc'
+      )
     })
 
     it('rejects a request with no CSRF token', async () => {
-      const response = await app.server.inject({
+      const response = await app.rawInject({
         method: 'POST',
         url: acceptUrlFor(DP_ITEM),
         payload: 'confirm-accept=yes',

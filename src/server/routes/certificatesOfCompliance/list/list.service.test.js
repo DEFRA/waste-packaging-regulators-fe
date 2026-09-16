@@ -86,9 +86,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
     let mockAccountApi
 
     beforeEach(() => {
-      config.get.mockImplementation((key) =>
-        key === 'csvExport.obligationConcurrency' ? 20 : false
-      )
+      config.get.mockImplementation((key) => {
+        if (key === 'csvExport.obligationConcurrency') return 20
+        return false
+      })
       mockObligationsApi = {
         listComplianceDeclarations: vi.fn(),
         getComplianceObligation: vi.fn().mockResolvedValue({ obligations: [] }),
@@ -420,7 +421,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           1,
           undefined,
           undefined,
-          'trace-xyz'
+          { traceId: 'trace-xyz' }
         )
 
         expect(
@@ -1589,7 +1590,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
           expect(vm.currentYearActions[0].reason).toBeNull()
           expect(vm.currentYearActions[0].viewSubmissionUrl).toBe(
-            '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-cancelled-no-reason'
+            '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificate/decl-cancelled-no-reason'
           )
         })
 
@@ -1618,7 +1619,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.currentYearActions[0].action).toBe('Accepted')
           expect(vm.currentYearActions[0].reason).toBe('')
           expect(vm.currentYearActions[0].viewSubmissionUrl).toBe(
-            '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-accepted-history'
+            '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificate/decl-accepted-history'
           )
         })
 
@@ -2731,7 +2732,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           1,
           undefined,
           undefined,
-          'trace-acct'
+          { traceId: 'trace-acct' }
         )
 
         expect(
@@ -2833,7 +2834,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
             1,
             undefined,
             undefined,
-            'trace-cs'
+            { traceId: 'trace-cs' }
           )
 
           expect(
@@ -3075,7 +3076,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           1,
           undefined,
           undefined,
-          'trace-obl'
+          { traceId: 'trace-obl' }
         )
 
         expect(

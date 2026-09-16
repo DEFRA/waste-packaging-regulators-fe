@@ -45,7 +45,8 @@ function resolveDeclarationActions(
   resolvedOrganisationId,
   resolvedId,
   registrationType,
-  locale = 'en'
+  locale = 'en',
+  routePrefix = ''
 ) {
   if (resolvedOrganisationId && resolvedId) {
     return buildCertificateDetailActions(
@@ -53,7 +54,8 @@ function resolveDeclarationActions(
       resolvedOrganisationId,
       resolvedId,
       registrationType,
-      locale
+      locale,
+      routePrefix
     )
   }
 
@@ -126,16 +128,39 @@ function mapDeclarationContactFields(
   }
 }
 
-export function mapDeclarationToDetail(
+function resolveDeclarationContext(
+  data,
+  { organisationId, id, declarationsForYear }
+) {
+  const { organisation, status } = data
+  const resolvedOrganisationId = organisationId ?? organisation?.id ?? null
+  const resolvedId = id ?? data.id ?? null
+  return {
+    reviewStatus: mapDeclarationStatusToReviewStatus(status),
+    resolvedOrganisationId,
+    resolvedId,
+    companyName: mapOrganisationName(organisation),
+    submittedUser: findSubmittedAuditUser(data.audit),
+    historyDeclarations: buildCurrentYearDeclarations(
+      declarationsForYear,
+      data,
+      status,
+      resolvedId
+    )
+  }
+}
+
+function buildDeclarationViewModel(
   data,
   {
-    organisationId,
-    id,
-    declarationsForYear,
-    submitterPhoneNumber,
-    wasteOrganisation,
-    locale = 'en'
-  } = {}
+    resolvedOrganisationId,
+    resolvedId,
+    reviewStatus,
+    companyName,
+    submittedUser,
+    historyDeclarations
+  },
+  { wasteOrganisation, submitterPhoneNumber, locale, routePrefix }
 ) {
   const {
     organisation,
@@ -144,21 +169,8 @@ export function mapDeclarationToDetail(
     obligationStatus,
     isRegulation43Compliant,
     submitterName,
-    created,
-    status
+    created
   } = data
-
-  const reviewStatus = mapDeclarationStatusToReviewStatus(status)
-  const resolvedOrganisationId = organisationId ?? organisation?.id ?? null
-  const resolvedId = id ?? data.id ?? null
-  const companyName = mapOrganisationName(organisation)
-  const submittedUser = findSubmittedAuditUser(data.audit)
-  const historyDeclarations = buildCurrentYearDeclarations(
-    declarationsForYear,
-    data,
-    status,
-    resolvedId
-  )
 
   return {
     organisationId: resolvedOrganisationId,
@@ -192,16 +204,43 @@ export function mapDeclarationToDetail(
       resolvedOrganisationId,
       resolvedId,
       organisation.registrationType,
-      locale
+      locale,
+      routePrefix
     ),
     queryDetails: mapQueriedOutcome(data, locale),
     currentYearActions: mapCurrentYearHistory(
       resolvedOrganisationId,
       historyDeclarations,
-      locale
+      locale,
+      routePrefix
     ),
     showObligations: (obligations ?? []).length !== 0
   }
+}
+
+export function mapDeclarationToDetail(
+  data,
+  {
+    organisationId,
+    id,
+    declarationsForYear,
+    submitterPhoneNumber,
+    wasteOrganisation,
+    locale = 'en',
+    routePrefix = ''
+  } = {}
+) {
+  const ctx = resolveDeclarationContext(data, {
+    organisationId,
+    id,
+    declarationsForYear
+  })
+  return buildDeclarationViewModel(data, ctx, {
+    wasteOrganisation,
+    submitterPhoneNumber,
+    locale,
+    routePrefix
+  })
 }
 
 export function mapObligationToDetail(

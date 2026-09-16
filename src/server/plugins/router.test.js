@@ -4,8 +4,6 @@ import inert from '@hapi/inert'
 import { config } from '#config/config.js'
 import { health } from '../routes/health/index.js'
 import { auth } from '../routes/auth/index.js'
-import { home } from '../routes/home/index.js'
-import { about } from '../routes/about/index.js'
 import { certificatesOfComplianceList } from '../routes/certificatesOfCompliance/list/index.js'
 import { certificatesOfComplianceDownload } from '../routes/certificatesOfCompliance/download/index.js'
 import { certificatesOfComplianceDetail } from '../routes/certificatesOfCompliance/detail/index.js'
@@ -73,13 +71,11 @@ describe('router plugin', () => {
     expect(server.register).toHaveBeenCalledWith([auth])
   })
 
-  it('registers all application route plugins', async () => {
+  it('registers certificate route plugins', async () => {
     configSpy = spyConfig({ isTest: true })
     const server = makeServer()
     await router.plugin.register(server)
     expect(server.register).toHaveBeenCalledWith([
-      home,
-      about,
       certificatesOfComplianceList,
       certificatesOfComplianceDownload,
       certificatesOfComplianceDetail,

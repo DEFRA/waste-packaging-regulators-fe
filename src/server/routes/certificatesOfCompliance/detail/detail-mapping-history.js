@@ -4,7 +4,10 @@ import {
   formatDate,
   formatHistoryDate
 } from '../common/dates.js'
-import { buildCertificateDetailPath } from '../actions/detail-actions.js'
+import {
+  buildCertificateDetailPath,
+  documentTypeFromRegistrationType
+} from '../actions/detail-actions.js'
 import { findAuditEntryByAction, auditAction } from './audit.js'
 
 export function mapAcceptedOutcomeFields(data, locale = 'en') {
@@ -88,10 +91,20 @@ function mapHistoryReason(status, transitionAudit) {
 function buildCurrentYearViewSubmissionUrl(
   declaration,
   fallbackOrganisationId,
-  locale = 'en'
+  locale = 'en',
+  routePrefix = ''
 ) {
   const organisationId = declaration.organisation?.id ?? fallbackOrganisationId
-  return buildCertificateDetailPath(organisationId, declaration.id, locale)
+  const documentType = documentTypeFromRegistrationType(
+    declaration.organisation?.registrationType
+  )
+  return buildCertificateDetailPath(
+    organisationId,
+    declaration.id,
+    documentType,
+    locale,
+    routePrefix
+  )
 }
 
 function getCurrentYearTransitionAudits(declaration) {
@@ -134,7 +147,8 @@ function buildCurrentYearHistoryRowFromStatus(
 export function mapCurrentYearHistory(
   fallbackOrganisationId,
   declarations = [],
-  locale = 'en'
+  locale = 'en',
+  routePrefix = ''
 ) {
   const rows = []
 
@@ -142,7 +156,8 @@ export function mapCurrentYearHistory(
     const viewSubmissionUrl = buildCurrentYearViewSubmissionUrl(
       declaration,
       fallbackOrganisationId,
-      locale
+      locale,
+      routePrefix
     )
     const transitionAudits = getCurrentYearTransitionAudits(declaration)
 

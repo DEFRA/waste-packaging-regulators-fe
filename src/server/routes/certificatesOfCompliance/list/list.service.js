@@ -492,13 +492,12 @@ export async function getCertificatesOfComplianceViewModel(
   currentPage,
   sortColumn,
   sortDirection,
-  traceId,
-  locale = 'en'
+  { traceId, locale = 'en', routePrefix = '' } = {}
 ) {
   const apiWasteObligation = createWasteObligationsApiService()
   const apiWasteOrganisation = createWasteOrganisationsApiService()
   const apiAccount = createAccountApiService()
-  const baseUrl = `/certificates-of-compliance?type=${organisationType}&tab=${tab}`
+  const baseUrl = `${routePrefix || '/'}?type=${organisationType}&tab=${tab}`
 
   const [summary, list] = await Promise.all([
     getComplianceSummary(

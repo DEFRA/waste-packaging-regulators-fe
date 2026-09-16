@@ -77,8 +77,26 @@ describe('certificate detail action helpers', () => {
   })
 
   test('buildCertificateDetailPath builds the detail page URL', () => {
-    expect(buildCertificateDetailPath('org-1', 'decl-1')).toBe(
-      '/org-1/certificates-of-compliance/decl-1'
+    expect(
+      buildCertificateDetailPath(
+        'org-1',
+        'decl-1',
+        'certificate',
+        'en',
+        '/certificates-of-compliance'
+      )
+    ).toBe('/certificates-of-compliance/org-1/certificate/decl-1')
+    expect(
+      buildCertificateDetailPath(
+        'org-1',
+        'decl-1',
+        'statement',
+        'en',
+        '/certificates-of-compliance'
+      )
+    ).toBe('/certificates-of-compliance/org-1/statement/decl-1')
+    expect(buildCertificateDetailPath('org-1', 'decl-1', 'certificate')).toBe(
+      '/org-1/certificate/decl-1'
     )
   })
 
@@ -88,7 +106,9 @@ describe('certificate detail action helpers', () => {
         'Pending',
         'org-1',
         'decl-1',
-        'DirectProducer'
+        'DirectProducer',
+        'en',
+        '/certificates-of-compliance'
       )
     ).toEqual({
       showAccept: true,
@@ -98,8 +118,9 @@ describe('certificate detail action helpers', () => {
         cancel: 'Cancel certificate'
       },
       urls: {
-        accept: '/org-1/certificates-of-compliance/decl-1/accept',
-        cancel: '/org-1/certificates-of-compliance/decl-1/cancel/reason'
+        accept: '/certificates-of-compliance/org-1/certificate/decl-1/accept',
+        cancel:
+          '/certificates-of-compliance/org-1/certificate/decl-1/cancel/reason'
       }
     })
     expect(
