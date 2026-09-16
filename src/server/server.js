@@ -48,7 +48,7 @@ export function bellRedirectOrigin(redirectUri, tls) {
 
 const authStrategyName = 'azure-ad-b2c'
 
-function registerAuthStrategy(server, tls) {
+function registerAuthStrategy(server) {
   const azureAdB2cConfig = config.get('auth.azureAdB2c')
 
   if (config.get('useMockAuth')) {
@@ -188,7 +188,7 @@ export async function createServer() {
     forwardedPrefixRedirects
   ])
 
-  registerAuthStrategy(server, tls)
+  registerAuthStrategy(server)
 
   await server.register([
     router // Register all the controllers/routes defined in src/server/plugins/router.js
