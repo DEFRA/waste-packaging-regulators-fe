@@ -42,6 +42,18 @@ export function context(request) {
     ? `${proxyPrefix}${assetPath}`
     : assetPath
 
+  let allowGoogleAnalytics = false
+  try {
+    const policy = request?.state?.cookies_policy
+    if (policy) {
+      const parsedPolicy =
+        typeof policy === 'string' ? JSON.parse(policy) : policy
+      allowGoogleAnalytics = parsedPolicy?.usage === true
+    }
+  } catch (e) {
+    logger.error(e, 'Failed to parse cookies_policy from request state')
+  }
+
   return {
     assetPath: `${externalAssetPath}/assets`,
     routePrefix: getForwardedPrefix(request),
@@ -56,6 +68,9 @@ export function context(request) {
     navigation: buildNavigation(),
     accountNavigation: buildAccountNavigation(request),
     regulatorContext: buildRegulatorContext(request, locale),
+    hasCookiePolicy: Boolean(request?.state?.cookies_policy),
+    cookiePreferenceSet: request?.query?.cookie_preference === 'set',
+    allowGoogleAnalytics,
     getAssetPath(asset) {
       if (!config.get('isProduction')) {
         return `${externalAssetPath}/${asset}`

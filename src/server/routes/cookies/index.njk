@@ -1,0 +1,127 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if showSuccess %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">
+              {{ cookiesI18n.t('successHeading') }}
+            </h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading">
+              {{ cookiesI18n.t('successMessage', { cookiesUrl: localeUrl('/') }) | safe }}
+            </p>
+          </div>
+        </div>
+      {% endif %}
+
+      {{ appHeading({
+        text: heading
+      }) }}
+
+      <div class="govuk-body" data-testid="app-page-body">
+        <p>{{ cookiesI18n.t('intro1') }}</p>
+        <p>{{ cookiesI18n.t('intro2') }}</p>
+
+        <h2 class="govuk-heading-m">{{ cookiesI18n.t('essentialHeading') }}</h2>
+        <p>{{ cookiesI18n.t('essentialIntro') }}</p>
+
+        <h3 class="govuk-heading-s">{{ cookiesI18n.t('essentialTableHeading') }}</h3>
+        
+        {{ govukTable({
+          head: [
+            { text: cookiesI18n.t('tableName') },
+            { text: cookiesI18n.t('tablePurpose') },
+            { text: cookiesI18n.t('tableExpires') }
+          ],
+          rows: [
+            [
+              { text: cookiesI18n.t('essentialSessionName') },
+              { text: cookiesI18n.t('essentialSessionPurpose') },
+              { text: cookiesI18n.t('essentialSessionExpires') }
+            ],
+            [
+              { text: cookiesI18n.t('essentialCsrfName') },
+              { text: cookiesI18n.t('essentialCsrfPurpose') },
+              { text: cookiesI18n.t('essentialCsrfExpires') }
+            ],
+            [
+              { text: cookiesI18n.t('essentialB2cName') },
+              { text: cookiesI18n.t('essentialB2cPurpose') },
+              { text: cookiesI18n.t('essentialB2cExpires') }
+            ]
+          ]
+        }) }}
+
+        <h2 class="govuk-heading-m">{{ cookiesI18n.t('analyticsHeading') }}</h2>
+        <p>{{ cookiesI18n.t('analyticsIntro1') }}</p>
+        <p>{{ cookiesI18n.t('analyticsIntro2') }}</p>
+        <p>{{ cookiesI18n.t('analyticsIntro3') }}</p>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>{{ cookiesI18n.t('analyticsList1') }}</li>
+          <li>{{ cookiesI18n.t('analyticsList2') }}</li>
+          <li>{{ cookiesI18n.t('analyticsList3') }}</li>
+          <li>{{ cookiesI18n.t('analyticsList4') }}</li>
+          <li>{{ cookiesI18n.t('analyticsList5') }}</li>
+        </ul>
+
+        <h3 class="govuk-heading-s">{{ cookiesI18n.t('analyticsTableHeading') }}</h3>
+
+        {{ govukTable({
+          head: [
+            { text: cookiesI18n.t('tableName') },
+            { text: cookiesI18n.t('tablePurpose') },
+            { text: cookiesI18n.t('tableExpires') }
+          ],
+          rows: [
+            [
+              { text: cookiesI18n.t('analyticsGaName') },
+              { text: cookiesI18n.t('analyticsGaPurpose') },
+              { text: cookiesI18n.t('analyticsGaExpires') }
+            ],
+            [
+              { text: cookiesI18n.t('analyticsGaStringName') },
+              { text: cookiesI18n.t('analyticsGaStringPurpose') },
+              { text: cookiesI18n.t('analyticsGaStringExpires') }
+            ]
+          ]
+        }) }}
+
+        <form action="{{ localeUrl('/cookies') }}" method="post">
+          {{ govukRadios({
+            name: "analytics",
+            fieldset: {
+              legend: {
+                text: cookiesI18n.t('analyticsQuestion'),
+                isPageHeading: false,
+                classes: "govuk-fieldset__legend--m"
+              }
+            },
+            value: cookiesPolicyUsage,
+            items: [
+              {
+                value: "yes",
+                text: t(locale, "common.yes")
+              },
+              {
+                value: "no",
+                text: t(locale, "common.no")
+              }
+            ]
+          }) }}
+
+          {{ govukButton({
+            text: cookiesI18n.t('saveSettings')
+          }) }}
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

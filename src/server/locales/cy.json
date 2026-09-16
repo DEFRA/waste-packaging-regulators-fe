@@ -24,6 +24,12 @@
       "oglSuffix": ", ac eithrio lle nodir fel arall",
       "crownCopyright": "Hawlfraint y Goron"
     },
+    "cookieBanner": {
+      "acceptAnalytics": "Derbyn cwcis dadansoddeg",
+      "rejectAnalytics": "Gwrthod cwcis dadansoddeg",
+      "viewCookies": "Gweld cwcis",
+      "hideMessage": "Cuddio neges cwcis"
+    },
     "dateTime": {
       "at": "am"
     }
@@ -35,6 +41,13 @@
   "about": {
     "pageTitle": "Ynghylch",
     "heading": "Ynghylch"
+  },
+  "cookies": {
+    "pageTitle": "Cwcis",
+    "heading": "Cwcis",
+    "breadcrumbHome": "Hafan",
+    "breadcrumbCookies": "Cwcis",
+    "saveSettings": "Cadw gosodiadau cwcis"
   },
   "compliance": {
     "components": {

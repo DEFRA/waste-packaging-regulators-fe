@@ -38,6 +38,17 @@
       "oglSuffix": ", except where otherwise stated",
       "crownCopyright": "Crown copyright"
     },
+    "cookieBanner": {
+      "ariaLabel": "Cookies on {{serviceName}}",
+      "heading": "Cookies on {{serviceName}}",
+      "essentialHtml": "<p class=\"govuk-body\">We use some essential cookies to make this service work.</p><p class=\"govuk-body\">We’d also like to use analytics cookies so we can understand how you use the service and make improvements.</p>",
+      "acceptAnalytics": "Accept analytics cookies",
+      "rejectAnalytics": "Reject analytics cookies",
+      "viewCookies": "View cookies",
+      "preferenceAccepted": "You’ve accepted analytics cookies. You can <a class=\"govuk-link\" href=\"{{cookiesUrl}}\">change your cookie settings</a> at any time.",
+      "preferenceRejected": "You’ve rejected analytics cookies. You can <a class=\"govuk-link\" href=\"{{cookiesUrl}}\">change your cookie settings</a> at any time.",
+      "hideMessage": "Hide cookie message"
+    },
     "dateTime": {
       "at": "at"
     }
@@ -51,6 +62,49 @@
     "pageTitle": "About",
     "heading": "About",
     "caption": "waste-packaging-regulators-fe"
+  },
+  "cookies": {
+    "pageTitle": "Cookies",
+    "heading": "Cookies",
+    "breadcrumbHome": "Home",
+    "breadcrumbCookies": "Cookies",
+    "successHeading": "Success",
+    "successMessage": "You’ve set your cookie preferences. <a class=\"govuk-notification-banner__link\" href=\"{{cookiesUrl}}\">Go back to the page you were looking at</a>.",
+    "intro1": "Cookies are small files saved on your phone, tablet or computer when you visit a website.",
+    "intro2": "We use cookies to make this site work and collect information about how you use our service.",
+    "essentialHeading": "Essential cookies",
+    "essentialIntro": "Essential cookies keep your information secure while you use this service. We do not need to ask permission to use them.",
+    "essentialTableHeading": "Essential cookies we use",
+    "analyticsHeading": "Analytics cookies",
+    "analyticsIntro1": "We use Google Analytics to understand how people use the pEPR regulator’s service. It helps us understand how you use the service and where we can make improvements.",
+    "analyticsIntro2": "We do not collect or store your personal information. We do not allow Google to use or share our analytics data.",
+    "analyticsIntro3": "Google Analytics cookies store information about:",
+    "analyticsList1": "the pages you visit",
+    "analyticsList2": "how long you spend on each page",
+    "analyticsList3": "how you arrived at the site",
+    "analyticsList4": "what you click on while you visit the site",
+    "analyticsList5": "the device and browser you use",
+    "analyticsTableHeading": "Analytics cookies we use",
+    "tableName": "Name",
+    "tablePurpose": "Purpose",
+    "tableExpires": "Expires",
+    "essentialSessionName": "session",
+    "essentialSessionPurpose": "Keeps you signed in",
+    "essentialSessionExpires": "4 hours",
+    "essentialCsrfName": "CSRFToken",
+    "essentialCsrfPurpose": "Secures your session",
+    "essentialCsrfExpires": "After each session",
+    "essentialB2cName": "bell-azure-ad-b2c",
+    "essentialB2cPurpose": "Allows you to access data",
+    "essentialB2cExpires": "Cleared when you sign out",
+    "analyticsGaName": "_ga",
+    "analyticsGaPurpose": "Counts individual visits to the service",
+    "analyticsGaExpires": "1 years",
+    "analyticsGaStringName": "_ga_<string>",
+    "analyticsGaStringPurpose": "Tracks activity in a session",
+    "analyticsGaStringExpires": "1 year",
+    "analyticsQuestion": "Do you want to accept analytics cookies?",
+    "saveSettings": "Save cookie settings"
   },
   "auth": {
     "signedOut": {

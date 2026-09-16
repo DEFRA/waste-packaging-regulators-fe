@@ -6,6 +6,10 @@ const en = require('#server/locales/en.json')
 
 const mockReadFileSync = vi.fn()
 const mockLoggerError = vi.fn()
+const mockConfigGet = vi.fn((key, configObj) => {
+  if (key === 'isProduction') return true
+  return configObj.get(key)
+})
 
 vi.mock('node:fs', async () => {
   const nodeFs = await import('node:fs')
@@ -28,8 +32,7 @@ vi.mock(import('#config/config.js'), async (importOriginal) => {
   return {
     config: {
       get(key) {
-        if (key === 'isProduction') return true
-        return originalModule.config.get(key)
+        return mockConfigGet(key, originalModule.config)
       }
     }
   }
@@ -39,6 +42,11 @@ describe('context and cache', () => {
   beforeEach(() => {
     mockReadFileSync.mockReset()
     mockLoggerError.mockReset()
+    mockConfigGet.mockReset()
+    mockConfigGet.mockImplementation((key, configObj) => {
+      if (key === 'isProduction') return true
+      return configObj.get(key)
+    })
     vi.resetModules()
   })
 
@@ -86,7 +94,10 @@ describe('context and cache', () => {
           routePrefix: '',
           serviceName: en.common.serviceName,
           serviceUrl: '/',
-          helpDeskEmail: 'eprcustomerservice@defra.gov.uk'
+          helpDeskEmail: 'eprcustomerservice@defra.gov.uk',
+          hasCookiePolicy: false,
+          cookiePreferenceSet: false,
+          allowGoogleAnalytics: false
         })
       })
 
@@ -102,6 +113,19 @@ describe('context and cache', () => {
         test('Should provide expected asset', () => {
           expect(contextResult.getAssetPath('an-image.png')).toBe(
             '/public/an-image.png'
+          )
+        })
+      })
+
+      describe('When not in production', () => {
+        test('Should use direct asset path', () => {
+          mockConfigGet.mockImplementation((key, configObj) => {
+            if (key === 'isProduction') return false
+            return configObj.get(key)
+          })
+          const res = contextImport.context(mockRequest)
+          expect(res.getAssetPath('application.js')).toBe(
+            '/public/application.js'
           )
         })
       })
@@ -126,6 +150,51 @@ describe('context and cache', () => {
           'Vite manifest.json not found'
         )
       })
+    })
+  })
+
+  describe('cookies_policy parsing', () => {
+    let contextImport
+    const mockRequest = {
+      path: '/',
+      query: {},
+      headers: {},
+      yar: { get: () => null }
+    }
+
+    beforeAll(async () => {
+      contextImport = await import('./context.js')
+    })
+
+    test('Should parse string cookies_policy correctly', () => {
+      const req = {
+        ...mockRequest,
+        state: { cookies_policy: '{"usage": true}' }
+      }
+      const res = contextImport.context(req)
+      expect(res.allowGoogleAnalytics).toBe(true)
+      expect(res.hasCookiePolicy).toBe(true)
+    })
+
+    test('Should use object cookies_policy correctly', () => {
+      const req = {
+        ...mockRequest,
+        state: { cookies_policy: { usage: false } }
+      }
+      const res = contextImport.context(req)
+      expect(res.allowGoogleAnalytics).toBe(false)
+      expect(res.hasCookiePolicy).toBe(true)
+    })
+
+    test('Should handle invalid JSON string in cookies_policy', () => {
+      const req = { ...mockRequest, state: { cookies_policy: 'invalid json' } }
+      const res = contextImport.context(req)
+      expect(res.allowGoogleAnalytics).toBe(false)
+      expect(res.hasCookiePolicy).toBe(true)
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        expect.any(SyntaxError),
+        'Failed to parse cookies_policy from request state'
+      )
     })
   })
 
@@ -181,7 +250,10 @@ describe('context and cache', () => {
           routePrefix: '',
           serviceName: en.common.serviceName,
           serviceUrl: '/',
-          helpDeskEmail: 'eprcustomerservice@defra.gov.uk'
+          helpDeskEmail: 'eprcustomerservice@defra.gov.uk',
+          hasCookiePolicy: false,
+          cookiePreferenceSet: false,
+          allowGoogleAnalytics: false
         })
       })
     })
