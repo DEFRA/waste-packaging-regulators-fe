@@ -20,6 +20,7 @@ import { maintenance } from './plugins/maintenance.js'
 import { getCacheEngine } from './common/helpers/session-cache/cache-engine.js'
 import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './plugins/content-security-policy.js'
+import { forwardedPrefixRedirects } from './plugins/forwarded-prefix-redirects.js'
 import { metrics } from '@defra/cdp-metrics'
 
 /**
@@ -182,7 +183,8 @@ export async function createServer() {
     maintenance,
     crumb,
     Scooter,
-    contentSecurityPolicy
+    contentSecurityPolicy,
+    forwardedPrefixRedirects
   ])
 
   registerAuthStrategy(server, tls)

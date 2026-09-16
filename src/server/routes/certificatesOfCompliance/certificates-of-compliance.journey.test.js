@@ -1260,7 +1260,9 @@ describe('certificates of compliance — journey', () => {
       const response = await app.get(pendingDownloadUrl, null)
 
       expect(response.statusCode).toBe(302)
-      expect(response.headers.location).toBe('/signin-oidc')
+      expect(response.headers.location).toBe(
+        '/certificates-of-compliance/signin-oidc'
+      )
     })
 
     it('returns a bad request for an invalid organisation type', async () => {
