@@ -1,46 +1,17 @@
-import { createAccountApiService } from '#services/account-api.service.js'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
-import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
 import {
   registrationTypeByOrganisationType,
-  statusBySubmissionStatus
+  statusBySubmissionStatus,
+  COMPLIANCE_YEAR,
+  UNSUBMITTED_DEFAULT_SORT
 } from '../common/constants.js'
 import {
-  buildAllNotSubmittedItems,
   fetchAllDeclarations,
+  fetchAllUnsubmittedOrganisations,
   mapDeclarationToItem,
-  resolveNotSubmittedReferenceNumbers,
-  resolveNotSubmittedObligationData
+  mapUnsubmittedToItem
 } from '../list/list.service.js'
 import { buildComplianceCsv } from './download-model.js'
-
-// Builds the full, unsorted not-submitted item list for CSV export.
-async function getAllNotSubmittedItems({
-  obligationsApi,
-  organisationsApi,
-  accountApi,
-  organisationType,
-  registrationType,
-  traceId
-}) {
-  const allItems = await buildAllNotSubmittedItems({
-    obligationsApi,
-    organisationsApi,
-    registrationType,
-    traceId
-  })
-
-  await resolveNotSubmittedReferenceNumbers(
-    accountApi,
-    allItems,
-    traceId,
-    organisationType
-  )
-
-  await resolveNotSubmittedObligationData(obligationsApi, allItems, traceId)
-
-  return allItems
-}
 
 // Every row for the active submission status (not just the current page), mirroring the list
 // view's data but unpaginated.
@@ -48,21 +19,23 @@ async function getAllItemsFor({
   organisationType,
   submissionStatus,
   obligationsApi,
-  organisationsApi,
-  accountApi,
   traceId
 }) {
   const registrationType = registrationTypeByOrganisationType[organisationType]
 
   if (submissionStatus === 'not-submitted') {
-    return getAllNotSubmittedItems({
+    // A stable total order keeps rows from shifting between pages if a
+    // submission lands mid-drain; the CSV itself is sorted by name downstream.
+    const rows = await fetchAllUnsubmittedOrganisations(
       obligationsApi,
-      organisationsApi,
-      accountApi,
-      organisationType,
-      registrationType,
+      {
+        obligationYear: COMPLIANCE_YEAR,
+        registrationType,
+        sort: UNSUBMITTED_DEFAULT_SORT
+      },
       traceId
-    })
+    )
+    return rows.map(mapUnsubmittedToItem)
   }
 
   const status = statusBySubmissionStatus[submissionStatus]
@@ -85,15 +58,11 @@ export async function getComplianceDownload(
   now = new Date()
 ) {
   const obligationsApi = createWasteObligationsApiService()
-  const organisationsApi = createWasteOrganisationsApiService()
-  const accountApi = createAccountApiService()
 
   const items = await getAllItemsFor({
     organisationType,
     submissionStatus,
     obligationsApi,
-    organisationsApi,
-    accountApi,
     traceId
   })
 
