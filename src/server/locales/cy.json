@@ -12,9 +12,17 @@
       "label": "Iaith"
     },
     "footer": {
-      "privacy": "Preifatrwydd",
+      "getHelp": "Cael help",
+      "emailLabel": "E-bost:",
+      "telephoneLabel": "Ffôn:",
+      "accessibility": "Datganiad hygyrchedd",
       "cookies": "Cwcis",
-      "accessibility": "Datganiad hygyrchedd"
+      "privacy": "Preifatrwydd",
+      "supportLinks": "Dolenni cymorth",
+      "oglPrefix": "Mae'r holl gynnwys ar gael o dan",
+      "oglLink": "Drwydded Llywodraeth Agored v3.0",
+      "oglSuffix": ", ac eithrio lle nodir fel arall",
+      "crownCopyright": "Hawlfraint y Goron"
     },
     "dateTime": {
       "at": "am"

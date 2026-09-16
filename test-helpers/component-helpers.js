@@ -28,11 +28,18 @@ Object.entries(filters).forEach(([name, filter]) => {
   nunjucksTestEnv.addFilter(name, filter)
 })
 
-export function renderComponent(componentName, params, callBlock) {
+export function renderComponent(
+  componentName,
+  params,
+  callBlock,
+  options = {}
+) {
   const macroPath = `${componentName}/macro.njk`
-  const macroName = `app${
-    componentName.charAt(0).toUpperCase() + camelCase(componentName.slice(1))
-  }`
+  const macroName =
+    options.macroName ||
+    `app${
+      componentName.charAt(0).toUpperCase() + camelCase(componentName.slice(1))
+    }`
   const macroParams = JSON.stringify(params, null, 2)
   let macroString = `{%- from "${macroPath}" import ${macroName} -%}`
 

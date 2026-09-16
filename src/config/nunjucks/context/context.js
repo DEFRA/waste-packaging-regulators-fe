@@ -3,7 +3,11 @@ import { readFileSync } from 'node:fs'
 
 import { config } from '#config/config.js'
 import { buildLanguageSwitcherUrls } from './build-language-switcher.js'
-import { buildNavigation } from './build-navigation.js'
+import {
+  buildNavigation,
+  buildAccountNavigation,
+  buildRegulatorContext
+} from './build-navigation.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { bindLocaleUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
@@ -49,7 +53,9 @@ export function context(request) {
     breadcrumbs: [],
     backlinkText: translate(locale, 'common.nav.back'),
     languageSwitcher: buildLanguageSwitcherUrls(request),
-    navigation: buildNavigation(request, locale),
+    navigation: buildNavigation(),
+    accountNavigation: buildAccountNavigation(request),
+    regulatorContext: buildRegulatorContext(request, locale),
     getAssetPath(asset) {
       if (!config.get('isProduction')) {
         return `${externalAssetPath}/${asset}`

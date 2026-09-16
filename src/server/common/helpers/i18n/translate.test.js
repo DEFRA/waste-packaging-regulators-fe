@@ -6,6 +6,10 @@ import {
   translate,
   translateComponent
 } from './translate.js'
+import { createRequire } from 'node:module'
+
+const require = createRequire(import.meta.url)
+const en = require('#server/locales/en.json')
 
 describe('translate', () => {
   beforeEach(() => {
@@ -13,9 +17,7 @@ describe('translate', () => {
   })
 
   test('returns English string for known key', () => {
-    expect(translate('en', 'common.serviceName')).toBe(
-      'waste-packaging-regulators-fe'
-    )
+    expect(translate('en', 'common.serviceName')).toBe(en.common.serviceName)
   })
 
   test('interpolates params', () => {
@@ -27,9 +29,7 @@ describe('translate', () => {
   })
 
   test('falls back to English when Welsh key missing', () => {
-    expect(translate('cy', 'common.serviceName')).toBe(
-      'waste-packaging-regulators-fe'
-    )
+    expect(translate('cy', 'common.serviceName')).toBe(en.common.serviceName)
   })
 
   test('falls back to English when Welsh value is blank', () => {
@@ -38,9 +38,7 @@ describe('translate', () => {
       common: { serviceName: '   ' }
     })
 
-    expect(translate('cy', 'common.serviceName')).toBe(
-      'waste-packaging-regulators-fe'
-    )
+    expect(translate('cy', 'common.serviceName')).toBe(en.common.serviceName)
   })
 
   test('uses Welsh translation when present in cy.json', () => {

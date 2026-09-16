@@ -2,6 +2,10 @@ import { vi } from 'vitest'
 
 import { catchAll, errorPageFor } from './errors.js'
 import { createServer } from '../../server.js'
+import { createRequire } from 'node:module'
+
+const require = createRequire(import.meta.url)
+const en = require('#server/locales/en.json')
 import { statusCodes } from '../constants/status-codes.js'
 
 const helpDeskEmail = 'eprcustomerservice@defra.gov.uk'
@@ -34,9 +38,11 @@ describe('#errors', () => {
       url: '/this/path/does/not/match/any/route'
     })
 
-    expect(result).toEqual(
-      expect.stringContaining('Page not found | waste-packaging-regulators-fe')
+    const expectedTitle = `Page not found | ${en.common.serviceName}`.replace(
+      /'/g,
+      '&#39;'
     )
+    expect(result).toEqual(expect.stringContaining(expectedTitle))
     expect(result).toEqual(expect.stringContaining(pageTitles.notFound))
     expect(result).toEqual(
       expect.stringContaining(

@@ -1,0 +1,73 @@
+@use "govuk-frontend" as *;
+@use "variables" as *;
+
+// -----------------------------------------------------------------------------
+// Footer
+// -----------------------------------------------------------------------------
+// Sticky footer — on pages using the Defra footer, keep it at the bottom of the
+// viewport when the content is too short to fill the screen, rather than
+// floating up under the content.
+//
+// Done with `position: sticky` rather than a flex body on purpose: making the
+// body a flex container suppresses the cross-axis stretch on
+// `.govuk-width-container` (a flex item with auto side margins opts out of
+// stretching), which collapses the page content to its intrinsic width and
+// knocks it out of line with the header and footer.
+//
+// Scoped with :has() so the standard GDS-branded pages are untouched.
+body:has(> .defra-internal-footer) {
+  min-height: 100vh;
+
+  > .defra-internal-footer {
+    position: sticky;
+    top: 100vh;
+  }
+}
+
+.defra-internal-footer {
+  @include govuk-font($size: 16);
+  @include govuk-responsive-padding(6, "top");
+  @include govuk-responsive-padding(6, "bottom");
+  border-top: 1px solid $govuk-border-colour;
+  background-color: govuk-colour("white");
+
+  // Footer links reuse the GDS link behaviour wholesale — underline thickness
+  // and offset, hover thickening and the yellow focus state — and override only
+  // the colour to the Defra footer grey. The focus state is declared here
+  // rather than left to the global `a:focus` that the DWP frontend plugin
+  // happens to ship, which would disappear with that plugin.
+  &__link {
+    @include govuk-link-common;
+
+    &:link,
+    &:visited,
+    &:hover,
+    &:active {
+      color: $defra-internal-footer-link;
+    }
+
+    // Re-assert the GDS focus colour: the colours above are emitted after
+    // govuk-link-common's :focus rule and match it on specificity, so they
+    // would otherwise win while the link is focused.
+    &:focus {
+      color: $govuk-focus-text-colour;
+    }
+  }
+
+  // The licence and copyright row needs no styles of its own. The markup uses
+  // govuk-frontend's `govuk-footer__meta`, `__meta-item`, `__licence-logo`,
+  // `__licence-description` and `__copyright-logo` classes, which are top-level
+  // selectors rather than nested under `.govuk-footer`, so they apply here and
+  // keep this row pixel-identical to the GDS footer. Only the link colour is
+  // ours, from `&__link` above.
+}
+
+// Fix the copyright logo URL because the default govuk-frontend asset path is incorrect due to SCSS import limitations
+.govuk-footer__copyright-logo::before {
+  background-image: url("/public/assets/images/govuk-crest.svg");
+  
+  @supports ((-webkit-mask-position: initial) or (mask-position: initial)) {
+    -webkit-mask-image: url("/public/assets/images/govuk-crest.svg");
+    mask-image: url("/public/assets/images/govuk-crest.svg");
+  }
+}
