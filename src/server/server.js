@@ -11,6 +11,7 @@ import { catchAll } from './common/helpers/errors.js'
 import { nunjucksConfig } from '#config/nunjucks/nunjucks.js'
 import { setupProxy } from './common/helpers/proxy/setup-proxy.js'
 import { applyForwardedPrefixToCookiePath } from './common/helpers/proxy/forwarded-prefix.js'
+import { bellRedirectLocation } from './auth/azure-ad-b2c.js'
 import { requestTracing } from './plugins/request-tracing.js'
 import { requestLogger } from './plugins/request-logger.js'
 import { boomErrorLogger } from './plugins/boom-error-logger.js'
@@ -96,7 +97,7 @@ function registerAuthStrategy(server, tls) {
     clientId: azureAdB2cConfig.clientId,
     clientSecret: azureAdB2cConfig.clientSecret,
     isSecure: azureAdB2cConfig.isSecure,
-    location: bellRedirectOrigin(azureAdB2cConfig.redirectUri, tls),
+    location: (request) => bellRedirectLocation(request),
     config: {
       tenant: azureAdB2cConfig.domain,
       discovery:
