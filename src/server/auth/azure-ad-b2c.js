@@ -2,6 +2,8 @@
  * Azure AD B2C OpenID Connect helpers (authority URL and end-session / logout).
  */
 
+import { withForwardedPrefix } from '../common/helpers/proxy/forwarded-prefix.js'
+
 /** Bell registers the OAuth state cookie as `bell-${provider.name}`. */
 export const BELL_AZURE_AD_B2C_COOKIE = 'bell-azure-ad-b2c'
 
@@ -92,6 +94,20 @@ function normalizeLogoutPathOrUrl(pathOrUrl) {
   }
   const path = raw.startsWith('/') ? raw : `/${raw}`
   return { kind: 'path', value: path }
+}
+
+/**
+ * Constructs the Bell `location` for this request: the origin visible to the
+ * browser (from `X-Forwarded-Host`/`X-Forwarded-Proto` when behind the proxy,
+ * else the request host) combined with the forwarded-prefix-scoped callback
+ * path.  Bell appends the route path to this value to form `redirect_uri`.
+ *
+ * @param {import('@hapi/hapi').Request} request
+ * @returns {string}
+ */
+export function bellRedirectLocation(request) {
+  const prefixedPath = withForwardedPrefix(request, request.path)
+  return resolveAbsoluteUrlFromRequestHost(request, prefixedPath)
 }
 
 /**

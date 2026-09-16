@@ -3,6 +3,7 @@ import {
   BELL_AZURE_AD_B2C_COOKIE,
   getB2cAuthorityPrefix,
   buildB2cLogoutUrl,
+  bellRedirectLocation,
   resolvePostLogoutAbsoluteUri
 } from './azure-ad-b2c.js'
 
@@ -238,5 +239,60 @@ describe('resolvePostLogoutAbsoluteUri', () => {
       const result = resolvePostLogoutAbsoluteUri(request, null, {})
       expect(result).toBe('http://localhost:3000/signed-out')
     })
+  })
+})
+
+describe('bellRedirectLocation', () => {
+  function makeRequest({
+    protocol = 'http',
+    host = 'localhost:3000',
+    xForwardedProto,
+    xForwardedHost,
+    xForwardedPrefix,
+    path = '/signin-oidc'
+  } = {}) {
+    return {
+      path,
+      headers: {
+        ...(xForwardedProto ? { 'x-forwarded-proto': xForwardedProto } : {}),
+        ...(xForwardedHost ? { 'x-forwarded-host': xForwardedHost } : {}),
+        ...(xForwardedPrefix ? { 'x-forwarded-prefix': xForwardedPrefix } : {}),
+        host
+      },
+      server: { info: { protocol } },
+      info: { host }
+    }
+  }
+
+  it('uses x-forwarded-host and prefix when behind the proxy', () => {
+    const request = makeRequest({
+      xForwardedProto: 'https',
+      xForwardedHost: 'proxy.example.com',
+      xForwardedPrefix: '/certificates-of-compliance'
+    })
+
+    expect(bellRedirectLocation(request)).toBe(
+      'https://proxy.example.com/certificates-of-compliance/signin-oidc'
+    )
+  })
+
+  it('falls back to request host when not behind a proxy', () => {
+    const request = makeRequest({ protocol: 'http', host: 'localhost:3000' })
+
+    expect(bellRedirectLocation(request)).toBe(
+      'http://localhost:3000/signin-oidc'
+    )
+  })
+
+  it('infers prefix from path when no x-forwarded-prefix header is present', () => {
+    const request = makeRequest({
+      protocol: 'http',
+      host: 'localhost:3000',
+      path: '/certificates-of-compliance/signin-oidc'
+    })
+
+    expect(bellRedirectLocation(request)).toBe(
+      'http://localhost:3000/certificates-of-compliance/signin-oidc'
+    )
   })
 })
