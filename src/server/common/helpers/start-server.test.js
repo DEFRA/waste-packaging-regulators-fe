@@ -51,12 +51,6 @@ describe('#startServer', () => {
 
   function expectStartupUrlsLogged(infoSpy, origin) {
     expect(infoSpy).toHaveBeenCalledWith(`Access your frontend on ${origin}`)
-    expect(infoSpy).toHaveBeenCalledWith(
-      `Direct producers: ${origin}/certificates-of-compliance?type=direct-producers&tab=pending`
-    )
-    expect(infoSpy).toHaveBeenCalledWith(
-      `Compliance schemes: ${origin}/certificates-of-compliance?type=compliance-schemes&tab=pending`
-    )
   }
 
   describe('When server starts', () => {

@@ -92,7 +92,10 @@ describe('getCertificatesOfComplianceViewModel', () => {
     let mockAccountApi
 
     beforeEach(() => {
-      config.get.mockReturnValue(false)
+      config.get.mockImplementation((key) => {
+        if (key === 'csvExport.obligationConcurrency') return 20
+        return false
+      })
       mockObligationsApi = {
         listComplianceDeclarations: vi.fn(),
         listUnsubmittedComplianceDeclarations: vi
@@ -231,7 +234,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           1,
           undefined,
           undefined,
-          'trace-xyz'
+          { traceId: 'trace-xyz' }
         )
 
         expect(
@@ -486,7 +489,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           1,
           undefined,
           undefined,
-          'trace-9'
+          { traceId: 'trace-9' }
         )
 
         expect(
@@ -1350,7 +1353,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
           expect(vm.currentYearActions[0].reason).toBeNull()
           expect(vm.currentYearActions[0].viewSubmissionUrl).toBe(
-            '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-cancelled-no-reason'
+            '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificate/decl-cancelled-no-reason'
           )
         })
 
@@ -1379,7 +1382,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.currentYearActions[0].action).toBe('Accepted')
           expect(vm.currentYearActions[0].reason).toBe('')
           expect(vm.currentYearActions[0].viewSubmissionUrl).toBe(
-            '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificates-of-compliance/decl-accepted-history'
+            '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificate/decl-accepted-history'
           )
         })
 

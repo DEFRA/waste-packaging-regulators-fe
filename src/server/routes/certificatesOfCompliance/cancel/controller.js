@@ -2,6 +2,7 @@ import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { config } from '#config/config.js'
+import { getForwardedPrefix } from '#server/common/helpers/proxy/forwarded-prefix.js'
 import { cancelComplianceDeclaration } from '../actions/cancel.service.js'
 import { getComplianceDeclarationReviewStatus } from '../actions/review-status.service.js'
 import {
@@ -19,26 +20,67 @@ import {
 } from './reasons.js'
 import { buildCancellationEmailPreview } from './cancellation-email-preview.service.js'
 
-function detailPath(organisationId, id, locale) {
+function detailPath(request, organisationId, id, documentType, locale) {
   return localeUrl(
-    `/${organisationId}/certificates-of-compliance/${id}`,
+    `${getForwardedPrefix(request)}/${organisationId}/${documentType}/${id}`,
     locale
   )
 }
 
-function reasonPath(organisationId, id, reason, locale) {
-  const base = `${detailPath(organisationId, id, locale)}/cancel/reason`
+function reasonPath(request, organisationId, id, documentType, reason, locale) {
+  const base = `${detailPath(request, organisationId, id, documentType, locale)}/cancel/reason`
   return reason ? `${base}?reason=${encodeURIComponent(reason)}` : base
 }
 
-function checkPath(organisationId, id, reason, locale) {
-  const base = `${detailPath(organisationId, id, locale)}/cancel/check`
+function checkPath(request, organisationId, id, documentType, reason, locale) {
+  const base = `${detailPath(request, organisationId, id, documentType, locale)}/cancel/check`
   return reason ? `${base}?reason=${encodeURIComponent(reason)}` : base
 }
 
-function emailPreviewPath(organisationId, id, reason, locale) {
-  const base = `${detailPath(organisationId, id, locale)}/cancel/email-preview`
+function emailPreviewPath(
+  request,
+  organisationId,
+  id,
+  documentType,
+  reason,
+  locale
+) {
+  const base = `${detailPath(request, organisationId, id, documentType, locale)}/cancel/email-preview`
   return reason ? `${base}?reason=${encodeURIComponent(reason)}` : base
+}
+
+function resolveDocTypeNoun(registrationType, locale) {
+  return registrationType === 'ComplianceScheme'
+    ? translateCoc(locale, 'common.documentNoun.statement')
+    : translateCoc(locale, 'common.documentNoun.certificate')
+}
+
+function fetchCancelViewModel(organisationId, id, request, locale) {
+  return getCertificateOfComplianceDetailViewModel(organisationId, id, {
+    traceId: request.getTraceId(),
+    locale,
+    routePrefix: getForwardedPrefix(request)
+  })
+}
+
+async function guardCancelAllowed(
+  request,
+  h,
+  { organisationId, id, documentType, locale }
+) {
+  const reviewStatus = await getComplianceDeclarationReviewStatus(
+    organisationId,
+    id,
+    request.getTraceId()
+  )
+  if (!canCancelComplianceDeclaration(reviewStatus)) {
+    return {
+      response: h.redirect(
+        detailPath(request, organisationId, id, documentType, locale)
+      )
+    }
+  }
+  return { reviewStatus }
 }
 
 function previewErrorMessages(locale) {
@@ -73,18 +115,16 @@ async function renderReasonForm(
   { selected = null, showError = false, locale } = {}
 ) {
   const resolvedLocale = locale ?? getLocale(request)
-  const { organisationId, id } = request.params
-  const { companyName, registrationType } =
-    await getCertificateOfComplianceDetailViewModel(organisationId, id, {
-      traceId: request.getTraceId(),
-      locale: resolvedLocale
-    })
+  const { organisationId, id, documentType } = request.params
+  const { companyName, registrationType } = await fetchCancelViewModel(
+    organisationId,
+    id,
+    request,
+    resolvedLocale
+  )
 
   const i18n = cocPageI18n(resolvedLocale, 'cancel')
-  const docTypeLower =
-    registrationType === 'ComplianceScheme'
-      ? translateCoc(resolvedLocale, 'common.documentNoun.statement')
-      : translateCoc(resolvedLocale, 'common.documentNoun.certificate')
+  const docTypeLower = resolveDocTypeNoun(registrationType, resolvedLocale)
   const errors = showError ? buildErrors(docTypeLower, resolvedLocale) : null
   const titleVerb = errors
     ? i18n.t('reason.titleVerb.error')
@@ -92,9 +132,16 @@ async function renderReasonForm(
 
   return h.view('certificatesOfCompliance/cancel/reason', {
     pageTitle: `${titleVerb} ${docTypeLower} — ${companyName}`,
-    backlink: detailPath(organisationId, id, resolvedLocale),
+    backlink: detailPath(
+      request,
+      organisationId,
+      id,
+      documentType,
+      resolvedLocale
+    ),
     organisationId,
     id,
+    documentType,
     companyName,
     docTypeLower,
     reasonItems: buildCancelReasonItems(
@@ -152,15 +199,15 @@ export const certificatesOfComplianceCancelReasonGetController = {
     }
 
     const locale = getLocale(request)
-    const { organisationId, id } = request.params
-    const reviewStatus = await getComplianceDeclarationReviewStatus(
+    const { organisationId, id, documentType } = request.params
+    const { response } = await guardCancelAllowed(request, h, {
       organisationId,
       id,
-      request.getTraceId()
-    )
-
-    if (!canCancelComplianceDeclaration(reviewStatus)) {
-      return h.redirect(detailPath(organisationId, id, locale))
+      documentType,
+      locale
+    })
+    if (response) {
+      return response
     }
 
     const { reason } = request.query
@@ -177,7 +224,7 @@ export const certificatesOfComplianceCancelReasonPostController = {
     }
 
     const locale = getLocale(request)
-    const { organisationId, id } = request.params
+    const { organisationId, id, documentType } = request.params
     const reason = request.payload?.['cancel-reason']
 
     if (!isValidCancelReason(reason)) {
@@ -188,57 +235,93 @@ export const certificatesOfComplianceCancelReasonPostController = {
       })
     }
 
-    return h.redirect(checkPath(organisationId, id, reason, locale))
+    return h.redirect(
+      checkPath(request, organisationId, id, documentType, reason, locale)
+    )
   }
+}
+
+async function guardCancelWithReason(request, h) {
+  if (!request.yar.get('user')) {
+    return { earlyResponse: redirectToSignIn(request, h) }
+  }
+
+  const locale = getLocale(request)
+  const { organisationId, id, documentType } = request.params
+  const { response } = await guardCancelAllowed(request, h, {
+    organisationId,
+    id,
+    documentType,
+    locale
+  })
+  if (response) {
+    return { earlyResponse: response }
+  }
+
+  const { reason } = request.query
+  if (!isValidCancelReason(reason)) {
+    return {
+      earlyResponse: h.redirect(
+        reasonPath(request, organisationId, id, documentType, null, locale)
+      )
+    }
+  }
+
+  return { locale, organisationId, id, documentType, reason }
 }
 
 export const certificatesOfComplianceCancelCheckGetController = {
   async handler(request, h) {
-    if (!request.yar.get('user')) {
-      return redirectToSignIn(request, h)
+    const ctx = await guardCancelWithReason(request, h)
+    if (ctx.earlyResponse) {
+      return ctx.earlyResponse
     }
 
-    const locale = getLocale(request)
-    const { organisationId, id } = request.params
-    const reviewStatus = await getComplianceDeclarationReviewStatus(
+    const { locale, organisationId, id, documentType, reason } = ctx
+
+    const { companyName, registrationType } = await fetchCancelViewModel(
       organisationId,
       id,
-      request.getTraceId()
+      request,
+      locale
     )
 
-    if (!canCancelComplianceDeclaration(reviewStatus)) {
-      return h.redirect(detailPath(organisationId, id, locale))
-    }
-
-    const { reason } = request.query
-
-    if (!isValidCancelReason(reason)) {
-      return h.redirect(reasonPath(organisationId, id, null, locale))
-    }
-
-    const { companyName, registrationType } =
-      await getCertificateOfComplianceDetailViewModel(organisationId, id, {
-        traceId: request.getTraceId(),
-        locale
-      })
-
     const i18n = cocPageI18n(locale, 'cancel')
-    const docTypeLower =
-      registrationType === 'ComplianceScheme'
-        ? translateCoc(locale, 'common.documentNoun.statement')
-        : translateCoc(locale, 'common.documentNoun.certificate')
+    const docTypeLower = resolveDocTypeNoun(registrationType, locale)
 
     return h.view('certificatesOfCompliance/cancel/check', {
       pageTitle: i18n.t('check.pageTitle', { companyName }),
-      backlink: reasonPath(organisationId, id, reason, locale),
+      backlink: reasonPath(
+        request,
+        organisationId,
+        id,
+        documentType,
+        reason,
+        locale
+      ),
       organisationId,
       id,
+      documentType,
       companyName,
       docTypeLower,
       reason,
       reasonLabel: getCancelReasonLabel(registrationType, reason, locale),
-      reasonPath: reasonPath(organisationId, id, reason, locale),
-      emailPreviewUrl: emailPreviewPath(organisationId, id, reason, locale),
+      reasonPath: reasonPath(
+        request,
+        organisationId,
+        id,
+        documentType,
+        reason,
+        locale
+      ),
+      emailPreviewUrl: emailPreviewPath(
+        request,
+        organisationId,
+        id,
+        documentType,
+        reason,
+        locale
+      ),
       locale,
       i18n
     })
@@ -247,26 +330,12 @@ export const certificatesOfComplianceCancelCheckGetController = {
 
 export const certificatesOfComplianceCancelEmailPreviewGetController = {
   async handler(request, h) {
-    if (!request.yar.get('user')) {
-      return redirectToSignIn(request, h)
+    const ctx = await guardCancelWithReason(request, h)
+    if (ctx.earlyResponse) {
+      return ctx.earlyResponse
     }
 
-    const locale = getLocale(request)
-    const { organisationId, id } = request.params
-    const reviewStatus = await getComplianceDeclarationReviewStatus(
-      organisationId,
-      id,
-      request.getTraceId()
-    )
-
-    if (!canCancelComplianceDeclaration(reviewStatus)) {
-      return h.redirect(detailPath(organisationId, id, locale))
-    }
-
-    const { reason } = request.query
-    if (!isValidCancelReason(reason)) {
-      return h.redirect(reasonPath(organisationId, id, null, locale))
-    }
+    const { locale, organisationId, id, reason } = ctx
 
     try {
       return await renderCancellationEmailPreview(request, h, {
@@ -288,7 +357,8 @@ export const certificatesOfComplianceCancelPostController = {
     }
 
     const locale = getLocale(request)
-    const { organisationId, id } = request.params
+    const { organisationId, id, documentType } = request.params
+    const detail = detailPath(request, organisationId, id, documentType, locale)
     const declarationKey = getDeclarationSessionKey(organisationId, id)
     const reviewStatus = await getComplianceDeclarationReviewStatus(
       organisationId,
@@ -301,19 +371,18 @@ export const certificatesOfComplianceCancelPostController = {
         certificateActionSessionKeys.justCancelled,
         declarationKey
       )
-      return h.redirect(detailPath(organisationId, id, locale))
+      return h.redirect(detail)
     }
 
     const reason = request.payload?.['cancel-reason']
     if (!isValidCancelReason(reason)) {
-      return h.redirect(reasonPath(organisationId, id, null, locale))
+      return h.redirect(
+        reasonPath(request, organisationId, id, documentType, null, locale)
+      )
     }
 
     const { registrationType, environmentalRegulator, businessCountry } =
-      await getCertificateOfComplianceDetailViewModel(organisationId, id, {
-        traceId: request.getTraceId(),
-        locale
-      })
+      await fetchCancelViewModel(organisationId, id, request, locale)
     const reasonLabel = getCancelReasonLabel(registrationType, reason, locale)
 
     try {
@@ -331,6 +400,6 @@ export const certificatesOfComplianceCancelPostController = {
 
     request.yar.set(certificateActionSessionKeys.justCancelled, declarationKey)
 
-    return h.redirect(detailPath(organisationId, id, locale))
+    return h.redirect(detail)
   }
 }

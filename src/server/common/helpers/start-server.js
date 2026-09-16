@@ -10,12 +10,6 @@ async function startServer() {
 
   server.logger.info('Server started successfully')
   server.logger.info(`Access your frontend on ${origin}`)
-  server.logger.info(
-    `Direct producers: ${origin}/certificates-of-compliance?type=direct-producers&tab=pending`
-  )
-  server.logger.info(
-    `Compliance schemes: ${origin}/certificates-of-compliance?type=compliance-schemes&tab=pending`
-  )
 
   return server
 }

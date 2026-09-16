@@ -88,6 +88,7 @@ describe('context and cache', () => {
               href: '/about'
             }
           ],
+          routePrefix: '',
           serviceName: 'waste-packaging-regulators-fe',
           serviceUrl: '/',
           helpDeskEmail: 'eprcustomerservice@defra.gov.uk'
@@ -191,6 +192,7 @@ describe('context and cache', () => {
               href: '/about'
             }
           ],
+          routePrefix: '',
           serviceName: 'waste-packaging-regulators-fe',
           serviceUrl: '/',
           helpDeskEmail: 'eprcustomerservice@defra.gov.uk'

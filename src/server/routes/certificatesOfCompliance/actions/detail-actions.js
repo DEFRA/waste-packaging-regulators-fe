@@ -4,9 +4,19 @@ import {
   translateSuccessBanner
 } from '../common/locale-strings.js'
 
-export function buildCertificateDetailPath(organisationId, id, locale = 'en') {
+export function documentTypeFromRegistrationType(registrationType) {
+  return registrationType === 'ComplianceScheme' ? 'statement' : 'certificate'
+}
+
+export function buildCertificateDetailPath(
+  organisationId,
+  id,
+  documentType,
+  locale = 'en',
+  routePrefix = ''
+) {
   return localeUrl(
-    `/${organisationId}/certificates-of-compliance/${id}`,
+    `${routePrefix}/${organisationId}/${documentType}/${id}`,
     locale
   )
 }
@@ -14,9 +24,17 @@ export function buildCertificateDetailPath(organisationId, id, locale = 'en') {
 export function buildCertificateDetailActionUrls(
   organisationId,
   id,
-  locale = 'en'
+  documentType,
+  locale = 'en',
+  routePrefix = ''
 ) {
-  const base = buildCertificateDetailPath(organisationId, id, locale)
+  const base = buildCertificateDetailPath(
+    organisationId,
+    id,
+    documentType,
+    locale,
+    routePrefix
+  )
   return {
     accept: `${base}/accept`,
     query: `${base}/query`,
@@ -29,9 +47,17 @@ export function buildCertificateDetailActions(
   organisationId,
   id,
   registrationType,
-  locale = 'en'
+  locale = 'en',
+  routePrefix = ''
 ) {
-  const urls = buildCertificateDetailActionUrls(organisationId, id, locale)
+  const documentType = documentTypeFromRegistrationType(registrationType)
+  const urls = buildCertificateDetailActionUrls(
+    organisationId,
+    id,
+    documentType,
+    locale,
+    routePrefix
+  )
   const labels = translateActionLabels(registrationType, locale)
   const showAccept = reviewStatus === 'Pending' || reviewStatus === 'Queried'
   const showCancel = showAccept || reviewStatus === 'Approved'
