@@ -1,0 +1,39 @@
+{
+  "icons": [
+    {
+      "src": "/public/assets/images/favicon.ico",
+      "type": "image/x-icon",
+      "sizes": "48x48"
+    },
+    {
+      "src": "/public/assets/images/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "150x150",
+      "purpose": "any"
+    },
+    {
+      "src": "/public/images/gov-crest.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/public/images/gov-crest.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/public/images/gov-crest.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/public/assets/images/govuk-crest.svg",
+      "type": "image/svg+xml",
+      "sizes": "150x150",
+      "purpose": "monochrome"
+    }
+  ]
+}

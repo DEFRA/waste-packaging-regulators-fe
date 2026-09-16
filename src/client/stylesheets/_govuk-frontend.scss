@@ -1,4 +1,7 @@
 @forward 'pkg:@ministryofjustice/frontend/moj/all' with (
   $moj-assets-path: '/public/assets/',
-  $govuk-global-styles: true
+  $moj-font-family: "arial"
 );
+
+// Output the GOV.UK Frontend CSS styles
+@forward "pkg:govuk-frontend";

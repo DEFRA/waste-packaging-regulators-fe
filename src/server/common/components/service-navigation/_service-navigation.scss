@@ -1,0 +1,117 @@
+@use "govuk-frontend" as *;
+@use "variables" as *;
+
+// -----------------------------------------------------------------------------
+// Service navigation
+// -----------------------------------------------------------------------------
+// govuk-frontend's own component, restyled rather than reimplemented. It is a
+// sibling of the header, not a child — the GOV.UK header and service navigation
+// are two components combined on the page, and this pair follows that.
+//
+// Scoped to `.defra-internal` on <body> rather than to the header, so the rules
+// hold wherever the navigation sits and the standard GDS pages are untouched.
+.defra-internal-service-header {
+  .govuk-service-navigation {
+    background-color: $defra-internal-nav-background;
+    border: 0;
+    margin-bottom: 0;
+
+    // Service name and sign-in/out share one row; the width container is the
+    // flex row they both sit in.
+    >.govuk-width-container {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: govuk-spacing(2) govuk-spacing(4);
+    }
+
+    .govuk-service-navigation__container {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    // Sign-in/out in the end slot — always on the right of the green band.
+    >.govuk-width-container>.defra-internal-service-navigation__context {
+      @include govuk-font($size: 16);
+      flex: 0 0 auto;
+      margin: 0 0 0 auto;
+      padding: govuk-spacing(2) 0 govuk-spacing(3);
+      text-align: right;
+    }
+
+    .govuk-service-navigation__link,
+    .govuk-service-navigation__toggle {
+      &:not(:hover):not(:focus) {
+        color: $defra-internal-link;
+      }
+
+      &:hover {
+        color: $defra-internal-link-hover;
+      }
+    }
+
+    .govuk-service-navigation__item {
+      border-color: $defra-internal-link;
+    }
+  }
+
+  // Language switcher on its own row below the green service band.
+  .defra-internal-language-bar {
+    background-color: govuk-colour("white");
+    border-top: 1px solid govuk-colour("black", $variant: "tint-80");
+    width: 100%;
+
+    >.govuk-width-container {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .language-toggle-nav {
+      margin: 0;
+      padding: govuk-spacing(2) 0;
+    }
+
+    .language-toggle {
+      @include govuk-font($size: 16);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .language-toggle__option {
+      display: flex;
+      align-items: center;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+
+      &:not(:last-child)::after {
+        content: "|";
+        margin: 0 govuk-spacing(2);
+        color: govuk-colour("black");
+      }
+    }
+
+    .language-toggle__active {
+      color: govuk-colour("black");
+    }
+
+    .language-toggle-nav .govuk-link {
+      @include govuk-link-common;
+      @include govuk-link-style-default;
+      @include govuk-link-style-no-visited-state;
+    }
+  }
+}
+
+@media #{govuk-from-breakpoint(tablet)} {
+  .defra-internal-service-header .govuk-service-navigation>.govuk-width-container>.defra-internal-service-navigation__context {
+    padding: govuk-spacing(3) 0;
+  }
+}

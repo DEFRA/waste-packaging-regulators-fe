@@ -1,2 +1,25 @@
+@use "sass:color";
+
 // Example custom CSS variables
 $app-light-grey: #f8f8f8;
+$defra-internal-brand: #00a33b;
+$defra-internal-footer-link: #3b3b3b;
+
+// The navigation band: the brand green washed out to the lightest tint that
+// still reads as a band rather than an off-white.
+$defra-internal-nav-background: color.mix(#ffffff, $defra-internal-brand, 92%);
+
+// Green as the interaction colour, one step darker than the brand. The brand
+// green itself is 2.6:1 on that band — nowhere near readable — where GOV.UK's
+// green is 5.7:1, so the band gets the brand and the links get this.
+$defra-internal-link: #00703c;
+
+// Hover, the way the Design System does it: the link colour shaded down, so the
+// link darkens rather than changing hue. govuk-frontend pairs `$govuk-link-colour`
+// with dark-blue; there is no "dark green" in the palette, so it is shaded here
+// by the same order of magnitude.
+$defra-internal-link-hover: color.mix(#000000, $defra-internal-link, 40%);
+
+// The crest ships with GOV.UK Frontend. `$govuk-images-path` is re-asserted at
+// the top of application.scss, so the standard helper resolves correctly here.
+$defra-internal-crest: url("/public/assets/images/govuk-crest.svg");

@@ -1,4 +1,8 @@
 import { vi } from 'vitest'
+import { createRequire } from 'node:module'
+
+const require = createRequire(import.meta.url)
+const en = require('#server/locales/en.json')
 
 const mockReadFileSync = vi.fn()
 const mockLoggerError = vi.fn()
@@ -76,20 +80,11 @@ describe('context and cache', () => {
             cy: expect.any(String)
           }),
           backlinkText: 'Back',
-          navigation: [
-            {
-              current: true,
-              text: 'Home',
-              href: '/'
-            },
-            {
-              current: false,
-              text: 'About',
-              href: '/about'
-            }
-          ],
+          navigation: [],
+          accountNavigation: [],
+          regulatorContext: `<div class="defra-internal-service-navigation__context">\n    <a class="govuk-service-navigation__link" href="/auth/login">Sign in</a>\n  </div>`,
           routePrefix: '',
-          serviceName: 'waste-packaging-regulators-fe',
+          serviceName: en.common.serviceName,
           serviceUrl: '/',
           helpDeskEmail: 'eprcustomerservice@defra.gov.uk'
         })
@@ -180,20 +175,11 @@ describe('context and cache', () => {
             cy: expect.any(String)
           }),
           backlinkText: 'Back',
-          navigation: [
-            {
-              current: true,
-              text: 'Home',
-              href: '/'
-            },
-            {
-              current: false,
-              text: 'About',
-              href: '/about'
-            }
-          ],
+          navigation: [],
+          accountNavigation: [],
+          regulatorContext: `<div class="defra-internal-service-navigation__context">\n    <a class="govuk-service-navigation__link" href="/auth/login">Sign in</a>\n  </div>`,
           routePrefix: '',
-          serviceName: 'waste-packaging-regulators-fe',
+          serviceName: en.common.serviceName,
           serviceUrl: '/',
           helpDeskEmail: 'eprcustomerservice@defra.gov.uk'
         })

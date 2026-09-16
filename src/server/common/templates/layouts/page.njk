@@ -1,4 +1,5 @@
-{% extends "moj/template.njk" %}
+{% set bodyClasses = "defra-internal" %}
+{% extends "govuk/template.njk" %}
 
 {% set htmlLang = locale %}
 
@@ -9,58 +10,60 @@
 
 {# Import custom components globally #}
 {% from "heading/macro.njk" import appHeading %}
+{% from "defra-internal-header/macro.njk" import defraInternalHeader %}
+{% from "defra-internal-footer/macro.njk" import defraInternalFooter %}
 
 {% block headIcons %}
-  <link rel="icon" sizes="48x48" href="{{ getAssetPath("node_modules/govuk-frontend/dist/govuk/assets/images/favicon.ico") }}">
-  <link rel="icon" sizes="any" href="{{ getAssetPath("node_modules/govuk-frontend/dist/govuk/assets/images/favicon.svg") }}" type="image/svg+xml" >
-  <link rel="mask-icon" href="{{ getAssetPath("node_modules/govuk-frontend/dist/govuk/assets/images/govuk-icon-mask.svg") }}" color="{{ themeColor }}">
-  <link rel="apple-touch-icon" href="{{ getAssetPath("node_modules/govuk-frontend/dist/govuk/assets/images/govuk-icon-180.png") }}">
-  <link rel="manifest" href="{{ getAssetPath("node_modules/govuk-frontend/dist/govuk/assets/manifest.json") }}">
+  <link rel="icon" sizes="any" href="/public/assets/images/govuk-crest.svg" type="image/svg+xml">
+  <link rel="mask-icon" href="/public/assets/images/govuk-crest.svg" color="{{ themeColor | default('#00a33b') }}">
+  <link rel="apple-touch-icon" href="/public/images/gov-crest.png">
+  <link rel="manifest" href="/public/manifest.json">
 {% endblock %}
 
 {% block head %}
   <link href="{{ getAssetPath('src/client/stylesheets/application.scss') }}" rel="stylesheet">
 {% endblock %}
 
-{% block govukHeader %}
-  {{ govukHeader({
-    homepageUrl: "https://www.gov.uk/",
-    classes: "app-header",
-    containerClasses: "govuk-width-container",
-    serviceName: serviceName,
-    serviceUrl: serviceUrl,
-    useTudorCrown: true
+{% block header %}
+  {{ defraInternalHeader({
+    organisationName: t(locale, "common.organisationName") | safe,
+    homepageUrl: localeUrl("/"),
+    navigation: accountNavigation
   }) }}
-{% endblock %}
-
-{% block govukServiceNavigation %}
-  {% set languageSwitcherEnd %}
-    <nav class="language-toggle-nav" aria-label="{{ t(locale, 'common.languageSwitcher.label') }}">
-      <ul class="language-toggle">
-        <li class="language-toggle__option">
-          {% if locale == 'cy' %}
-            <a class="govuk-link govuk-link--no-visited-state" href="{{ languageSwitcher.en }}" lang="en">{{ t(locale, "common.languageSwitcher.english") }}</a>
-          {% else %}
-            <span class="language-toggle__active" lang="en">{{ t(locale, "common.languageSwitcher.english") }}</span>
-          {% endif %}
-        </li>
-        <li class="language-toggle__option">
-          {% if locale == 'cy' %}
-            <span class="language-toggle__active" lang="cy">{{ t(locale, "common.languageSwitcher.welsh") }}</span>
-          {% else %}
-            <a class="govuk-link govuk-link--no-visited-state" href="{{ languageSwitcher.cy }}" lang="cy">{{ t(locale, "common.languageSwitcher.welsh") }}</a>
-          {% endif %}
-        </li>
-      </ul>
-    </nav>
-  {% endset %}
-
-  {{ govukServiceNavigation({
-    navigation: navigation,
-    slots: {
-      end: languageSwitcherEnd
-    }
-  }) }}
+  <div class="defra-internal-service-header">
+    {% set regulatorEnd %}
+      {{ regulatorContext | safe }}
+    {% endset %}
+    {{ govukServiceNavigation({
+      serviceName: serviceName,
+      serviceUrl: serviceUrl,
+      navigationId: "service-navigation",
+      navigation: navigation,
+      slots: { end: regulatorEnd }
+    }) }}
+    <div class="defra-internal-language-bar">
+      <div class="govuk-width-container">
+        <nav class="language-toggle-nav" aria-label="{{ t(locale, 'common.languageSwitcher.label') }}">
+          <ul class="language-toggle">
+            <li class="language-toggle__option">
+              {% if locale == 'cy' %}
+                <a class="govuk-link govuk-link--no-visited-state" href="{{ languageSwitcher.en }}" lang="en">{{ t(locale, "common.languageSwitcher.english") }}</a>
+              {% else %}
+                <span class="language-toggle__active" lang="en">{{ t(locale, "common.languageSwitcher.english") }}</span>
+              {% endif %}
+            </li>
+            <li class="language-toggle__option">
+              {% if locale == 'cy' %}
+                <span class="language-toggle__active" lang="cy">{{ t(locale, "common.languageSwitcher.welsh") }}</span>
+              {% else %}
+                <a class="govuk-link govuk-link--no-visited-state" href="{{ languageSwitcher.cy }}" lang="cy">{{ t(locale, "common.languageSwitcher.welsh") }}</a>
+              {% endif %}
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block pageTitle %}
@@ -89,24 +92,26 @@
 
 {% block content %}{% endblock %}
 
-{% block govukFooter %}
-  {{ govukFooter({
-    meta: {
-      items: [
-        {
-          href: "https://www.gov.uk/help/privacy-notice",
-          text: t(locale, "common.footer.privacy")
-        },
-        {
-          href: "https://www.gov.uk/help/cookies",
-          text: t(locale, "common.footer.cookies")
-        },
-        {
-          href: "https://www.gov.uk/help/accessibility-statement",
-          text: t(locale, "common.footer.accessibility")
-        }
-      ]
-    }
+{% block footer %}
+  {{ defraInternalFooter({
+    getHelp: {
+      heading: t(locale, "common.footer.getHelp"),
+      email: "eprcustomerservice@defra.gov.uk",
+      emailLabel: t(locale, "common.footer.emailLabel"),
+      telephone: "0300 060 0002",
+      telephoneLabel: t(locale, "common.footer.telephoneLabel"),
+      hours: t(locale, "common.footer.hours")
+    },
+    links: [
+      { href: "https://www.gov.uk/help/accessibility-statement", text: t(locale, "common.footer.accessibility") },
+      { href: localeUrl("/cookies"), text: t(locale, "common.footer.cookies") },
+      { href: "https://www.gov.uk/help/privacy-notice", text: t(locale, "common.footer.privacy") }
+    ],
+    supportLinksLabel: t(locale, "common.footer.supportLinks"),
+    oglPrefix: t(locale, "common.footer.oglPrefix"),
+    oglLink: t(locale, "common.footer.oglLink"),
+    oglSuffix: t(locale, "common.footer.oglSuffix"),
+    crownCopyright: t(locale, "common.footer.crownCopyright")
   }) }}
 {% endblock %}
 

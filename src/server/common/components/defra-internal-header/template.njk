@@ -1,0 +1,69 @@
+{#
+  defra-internal — header
+
+  The Defra top bar: the organisation lock-up, the signed-in person and the way
+  out.
+
+  It pairs with govuk-frontend's own service navigation, rendered next to this
+  one rather than inside it — the same way the GOV.UK header and service
+  navigation are two components combined on the page. The service name, the
+  links and the regulator the person works for all belong to that component,
+  not to this one.
+
+  The account menu is a list, not a bespoke user object, so it takes the shape a
+  service already builds for the service navigation: { text, href, current }. An
+  item with an `href` is a link; one without is plain text, which is how the
+  signed-in person's name renders. Pass nothing and no menu renders, which is
+  what a signed-out page needs. There is no sign-in param: this header belongs
+  to pages you are already on, so signing in belongs on a page, not the chrome.
+
+  The param is `navigation` because that is what this shape is called
+  everywhere. A service that already has a `navigation` feeding
+  govukServiceNavigation builds a SECOND list for this one — call it
+  `accountNavigation` — and passes `navigation: accountNavigation`. Two lists,
+  because they are two things: places to go, and who you are. Worked example in
+  app/lib/navigation.js.
+
+  There is no `html` key beside `text`. Nothing in an account menu is markup.
+
+  params:
+    organisationName  {string}  logo lock-up text; use <br> to control wrapping
+    homepageUrl       {string}  where the lock-up links to (default "/")
+    navigation        {array}   [{ text, href, current, visuallyHiddenText }]
+                                shown top right; omit on a signed-out page to
+                                hide the account menu. No `href` renders plain
+                                text. `current` sets aria-current="page", the
+                                same as govuk-frontend. `visuallyHiddenText` is
+                                an optional screen-reader prefix, e.g.
+                                "Signed in as " before a person's name.
+
+  Styles: app/assets/sass/_defra-internal.scss
+#}
+{# No `role="banner"`. A top-level `<header>` already is one, and govuk-frontend
+   dropped the explicit role from its own header for the same reason. #}
+<header class="defra-internal-header">
+  <div class="govuk-width-container">
+    <div class="defra-internal-header__main">
+      <div class="defra-internal-header__logo">
+        <a class="defra-internal-header__logo-link" href="{{ params.homepageUrl | default('/') }}">
+          {{ params.organisationName | default("Department for Environment,<br>Food &amp; Rural Affairs") | safe }}
+        </a>
+      </div>
+      {# A div, not a nav. The GOV.UK header marks its navigation up as `nav`
+         because it is a set of destinations; a name and one action is not. #}
+      {% if params.navigation.length %}
+        <div class="defra-internal-header__account-menu">
+          <ul>
+            {% for item in params.navigation %}
+              {# Captured once and used in both branches, the way govuk-frontend's
+                 own service navigation builds its items. `safe` on output only
+                 prevents double-escaping — both values are escaped at capture. #}
+              {%- set itemContent %}{% if item.visuallyHiddenText %}<span class="govuk-visually-hidden">{{ item.visuallyHiddenText }}</span>{% endif %}{{ item.text }}{% endset -%}
+              <li>{% if item.href %}<a href="{{ item.href }}"{% if item.current %} aria-current="page"{% endif %}>{{ itemContent | safe }}</a>{% else %}{{ itemContent | safe }}{% endif %}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</header>

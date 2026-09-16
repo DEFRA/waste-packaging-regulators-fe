@@ -1,0 +1,134 @@
+@use "govuk-frontend" as *;
+@use "variables" as *;
+
+// -----------------------------------------------------------------------------
+// Header
+// -----------------------------------------------------------------------------
+.defra-internal-header {
+  background-color: govuk-colour("white");
+
+  // The green keyline closes the bar, whether or not the navigation follows it.
+  // Paired, it also separates the white bar from the green band below.
+  border-bottom: 8px solid $defra-internal-brand;
+
+  // Header links are GDS links, nothing more: the standard link colour with no
+  // underline until hover, the standard thick hover underline, the standard
+  // yellow focus state. Sign out stays blue — green is the interaction colour of
+  // the navigation band, not of the whole chrome.
+  //
+  // The three mixins are the whole rule. Nothing is hand-rolled and nothing is
+  // reasserted afterwards: `$govuk-font-family` is already the Defra typeface
+  // (application.scss points it at `--app-font-family`), so the typography that
+  // comes with `govuk-link-common` is the Defra typography.
+  a {
+    @include govuk-link-common;
+    @include govuk-link-style-no-visited-state;
+    @include govuk-link-style-no-underline;
+  }
+
+  // The lock-up is a link that must not look like one — it is the page
+  // identifying itself. The GDS text-link style: black in every state, with the
+  // underline on hover coming from the `a` rule above.
+  //
+  // Written out in full rather than as `&__logo-link` on purpose. Nested like
+  // this it compiles to `.defra-internal-header .defra-internal-header__logo-link`
+  // (0,3,0 with the pseudo-class), which outranks the `a` rule above (0,2,1);
+  // `&__logo-link` would compile to (0,2,0) and lose to it, turning it blue.
+  .defra-internal-header__logo-link {
+    @include govuk-link-style-text;
+  }
+
+  // Defra organisation lock-up — text with a govuk crest and a green keyline,
+  // standing in for the GOV.UK logo. Its colours come from the text-link rule
+  // above; what is left here is the lock-up itself.
+  &__logo-link {
+    position: relative;
+    display: block;
+    @include govuk-font($size: 19, $line-height: 1);
+
+    // The crest sits between the keyline and the text, positioned absolutely, so
+    // the text has to be padded clear of both. Written as the sum of its parts
+    // rather than a single number, so changing the gap below cannot silently
+    // leave the text overlapping the crest.
+    padding-left: 8px + 36px + govuk-spacing(2);
+    border-left: 2px solid $defra-internal-brand;
+
+    // The crest, drawn the way govuk-frontend draws this same asset in its
+    // footer: a background image by default, swapped for a `currentcolor` mask
+    // where masks are supported so it follows the text colour — otherwise it is
+    // painted black on black in dark forced-colours mode and disappears.
+    // See govuk-frontend/dist/govuk/components/footer/_index.scss:100-122
+    &::before {
+      content: "";
+      position: absolute;
+      top: 1px;
+      // Gap between the green keyline and the crest. Off the GDS spacing scale
+      // deliberately — 10px is too wide here and 5px too tight. The padding-left
+      // above adds this to the crest width, so the two stay in step.
+      left: 8px;
+      width: 36px;
+      height: 34px;
+      background: #{$defra-internal-crest} no-repeat 50% 0 / auto 34px;
+
+    }
+  }
+
+  &__main {
+    // Even top and bottom, so the content sits clear of the keyline.
+    @include govuk-responsive-padding(4, "top");
+    @include govuk-responsive-padding(4, "bottom");
+    display: flex;
+    // Below ~390px the lock-up and the account menu cannot share a row without
+    // pushing the page into horizontal scroll (WCAG 1.4.10 Reflow). Let the
+    // account menu drop onto its own row instead; `margin-left: auto` keeps it
+    // right-aligned either way.
+    flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
+    gap: govuk-spacing(4);
+  }
+
+  &__logo {
+    flex-shrink: 0;
+  }
+
+  &__account-menu {
+    // Same type as `govuk-body-s`, which is govuk-font($size: 16). Set through
+    // the mixin rather than by putting the class on the markup, because the
+    // class also carries margins that would break the flex row below.
+    @include govuk-font($size: 16);
+    margin-left: auto;
+
+    ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    // No divider between them. The menu is a name and an action, and those
+    // already read as different things — a rule between them only makes the
+    // pair look like a menu of two links.
+    li + li {
+      margin-left: govuk-spacing(4);
+    }
+  }
+}
+
+@supports ((-webkit-mask-position: initial) or (mask-position: initial)) {
+  .defra-internal-header__logo::before {
+    background: currentcolor;
+    -webkit-mask: #{$defra-internal-crest} no-repeat 50% 0 / auto 34px;
+    mask: #{$defra-internal-crest} no-repeat 50% 0 / auto 34px;
+  }
+
+  // currentcolor is not computed correctly in forced-colours mode, so
+  // pin it to the system link colour as govuk-frontend does.
+  @media screen and (forced-colors: active) {
+    .defra-internal-header__logo::before {
+      background: linktext;
+    }
+  }
+}

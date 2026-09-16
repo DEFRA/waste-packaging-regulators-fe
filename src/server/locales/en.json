@@ -1,6 +1,7 @@
 {
   "common": {
-    "serviceName": "waste-packaging-regulators-fe",
+    "serviceName": "pEPR: Regulators' Service",
+    "organisationName": "Department for Environment,<br>Food &amp; Rural Affairs",
     "continue": "Continue",
     "yes": "Yes",
     "no": "No",
@@ -24,9 +25,18 @@
       "welsh": "Cymraeg"
     },
     "footer": {
-      "privacy": "Privacy",
+      "getHelp": "Get help",
+      "emailLabel": "Email:",
+      "telephoneLabel": "Telephone:",
+      "hours": "Monday to Friday, 8am to 6pm",
+      "accessibility": "Accessibility statement",
       "cookies": "Cookies",
-      "accessibility": "Accessibility statement"
+      "privacy": "Privacy",
+      "supportLinks": "Support links",
+      "oglPrefix": "All content is available under the",
+      "oglLink": "Open Government Licence v3.0",
+      "oglSuffix": ", except where otherwise stated",
+      "crownCopyright": "Crown copyright"
     },
     "dateTime": {
       "at": "at"
