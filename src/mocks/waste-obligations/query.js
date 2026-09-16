@@ -52,7 +52,7 @@ function sortFieldFor(column, record) {
   }
 }
 
-function compareValues(a, b) {
+export function compareValues(a, b) {
   if (a == null && b == null) {
     return 0
   }
@@ -95,4 +95,61 @@ export function sortRecords(records, sortParam) {
 export function parsePositiveInt(value, fallback) {
   const parsed = Number.parseInt(value, 10)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
+
+// GET /compliance-declarations/unsubmitted has its own field vocabulary and,
+// unlike the declaration search, accepts a genuine priority-ordered list rather
+// than one column plus a fixed tiebreak — so it cannot reuse sortRecords.
+export const UNSUBMITTED_SORT_FIELDS = [
+  'Name',
+  'ReferenceNumber',
+  'RecyclingObligationsMet',
+  'ObligationCoveragePercentage'
+]
+
+function unsubmittedSortFieldFor(field, row) {
+  switch (field) {
+    case 'ReferenceNumber':
+      return row.referenceNumber
+    case 'RecyclingObligationsMet':
+      return row.recyclingObligationsMet
+    case 'ObligationCoveragePercentage':
+      return row.obligationCoveragePercentage
+    default:
+      return row.name
+  }
+}
+
+export function parseUnsubmittedSort(sortParam) {
+  if (!sortParam) {
+    return [{ field: 'Name', direction: 'asc' }]
+  }
+
+  return sortParam
+    .split(',')
+    .map((term) => term.trim())
+    .filter(Boolean)
+    .map((term) => {
+      const [, field, direction] = /^([^[]+)\[(asc|desc)\]$/.exec(term) ?? []
+      return field ? { field, direction } : null
+    })
+}
+
+// Terms apply in priority order; organisationId is the final tiebreaker, as the
+// real endpoint guarantees a deterministic order across pages.
+export function sortUnsubmitted(rows, terms) {
+  return [...rows].sort((a, b) => {
+    for (const { field, direction } of terms) {
+      const factor = direction === 'asc' ? 1 : -1
+      const result =
+        compareValues(
+          unsubmittedSortFieldFor(field, a),
+          unsubmittedSortFieldFor(field, b)
+        ) * factor
+      if (result !== 0) {
+        return result
+      }
+    }
+    return compareValues(a.organisationId, b.organisationId)
+  })
 }

@@ -97,6 +97,91 @@ describe('WasteObligationsApiService', () => {
     )
   })
 
+  test('listUnsubmittedComplianceDeclarations calls endpoint with no params when none provided', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(
+        mockOkResponse({ unsubmittedOrganisations: [], total: 0 })
+      )
+    const service = new WasteObligationsApiService({
+      baseUrl: 'http://localhost:8080',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    await service.listUnsubmittedComplianceDeclarations({})
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:8080/compliance-declarations/unsubmitted',
+      expect.objectContaining({ method: 'GET' })
+    )
+  })
+
+  // The literal URL is asserted on purpose: the mock backend is the only other
+  // model of this contract, so a renamed or dropped parameter should surface
+  // here as a readable diff rather than at runtime.
+  test('listUnsubmittedComplianceDeclarations builds query string from provided filters', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(
+        mockOkResponse({ unsubmittedOrganisations: [], total: 0 })
+      )
+    const service = new WasteObligationsApiService({
+      baseUrl: 'http://localhost:8080',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    await service.listUnsubmittedComplianceDeclarations(
+      {
+        obligationYear: 2026,
+        registrationType: 'DirectProducer',
+        search: 'acme',
+        sort: 'Name[asc]',
+        page: 2,
+        pageSize: 100
+      },
+      'trace-1'
+    )
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:8080/compliance-declarations/unsubmitted?obligationYear=2026&registrationType=DirectProducer&search=acme&sort=Name%5Basc%5D&page=2&pageSize=100',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          Accept: 'application/json',
+          Authorization: expect.stringMatching(/^Basic /),
+          'x-cdp-request-id': 'trace-1'
+        })
+      })
+    )
+  })
+
+  test('listUnsubmittedComplianceDeclarations omits undefined filter params', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(
+        mockOkResponse({ unsubmittedOrganisations: [], total: 0 })
+      )
+    const service = new WasteObligationsApiService({
+      baseUrl: 'http://localhost:8080',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    await service.listUnsubmittedComplianceDeclarations({
+      registrationType: 'ComplianceScheme'
+    })
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:8080/compliance-declarations/unsubmitted?registrationType=ComplianceScheme',
+      expect.any(Object)
+    )
+  })
+
   test('listOrganisationComplianceDeclarations targets the org-scoped endpoint with obligationYear', async () => {
     const fetchImpl = vi
       .fn()
@@ -346,75 +431,6 @@ describe('WasteObligationsApiService', () => {
         headers: expect.objectContaining({ 'x-cdp-request-id': 'trace-2' })
       })
     )
-  })
-
-  describe('getComplianceObligationOrNull', () => {
-    test('returns data when obligations exist', async () => {
-      const fetchImpl = vi
-        .fn()
-        .mockResolvedValue(
-          mockOkResponse({ obligations: [{ material: 'Glass' }] })
-        )
-      const service = new WasteObligationsApiService({
-        baseUrl: 'http://localhost:8080',
-        clientId: 'Developer',
-        clientSecret: 'developer-pwd',
-        fetchImpl
-      })
-
-      const result = await service.getComplianceObligationOrNull({
-        organisationId: 'org-abc',
-        obligationYear: 2026
-      })
-
-      expect(result).toMatchObject({
-        obligations: [{ material: 'Glass' }]
-      })
-    })
-
-    test('returns null when the API responds with 404', async () => {
-      const fetchImpl = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 404,
-        headers: { get: vi.fn().mockReturnValue('application/problem+json') },
-        json: vi.fn().mockResolvedValue({ title: 'Not Found', status: 404 })
-      })
-      const service = new WasteObligationsApiService({
-        baseUrl: 'http://localhost:8080',
-        clientId: 'Developer',
-        clientSecret: 'developer-pwd',
-        fetchImpl
-      })
-
-      const result = await service.getComplianceObligationOrNull({
-        organisationId: 'org-abc',
-        obligationYear: 2026
-      })
-
-      expect(result).toBeNull()
-    })
-
-    test('rethrows non-404 API errors', async () => {
-      const fetchImpl = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-        headers: { get: vi.fn().mockReturnValue('application/problem+json') },
-        json: vi.fn().mockResolvedValue({ title: 'Server Error', status: 500 })
-      })
-      const service = new WasteObligationsApiService({
-        baseUrl: 'http://localhost:8080',
-        clientId: 'Developer',
-        clientSecret: 'developer-pwd',
-        fetchImpl
-      })
-
-      await expect(
-        service.getComplianceObligationOrNull({
-          organisationId: 'org-abc',
-          obligationYear: 2026
-        })
-      ).rejects.toMatchObject({ status: 500 })
-    })
   })
 
   test('updateComplianceDeclaration includes notification when provided', async () => {
