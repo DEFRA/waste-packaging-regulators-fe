@@ -10,6 +10,7 @@ import { certificatesOfComplianceDetail } from '../routes/certificatesOfComplian
 import { certificatesOfComplianceAccept } from '../routes/certificatesOfCompliance/accept/index.js'
 import { certificatesOfComplianceCancel } from '../routes/certificatesOfCompliance/cancel/index.js'
 import { errorExamples } from '../routes/error/examples/index.js'
+import { cookies } from '../routes/cookies/index.js'
 
 export const router = {
   plugin: {
@@ -22,6 +23,9 @@ export const router = {
 
       // Auth routes: /signin-oidc, /logout, /signed-out
       await server.register([auth])
+
+      // Cookie settings
+      await server.register([cookies])
 
       const cocPlugins = [
         certificatesOfComplianceList,

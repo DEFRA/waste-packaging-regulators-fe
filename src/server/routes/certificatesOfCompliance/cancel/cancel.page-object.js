@@ -63,7 +63,7 @@ export function loadCheckPage(payload) {
     emailLinkHref: emailRow?.find('.govuk-summary-list__value a').attr('href'),
     insetText: $('.govuk-inset-text').text().trim(),
     hiddenReason: $('input[name="cancel-reason"]').attr('value'),
-    confirmButton: $('.govuk-button').first().text().trim(),
+    confirmButton: $('main .govuk-button').first().text().trim(),
     formAction: $('form').attr('action')
   }
 }
