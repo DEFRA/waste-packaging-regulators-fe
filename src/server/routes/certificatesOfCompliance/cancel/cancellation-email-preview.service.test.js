@@ -138,7 +138,14 @@ describe('buildCancellationEmailPreview', () => {
           submitter: 'Nadia Roche',
           persons: [
             approved('Catherine', 'Morris', 'catherine.morris@howco.test'),
-            approved('James', 'Wright', 'james.wright@howco.test')
+            approved('James', 'Wright', 'james.wright@howco.test'),
+            {
+              userId: 'scenario-user-0',
+              firstName: 'Nadia',
+              lastName: 'Roche',
+              email: 'nadia.roche@scenario.test',
+              serviceRole: 'Delegated Person'
+            }
           ]
         },
         {
@@ -146,7 +153,16 @@ describe('buildCancellationEmailPreview', () => {
           type: 'compliance-scheme',
           status: 'pending',
           submitter: 'Owen Pryce',
-          persons: [approved('Jane', 'Doe', 'jane.doe@ecopack.co.uk')]
+          persons: [
+            approved('Jane', 'Doe', 'jane.doe@ecopack.co.uk'),
+            {
+              userId: 'scenario-user-1',
+              firstName: 'Owen',
+              lastName: 'Pryce',
+              email: 'owen.pryce@scenario.test',
+              serviceRole: 'Delegated Person'
+            }
+          ]
         }
       ]
     })
@@ -167,6 +183,13 @@ describe('buildCancellationEmailPreview', () => {
       getOrganisationWithPersonsOrNull: vi.fn((organisationId) =>
         Promise.resolve(
           scenario.backends.account.organisationWithPersons(organisationId)
+        )
+      ),
+      getOrganisationsByCompaniesHouseNumbers: vi.fn((numbers) =>
+        Promise.resolve(
+          scenario.backends.account.organisationsByCompaniesHouseNumbers(
+            numbers
+          )
         )
       )
     }

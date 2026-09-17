@@ -34,7 +34,14 @@ const ORGS = [
         'catherine.morris@howco.test',
         '020 7946 0100'
       ),
-      approved('James', 'Wright', 'james.wright@howco.test', '020 7946 0109')
+      approved('James', 'Wright', 'james.wright@howco.test', '020 7946 0109'),
+      {
+        userId: 'scenario-user-0',
+        firstName: 'Nadia',
+        lastName: 'Roche',
+        email: 'nadia.roche@scenario.test',
+        serviceRole: 'Delegated Person'
+      }
     ]
   },
   {
@@ -43,7 +50,14 @@ const ORGS = [
     status: 'pending',
     submitter: 'Owen Pryce',
     persons: [
-      approved('Jane', 'Doe', 'jane.doe@ecopack.co.uk', '020 7946 0110')
+      approved('Jane', 'Doe', 'jane.doe@ecopack.co.uk', '020 7946 0110'),
+      {
+        userId: 'scenario-user-1',
+        firstName: 'Owen',
+        lastName: 'Pryce',
+        email: 'owen.pryce@scenario.test',
+        serviceRole: 'Delegated Person'
+      }
     ]
   },
   { name: 'Quenby Producers Ltd', status: 'cancelled', listed: false }
