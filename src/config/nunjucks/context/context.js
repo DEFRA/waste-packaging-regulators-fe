@@ -55,6 +55,7 @@ export function context(request) {
   }
 
   return {
+    cspNonce: request?.plugins?.blankie?.nonces?.script,
     assetPath: `${externalAssetPath}/assets`,
     routePrefix: getForwardedPrefix(request),
     locale,
@@ -71,6 +72,8 @@ export function context(request) {
     hasCookiePolicy: Boolean(request?.state?.cookies_policy),
     cookiePreferenceSet: request?.query?.cookie_preference === 'set',
     allowGoogleAnalytics,
+    ga4: config.get('GA4'),
+    gtm: config.get('GTM'),
     getAssetPath(asset) {
       if (!config.get('isProduction')) {
         return `${externalAssetPath}/${asset}`

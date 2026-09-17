@@ -37,7 +37,8 @@ export function renderErrorPage(h, statusCode) {
   return h
     .view(view, {
       pageTitle,
-      availableFrom: config.get('maintenance.availableFrom')
+      availableFrom: config.get('maintenance.availableFrom'),
+      hideCookieBanner: true
     })
     .code(statusCode)
 }

@@ -3,13 +3,16 @@ import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
 
 export function buildAccountNavigation(request) {
+  const user = getSessionUser(request)
   const accountDetails = request.app?.accountDetails
 
   if (accountDetails?.organisationName) {
     return [{ text: accountDetails.organisationName }]
+  } else if (user?.organisationName) {
+    return [{ text: user.organisationName }]
+  } else {
+    return []
   }
-
-  return []
 }
 
 export function buildNavigation() {

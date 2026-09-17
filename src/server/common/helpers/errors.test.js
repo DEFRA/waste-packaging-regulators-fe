@@ -111,7 +111,8 @@ describe('#catchAll', () => {
 
     expect(mockToolkitView).toHaveBeenCalledWith('error/not-found', {
       pageTitle: pageTitles.notFound,
-      availableFrom: ''
+      availableFrom: '',
+      hideCookieBanner: true
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.notFound)
   })
@@ -121,7 +122,8 @@ describe('#catchAll', () => {
 
     expect(mockToolkitView).toHaveBeenCalledWith('error/access-denied', {
       pageTitle: pageTitles.accessDenied,
-      availableFrom: ''
+      availableFrom: '',
+      hideCookieBanner: true
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.forbidden)
   })
@@ -131,7 +133,8 @@ describe('#catchAll', () => {
 
     expect(mockToolkitView).toHaveBeenCalledWith('error/service-unavailable', {
       pageTitle: pageTitles.serviceUnavailable,
-      availableFrom: ''
+      availableFrom: '',
+      hideCookieBanner: true
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.serviceUnavailable)
   })
@@ -150,7 +153,8 @@ describe('#catchAll', () => {
         'error/problem-with-service',
         {
           pageTitle: pageTitles.problemWithService,
-          availableFrom: ''
+          availableFrom: '',
+          hideCookieBanner: true
         }
       )
       expect(mockToolkitCode).toHaveBeenCalledWith(statusCode)

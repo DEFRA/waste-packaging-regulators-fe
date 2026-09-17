@@ -18,6 +18,12 @@ describe('#contentSecurityPolicy', () => {
       url: '/'
     })
 
-    expect(resp.headers['content-security-policy']).toBeDefined()
+    const csp = resp.headers['content-security-policy']
+    expect(csp).toBeDefined()
+    expect(csp).toContain('https://www.google-analytics.com')
+    expect(csp).toContain('https://www.googletagmanager.com')
+    expect(csp).toContain('https://region1.google-analytics.com')
+    expect(csp).toContain('https://analytics.google.com')
+    expect(csp).toMatch(/'nonce-[a-zA-Z0-9+/=]+'/)
   })
 })
