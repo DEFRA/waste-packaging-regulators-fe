@@ -38,7 +38,15 @@ export class AccountApiService extends BaseApiService {
       { companiesHouseNumbers },
       this.getTracingHeader(traceId)
     )
-    return Array.isArray(response) ? response : []
+    if (Array.isArray(response)) {
+      return response
+    }
+
+    if (response && typeof response === 'object') {
+      return [response]
+    }
+
+    return []
   }
 
   async getOrganisationWithPersons(organisationId, traceId) {

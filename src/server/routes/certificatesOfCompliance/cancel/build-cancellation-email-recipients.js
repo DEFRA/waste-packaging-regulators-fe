@@ -79,7 +79,10 @@ async function resolveAccountOrganisationId(
       traceId
     )
   const matches = organisations.filter(
-    (organisation) => organisation.isComplianceScheme && organisation.externalId
+    (organisation) =>
+      organisation.isComplianceScheme &&
+      organisation.externalId &&
+      organisation.companiesHouseNumber === companiesHouseNumber
   )
 
   if (matches.length !== 1) {

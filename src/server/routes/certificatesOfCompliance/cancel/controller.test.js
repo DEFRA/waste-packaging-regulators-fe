@@ -328,6 +328,23 @@ describe('certificates of compliance — cancel', () => {
       expect(response.headers.location).toBe(reasonUrlFor(DP_ITEM))
     })
 
+    it('links preview stylesheet and crest from the application public path', async () => {
+      const cookie = await app.signIn()
+      const response = await app.get(emailPreviewUrlFor(DP_ITEM), cookie)
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.payload).toContain(
+        'href="/public/assets/stylesheets/email-preview.css"'
+      )
+      expect(response.payload).toContain(
+        'src="/public/assets/images/govuk-crest.svg"'
+      )
+
+      const css = await app.get('/public/assets/stylesheets/email-preview.css')
+      expect(css.statusCode).toBe(statusCodes.ok)
+      expect(css.payload).toContain('background-color: #e8ebed')
+    })
+
     it('lists submitter and primary contact emails and renders personalisation from the Notify preview for a direct producer', async () => {
       const cookie = await app.signIn()
       const response = await app.get(emailPreviewUrlFor(DP_ITEM), cookie)

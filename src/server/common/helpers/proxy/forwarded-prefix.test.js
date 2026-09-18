@@ -1,5 +1,6 @@
 import {
   applyForwardedPrefixToCookiePath,
+  getExternalPublicPath,
   getForwardedPrefix,
   getProxyPrefix,
   withForwardedPrefix
@@ -51,6 +52,22 @@ describe('forwarded prefix helpers', () => {
 
     test('returns empty string for an unrecognised path when no header is present', () => {
       expect(getForwardedPrefix(createRequest(undefined, '/home'))).toBe('')
+    })
+  })
+
+  describe('getExternalPublicPath', () => {
+    test('returns /public when no proxy header is present', () => {
+      expect(
+        getExternalPublicPath(
+          createRequest(undefined, '/certificates-of-compliance/list')
+        )
+      ).toBe('/public')
+    })
+
+    test('prefixes /public when X-Forwarded-Prefix is set', () => {
+      expect(
+        getExternalPublicPath(createRequest('/certificates-of-compliance'))
+      ).toBe('/certificates-of-compliance/public')
     })
   })
 

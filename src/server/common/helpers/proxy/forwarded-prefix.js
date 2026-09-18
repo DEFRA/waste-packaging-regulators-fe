@@ -30,6 +30,8 @@ function hasForwardedPrefixHeader(request) {
   return typeof request?.headers?.['x-forwarded-prefix'] === 'string'
 }
 
+import { config } from '#config/config.js'
+
 function isCertificatesOfCompliancePath(path) {
   return (
     path === '/certificates-of-compliance' ||
@@ -79,6 +81,19 @@ export function getProxyPrefix(request) {
     return validatePrefix(request.headers['x-forwarded-prefix'])
   }
   return ''
+}
+
+/**
+ * Returns the external URL prefix for static files under `/public`, including
+ * the reverse-proxy path when X-Forwarded-Prefix is set.
+ *
+ * @param {import('@hapi/hapi').Request} request
+ * @returns {string}
+ */
+export function getExternalPublicPath(request) {
+  const base = config.get('assetPath')
+  const prefix = getProxyPrefix(request)
+  return prefix ? `${prefix}${base}` : base
 }
 
 /**

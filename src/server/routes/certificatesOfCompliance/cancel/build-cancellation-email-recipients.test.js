@@ -275,4 +275,36 @@ describe('buildCancellationEmailRecipients', () => {
       createAccountApiService().getOrganisationWithPersonsOrNull
     ).not.toHaveBeenCalled()
   })
+
+  test('ignores unrelated operators when Companies House lookup returns extra rows', async () => {
+    mockAccountApi({
+      companiesHouseMatches: [
+        {
+          externalId: accountOrganisationId,
+          companiesHouseNumber,
+          isComplianceScheme: true
+        },
+        {
+          externalId: 'another-account-id',
+          companiesHouseNumber: '99999999',
+          isComplianceScheme: true
+        }
+      ],
+      organisationWithPersons: organisationWithBothRecipients
+    })
+
+    const recipients = await buildCancellationEmailRecipients(
+      complianceSchemeDeclaration,
+      complianceSchemeWasteOrganisation,
+      'trace-recipients'
+    )
+
+    expect(
+      createAccountApiService().getOrganisationWithPersonsOrNull
+    ).toHaveBeenCalledWith(accountOrganisationId, 'trace-recipients')
+    expect(recipients.map((recipient) => recipient.email)).toEqual([
+      'approved-person@email.com',
+      'submitter@email.com'
+    ])
+  })
 })
