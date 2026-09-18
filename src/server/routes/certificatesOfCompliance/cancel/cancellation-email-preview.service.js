@@ -43,10 +43,14 @@ async function fetchWasteOrganisation(organisationId, traceId) {
 
 async function fetchCancellationRecipients(
   declaration,
-  organisationId,
+  wasteOrganisation,
   traceId
 ) {
-  return buildCancellationEmailRecipients(declaration, organisationId, traceId)
+  return buildCancellationEmailRecipients(
+    declaration,
+    wasteOrganisation,
+    traceId
+  )
 }
 
 export async function buildCancellationEmailPreview({
@@ -67,10 +71,15 @@ export async function buildCancellationEmailPreview({
     return { error: 'invalid-reason' }
   }
 
-  const [wasteOrganisation, recipients] = await Promise.all([
-    fetchWasteOrganisation(organisationId, traceId),
-    fetchCancellationRecipients(declaration, organisationId, traceId)
-  ])
+  const wasteOrganisation = await fetchWasteOrganisation(
+    organisationId,
+    traceId
+  )
+  const recipients = await fetchCancellationRecipients(
+    declaration,
+    wasteOrganisation,
+    traceId
+  )
 
   if (recipients.length === 0) {
     return { error: 'no-recipients' }

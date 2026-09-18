@@ -25,19 +25,6 @@ export function dedupeRecipientsByEmail(recipients = []) {
     )
 }
 
-function splitDisplayName(name) {
-  const trimmed = name?.trim()
-  if (!trimmed) {
-    return { firstName: '', lastName: '' }
-  }
-
-  const [firstName, ...remainingParts] = trimmed.split(/\s+/)
-  return {
-    firstName,
-    lastName: remainingParts.join(' ')
-  }
-}
-
 function matchPersonForSubmitter(persons, submitter) {
   return persons.find(
     (person) =>
@@ -60,41 +47,83 @@ function resolveSubmitterRecipient(submitter, organisationWithPersons) {
     organisationWithPersons?.persons ?? [],
     submitter
   )
-  if (matchedPerson?.firstName && matchedPerson?.lastName) {
-    return {
-      firstName: matchedPerson.firstName,
-      lastName: matchedPerson.lastName,
-      email
-    }
+  if (!matchedPerson?.firstName || !matchedPerson?.lastName) {
+    return null
   }
 
-  const { firstName, lastName } = splitDisplayName(submitter.name)
-
   return {
-    firstName,
-    lastName,
+    firstName: matchedPerson.firstName,
+    lastName: matchedPerson.lastName,
     email
   }
 }
 
-async function fetchOrganisationWithPersons(
+async function resolveAccountOrganisationId(
   accountApi,
-  organisationId,
+  registrationType,
+  wasteOrganisation,
   traceId
 ) {
-  return accountApi.getOrganisationWithPersonsOrNull(organisationId, traceId)
+  if (registrationType === 'DirectProducer') {
+    return wasteOrganisation?.id ?? null
+  }
+
+  const companiesHouseNumber = wasteOrganisation?.companiesHouseNumber?.trim()
+  if (!companiesHouseNumber) {
+    return null
+  }
+
+  const organisations =
+    await accountApi.getOrganisationsByCompaniesHouseNumbers(
+      [companiesHouseNumber],
+      traceId
+    )
+  const matches = organisations.filter(
+    (organisation) =>
+      organisation.isComplianceScheme &&
+      organisation.externalId &&
+      organisation.companiesHouseNumber === companiesHouseNumber
+  )
+
+  if (matches.length !== 1) {
+    return null
+  }
+
+  return matches[0].externalId
+}
+
+async function fetchOrganisationWithPersons(
+  accountApi,
+  accountOrganisationId,
+  traceId
+) {
+  if (!accountOrganisationId) {
+    return null
+  }
+
+  return accountApi.getOrganisationWithPersonsOrNull(
+    accountOrganisationId,
+    traceId
+  )
 }
 
 export async function buildCancellationEmailRecipients(
   declaration,
-  organisationId,
+  wasteOrganisation,
   traceId
 ) {
   const accountApi = createAccountApiService()
   const submitter = findSubmittedAuditUser(declaration?.audit)
+  const registrationType = declaration?.organisation?.registrationType
+  const accountOrganisationId = await resolveAccountOrganisationId(
+    accountApi,
+    registrationType,
+    wasteOrganisation,
+    traceId
+  )
   const organisationWithPersons = await fetchOrganisationWithPersons(
     accountApi,
-    organisationId,
+    accountOrganisationId,
     traceId
   )
 

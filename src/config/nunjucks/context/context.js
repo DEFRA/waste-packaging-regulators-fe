@@ -13,13 +13,12 @@ import { bindLocaleUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
 import {
+  getExternalPublicPath,
   getForwardedPrefix,
-  getProxyPrefix,
   withForwardedPrefix
 } from '#server/common/helpers/proxy/forwarded-prefix.js'
 
 const logger = createLogger()
-const assetPath = config.get('assetPath')
 const manifestPath = path.join(
   config.get('root'),
   '.public/.vite/manifest.json'
@@ -37,10 +36,7 @@ export function context(request) {
   }
 
   const locale = getLocale(request)
-  const proxyPrefix = getProxyPrefix(request)
-  const externalAssetPath = proxyPrefix
-    ? `${proxyPrefix}${assetPath}`
-    : assetPath
+  const externalAssetPath = getExternalPublicPath(request)
 
   let allowGoogleAnalytics = false
   try {

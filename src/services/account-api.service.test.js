@@ -130,7 +130,30 @@ describe('AccountApiService', () => {
     )
   })
 
-  test('getOrganisationsByCompaniesHouseNumbers returns an empty array when the response is not a list', async () => {
+  test('getOrganisationsByCompaniesHouseNumbers wraps a single organisation object in an array', async () => {
+    const responseBody = {
+      externalId: externalIds[0],
+      name: 'GreenCircle Group',
+      referenceNumber: '110987',
+      companiesHouseNumber: '88201456',
+      isComplianceScheme: true
+    }
+    const fetchImpl = vi.fn().mockResolvedValue(mockOkResponse(responseBody))
+    const service = new AccountApiService({
+      baseUrl: 'http://localhost:3001',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    const result = await service.getOrganisationsByCompaniesHouseNumbers([
+      '88201456'
+    ])
+
+    expect(result).toEqual([responseBody])
+  })
+
+  test('getOrganisationsByCompaniesHouseNumbers returns an empty array when the response is not usable', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(mockOkResponse(''))
     const service = new AccountApiService({
       baseUrl: 'http://localhost:3001',

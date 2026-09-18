@@ -34,7 +34,14 @@ const ORGS = [
         'catherine.morris@howco.test',
         '020 7946 0100'
       ),
-      approved('James', 'Wright', 'james.wright@howco.test', '020 7946 0109')
+      approved('James', 'Wright', 'james.wright@howco.test', '020 7946 0109'),
+      {
+        userId: 'scenario-user-0',
+        firstName: 'Nadia',
+        lastName: 'Roche',
+        email: 'nadia.roche@scenario.test',
+        serviceRole: 'Delegated Person'
+      }
     ]
   },
   {
@@ -43,7 +50,14 @@ const ORGS = [
     status: 'pending',
     submitter: 'Owen Pryce',
     persons: [
-      approved('Jane', 'Doe', 'jane.doe@ecopack.co.uk', '020 7946 0110')
+      approved('Jane', 'Doe', 'jane.doe@ecopack.co.uk', '020 7946 0110'),
+      {
+        userId: 'scenario-user-1',
+        firstName: 'Owen',
+        lastName: 'Pryce',
+        email: 'owen.pryce@scenario.test',
+        serviceRole: 'Delegated Person'
+      }
     ]
   },
   { name: 'Quenby Producers Ltd', status: 'cancelled', listed: false }
@@ -312,6 +326,23 @@ describe('certificates of compliance — cancel', () => {
       )
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe(reasonUrlFor(DP_ITEM))
+    })
+
+    it('links preview stylesheet and crest from the application public path', async () => {
+      const cookie = await app.signIn()
+      const response = await app.get(emailPreviewUrlFor(DP_ITEM), cookie)
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.payload).toContain(
+        'href="/public/assets/stylesheets/email-preview.css"'
+      )
+      expect(response.payload).toContain(
+        'src="/public/assets/images/govuk-crest.svg"'
+      )
+
+      const css = await app.get('/public/assets/stylesheets/email-preview.css')
+      expect(css.statusCode).toBe(statusCodes.ok)
+      expect(css.payload).toContain('background-color: #e8ebed')
     })
 
     it('lists submitter and primary contact emails and renders personalisation from the Notify preview for a direct producer', async () => {

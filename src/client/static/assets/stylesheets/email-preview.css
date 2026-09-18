@@ -2,6 +2,8 @@
  * Standalone cancellation email preview — matches regulator-responsibility-prototype
  * cancel-certificate-email-preview.njk (centred card on grey background, GOV.UK Notify chrome).
  * Not part of the main application.scss bundle; linked only from email-preview.njk.
+ * Lives under /public/assets/stylesheets/ so the URL is not mistaken for
+ * /{organisationId}/{documentType}/{id} (e.g. public/stylesheets/email-preview.css).
  */
 
 body {

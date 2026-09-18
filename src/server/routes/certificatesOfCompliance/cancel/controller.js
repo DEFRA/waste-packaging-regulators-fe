@@ -186,6 +186,8 @@ async function renderCancellationEmailPreview(
     subject: preview.subject,
     body: preview.body,
     toAddresses: preview.toAddresses,
+    // Standalone preview links static files from /public, not the proxied
+    // /certificates-of-compliance/public path used by getAssetPath elsewhere.
     assetPath: config.get('assetPath'),
     locale,
     i18n
