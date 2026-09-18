@@ -102,6 +102,16 @@ export const config = convict({
       env: 'MAINTENANCE_AVAILABLE_FROM'
     }
   },
+  GA4: {
+    doc: 'Google Analytics 4 ID',
+    format: String,
+    default: ''
+  },
+  GTM: {
+    doc: 'Google Tag Manager ID',
+    format: String,
+    default: ''
+  },
   isDevelopment: {
     doc: 'If this application running in the development environment',
     format: Boolean,

@@ -55,7 +55,8 @@ describe('context and cache', () => {
       path: '/',
       query: {},
       headers: {},
-      yar: { get: () => null }
+      yar: { get: () => null },
+      plugins: { blankie: { nonces: { script: 'test-nonce' } } }
     }
 
     describe('When Vite manifest file read succeeds', () => {
@@ -95,9 +96,12 @@ describe('context and cache', () => {
           serviceName: en.common.serviceName,
           serviceUrl: '/',
           helpDeskEmail: 'eprcustomerservice@defra.gov.uk',
+          ga4: '',
+          gtm: '',
           hasCookiePolicy: false,
           cookiePreferenceSet: false,
-          allowGoogleAnalytics: false
+          allowGoogleAnalytics: false,
+          cspNonce: 'test-nonce'
         })
       })
 
@@ -159,7 +163,8 @@ describe('context and cache', () => {
       path: '/',
       query: {},
       headers: {},
-      yar: { get: () => null }
+      yar: { get: () => null },
+      plugins: { blankie: { nonces: { script: 'test-nonce' } } }
     }
 
     beforeAll(async () => {
@@ -203,7 +208,8 @@ describe('context and cache', () => {
       path: '/',
       query: {},
       headers: {},
-      yar: { get: () => null }
+      yar: { get: () => null },
+      plugins: { blankie: { nonces: { script: 'test-nonce' } } }
     }
     let contextResult
 
@@ -251,9 +257,12 @@ describe('context and cache', () => {
           serviceName: en.common.serviceName,
           serviceUrl: '/',
           helpDeskEmail: 'eprcustomerservice@defra.gov.uk',
+          ga4: '',
+          gtm: '',
           hasCookiePolicy: false,
           cookiePreferenceSet: false,
-          allowGoogleAnalytics: false
+          allowGoogleAnalytics: false,
+          cspNonce: 'test-nonce'
         })
       })
     })
