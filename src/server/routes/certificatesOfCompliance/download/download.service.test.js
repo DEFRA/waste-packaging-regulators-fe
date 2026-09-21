@@ -93,6 +93,7 @@ describe('#getComplianceDownload (real API path)', () => {
       'direct-producers',
       'pending',
       'trace-1',
+      null,
       NOW
     )
 
@@ -156,6 +157,7 @@ describe('#getComplianceDownload (real API path)', () => {
       'direct-producers',
       'accepted',
       'trace-1',
+      null,
       NOW
     )
 
@@ -190,6 +192,7 @@ describe('#getComplianceDownload (real API path)', () => {
       'direct-producers',
       'not-submitted',
       'trace-1',
+      null,
       NOW
     )
 
@@ -223,6 +226,7 @@ describe('#getComplianceDownload (real API path)', () => {
       'direct-producers',
       'not-submitted',
       'trace-1',
+      null,
       NOW
     )
 
@@ -249,6 +253,7 @@ describe('#getComplianceDownload (real API path)', () => {
       'direct-producers',
       'not-submitted',
       'trace-1',
+      null,
       NOW
     )
 
@@ -277,6 +282,7 @@ describe('#getComplianceDownload (real API path)', () => {
       'compliance-schemes',
       'not-submitted',
       'trace-1',
+      null,
       NOW
     )
 
@@ -293,6 +299,7 @@ describe('#getComplianceDownload (real API path)', () => {
       'direct-producers',
       'nonsense',
       'trace-1',
+      null,
       NOW
     )
 
@@ -329,6 +336,7 @@ describe('#getComplianceDownload (real API path)', () => {
         'direct-producers',
         'not-submitted',
         'trace-1',
+        null,
         NOW
       )
 
@@ -351,6 +359,7 @@ describe('#getComplianceDownload (real API path)', () => {
         'direct-producers',
         'not-submitted',
         'trace-1',
+        null,
         NOW
       )
 
@@ -384,6 +393,7 @@ describe('#getComplianceDownload (real API path)', () => {
         'direct-producers',
         'not-submitted',
         'trace-1',
+        null,
         NOW
       )
 

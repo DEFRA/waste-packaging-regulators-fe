@@ -10,6 +10,18 @@ function buildPathWithQuery(basePath, queryString) {
   return `${basePath}?${queryString}`
 }
 
+function buildComplianceDeclarationsSort(sortColumn, sortDirection) {
+  if (sortColumn == null || sortDirection == null) {
+    return null
+  }
+
+  if (sortColumn === 'OrganisationName') {
+    return `OrganisationName[${sortDirection}]`
+  }
+
+  return `${sortColumn}[${sortDirection}],OrganisationName[asc]`
+}
+
 export class WasteObligationsApiService extends BaseApiService {
   constructor(options = {}) {
     super({
@@ -54,11 +66,8 @@ export class WasteObligationsApiService extends BaseApiService {
     if (pageSize != null) {
       params.set('pageSize', String(pageSize))
     }
-    if (sortColumn != null && sortDirection != null) {
-      const sortParam =
-        sortColumn === 'OrganisationName'
-          ? `OrganisationName[${sortDirection}]`
-          : `${sortColumn}[${sortDirection}],OrganisationName[asc]`
+    const sortParam = buildComplianceDeclarationsSort(sortColumn, sortDirection)
+    if (sortParam != null) {
       params.set('sort', sortParam)
     }
     const qs = params.toString()

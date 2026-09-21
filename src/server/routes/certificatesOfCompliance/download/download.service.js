@@ -57,21 +57,9 @@ export async function getComplianceDownload(
   organisationType,
   submissionStatus,
   traceId,
-  countryOrNow = null,
-  maybeNow = undefined
+  country = null,
+  now = new Date()
 ) {
-  let country = null
-  let now = new Date()
-
-  if (countryOrNow instanceof Date) {
-    now = countryOrNow
-  } else if (typeof countryOrNow === 'string') {
-    country = countryOrNow
-    if (maybeNow instanceof Date) {
-      now = maybeNow
-    }
-  }
-
   const obligationsApi = createWasteObligationsApiService()
 
   const items = await getAllItemsFor({

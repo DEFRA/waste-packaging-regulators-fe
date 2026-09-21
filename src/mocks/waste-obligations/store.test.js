@@ -50,3 +50,25 @@ describe('createObligationsStore queryDeclarations country filter', () => {
     expect(result.complianceDeclarations[0].id).toBe('dec-default')
   })
 })
+
+describe('createObligationsStore queryUnsubmitted country filter', () => {
+  test('filters unsubmitted organisations when country param is provided', () => {
+    const store = createObligationsStore([
+      makeRecord({
+        declarationId: null,
+        submissionStatus: 'not-submitted',
+        declarationStatus: undefined
+      })
+    ])
+
+    const matching = store.queryUnsubmitted(
+      new URLSearchParams({ country: 'GB-ENG' })
+    )
+    const nonMatching = store.queryUnsubmitted(
+      new URLSearchParams({ country: 'GB-WLS' })
+    )
+
+    expect(matching.total).toBe(1)
+    expect(nonMatching.total).toBe(0)
+  })
+})

@@ -1,4 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import * as getSessionUserModule from '#server/common/helpers/get-session-user.js'
 import { load } from 'cheerio'
 import { vi } from 'vitest'
 import * as listService from './list.service.js'
@@ -1048,6 +1049,54 @@ describe('#certificatesOfComplianceController', () => {
         'Acme',
         undefined,
         'GB-ENG'
+      )
+    })
+
+    test('passes null country when session user has unmapped nationId', async () => {
+      vi.spyOn(getSessionUserModule, 'getSessionUser').mockReturnValue({
+        nationId: 99
+      })
+      vi.spyOn(
+        listService,
+        'getCertificatesOfComplianceViewModel'
+      ).mockResolvedValue({
+        heading: 'View certificates and statements of compliance',
+        backlink: './',
+        complianceYear: '2026',
+        totalPending: 0,
+        totalAccepted: 0,
+        totalNotSubmitted: 0,
+        organisationType: 'direct-producers',
+        activeTab: 'pending',
+        items: [],
+        emptyTabMessage: emptyTabMessages.pending,
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          baseUrl:
+            '/certificates-of-compliance?type=direct-producers&tab=pending'
+        },
+        sort: {
+          column: 'DateSubmitted',
+          direction: 'desc',
+          baseUrl:
+            '/certificates-of-compliance?type=direct-producers&tab=pending&page=1'
+        }
+      })
+
+      await inject(
+        '/certificates-of-compliance?type=direct-producers&tab=pending'
+      )
+
+      expect(
+        listService.getCertificatesOfComplianceViewModel
+      ).toHaveBeenCalledWith(
+        'direct-producers',
+        'pending',
+        1,
+        'DateSubmitted',
+        'desc',
+        expect.objectContaining({ country: null })
       )
     })
   })

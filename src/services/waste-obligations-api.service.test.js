@@ -76,6 +76,30 @@ describe('WasteObligationsApiService', () => {
     )
   })
 
+  test('listComplianceDeclarations includes country and obligationYear when provided', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(
+        mockOkResponse({ complianceDeclarations: [], total: 0 })
+      )
+    const service = new WasteObligationsApiService({
+      baseUrl: 'http://localhost:8080',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    await service.listComplianceDeclarations({
+      country: 'GB-ENG',
+      obligationYear: 2026
+    })
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:8080/compliance-declarations?obligationYear=2026&country=GB-ENG',
+      expect.any(Object)
+    )
+  })
+
   test('listComplianceDeclarations includes country when provided', async () => {
     const fetchImpl = vi
       .fn()
