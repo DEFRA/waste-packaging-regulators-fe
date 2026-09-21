@@ -1,5 +1,5 @@
 // Maps Account API nationId (session user) to waste-obligations country filter codes.
-// nationId values: 1 England, 2 NI, 3 Scotland, 4 Wales — see .cursor/docs/cancellation-email-fields.md
+// nationId values: 1 England, 2 NI, 3 Scotland, 4 Wales
 
 const NATION_ID_TO_COUNTRY = {
   1: 'GB-ENG',
