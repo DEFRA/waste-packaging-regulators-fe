@@ -1,6 +1,7 @@
 import { getSessionUser } from '#server/common/helpers/get-session-user.js'
 import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
+import { withForwardedPrefix } from '#server/common/helpers/proxy/forwarded-prefix.js'
 
 export function buildAccountNavigation(request) {
   const user = getSessionUser(request)
@@ -32,11 +33,11 @@ export function buildRegulatorContext(request, locale = 'en') {
     } else {
       html += ''
     }
-    html += `<a class="govuk-service-navigation__link" href="${localeUrl('/auth/logout', locale)}">${translate(locale, 'common.nav.signOut')}</a></div>`
+    html += `<a class="govuk-service-navigation__link" href="${localeUrl(withForwardedPrefix(request, '/logout'), locale)}">${translate(locale, 'common.nav.signOut')}</a></div>`
     return html
   }
 
   return `<div class="defra-internal-service-navigation__context">
-    <a class="govuk-service-navigation__link" href="${localeUrl('/auth/login', locale)}">${translate(locale, 'common.nav.signIn')}</a>
+    <a class="govuk-service-navigation__link" href="${localeUrl(withForwardedPrefix(request, '/signin-oidc'), locale)}">${translate(locale, 'common.nav.signIn')}</a>
   </div>`
 }

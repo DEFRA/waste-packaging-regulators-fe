@@ -1,5 +1,6 @@
 import { getLocale } from './get-locale.js'
 import { isSupportedLocale, normaliseLocale } from './locales.js'
+import { withForwardedPrefix } from '#server/common/helpers/proxy/forwarded-prefix.js'
 
 function pathHasLangQuery(pathOrUrl) {
   const queryIndex = pathOrUrl.indexOf('?')
@@ -51,7 +52,9 @@ export function bindLocaleUrl(locale) {
  * @param {string} path
  */
 export function redirectWithLocale(h, request, path) {
-  return h.redirect(localeUrl(path, getLocale(request)))
+  return h.redirect(
+    localeUrl(withForwardedPrefix(request, path), getLocale(request))
+  )
 }
 
 /**
