@@ -23,6 +23,7 @@ export class WasteObligationsApiService extends BaseApiService {
       status,
       registrationType,
       obligationYear,
+      country,
       search,
       page,
       pageSize,
@@ -40,6 +41,9 @@ export class WasteObligationsApiService extends BaseApiService {
     }
     if (obligationYear != null) {
       params.set('obligationYear', String(obligationYear))
+    }
+    if (country != null) {
+      params.set('country', country)
     }
     if (search) {
       params.set('search', search)

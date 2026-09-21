@@ -76,6 +76,27 @@ describe('WasteObligationsApiService', () => {
     )
   })
 
+  test('listComplianceDeclarations includes country when provided', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(
+        mockOkResponse({ complianceDeclarations: [], total: 0 })
+      )
+    const service = new WasteObligationsApiService({
+      baseUrl: 'http://localhost:8080',
+      clientId: 'Developer',
+      clientSecret: 'developer-pwd',
+      fetchImpl
+    })
+
+    await service.listComplianceDeclarations({ country: 'GB-ENG' })
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:8080/compliance-declarations?country=GB-ENG',
+      expect.any(Object)
+    )
+  })
+
   test('listComplianceDeclarations omits undefined filter params', async () => {
     const fetchImpl = vi
       .fn()
