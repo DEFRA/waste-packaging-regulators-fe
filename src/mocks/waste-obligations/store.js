@@ -4,6 +4,7 @@
 
 import {
   OBLIGATION_YEAR,
+  MOCK_BUSINESS_COUNTRY,
   MOCK_STATUS_SUBMITTED,
   MOCK_STATUS_ACCEPTED
 } from '#mocks/identities.js'
@@ -69,6 +70,7 @@ export function createObligationsStore(records = []) {
   // same way the real backend the frontend talks to does.
   function queryDeclarations(searchParams) {
     const registrationType = searchParams.get('registrationType')
+    const country = searchParams.get('country')
     const matchesStatus = statusMatcherForQuery(searchParams.get('status'))
     const search = searchParams.get('search')?.trim().toLowerCase()
 
@@ -78,6 +80,13 @@ export function createObligationsStore(records = []) {
         (registrationType == null ||
           record.registrationType === registrationType)
     )
+
+    if (country != null) {
+      matched = matched.filter(
+        (record) =>
+          (record.businessCountry ?? MOCK_BUSINESS_COUNTRY) === country
+      )
+    }
 
     if (search) {
       matched = matched.filter((record) =>
