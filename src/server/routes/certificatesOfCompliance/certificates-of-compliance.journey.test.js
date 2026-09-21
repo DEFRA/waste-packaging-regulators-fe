@@ -83,7 +83,9 @@ describe('certificates of compliance — journey', () => {
       const response = await app.server.inject({ method: 'GET', url: listUrl })
 
       expect(response.statusCode).toBe(302)
-      expect(response.headers.location).toBe('/signin-oidc')
+      expect(response.headers.location).toBe(
+        '/certificates-of-compliance/signin-oidc'
+      )
     })
 
     it('redirects the detail page to /signin-oidc and stores returnTo', async () => {

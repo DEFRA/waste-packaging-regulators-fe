@@ -40,7 +40,7 @@ describe('#buildRegulatorContext', () => {
     const request = mockRequest({ yar: { id: null } })
     const result = buildRegulatorContext(request, 'en')
     expect(result).toContain('Sign in')
-    expect(result).toContain('href="/auth/login"')
+    expect(result).toContain('href="/signin-oidc"')
   })
 
   test('Should show first and last name and sign out link when available in accountDetails', () => {
@@ -54,7 +54,7 @@ describe('#buildRegulatorContext', () => {
     const result = buildRegulatorContext(request, 'en')
     expect(result).toContain('John Doe &nbsp;|&nbsp;')
     expect(result).toContain('Sign out')
-    expect(result).toContain('href="/auth/logout"')
+    expect(result).toContain('href="/logout"')
   })
 
   test('Should fallback to user.name if firstName/lastName not in accountDetails', () => {
