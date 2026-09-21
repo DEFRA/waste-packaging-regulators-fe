@@ -1,5 +1,7 @@
+import { withForwardedPrefix } from '#server/common/helpers/proxy/forwarded-prefix.js'
+
 export function buildLanguageSwitcherUrls(request) {
-  const path = request?.path ?? '/'
+  const path = withForwardedPrefix(request, request?.path ?? '/')
   const search = new URLSearchParams(
     String(request?.url?.search ?? '').replace(/^\?/, '')
   )
