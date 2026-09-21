@@ -227,6 +227,44 @@ describe('resolvePostLogoutAbsoluteUri', () => {
     })
   })
 
+  describe('when X-Forwarded-Prefix is set', () => {
+    it('includes the forwarded prefix in the URI when no redirectUri is configured', () => {
+      const request = {
+        headers: {
+          'x-forwarded-proto': 'https',
+          'x-forwarded-host': 'proxy.example.com',
+          'x-forwarded-prefix': '/packaging-waste-regulators',
+          host: 'localhost:3000'
+        },
+        server: { info: { protocol: 'http' } },
+        info: { host: 'localhost:3000' }
+      }
+
+      expect(resolvePostLogoutAbsoluteUri(request, '/signed-out', {})).toBe(
+        'https://proxy.example.com/packaging-waste-regulators/signed-out'
+      )
+    })
+
+    it('includes the forwarded prefix when redirectUri is an absolute URL', () => {
+      const request = {
+        headers: {
+          'x-forwarded-prefix': '/packaging-waste-regulators',
+          host: 'proxy.example.com'
+        },
+        server: { info: { protocol: 'http' } },
+        info: { host: 'proxy.example.com' }
+      }
+      const azureConfig = {
+        redirectUri:
+          'https://proxy.example.com/packaging-waste-regulators/auth/callback'
+      }
+
+      expect(
+        resolvePostLogoutAbsoluteUri(request, '/signed-out', azureConfig)
+      ).toBe('https://proxy.example.com/packaging-waste-regulators/signed-out')
+    })
+  })
+
   describe('defaults', () => {
     it('defaults to /signed-out when pathOrUrl is empty', () => {
       const request = makeRequest({ protocol: 'http', host: 'localhost:3000' })

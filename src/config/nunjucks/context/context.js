@@ -9,7 +9,7 @@ import {
   buildRegulatorContext
 } from './build-navigation.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
-import { bindLocaleUrl } from '#server/common/helpers/i18n/locale-url.js'
+import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
 import {
@@ -55,7 +55,8 @@ export function context(request) {
     assetPath: `${externalAssetPath}/assets`,
     routePrefix: getForwardedPrefix(request),
     locale,
-    localeUrl: bindLocaleUrl(locale),
+    localeUrl: (pathOrUrl) =>
+      localeUrl(withForwardedPrefix(request, pathOrUrl), locale),
     serviceName: translate(locale, 'common.serviceName'),
     serviceUrl: withForwardedPrefix(request, '/'),
     helpDeskEmail: config.get('helpDeskEmail'),

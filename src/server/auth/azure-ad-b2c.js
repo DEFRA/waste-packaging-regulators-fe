@@ -124,14 +124,12 @@ export function resolvePostLogoutAbsoluteUri(request, pathOrUrl, azureConfig) {
     return upgradeToHttpsIfNeeded(request, new URL(normalized.value))
   }
 
+  const path = withForwardedPrefix(request, normalized.value)
+
   const redirectUri = azureConfig?.redirectUri || ''
   if (/^https?:\/\//i.test(redirectUri)) {
-    return resolveAbsoluteUrlFromConfiguredRedirect(
-      request,
-      normalized.value,
-      redirectUri
-    )
+    return resolveAbsoluteUrlFromConfiguredRedirect(request, path, redirectUri)
   }
 
-  return resolveAbsoluteUrlFromRequestHost(request, normalized.value)
+  return resolveAbsoluteUrlFromRequestHost(request, path)
 }
