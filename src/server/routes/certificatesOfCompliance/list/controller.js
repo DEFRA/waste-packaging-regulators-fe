@@ -15,6 +15,8 @@ import {
 } from '#server/common/helpers/proxy/forwarded-prefix.js'
 import { SEARCH_TERM_MAX_LENGTH } from '../common/constants.js'
 import { cocPageI18n } from '../common/locale-strings.js'
+import { getSessionUser } from '#server/common/helpers/get-session-user.js'
+import { getRegulatorCountryCode } from '#server/common/helpers/regulator-country-code.js'
 import { getCertificatesOfComplianceViewModel } from './list.service.js'
 import { getComplianceSearchResults } from './search.service.js'
 
@@ -165,6 +167,14 @@ export const certificatesOfComplianceController = {
     const { searchTerm, errors } = parseSearchTerm(request.query.search, locale)
     const traceId = request.headers[config.get('tracing.header')]
     const routePrefix = getForwardedPrefix(request)
+    const sessionUser = getSessionUser(request)
+    const country = getRegulatorCountryCode(sessionUser)
+
+    if (country == null && sessionUser != null) {
+      request.logger.warn(
+        'Session user has no mapped nationId; obligations list will not be filtered by country'
+      )
+    }
 
     const [viewModel, search] = await Promise.all([
       getCertificatesOfComplianceViewModel(
@@ -173,9 +183,11 @@ export const certificatesOfComplianceController = {
         parsePageNumber(page),
         sortColumn,
         sortDirection,
-        { traceId, locale, routePrefix }
+        { traceId, locale, routePrefix, country }
       ),
-      searchTerm ? getComplianceSearchResults(type, searchTerm, traceId) : null
+      searchTerm
+        ? getComplianceSearchResults(type, searchTerm, traceId, country)
+        : null
     ]).catch((error) => {
       handleApiError(request, error)
       throw error

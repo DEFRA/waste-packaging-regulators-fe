@@ -2,6 +2,8 @@ import { config } from '#config/config.js'
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import { persistAuthLocale } from '#server/common/helpers/i18n/locale-url.js'
+import { getSessionUser } from '#server/common/helpers/get-session-user.js'
+import { getRegulatorCountryCode } from '#server/common/helpers/regulator-country-code.js'
 import { getComplianceDownload } from './download.service.js'
 import Boom from '@hapi/boom'
 
@@ -38,11 +40,20 @@ export const certificatesOfComplianceDownloadController = {
     }
 
     const traceId = request.headers[config.get('tracing.header')]
+    const sessionUser = getSessionUser(request)
+    const country = getRegulatorCountryCode(sessionUser)
+
+    if (country == null && sessionUser != null) {
+      request.logger.warn(
+        'Session user has no mapped nationId; obligations export will not be filtered by country'
+      )
+    }
 
     const { filename, csv } = await getComplianceDownload(
       organisationType,
       submissionStatus,
-      traceId
+      traceId,
+      country
     ).catch((error) => {
       handleApiError(request, error)
       throw error
