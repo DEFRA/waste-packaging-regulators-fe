@@ -73,6 +73,18 @@ describe('#certificatesOfComplianceAcceptController', () => {
       )
     })
 
+    it('preserves type and tab query parameters in the backlink', async () => {
+      const cookie = await app.signIn()
+      const response = await app.get(
+        `${acceptUrlFor(DP_ITEM)}?type=directProducer&tab=pending`,
+        cookie
+      )
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.payload).toContain(
+        `${detailUrlFor(DP_ITEM)}?type=directProducer&amp;tab=pending`
+      )
+    })
+
     it('redirects to the detail page when the declaration is no longer pending', async () => {
       const cookie = await app.signIn()
       const response = await app.get(acceptUrlFor(ACCEPTED_ITEM), cookie)
@@ -142,6 +154,19 @@ describe('#certificatesOfComplianceAcceptController', () => {
       expect(detailResponse.payload).not.toContain('govuk-notification-banner')
     })
 
+    it('redirects to the detail page preserving type and tab query parameters when "no" is chosen', async () => {
+      const cookie = await app.signIn()
+      const noResponse = await app.post(
+        `${acceptUrlFor(DP_ITEM)}?type=directProducer&tab=pending`,
+        'confirm-accept=no',
+        cookie
+      )
+      expect(noResponse.statusCode).toBe(302)
+      expect(noResponse.headers.location).toBe(
+        `${detailUrlFor(DP_ITEM)}?type=directProducer&tab=pending`
+      )
+    })
+
     it('redirects to the detail page when "yes" is chosen and shows the accepted banner', async () => {
       const cookie = await app.signIn()
       const yesResponse = await app.post(
@@ -159,6 +184,19 @@ describe('#certificatesOfComplianceAcceptController', () => {
       expect(detailResponse.statusCode).toBe(statusCodes.ok)
       expect(detailResponse.payload).toContain('Certificate accepted')
       expect(detailResponse.payload).toContain('Certificate has been accepted.')
+    })
+
+    it('redirects to the detail page preserving type and tab query parameters when "yes" is chosen', async () => {
+      const cookie = await app.signIn()
+      const yesResponse = await app.post(
+        `${acceptUrlFor(DP_ITEM)}?type=complianceScheme&tab=notSubmitted`,
+        'confirm-accept=yes',
+        cookie
+      )
+      expect(yesResponse.statusCode).toBe(302)
+      expect(yesResponse.headers.location).toBe(
+        `${detailUrlFor(DP_ITEM)}?type=complianceScheme&tab=notSubmitted`
+      )
     })
 
     it('shows "Statement accepted" banner copy for a Compliance Scheme after "yes"', async () => {

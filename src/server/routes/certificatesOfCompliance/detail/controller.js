@@ -26,10 +26,9 @@ export const certificatesOfComplianceDetailController = {
 
     const { organisationId, id } = request.params
     const traceId = request.headers[config.get('tracing.header')]
+    const { type, tab, obligationYear: queryObligationYear } = request.query
     const obligationYear =
-      id == null
-        ? parseObligationYearQuery(request.query.obligationYear)
-        : undefined
+      id == null ? parseObligationYearQuery(queryObligationYear) : undefined
     const locale = getLocale(request)
     const declarationKey = getDeclarationSessionKey(organisationId, id)
     const bannerFlags = readAndClearCertificateActionBannerFlags(
@@ -45,7 +44,9 @@ export const certificatesOfComplianceDetailController = {
         bannerFlags,
         obligationYear,
         locale,
-        routePrefix: getForwardedPrefix(request)
+        routePrefix: getForwardedPrefix(request),
+        type,
+        tab
       }
     ).catch((error) => {
       handleApiError(request, error)

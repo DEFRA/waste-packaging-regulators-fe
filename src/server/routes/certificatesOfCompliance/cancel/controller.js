@@ -19,22 +19,63 @@ import {
   isValidCancelReason
 } from './reasons.js'
 import { buildCancellationEmailPreview } from './cancellation-email-preview.service.js'
+import { getBaseQueryString } from '../common/query.js'
 
-function detailPath(request, organisationId, id, documentType, locale) {
-  return localeUrl(
-    `${getForwardedPrefix(request)}/${organisationId}/${documentType}/${id}`,
+function buildPath(
+  request,
+  organisationId,
+  id,
+  documentType,
+  locale,
+  suffix = '',
+  params = {}
+) {
+  const basePath = localeUrl(
+    `${getForwardedPrefix(request)}/${organisationId}/${documentType}/${id}${suffix}`,
     locale
   )
+  const qs = new URLSearchParams()
+  if (request.query.type) {
+    qs.set('type', request.query.type)
+  }
+  if (request.query.tab) {
+    qs.set('tab', request.query.tab)
+  }
+  for (const [k, v] of Object.entries(params)) {
+    if (v) {
+      qs.set(k, v)
+    }
+  }
+  const queryStr = qs.toString()
+  return queryStr ? `${basePath}?${queryStr}` : basePath
+}
+
+function detailPath(request, organisationId, id, documentType, locale) {
+  return buildPath(request, organisationId, id, documentType, locale)
 }
 
 function reasonPath(request, organisationId, id, documentType, reason, locale) {
-  const base = `${detailPath(request, organisationId, id, documentType, locale)}/cancel/reason`
-  return reason ? `${base}?reason=${encodeURIComponent(reason)}` : base
+  return buildPath(
+    request,
+    organisationId,
+    id,
+    documentType,
+    locale,
+    '/cancel/reason',
+    { reason }
+  )
 }
 
 function checkPath(request, organisationId, id, documentType, reason, locale) {
-  const base = `${detailPath(request, organisationId, id, documentType, locale)}/cancel/check`
-  return reason ? `${base}?reason=${encodeURIComponent(reason)}` : base
+  return buildPath(
+    request,
+    organisationId,
+    id,
+    documentType,
+    locale,
+    '/cancel/check',
+    { reason }
+  )
 }
 
 function emailPreviewPath(
@@ -45,8 +86,15 @@ function emailPreviewPath(
   reason,
   locale
 ) {
-  const base = `${detailPath(request, organisationId, id, documentType, locale)}/cancel/email-preview`
-  return reason ? `${base}?reason=${encodeURIComponent(reason)}` : base
+  return buildPath(
+    request,
+    organisationId,
+    id,
+    documentType,
+    locale,
+    '/cancel/email-preview',
+    { reason }
+  )
 }
 
 function resolveDocTypeNoun(registrationType, locale) {
@@ -149,6 +197,9 @@ async function renderReasonForm(
       selected,
       resolvedLocale
     ),
+    queryString: getBaseQueryString(request),
+    type: request.query.type,
+    tab: request.query.tab,
     errors,
     locale: resolvedLocale,
     i18n
@@ -269,7 +320,16 @@ async function guardCancelWithReason(request, h) {
     }
   }
 
-  return { locale, organisationId, id, documentType, reason }
+  return {
+    locale,
+    organisationId,
+    id,
+    documentType,
+    reason,
+    type: request.query.type,
+    tab: request.query.tab,
+    queryString: getBaseQueryString(request)
+  }
 }
 
 export const certificatesOfComplianceCancelCheckGetController = {
@@ -279,7 +339,16 @@ export const certificatesOfComplianceCancelCheckGetController = {
       return ctx.earlyResponse
     }
 
-    const { locale, organisationId, id, documentType, reason } = ctx
+    const {
+      locale,
+      organisationId,
+      id,
+      documentType,
+      reason,
+      type,
+      tab,
+      queryString
+    } = ctx
 
     const { companyName, registrationType } = await fetchCancelViewModel(
       organisationId,
@@ -324,6 +393,9 @@ export const certificatesOfComplianceCancelCheckGetController = {
         reason,
         locale
       ),
+      queryString,
+      type,
+      tab,
       locale,
       i18n
     })

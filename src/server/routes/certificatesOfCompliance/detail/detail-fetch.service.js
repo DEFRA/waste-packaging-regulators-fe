@@ -164,7 +164,9 @@ async function getSubmittedDeclarationDetail({
   obligationYear,
   traceId,
   locale = 'en',
-  routePrefix = ''
+  routePrefix = '',
+  type,
+  tab
 }) {
   const declaration = await obligationsApi.getComplianceDeclarationOrNull(
     { id, organisationId },
@@ -188,7 +190,9 @@ async function getSubmittedDeclarationDetail({
       submitterPhoneNumber,
       wasteOrganisation,
       locale,
-      routePrefix
+      routePrefix,
+      type,
+      tab
     })
   }
 
@@ -209,7 +213,7 @@ export async function getDeclarationDetail(
   accountApi,
   organisationId,
   id,
-  { traceId, obligationYear, locale = 'en', routePrefix = '' } = {}
+  { traceId, obligationYear, locale = 'en', routePrefix = '', type, tab } = {}
 ) {
   if (!id) {
     return getNotSubmittedDeclarationDetail({
@@ -232,6 +236,8 @@ export async function getDeclarationDetail(
     obligationYear,
     traceId,
     locale,
-    routePrefix
+    routePrefix,
+    type,
+    tab
   })
 }

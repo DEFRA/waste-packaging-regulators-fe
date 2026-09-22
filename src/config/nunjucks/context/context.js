@@ -52,7 +52,6 @@ export function context(request) {
 
   return {
     cspNonce: request?.plugins?.blankie?.nonces?.script,
-    publicPath: externalAssetPath,
     assetPath: `${externalAssetPath}/assets`,
     routePrefix: getForwardedPrefix(request),
     locale,

@@ -25,8 +25,7 @@ export function buildCertificateDetailActionUrls(
   organisationId,
   id,
   documentType,
-  locale = 'en',
-  routePrefix = ''
+  { type, tab, locale = 'en', routePrefix = '' } = {}
 ) {
   const base = buildCertificateDetailPath(
     organisationId,
@@ -35,10 +34,20 @@ export function buildCertificateDetailActionUrls(
     locale,
     routePrefix
   )
+
+  const qs = new URLSearchParams()
+  if (type) {
+    qs.set('type', type)
+  }
+  if (tab) {
+    qs.set('tab', tab)
+  }
+  const q = qs.toString() ? `?${qs.toString()}` : ''
+
   return {
-    accept: `${base}/accept`,
-    query: `${base}/query`,
-    cancel: `${base}/cancel/reason`
+    accept: `${base}/accept${q}`,
+    query: `${base}/query${q}`,
+    cancel: `${base}/cancel/reason${q}`
   }
 }
 
@@ -47,16 +56,14 @@ export function buildCertificateDetailActions(
   organisationId,
   id,
   registrationType,
-  locale = 'en',
-  routePrefix = ''
+  { type, tab, locale = 'en', routePrefix = '' } = {}
 ) {
   const documentType = documentTypeFromRegistrationType(registrationType)
   const urls = buildCertificateDetailActionUrls(
     organisationId,
     id,
     documentType,
-    locale,
-    routePrefix
+    { type, tab, locale, routePrefix }
   )
   const labels = translateActionLabels(registrationType, locale)
   const showAccept = reviewStatus === 'Pending' || reviewStatus === 'Queried'

@@ -15,7 +15,9 @@ export async function getCertificateOfComplianceDetailViewModel(
     bannerFlags = {},
     obligationYear,
     locale = 'en',
-    routePrefix = ''
+    routePrefix = '',
+    type,
+    tab
   } = {}
 ) {
   const obligationsApi = createWasteObligationsApiService()
@@ -28,15 +30,28 @@ export async function getCertificateOfComplianceDetailViewModel(
     accountApi,
     organisationId,
     id,
-    { traceId, obligationYear, locale, routePrefix }
+    { traceId, obligationYear, locale, routePrefix, type, tab }
   )
 
   const i18n = cocPageI18n(locale, 'detail')
 
+  const backlinkQueryParams = new URLSearchParams()
+  if (type) {
+    backlinkQueryParams.append('type', type)
+  }
+  if (tab) {
+    backlinkQueryParams.append('tab', tab)
+  }
+
+  const queryString = backlinkQueryParams.toString()
+  const backlinkPath = queryString
+    ? `${routePrefix || '/'}?${queryString}`
+    : routePrefix || '/'
+
   return {
     pageTitle: detail.companyName,
     heading: detail.companyName,
-    backlink: localeUrl(routePrefix || '/', locale),
+    backlink: localeUrl(backlinkPath, locale),
     backlinkText: translate(
       locale,
       'certificatesOfCompliance.detail.backlinkText'

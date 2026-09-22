@@ -37,11 +37,11 @@
             <th scope="row" class="govuk-table__header govuk-!-width-one-quarter">
               {% if item.id == null %}
                 <a
-                  href="{{ localeUrl(routePrefix ~ '/' ~ item.organisationId ~ '?obligationYear=' ~ complianceYear) }}"
+                  href="{{ localeUrl(routePrefix ~ '/' ~ item.organisationId ~ '?obligationYear=' ~ complianceYear ~ '&type=' ~ organisationType ~ '&tab=' ~ activeTab) }}"
                   class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
               {% else %}
                 <a
-                  href="{{ localeUrl(routePrefix ~ '/' ~ item.organisationId ~ '/' ~ ('statement' if organisationType == 'compliance-schemes' else 'certificate') ~ '/' ~ item.id) }}"
+                  href="{{ localeUrl(routePrefix ~ '/' ~ item.organisationId ~ '/' ~ ('statement' if organisationType == 'compliance-schemes' else 'certificate') ~ '/' ~ item.id ~ '?type=' ~ organisationType ~ '&tab=' ~ activeTab) }}"
                   class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
               {% endif %}
             </th>

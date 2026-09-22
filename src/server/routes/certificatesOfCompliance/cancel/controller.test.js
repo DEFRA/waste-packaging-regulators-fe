@@ -169,6 +169,18 @@ describe('certificates of compliance — cancel', () => {
       expect(checked).toEqual(['obligations-changed'])
     })
 
+    it('preserves type and tab query parameters in the backlink', async () => {
+      const cookie = await app.signIn()
+      const response = await app.get(
+        `${reasonUrlFor(DP_ITEM)}?type=directProducer&tab=pending`,
+        cookie
+      )
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.payload).toContain(
+        `${detailUrlFor(DP_ITEM)}?type=directProducer&amp;tab=pending`
+      )
+    })
+
     it('redirects to the detail page when the declaration is already cancelled', async () => {
       const cookie = await app.signIn()
       const response = await app.get(reasonUrlFor(CANCELLED_ITEM), cookie)
@@ -247,6 +259,19 @@ describe('certificates of compliance — cancel', () => {
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe(
         `${checkUrlFor(DP_ITEM)}?reason=producer-request`
+      )
+    })
+
+    it('redirects to the check page preserving type and tab query parameters', async () => {
+      const cookie = await app.signIn()
+      const response = await app.post(
+        `${reasonUrlFor(DP_ITEM)}?type=directProducer&tab=pending`,
+        'cancel-reason=producer-request',
+        cookie
+      )
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe(
+        `${checkUrlFor(DP_ITEM)}?type=directProducer&tab=pending&reason=producer-request`
       )
     })
   })
@@ -420,6 +445,22 @@ describe('certificates of compliance — cancel', () => {
       expect(detailResponse.payload).toContain('Certificate cancelled')
       expect(detailResponse.payload).toContain(
         'app-notification-banner--cancelled'
+      )
+    })
+
+    it('redirects to the detail page preserving type and tab query parameters', async () => {
+      const cookie = await app.signIn()
+      // Use the raw app.post instead of the cancel() helper which does reason -> action sequentially
+      // We only care about the action endpoint preserving the url here
+      const cancelResponse = await app.post(
+        `${actionUrlFor(DP_ITEM)}?type=directProducer&tab=pending`,
+        'cancel-reason=producer-request',
+        cookie
+      )
+
+      expect(cancelResponse.statusCode).toBe(302)
+      expect(cancelResponse.headers.location).toBe(
+        `${detailUrlFor(DP_ITEM)}?type=directProducer&tab=pending`
       )
     })
   })

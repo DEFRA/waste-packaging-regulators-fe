@@ -107,8 +107,7 @@ describe('certificate detail action helpers', () => {
         'org-1',
         'decl-1',
         'DirectProducer',
-        'en',
-        '/certificates-of-compliance'
+        { locale: 'en', routePrefix: '/certificates-of-compliance' }
       )
     ).toEqual({
       showAccept: true,

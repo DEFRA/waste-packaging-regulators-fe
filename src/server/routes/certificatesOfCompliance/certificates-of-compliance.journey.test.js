@@ -198,7 +198,7 @@ describe('certificates of compliance — journey', () => {
 
       const match = listResponse.payload.match(
         new RegExp(
-          `href="(\\/certificates-of-compliance\\/[^"]+\\/${org.declarationId})"`
+          `href="(\\/certificates-of-compliance\\/[^"]+\\/${org.declarationId}[^"]*)"`
         )
       )
       expect(match, 'Should extract detail link').not.toBeNull()
@@ -231,7 +231,7 @@ describe('certificates of compliance — journey', () => {
 
       const match = listResponse.payload.match(
         new RegExp(
-          `href="(\\/certificates-of-compliance\\/[^"]+\\/${org.declarationId})"`
+          `href="(\\/certificates-of-compliance\\/[^"]+\\/${org.declarationId}[^"]*)"`
         )
       )
       expect(match).not.toBeNull()

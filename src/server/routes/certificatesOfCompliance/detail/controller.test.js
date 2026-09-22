@@ -173,6 +173,79 @@ describe('#certificatesOfComplianceDetailController', () => {
     )
   })
 
+  describe('Backlink', () => {
+    it.each([
+      { type: 'directProducer', tab: 'pending' },
+      { type: 'directProducer', tab: 'accepted' },
+      { type: 'directProducer', tab: 'notSubmitted' },
+      { type: 'complianceScheme', tab: 'pending' },
+      { type: 'complianceScheme', tab: 'accepted' },
+      { type: 'complianceScheme', tab: 'notSubmitted' }
+    ])(
+      'should preserve type=$type and tab=$tab in the backlink',
+      async ({ type, tab }) => {
+        const url = `${pendingDp.detailPath}?type=${type}&tab=${tab}`
+        const response = await app.get(url)
+
+        const expectedBacklink = `/certificates-of-compliance?type=${type}&amp;tab=${tab}`
+
+        expect(response.payload).toContain(`href="${expectedBacklink}"`)
+      }
+    )
+
+    it('should not append query parameters if they are not provided', async () => {
+      const response = await app.get(pendingDp.detailPath)
+
+      expect(response.payload).toContain(`href="/certificates-of-compliance"`)
+    })
+  })
+
+  describe('parseObligationYearQuery', () => {
+    it('passes obligationYear to the service when id is missing and query is present', async () => {
+      const spy = vi.spyOn(
+        detailService,
+        'getCertificateOfComplianceDetailViewModel'
+      )
+      await app.get(notSubmitted.detailPath)
+      expect(spy).toHaveBeenCalledWith(
+        expect.any(String),
+        undefined, // id
+        expect.objectContaining({ obligationYear: 2026 })
+      )
+      spy.mockRestore()
+    })
+
+    it('passes undefined obligationYear when id is missing but query is empty', async () => {
+      const spy = vi.spyOn(
+        detailService,
+        'getCertificateOfComplianceDetailViewModel'
+      )
+      const path = notSubmitted.detailPath.split('?')[0]
+      await app.get(`${path}?obligationYear=`)
+      expect(spy).toHaveBeenCalledWith(
+        expect.any(String),
+        undefined, // id
+        expect.objectContaining({ obligationYear: undefined })
+      )
+      spy.mockRestore()
+    })
+
+    it('passes undefined obligationYear when id is missing but query is invalid', async () => {
+      const spy = vi.spyOn(
+        detailService,
+        'getCertificateOfComplianceDetailViewModel'
+      )
+      const path = notSubmitted.detailPath.split('?')[0]
+      await app.get(`${path}?obligationYear=abc`)
+      expect(spy).toHaveBeenCalledWith(
+        expect.any(String),
+        undefined, // id
+        expect.objectContaining({ obligationYear: undefined })
+      )
+      spy.mockRestore()
+    })
+  })
+
   it.each([
     {
       description: '"Back to all submissions" as the backlink text',
