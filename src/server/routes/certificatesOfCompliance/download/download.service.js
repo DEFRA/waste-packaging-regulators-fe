@@ -19,7 +19,8 @@ async function getAllItemsFor({
   organisationType,
   submissionStatus,
   obligationsApi,
-  traceId
+  traceId,
+  country
 }) {
   const registrationType = registrationTypeByOrganisationType[organisationType]
 
@@ -31,6 +32,7 @@ async function getAllItemsFor({
       {
         obligationYear: COMPLIANCE_YEAR,
         registrationType,
+        country,
         sort: UNSUBMITTED_DEFAULT_SORT
       },
       traceId
@@ -45,7 +47,7 @@ async function getAllItemsFor({
 
   const declarations = await fetchAllDeclarations(
     obligationsApi,
-    { status, registrationType },
+    { status, registrationType, country },
     traceId
   )
   return declarations.map(mapDeclarationToItem)
@@ -55,6 +57,7 @@ export async function getComplianceDownload(
   organisationType,
   submissionStatus,
   traceId,
+  country = null,
   now = new Date()
 ) {
   const obligationsApi = createWasteObligationsApiService()
@@ -63,7 +66,8 @@ export async function getComplianceDownload(
     organisationType,
     submissionStatus,
     obligationsApi,
-    traceId
+    traceId,
+    country
   })
 
   return buildComplianceCsv({

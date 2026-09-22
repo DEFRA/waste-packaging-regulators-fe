@@ -1,7 +1,9 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import * as getSessionUserModule from '#server/common/helpers/get-session-user.js'
 import { load } from 'cheerio'
 import { vi } from 'vitest'
 import * as listService from './list.service.js'
+import * as searchService from './search.service.js'
 import { getDefaultSortColumn } from './controller.js'
 import { setupRegulatorsApp } from '#test-helpers/msw/harness.js'
 import {
@@ -988,6 +990,114 @@ describe('#certificatesOfComplianceController', () => {
 
       expect(response.result).toContain('sort=DateSubmitted[asc]')
       expect(response.result).toContain('aria-sort="descending"')
+    })
+  })
+
+  describe('Regulator country filter', () => {
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    test('passes session regulator country to the list and search services', async () => {
+      vi.spyOn(
+        listService,
+        'getCertificatesOfComplianceViewModel'
+      ).mockResolvedValue({
+        heading: 'View certificates and statements of compliance',
+        backlink: './',
+        complianceYear: '2026',
+        totalPending: 0,
+        totalAccepted: 0,
+        totalNotSubmitted: 0,
+        organisationType: 'direct-producers',
+        activeTab: 'pending',
+        items: [],
+        emptyTabMessage: emptyTabMessages.pending,
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          baseUrl:
+            '/certificates-of-compliance?type=direct-producers&tab=pending'
+        },
+        sort: {
+          column: 'DateSubmitted',
+          direction: 'desc',
+          baseUrl:
+            '/certificates-of-compliance?type=direct-producers&tab=pending&page=1'
+        }
+      })
+      const searchSpy = vi
+        .spyOn(searchService, 'getComplianceSearchResults')
+        .mockResolvedValue([])
+
+      await inject(
+        '/certificates-of-compliance?type=direct-producers&tab=pending&search=Acme'
+      )
+
+      expect(
+        listService.getCertificatesOfComplianceViewModel
+      ).toHaveBeenCalledWith(
+        'direct-producers',
+        'pending',
+        1,
+        'DateSubmitted',
+        'desc',
+        expect.objectContaining({ country: 'GB-ENG' })
+      )
+      expect(searchSpy).toHaveBeenCalledWith(
+        'direct-producers',
+        'Acme',
+        undefined,
+        'GB-ENG'
+      )
+    })
+
+    test('passes null country when session user has unmapped nationId', async () => {
+      vi.spyOn(getSessionUserModule, 'getSessionUser').mockReturnValue({
+        nationId: 99
+      })
+      vi.spyOn(
+        listService,
+        'getCertificatesOfComplianceViewModel'
+      ).mockResolvedValue({
+        heading: 'View certificates and statements of compliance',
+        backlink: './',
+        complianceYear: '2026',
+        totalPending: 0,
+        totalAccepted: 0,
+        totalNotSubmitted: 0,
+        organisationType: 'direct-producers',
+        activeTab: 'pending',
+        items: [],
+        emptyTabMessage: emptyTabMessages.pending,
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          baseUrl:
+            '/certificates-of-compliance?type=direct-producers&tab=pending'
+        },
+        sort: {
+          column: 'DateSubmitted',
+          direction: 'desc',
+          baseUrl:
+            '/certificates-of-compliance?type=direct-producers&tab=pending&page=1'
+        }
+      })
+
+      await inject(
+        '/certificates-of-compliance?type=direct-producers&tab=pending'
+      )
+
+      expect(
+        listService.getCertificatesOfComplianceViewModel
+      ).toHaveBeenCalledWith(
+        'direct-producers',
+        'pending',
+        1,
+        'DateSubmitted',
+        'desc',
+        expect.objectContaining({ country: null })
+      )
     })
   })
 

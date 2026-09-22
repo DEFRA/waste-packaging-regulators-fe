@@ -244,6 +244,28 @@ describe('getCertificatesOfComplianceViewModel', () => {
           mockObligationsApi.listUnsubmittedComplianceDeclarations
         ).toHaveBeenCalledWith(expect.any(Object), 'trace-xyz')
       })
+
+      test('forwards regulator country to tab count and list API calls', async () => {
+        stubCounts({ pending: 0, accepted: 0, notSubmitted: 0 })
+
+        await getCertificatesOfComplianceViewModel(
+          'direct-producers',
+          'pending',
+          1,
+          undefined,
+          undefined,
+          { country: 'GB-ENG' }
+        )
+
+        for (const [params] of mockObligationsApi.listComplianceDeclarations
+          .mock.calls) {
+          expect(params.country).toBe('GB-ENG')
+        }
+        for (const [params] of mockObligationsApi
+          .listUnsubmittedComplianceDeclarations.mock.calls) {
+          expect(params.country).toBe('GB-ENG')
+        }
+      })
     })
 
     describe('getComplianceList — pending tab', () => {

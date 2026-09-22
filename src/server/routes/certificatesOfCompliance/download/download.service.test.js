@@ -93,6 +93,7 @@ describe('#getComplianceDownload (real API path)', () => {
       'direct-producers',
       'pending',
       'trace-1',
+      null,
       NOW
     )
 
@@ -106,6 +107,46 @@ describe('#getComplianceDownload (real API path)', () => {
     expect(rows[0]['Organisation name']).toBe('Acme')
   })
 
+  test('passes regulator country filter to list declarations', async () => {
+    obligationsApi.listComplianceDeclarations.mockResolvedValue({
+      total: 0,
+      complianceDeclarations: []
+    })
+
+    await getComplianceDownload(
+      'direct-producers',
+      'pending',
+      'trace-1',
+      'GB-WLS'
+    )
+
+    expect(obligationsApi.listComplianceDeclarations).toHaveBeenCalledWith(
+      expect.objectContaining({ country: 'GB-WLS' }),
+      'trace-1'
+    )
+  })
+
+  test('passes regulator country filter to unsubmitted export', async () => {
+    obligationsApi.listUnsubmittedComplianceDeclarations.mockResolvedValue({
+      total: 0,
+      unsubmittedOrganisations: []
+    })
+
+    await getComplianceDownload(
+      'direct-producers',
+      'not-submitted',
+      'trace-1',
+      'GB-NIR'
+    )
+
+    expect(
+      obligationsApi.listUnsubmittedComplianceDeclarations
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({ country: 'GB-NIR' }),
+      'trace-1'
+    )
+  })
+
   test('produces header-only output for an empty list without calling the account API', async () => {
     obligationsApi.listComplianceDeclarations.mockResolvedValue({
       total: 0,
@@ -116,6 +157,7 @@ describe('#getComplianceDownload (real API path)', () => {
       'direct-producers',
       'accepted',
       'trace-1',
+      null,
       NOW
     )
 
@@ -150,6 +192,7 @@ describe('#getComplianceDownload (real API path)', () => {
       'direct-producers',
       'not-submitted',
       'trace-1',
+      null,
       NOW
     )
 
@@ -183,6 +226,7 @@ describe('#getComplianceDownload (real API path)', () => {
       'direct-producers',
       'not-submitted',
       'trace-1',
+      null,
       NOW
     )
 
@@ -209,6 +253,7 @@ describe('#getComplianceDownload (real API path)', () => {
       'direct-producers',
       'not-submitted',
       'trace-1',
+      null,
       NOW
     )
 
@@ -237,6 +282,7 @@ describe('#getComplianceDownload (real API path)', () => {
       'compliance-schemes',
       'not-submitted',
       'trace-1',
+      null,
       NOW
     )
 
@@ -253,6 +299,7 @@ describe('#getComplianceDownload (real API path)', () => {
       'direct-producers',
       'nonsense',
       'trace-1',
+      null,
       NOW
     )
 
@@ -289,6 +336,7 @@ describe('#getComplianceDownload (real API path)', () => {
         'direct-producers',
         'not-submitted',
         'trace-1',
+        null,
         NOW
       )
 
@@ -311,6 +359,7 @@ describe('#getComplianceDownload (real API path)', () => {
         'direct-producers',
         'not-submitted',
         'trace-1',
+        null,
         NOW
       )
 
@@ -344,6 +393,7 @@ describe('#getComplianceDownload (real API path)', () => {
         'direct-producers',
         'not-submitted',
         'trace-1',
+        null,
         NOW
       )
 

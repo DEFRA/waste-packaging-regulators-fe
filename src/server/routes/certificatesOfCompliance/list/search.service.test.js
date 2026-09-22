@@ -76,12 +76,32 @@ describe('#getComplianceSearchResults', () => {
           obligationYear: 2026,
           status: 'Submitted,Accepted,Cancelled',
           registrationType: 'ComplianceScheme',
+          country: null,
           search: 'zeina',
           sortColumn: 'DateSubmitted',
           sortDirection: 'desc',
           page: 1,
           pageSize: 100
         },
+        'trace-1'
+      )
+    })
+
+    test('Should pass regulator country filter when provided', async () => {
+      listComplianceDeclarations.mockResolvedValue({
+        complianceDeclarations: [],
+        total: 0
+      })
+
+      await getComplianceSearchResults(
+        'direct-producers',
+        'acme',
+        'trace-1',
+        'GB-SCT'
+      )
+
+      expect(listComplianceDeclarations).toHaveBeenCalledWith(
+        expect.objectContaining({ country: 'GB-SCT' }),
         'trace-1'
       )
     })

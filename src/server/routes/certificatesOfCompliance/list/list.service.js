@@ -150,7 +150,12 @@ export async function fetchAllUnsubmittedOrganisations(api, params, traceId) {
   ]
 }
 
-async function getComplianceSummary(obligationsApi, organisationType, traceId) {
+async function getComplianceSummary(
+  obligationsApi,
+  organisationType,
+  traceId,
+  country
+) {
   const registrationType = registrationTypeByOrganisationType[organisationType]
 
   // Three symmetrical count probes. The not-submitted count used to mean
@@ -163,6 +168,7 @@ async function getComplianceSummary(obligationsApi, organisationType, traceId) {
           obligationYear: COMPLIANCE_YEAR,
           status: 'Submitted',
           registrationType,
+          country,
           pageSize: 1
         },
         traceId
@@ -172,6 +178,7 @@ async function getComplianceSummary(obligationsApi, organisationType, traceId) {
           obligationYear: COMPLIANCE_YEAR,
           status: 'Accepted',
           registrationType,
+          country,
           pageSize: 1
         },
         traceId
@@ -180,6 +187,7 @@ async function getComplianceSummary(obligationsApi, organisationType, traceId) {
         {
           obligationYear: COMPLIANCE_YEAR,
           registrationType,
+          country,
           pageSize: 1
         },
         traceId
@@ -202,12 +210,14 @@ async function getNotSubmittedComplianceList({
   sortColumn,
   sortDirection,
   page,
-  traceId
+  traceId,
+  country
 }) {
   const data = await obligationsApi.listUnsubmittedComplianceDeclarations(
     {
       obligationYear: COMPLIANCE_YEAR,
       registrationType,
+      country,
       sort: resolveUnsubmittedSort(sortColumn, sortDirection),
       page,
       pageSize: PAGE_SIZE
@@ -229,7 +239,8 @@ async function getComplianceList({
   sortColumn,
   sortDirection,
   page,
-  traceId
+  traceId,
+  country
 }) {
   const registrationType = registrationTypeByOrganisationType[organisationType]
 
@@ -240,7 +251,8 @@ async function getComplianceList({
       sortColumn,
       sortDirection,
       page,
-      traceId
+      traceId,
+      country
     })
   }
 
@@ -258,6 +270,7 @@ async function getComplianceList({
       obligationYear: COMPLIANCE_YEAR,
       status,
       registrationType,
+      country,
       page,
       pageSize: PAGE_SIZE,
       sortColumn,
@@ -279,13 +292,18 @@ export async function getCertificatesOfComplianceViewModel(
   currentPage,
   sortColumn,
   sortDirection,
-  { traceId, locale = 'en', routePrefix = '' } = {}
+  { traceId, locale = 'en', routePrefix = '', country = null } = {}
 ) {
   const apiWasteObligation = createWasteObligationsApiService()
   const baseUrl = `${routePrefix || '/'}?type=${organisationType}&tab=${tab}`
 
   const [summary, list] = await Promise.all([
-    getComplianceSummary(apiWasteObligation, organisationType, traceId),
+    getComplianceSummary(
+      apiWasteObligation,
+      organisationType,
+      traceId,
+      country
+    ),
     getComplianceList({
       obligationsApi: apiWasteObligation,
       organisationType,
@@ -293,7 +311,8 @@ export async function getCertificatesOfComplianceViewModel(
       sortColumn,
       sortDirection,
       page: currentPage,
-      traceId
+      traceId,
+      country
     })
   ])
 

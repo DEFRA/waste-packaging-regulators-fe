@@ -23,7 +23,8 @@ function mapDeclarationToSearchItem(declaration) {
 export async function getComplianceSearchResults(
   organisationType,
   searchTerm,
-  traceId
+  traceId,
+  country = null
 ) {
   const obligationsApi = createWasteObligationsApiService()
   const registrationType = registrationTypeByOrganisationType[organisationType]
@@ -36,6 +37,7 @@ export async function getComplianceSearchResults(
       obligationYear: COMPLIANCE_YEAR,
       status: SEARCH_STATUSES,
       registrationType,
+      country,
       search: searchTerm,
       sortColumn: 'DateSubmitted',
       sortDirection: 'desc',
