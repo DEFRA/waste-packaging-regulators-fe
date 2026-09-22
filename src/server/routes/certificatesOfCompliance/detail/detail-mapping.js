@@ -45,8 +45,7 @@ function resolveDeclarationActions(
   resolvedOrganisationId,
   resolvedId,
   registrationType,
-  locale = 'en',
-  routePrefix = ''
+  { type, tab, locale = 'en', routePrefix = '' } = {}
 ) {
   if (resolvedOrganisationId && resolvedId) {
     return buildCertificateDetailActions(
@@ -54,8 +53,7 @@ function resolveDeclarationActions(
       resolvedOrganisationId,
       resolvedId,
       registrationType,
-      locale,
-      routePrefix
+      { type, tab, locale, routePrefix }
     )
   }
 
@@ -160,7 +158,7 @@ function buildDeclarationViewModel(
     submittedUser,
     historyDeclarations
   },
-  { wasteOrganisation, submitterPhoneNumber, locale, routePrefix }
+  { wasteOrganisation, submitterPhoneNumber, locale, routePrefix, type, tab }
 ) {
   const {
     organisation,
@@ -204,8 +202,7 @@ function buildDeclarationViewModel(
       resolvedOrganisationId,
       resolvedId,
       organisation.registrationType,
-      locale,
-      routePrefix
+      { type, tab, locale, routePrefix }
     ),
     queryDetails: mapQueriedOutcome(data, locale),
     currentYearActions: mapCurrentYearHistory(
@@ -227,7 +224,9 @@ export function mapDeclarationToDetail(
     submitterPhoneNumber,
     wasteOrganisation,
     locale = 'en',
-    routePrefix = ''
+    routePrefix = '',
+    type,
+    tab
   } = {}
 ) {
   const ctx = resolveDeclarationContext(data, {
@@ -239,7 +238,9 @@ export function mapDeclarationToDetail(
     wasteOrganisation,
     submitterPhoneNumber,
     locale,
-    routePrefix
+    routePrefix,
+    type,
+    tab
   })
 }
 

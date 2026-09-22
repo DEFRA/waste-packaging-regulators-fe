@@ -10,6 +10,7 @@ import {
   getDeclarationSessionKey
 } from '../actions/session.service.js'
 import { canApproveComplianceDeclaration } from '../actions/status.js'
+import { getBaseQueryString } from '../common/query.js'
 import { getCertificateOfComplianceDetailViewModel } from '../detail/detail.service.js'
 import { redirectToSignIn } from '../detail/actions-controller.js'
 import { cocPageI18n, translateCoc } from '../common/locale-strings.js'
@@ -26,10 +27,19 @@ function buildErrors(locale) {
 }
 
 function detailPath(request, organisationId, id, documentType, locale) {
-  return localeUrl(
+  const base = localeUrl(
     `${getForwardedPrefix(request)}/${organisationId}/${documentType}/${id}`,
     locale
   )
+  const qs = new URLSearchParams()
+  if (request.query.type) {
+    qs.set('type', request.query.type)
+  }
+  if (request.query.tab) {
+    qs.set('tab', request.query.tab)
+  }
+  const queryStr = qs.toString()
+  return queryStr ? `${base}?${queryStr}` : base
 }
 
 function getTraceIdFromRequest(request) {
@@ -58,13 +68,22 @@ async function renderForm(request, h, { errors = null, locale } = {}) {
 
   return h.view('certificatesOfCompliance/accept/index', {
     pageTitle: `${titleVerb} ${docTypeLower} — ${companyName}`,
-    backlink: detailPath(organisationId, id, documentType, resolvedLocale),
+    backlink: detailPath(
+      request,
+      organisationId,
+      id,
+      documentType,
+      resolvedLocale
+    ),
     organisationId,
     id,
     documentType,
     companyName,
     registrationType,
     docTypeLower,
+    queryString: getBaseQueryString(request),
+    type: request.query.type,
+    tab: request.query.tab,
     errors,
     locale: resolvedLocale,
     i18n

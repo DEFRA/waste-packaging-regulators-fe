@@ -15,7 +15,7 @@
         }) }}
       {% endif %}
 
-      <form method="post" action="{{ localeUrl(routePrefix ~ '/' ~ organisationId ~ '/' ~ documentType ~ '/' ~ id ~ '/cancel/reason') }}" novalidate>
+      <form method="post" action="{{ localeUrl(routePrefix ~ '/' ~ organisationId ~ '/' ~ documentType ~ '/' ~ id ~ '/cancel/reason' ~ (queryString | default(''))) }}" novalidate>
         {{ appCsrfField(CSRFToken) }}
         {{ govukRadios({
           name: "cancel-reason",

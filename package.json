@@ -46,7 +46,7 @@
     "@elastic/ecs-pino-format": "1.5.0",
     "@hapi/bell": "13.1.0",
     "@hapi/catbox-memory": "6.0.2",
-    "@hapi/catbox-redis": "6.0.1",
+    "@hapi/catbox-redis": "6.0.2",
     "@hapi/crumb": "9.0.1",
     "@hapi/hapi": "21.4.9",
     "@hapi/inert": "7.1.2",
@@ -65,7 +65,7 @@
     "global-agent": "3.0.0",
     "govuk-frontend": "6.3.0",
     "hapi-pino": "13.0.0",
-    "hapi-pulse": "3.0.0",
+    "hapi-pulse": "4.0.0",
     "ioredis": "5.11.1",
     "lodash": "4.18.1",
     "moment": "2.30.1",
@@ -82,7 +82,7 @@
   "devDependencies": {
     "@babel/preset-env": "7.29.2",
     "@defra/hapi-connect": "1.0.1",
-    "@vitest/coverage-v8": "4.1.9",
+    "@vitest/coverage-v8": "4.1.11",
     "cheerio": "1.2.0",
     "cross-env": "10.1.0",
     "eslint": "9.39.2",
@@ -95,7 +95,7 @@
     "stylelint": "16.26.1",
     "stylelint-config-gds": "2.0.0",
     "vite": "8.0.16",
-    "vitest": "4.1.9"
+    "vitest": "4.1.11"
   },
   "overrides": {
     "tmp": "0.2.5"
