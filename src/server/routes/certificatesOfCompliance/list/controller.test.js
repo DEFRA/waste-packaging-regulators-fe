@@ -1,4 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { translate } from '#server/common/helpers/i18n/translate.js'
 import * as getSessionUserModule from '#server/common/helpers/get-session-user.js'
 import { load } from 'cheerio'
 import { vi } from 'vitest'
@@ -885,7 +886,11 @@ describe('#certificatesOfComplianceController', () => {
 
       expect($('html').attr('lang')).toBe('cy')
       expect($('input[name="lang"]').attr('value')).toBe('cy')
-      expect($('a:contains("Clear search")').attr('href')).toBe(
+      expect(
+        $(
+          `a:contains("${translate('cy', 'certificatesOfCompliance.list.searchResults.clearSearch')}")`
+        ).attr('href')
+      ).toBe(
         '/certificates-of-compliance?type=direct-producers&tab=pending&lang=cy'
       )
       expect(
