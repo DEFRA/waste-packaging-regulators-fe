@@ -15,10 +15,10 @@
 {% from "defra-internal-footer/macro.njk" import defraInternalFooter %}
 
 {% block headIcons %}
-  <link rel="icon" sizes="any" href="/public/assets/images/govuk-crest.svg" type="image/svg+xml">
-  <link rel="mask-icon" href="/public/assets/images/govuk-crest.svg" color="{{ themeColor | default('#00a33b') }}">
-  <link rel="apple-touch-icon" href="/public/images/gov-crest.png">
-  <link rel="manifest" href="/public/manifest.json">
+  <link rel="icon" sizes="any" href="{{ assetPath }}/images/govuk-crest.svg" type="image/svg+xml">
+  <link rel="mask-icon" href="{{ assetPath }}/images/govuk-crest.svg" color="{{ themeColor | default('#00a33b') }}">
+  <link rel="apple-touch-icon" href="{{ publicPath }}/images/gov-crest.png">
+  <link rel="manifest" href="{{ publicPath }}/manifest.json">
 {% endblock %}
 
 {% block head %}
