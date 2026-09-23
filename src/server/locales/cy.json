@@ -1,20 +1,33 @@
 {
   "common": {
+    "organisationName": "Adran yr Amgylchedd,<br>Bwyd a Materion Gwledig",
+    "continue": "Parhau",
+    "yes": "Ydw",
+    "no": "Nac ydw",
+    "search": "Chwilio",
+    "errorPrefix": "Gwall:",
+    "opensInNewTab": "yn agor mewn tab newydd",
+    "errorSummary": {
+      "title": "Mae problem"
+    },
     "nav": {
       "home": "Hafan",
-      "about": "Ynghylch",
+      "about": "Gwybodaeth",
       "back": "Yn ôl",
       "backDescription": "Yn ôl i'r dudalen flaenorol",
       "signIn": "Mewngofnodi",
       "signOut": "Allgofnodi"
     },
     "languageSwitcher": {
-      "label": "Iaith"
+      "label": "Iaith",
+      "english": "English",
+      "welsh": "Cymraeg"
     },
     "footer": {
       "getHelp": "Cael help",
       "emailLabel": "E-bost:",
       "telephoneLabel": "Ffôn:",
+      "hours": "Dydd Llun i ddydd Gwener, 8am i 6pm",
       "accessibility": "Datganiad hygyrchedd",
       "cookies": "Cwcis",
       "privacy": "Preifatrwydd",
@@ -25,50 +38,370 @@
       "crownCopyright": "Hawlfraint y Goron"
     },
     "cookieBanner": {
-      "acceptAnalytics": "Derbyn cwcis dadansoddeg",
-      "rejectAnalytics": "Gwrthod cwcis dadansoddeg",
-      "viewCookies": "Gweld cwcis",
-      "hideMessage": "Cuddio neges cwcis"
+      "ariaLabel": "Cwcis ar {{serviceName}}",
+      "heading": "Cwcis ar {{serviceName}}",
+      "essentialHtml": "<p class=\"govuk-body\">Rydym ni'n defnyddio rhai cwcis hanfodol i wneud i'r gwasanaeth hwn weithio.</p><p class=\"govuk-body\">Rydym hefyd yn awyddus i ddefnyddio cwcis dadansoddi er mwyn deall sut rydych chi'n defnyddio'r gwasanaeth a sut gallwn ni ei wella.</p>",
+      "acceptAnalytics": "Derbyn cwcis dadansoddi",
+      "rejectAnalytics": "Gwrthod cwcis dadansoddi",
+      "viewCookies": "Gweld y cwcis",
+      "preferenceAccepted": "Rydych chi wedi derbyn cwcis dadansoddi. Gallwch <a class=\"govuk-link\" href=\"{{cookiesUrl}}\">newid eich gosodiadau cwcis</a> ar unrhyw adeg.",
+      "preferenceRejected": "Rydych chi wedi gwrthod cwcis dadansoddi. Gallwch <a class=\"govuk-link\" href=\"{{cookiesUrl}}\">newid eich gosodiadau cwcis</a> ar unrhyw adeg.",
+      "hideMessage": "Cuddio'r neges cwcis"
     },
     "dateTime": {
-      "at": "am"
+      "at": "yn"
     }
   },
   "home": {
     "pageTitle": "Hafan",
-    "heading": "Hafan"
+    "heading": "Hafan",
+    "caption": "waste-packaging-regulators-fe"
   },
   "about": {
-    "pageTitle": "Ynghylch",
-    "heading": "Ynghylch"
+    "pageTitle": "Gwybodaeth",
+    "heading": "Gwybodaeth",
+    "caption": "waste-packaging-regulators-fe"
   },
   "cookies": {
     "pageTitle": "Cwcis",
     "heading": "Cwcis",
     "breadcrumbHome": "Hafan",
     "breadcrumbCookies": "Cwcis",
-    "saveSettings": "Cadw gosodiadau cwcis"
+    "successHeading": "Llwyddiant",
+    "successMessage": "Rydych chi wedi gosod eich dewisiadau cwcis. <a class=\"govuk-notification-banner__link\" href=\"{{cookiesUrl}}\">Mynd yn ôl i'r dudalen roeddech chi'n edrych arni</a>.",
+    "intro1": "Mae cwcis yn ffeiliau bach sy'n cael eu cadw ar eich ffôn, eich tabled neu eich cyfrifiadur pan fyddwch chi'n ymweld â gwefan.",
+    "intro2": "Rydym yn defnyddio cwcis i wneud i'r wefan hon weithio ac i gasglu gwybodaeth am sut rydych chi'n defnyddio ein gwasanaeth.",
+    "essentialHeading": "Cwcis hanfodol",
+    "essentialIntro": "Mae cwcis hanfodol yn cadw eich gwybodaeth yn ddiogel wrth i chi ddefnyddio'r gwasanaeth hwn. Does dim angen i ni ofyn am ganiatâd i'w defnyddio.",
+    "essentialTableHeading": "Cwcis hanfodol rydym yn eu defnyddio",
+    "analyticsHeading": "Cwcis dadansoddi",
+    "analyticsIntro1": "Rydym ni'n defnyddio Google Analytics i ddeall sut mae pobl yn defnyddio gwasanaeth rheoleiddio pEPR. Mae'n ein helpu i ddeall sut rydych chi'n defnyddio'r gwasanaeth a sut gallwn ni ei wella.",
+    "analyticsIntro2": "Dydyn ni ddim yn casglu nac yn cadw unrhyw wybodaeth bersonol. Nid ydym yn caniatáu i Google rannu ein data dadansoddi.",
+    "analyticsIntro3": "Mae cwcis Google Analytics yn cadw gwybodaeth am:",
+    "analyticsList1": "y tudalennau rydych chi'n ymweld â nhw",
+    "analyticsList2": "faint o amser rydych chi'n ei dreulio ar bob tudalen",
+    "analyticsList3": "sut y gwnaethoch chi gyrraedd y safle",
+    "analyticsList4": "beth rydych chi'n clicio arno wrth ymweld â'r safle",
+    "analyticsList5": "y ddyfais a'r porwr rydych chi'n eu defnyddio",
+    "analyticsTableHeading": "Cwcis dadansoddi rydym yn eu defnyddio",
+    "tableName": "Enw",
+    "tablePurpose": "Pwrpas",
+    "tableExpires": "Yn dod i ben",
+    "essentialSessionName": "sesiwn",
+    "essentialSessionPurpose": "Yn eich cadw chi wedi mewngofnodi",
+    "essentialSessionExpires": "4 awr",
+    "essentialCsrfName": "CSRFToken",
+    "essentialCsrfPurpose": "Mae'n diogelu eich sesiwn",
+    "essentialCsrfExpires": "Ar ôl pob sesiwn",
+    "essentialB2cName": "bell-azure-ad-b2c",
+    "essentialB2cPurpose": "Mae'n caniatáu i chi gael mynediad at ddata",
+    "essentialB2cExpires": "Wedi'i glirio pan fyddwch chi'n allgofnodi",
+    "analyticsGaName": "_ga",
+    "analyticsGaPurpose": "Cyfri ymweliadau unigol â'r gwasanaeth",
+    "analyticsGaExpires": "Blwyddyn",
+    "analyticsGaStringName": "_ga_<string>",
+    "analyticsGaStringPurpose": "Olrhain gweithgarwch mewn sesiwn",
+    "analyticsGaStringExpires": "Blwyddyn",
+    "analyticsQuestion": "Ydych chi eisiau derbyn y cwcis dadansoddi?",
+    "saveSettings": "Cadw'r gosodiadau cwcis"
+  },
+  "auth": {
+    "signedOut": {
+      "pageTitle": "Wedi allgofnodi",
+      "heading": "Wedi allgofnodi",
+      "message": "Rydych chi wedi cael eich allgofnodi."
+    }
   },
   "compliance": {
     "components": {
       "statusTag": {
-        "met": "Wedi bodloni",
-        "notMet": "Heb fodloni"
+        "noData": "Dim data",
+        "met": "Cyflawnwyd",
+        "notMet": "Heb gyflawni",
+        "compliant": "Yn cydymffurfio",
+        "notCompliant": "Ddim yn cydymffurfio"
+      },
+      "sortingColumnHeader": {
+        "sortBy": "Trefnu yn ôl {{columnLabel}}, {{direction}}",
+        "ascending": "esgynnol",
+        "descending": "disgynnol"
       },
       "pagination": {
+        "navAriaLabel": "Tudalen canlyniadau",
         "previous": "Blaenorol",
-        "next": "Nesaf"
+        "next": "Nesaf",
+        "pageAriaLabel": "Tudalen {{page}}"
       }
     }
   },
   "certificatesOfCompliance": {
-    "cancel": {
-      "notificationParameters": {
+    "common": {
+      "noData": "Dim data",
+      "unknownOrganisation": "Sefydliad anhysbys",
+      "documentNoun": {
+        "certificate": "tystysgrif",
+        "statement": "datganiad",
+        "certificateOfCompliance": "tystysgrif cydymffurfio",
+        "statementOfCompliance": "datganiad cydymffurfio"
+      },
+      "organisationType": {
+        "directProducer": "Cynhyrchydd uniongyrchol",
+        "complianceScheme": "Cynllun cydymffurfio"
+      },
+      "producerTypeNav": {
+        "ariaLabel": "Hidlo yn ôl math o gynhyrchydd",
+        "directProducers": "Cynhyrchwyr uniongyrchol",
+        "complianceSchemes": "Cynlluniau cydymffurfio"
+      },
+      "submissionStatus": {
+        "pending": "Yn aros",
+        "accepted": "Wedi Derbyn",
+        "notSubmitted": "Heb gyflwyno",
+        "cancelled": "Wedi canslo",
+        "queried": "Wedi ymholi"
+      },
+      "regulation43": {
+        "label": "Rheoliad 43",
+        "complied": "wedi cydymffurfio",
+        "notComplied": "heb gydymffurfio",
+        "statement": "Mae {{organisationName}} wedi datgan {{compliance}} â’r holl ofynion eraill yn rheoliad 43."
+      },
+      "complianceTypeLabel": "{{year}} {{documentNoun}}",
+      "columns": {
+        "organisationName": "Enw’r sefydliad",
+        "organisationId": "ID y Sefydliad",
+        "recyclingObligations": "Rhwymedigaethau ailgylchu",
+        "regulation43": "Rheoliad 43",
+        "percentageMet": "Canran a gyflawnwyd",
+        "dateSubmitted": "Dyddiad cyflwyno",
+        "submissionStatus": "Statws y cyflwyniad"
+      },
+      "actions": {
         "directProducer": {
-          "certOrStatement": "tystysgrif"
+          "accept": "Derbyn tystysgrif",
+          "cancel": "Canslo tystysgrif"
         },
         "complianceScheme": {
-          "certOrStatement": "datganiad"
+          "accept": "Derbyn y datganiad",
+          "cancel": "Canslo’r datganiad"
+        }
+      },
+      "successBanner": {
+        "directProducer": {
+          "accepted": {
+            "heading": "Tystysgrif wedi’i derbyn",
+            "text": "Mae’r tystysgrif wedi cael ei derbyn."
+          },
+          "cancelled": {
+            "heading": "Tystysgrif wedi’i chanslo",
+            "text": "Mae’r tystysgrif wedi’i chanslo ac mae e-bost wedi ei anfon at y cynhyrchydd."
+          }
+        },
+        "complianceScheme": {
+          "accepted": {
+            "heading": "Datganiad wedi’i dderbyn",
+            "text": "Mae’r datganiad wedi cael ei derbyn."
+          },
+          "cancelled": {
+            "heading": "Datganiad wedi’i ganslo",
+            "text": "Mae’r datganiad wedi’i ganslo ac mae e-bost wedi ei anfon at y cynllun cydymffurfio."
+          }
+        }
+      },
+      "companiesHouse": {
+        "viewLink": "Gweld ar Tŷ'r Cwmnïau"
+      }
+    },
+    "list": {
+      "pageTitle": "Gweld tystysgrifau a datganiadau cydymffurfio",
+      "heading": "Gweld tystysgrifau a datganiadau cydymffurfio",
+      "relevantYearCaption": "{{complianceYear}} y flwyddyn berthnasol",
+      "search": {
+        "label": "Chwilio yn ôl enw neu ID sefydliad",
+        "error": "Rhowch enw neu ID sefydliad"
+      },
+      "tabs": {
+        "pending": "Yn aros ({{count}})",
+        "accepted": "Wedi’i dderbyn ({{count}})",
+        "notSubmitted": "Heb ei gyflwyno ({{count}})"
+      },
+      "tabSummary": {
+        "pending": "cyflwyniadau sy’n aros",
+        "accepted": "cyflwyniadau wedi’u derbyn",
+        "notSubmitted": "heb gyflwyno"
+      },
+      "emptyTab": {
+        "pending": "Dim cyflwyniadau’n aros i gael eu hadolygu. Bydd cyflwyniadau newydd yn ymddangos yma wrth iddynt gyrraedd.",
+        "accepted": "Dim cyflwyniadau wedi’u derbyn eto. Bydd cyflwyniadau rydych chi’n eu derbyn yn cael eu rhestru yma.",
+        "notSubmitted": "Does dim cyflwyniadau yn weddill"
+      },
+      "downloadLink": "Lawrlwytho’r rhestr (CSV)",
+      "searchResults": {
+        "caption": "Canlyniadau chwilio",
+        "resultSingular": "{{count}} canlyniad ar gyfer \"{{searchTerm}}\".",
+        "resultPlural": "{{count}} canlyniadau ar gyfer \"{{searchTerm}}\".",
+        "clearSearch": "Clirio’r Chwiliad",
+        "truncated": "Yn dangos y {{count}} cyntaf o’r canlyniadau. Mireiniwch eich chwiliad i gael canlyniadau perthnasol.",
+        "noResults": "Gwiriwch y sillafu, neu chwiliwch am ran o enw neu ID y sefydliad"
+      },
+      "backlinkText": "Yn ôl"
+    },
+    "detail": {
+      "pageTitle": "{{companyName}}",
+      "backlinkText": "Yn ôl i bob cyflwyniad",
+      "inset": {
+        "statementNotSubmitted": "Nid yw’r datganiad hwn wedi’i gyflwyno felly bydd yr wybodaeth yn diweddaru os bydd yn cael ei newid gan y cynllun cydymffurfio.",
+        "statementSubmitted": "Roedd yr wybodaeth ar y datganiad hwn yn gywir adeg ei gyflwyno.",
+        "certificateNotSubmitted": "Nid yw’r tystysgrif wedi’i chyflwyno felly bydd yr wybodaeth yn diweddaru os bydd yn cael ei newid gan y cynhyrchydd.",
+        "certificateSubmitted": "Roedd yr wybodaeth ar y datganiad hwn yn gywir adeg ei gyflwyno."
+      },
+      "summary": {
+        "regulation43": "Rheoliad 43",
+        "recyclingObligations": "Rhwymedigaethau ailgylchu",
+        "submissionStatus": "Statws y cyflwyniad",
+        "submittedOn": "Cyflwynwyd ar",
+        "acceptedBy": "Derbyniwyd gan",
+        "acceptedDate": "Dyddiad Derbyn",
+        "cancelledBy": "Canslwyd gan",
+        "cancelledDate": "Dyddiad Canslo",
+        "reasonForCancellation": "Rheswm dros ganslo",
+        "organisationType": "Math o sefydliad",
+        "organisationId": "ID y Sefydliad",
+        "companyNumber": "Rhif y cwmni",
+        "nameOnAccount": "Enw ar y cyfrif",
+        "emailAddress": "Cyfeiriad e-bost",
+        "phoneNumber": "Rhif ffôn"
+      },
+      "declaration": {
+        "heading": "Datganiad",
+        "intro": "Llofnododd {{signedBy}} y datganiad i gadarnhau’r canlynol:",
+        "bulletEligibleBefore": "eu bod yn berson cymeradwy neu ddirprwyedig sy’n gymwys i gyflwyno",
+        "bulletEligibleAfter": "ar ran {{companyName}}",
+        "bulletAccurate": "bod yr wybodaeth maen nhw’n ei chyflwyno yn gywir",
+        "bulletEnforcement": "eu bod yn deall y gallent wynebu camau gorfodi os byddant yn cyflwyno gwybodaeth anwir neu gamarweiniol"
+      },
+      "queryDetails": {
+        "heading": "Manylion yr ymholiad",
+        "queriedMaterials": "Deunyddiau y gwnaethpwyd ymholiadau yn eu cylch",
+        "reason": "Rheswm",
+        "dateQueried": "Dyddiad y gwnaethpwyd ymholiad"
+      },
+      "obligations": {
+        "heading": "Rhwymedigaethau ailgylchu",
+        "valuesInTonnes": "Mae’r holl werthoedd yn cael eu dangos fel tunelli.",
+        "tableCaption": "Rhwymedigaethau ailgylchu yn ôl deunydd, mewn tunelli",
+        "material": "Deunydd",
+        "obligationToMeet": "Rhwymedigaethau ailgylchu i’w cyflawni",
+        "awaitingAcceptance": "Tunelli sy’n aros i gael eu derbyn",
+        "accepted": "Tunelli sydd wedi’u derbyn",
+        "outstanding": "Tunelli sy’n aros",
+        "status": "Statws",
+        "totals": "Cyfansymiau",
+        "noData": "Dim data",
+        "glassBreakdownHeading": "Dadansoddiad o’r rhwymedigaeth ailgylchu gwydr",
+        "glassBreakdownCaption": "Crynodeb o’r Rhwymedigaeth ailgylchu gwydr yn ôl deunydd, mewn tunelli"
+      },
+      "currentYear": {
+        "heading": "Blwyddyn gyfredol",
+        "noPreviousSubmissions": "Dim cyflwyniadau blaenorol",
+        "tableCaption": "Hanes cyflwyno’r flwyddyn gyfredol",
+        "date": "Dyddiad",
+        "action": "Cam gweithredu",
+        "by": "Gan",
+        "reason": "Rheswm",
+        "viewSubmissionHidden": "Gweld y cyflwyniad",
+        "viewSubmissionLink": "Gweld y cyflwyniad",
+        "actionAccepted": "Wedi Derbyn",
+        "actionCancelled": "Wedi canslo"
+      }
+    },
+    "accept": {
+      "pageTitle": "{{titleVerb}}{{docTypeLower}} — {{companyName}}",
+      "titleVerb": {
+        "accept": "Derbyn",
+        "error": "Gwall: Derbyn"
+      },
+      "legend": "Ydych chi’n siŵr eich bod chi eisiau derbyn {{docTypeLower}} ar gyfer {{companyName}}?",
+      "error": "Dewiswch ie neu na"
+    },
+    "cancel": {
+      "reason": {
+        "pageTitle": "{{titleVerb}}{{docTypeLower}} — {{companyName}}",
+        "titleVerb": {
+          "cancel": "Canslo",
+          "error": "Gwall: Canslo"
+        },
+        "legend": "Pam ydych chi'n canslo {{docTypeLower}} {{companyName}}'s?",
+        "error": "Dewiswch pam rydych chi’n canslo {{docTypeLower}}",
+        "reasons": {
+          "incorrectSigner": {
+            "label": "Heb ei lofnodi gan y person cywir",
+            "hint": "Dydy’r enw rydych chi wedi’i roi ddim yn berson wedi’i gymeradwyo na’i ddirprwyo"
+          },
+          "obligationsChanged": {
+            "label": "Rhwymedigaethau ailgylchu wedi newid",
+            "hint": "Er enghraifft, mae’r {{producerTypeLower}} wedi ailgyflwyno data pecynwaith"
+          },
+          "submittedEarly": {
+            "label": "Mae {{producerType}} yn gallu cyflawni rhwymedigaethau ailgylchu",
+            "hint": "{{docType}} wedi’i gyflwyno {{notMet}} gydag amser i gaffael PRNs neu PERNs",
+            "notMetSuffix": "heb ei gyflawni"
+          },
+          "producerRequest": {
+            "label": "Mae’r {{producerType}} wedi gwneud cais i ganslo",
+            "hint": "Er enghraifft, i ddiweddaru gwybodaeth ac ailgyflwyno"
+          }
+        },
+        "wording": {
+          "docTypeCertificate": "Tystysgrif",
+          "docTypeStatement": "Datganiad",
+          "producerTypeProducer": "Cynhyrchydd",
+          "producerTypeComplianceScheme": "Cynllun cydymffurfio",
+          "producerTypeLowerProducer": "datganiad",
+          "producerTypeLowerComplianceScheme": "cynllun cydymffurfio"
+        }
+      },
+      "check": {
+        "pageTitle": "Cadarnhau ac anfon e-bost canslo — {{companyName}}",
+        "heading": "Cadarnhau ac anfon e-bost canslo",
+        "organisation": "Sefydliad",
+        "cancelReason": "Rheswm dros ganslo",
+        "changeReasonHidden": "rheswm dros ganslo",
+        "email": "E-bost",
+        "emailPreviewLink": "Gweld yr e-bost canslo (yn agor mewn tab newydd)",
+        "inset": "Pan fyddwch chi’n cadarnhau ac yn anfon, byddwn ni’n canslo’r {{docTypeLower}} ac yn e-bostio’r person sydd wedi’i chyflwyno.",
+        "confirmButton": "Cadarnhau ac anfon"
+      },
+      "emailPreview": {
+        "ariaLabel": "Rhagolwg o’r e-bost canslo",
+        "fromLabel": "Gan:",
+        "fromValue": "Cyfrifoldeb Estynedig Cynhyrchwyr dros Becynwaith (pEPR) <noreply@notifications.service.gov.uk>",
+        "toLabel": "At Sylw:",
+        "subjectLabel": "Pwnc:",
+        "defraName": "Adran yr Amgylchedd, Bwyd a Materion Gwledig"
+      },
+      "emailPreviewUnavailable": {
+        "pageTitle": "Nid yw’r rhagolwg o’r e-bost canslo ar gael",
+        "heading": "Nid yw’r rhagolwg o’r e-bost canslo ar gael",
+        "fallback": "Nid yw’r rhagolwg o’r e-bost canslo ar gael.",
+        "errors": {
+          "noRecipients": "Doedd dim modd i ni ddod o hyd i gyfeiriadau e-bost derbynwyr ar gyfer y sefydliad hwn.",
+          "unknownTemplate": "Doedd dim modd i ni ddod o hyd i dempled e-bost ar gyfer y rheswm dros ganslo dan sylw.",
+          "declarationNotFound": "Doedd dim modd i ni ddod o hyd i’r datganiad cydymffurfio ar gyfer y rhagolwg hwn.",
+          "invalidReason": "Nid yw’r rheswm dros ganslo yn ddilys.",
+          "notifyNotConfigured": "Nid yw’r rhagolwg o’r e-bost canslo ar gael oherwydd dydy GOV.UK Notify ddim wedi’i ffurfweddu ar gyfer yr amgylchedd hwn."
+        }
+      },
+      "notificationParameters": {
+        "directProducer": {
+          "certOrStatement": "tystysgrif",
+          "certOrStatementBullet": "caffael digon o nodiadau ailgylchu gwastraff pecynwaith (PRNs) neu nodiadau ailgylchu allforio gwastraff pecynwaith (PERNs) i gyflawni eich rhwymedigaethau ailgylchu bob blwyddyn",
+          "certOrStatementBullet2": "caffael digon o nodiadau ailgylchu gwastraff pecynwaith (PRNs) neu nodiadau ailgylchu allforio gwastraff pecynwaith (PERNs) i fodloni eich rhwymedigaethau ailgylchu diwygiedig"
+        },
+        "complianceScheme": {
+          "certOrStatement": "datganiad",
+          "certOrStatementBullet": "cyflawni eich rhwymedigaethau ailgylchu",
+          "certOrStatementBullet2": "cyflawni eich rhwymedigaethau ailgylchu diwygiedig"
         }
       }
     }
