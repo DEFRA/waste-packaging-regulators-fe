@@ -10,10 +10,10 @@ This file explains the thinking, the structure, and how to work with it.
 ## Why it is built this way
 
 - **Interception at the HTTP boundary.** Production code makes ordinary `fetch`
-  calls and never branches on `MOCK_API`. `msw` is a devDependency, imported behind
-  a dynamic `import()` in `server.js`, so it never enters the production module
-  graph — no deployed environment runs with `MOCK_API=true`. The seam is the
-  network, not the code, so the mocks exercise the real request/response paths.
+  calls and never branches on `MOCK_API`. The seam is the network, not the code,
+  so the mocks exercise the real request/response paths. `MOCK_API` defaults to
+  `false` in production but can be set to `true` to deploy the app with mock data
+  (e.g. a demo or smoke-test environment).
 
 - **One canonical source of truth.** Each backend describes its world once. For
   waste-obligations that is a single set of compliance records; the list, detail,
@@ -27,9 +27,9 @@ This file explains the thinking, the structure, and how to work with it.
   mock deterministic: every request sees the same records, which makes parallel
   test runs safe and eliminates reset-between-test bookkeeping.
 
-- **Dev-only, and scoped as such.** The layer is excluded from the production build
-  and from SonarCloud analysis — its fixtures use "magic" numbers and repeated
-  literals by nature, and its branches are covered through the integration tests.
+- **Excluded from SonarCloud analysis.** The layer's fixtures use "magic" numbers
+  and repeated literals by nature, and its branches are covered through integration
+  tests rather than unit tests.
 
 ## Structure
 

@@ -151,6 +151,11 @@ Set `MOCK_ERROR_STATUS=<http status>` alongside `MOCK_API=true` to make every
 mocked call return that status instead of data, so you can walk a journey into the
 real error pages without a failing backend.
 
+`MOCK_API` defaults to `false` in production, but can be set to `true` in any
+deployed environment (e.g. a demo or smoke-test instance) to run the app without
+live backend services. Pair with `MOCK_AUTH=true` to bypass Azure AD B2C in the
+same environment.
+
 The mock layer's design, structure and how to work with it: see
 [`src/mocks/README.md`](./src/mocks/README.md).
 
