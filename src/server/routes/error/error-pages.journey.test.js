@@ -126,34 +126,54 @@ describe('error pages — journey', () => {
   // MOCK_ERROR_STATUS makes the mocked services fail, so the journey reaches the
   // error pages through the real controller → boomify → onPreResponse path.
   describe('a failing service in mock mode', () => {
-    it('shows the access denied page when the list request is forbidden', async () => {
-      setMockErrorStatus(statusCodes.forbidden)
+    // AMCR-485: a backend's status describes the call we made to it, never the
+    // user's request, so the user only ever sees one of these two outcomes.
+    it.each([
+      ['is shuttered', statusCodes.notFound],
+      ['is unavailable', statusCodes.serviceUnavailable],
+      ['times out at the gateway', statusCodes.gatewayTimeout]
+    ])(
+      'shows the service unavailable page when the backend %s',
+      async (_reason, status) => {
+        setMockErrorStatus(status)
 
-      const response = await inject(LIST_URL)
+        const response = await inject(LIST_URL)
 
-      expect(response.statusCode).toBe(statusCodes.forbidden)
-      expect(response.payload).toContain(titleFor(statusCodes.forbidden))
-    })
+        expect(response.statusCode).toBe(statusCodes.serviceUnavailable)
+        expect(response.payload).toContain(
+          titleFor(statusCodes.serviceUnavailable)
+        )
+      }
+    )
 
-    it('shows the problem with the service page when the list request fails', async () => {
-      setMockErrorStatus(statusCodes.internalServerError)
+    it.each([
+      ['refuses our credentials', statusCodes.forbidden],
+      ['rejects the request we built', statusCodes.badRequest],
+      ['is up but broken', statusCodes.internalServerError]
+    ])(
+      'shows the problem with the service page when the backend %s',
+      async (_reason, status) => {
+        setMockErrorStatus(status)
 
-      const response = await inject(LIST_URL)
+        const response = await inject(LIST_URL)
 
-      expect(response.statusCode).toBe(statusCodes.internalServerError)
-      expect(response.payload).toContain(
-        titleFor(statusCodes.internalServerError)
-      )
-      expect(response.payload).toContain(`mailto:${HELP_DESK_EMAIL}`)
-    })
+        expect(response.statusCode).toBe(statusCodes.internalServerError)
+        expect(response.payload).toContain(
+          titleFor(statusCodes.internalServerError)
+        )
+        expect(response.payload).toContain(`mailto:${HELP_DESK_EMAIL}`)
+      }
+    )
 
-    it('shows the page not found page when the detail record is missing', async () => {
+    it('shows the service unavailable page when the detail request 404s', async () => {
       setMockErrorStatus(statusCodes.notFound)
 
       const response = await inject(DETAIL_URL)
 
-      expect(response.statusCode).toBe(statusCodes.notFound)
-      expect(response.payload).toContain(titleFor(statusCodes.notFound))
+      expect(response.statusCode).toBe(statusCodes.serviceUnavailable)
+      expect(response.payload).toContain(
+        titleFor(statusCodes.serviceUnavailable)
+      )
     })
 
     it('serves the page as normal once the failure is cleared', async () => {
