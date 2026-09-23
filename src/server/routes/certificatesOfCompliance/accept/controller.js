@@ -27,10 +27,7 @@ function buildErrors(locale) {
 }
 
 function detailPath(request, organisationId, id, documentType, locale) {
-  const base = localeUrl(
-    `${getForwardedPrefix(request)}/${organisationId}/${documentType}/${id}`,
-    locale
-  )
+  const basePath = `${getForwardedPrefix(request)}/${organisationId}/${documentType}/${id}`
   const qs = new URLSearchParams()
   if (request.query.type) {
     qs.set('type', request.query.type)
@@ -39,7 +36,8 @@ function detailPath(request, organisationId, id, documentType, locale) {
     qs.set('tab', request.query.tab)
   }
   const queryStr = qs.toString()
-  return queryStr ? `${base}?${queryStr}` : base
+  const fullPath = queryStr ? `${basePath}?${queryStr}` : basePath
+  return localeUrl(fullPath, locale)
 }
 
 function getTraceIdFromRequest(request) {

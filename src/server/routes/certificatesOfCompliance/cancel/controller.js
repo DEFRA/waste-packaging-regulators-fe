@@ -30,10 +30,7 @@ function buildPath(
   suffix = '',
   params = {}
 ) {
-  const basePath = localeUrl(
-    `${getForwardedPrefix(request)}/${organisationId}/${documentType}/${id}${suffix}`,
-    locale
-  )
+  const basePath = `${getForwardedPrefix(request)}/${organisationId}/${documentType}/${id}${suffix}`
   const qs = new URLSearchParams()
   if (request.query.type) {
     qs.set('type', request.query.type)
@@ -47,7 +44,8 @@ function buildPath(
     }
   }
   const queryStr = qs.toString()
-  return queryStr ? `${basePath}?${queryStr}` : basePath
+  const fullPath = queryStr ? `${basePath}?${queryStr}` : basePath
+  return localeUrl(fullPath, locale)
 }
 
 function detailPath(request, organisationId, id, documentType, locale) {
