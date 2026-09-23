@@ -100,6 +100,30 @@ describe('certificate detail action helpers', () => {
     )
   })
 
+  test('buildCertificateDetailActions appends locale, type, and tab to urls', () => {
+    expect(
+      buildCertificateDetailActions(
+        'Pending',
+        'org-1',
+        'decl-1',
+        'DirectProducer',
+        {
+          locale: 'cy',
+          routePrefix: '/certificates-of-compliance',
+          type: 'direct-producers',
+          tab: 'pending'
+        }
+      )
+    ).toMatchObject({
+      urls: {
+        accept:
+          '/certificates-of-compliance/org-1/certificate/decl-1/accept?type=direct-producers&tab=pending&lang=cy',
+        cancel:
+          '/certificates-of-compliance/org-1/certificate/decl-1/cancel/reason?type=direct-producers&tab=pending&lang=cy'
+      }
+    })
+  })
+
   test('buildCertificateDetailActions shows buttons by review status', () => {
     expect(
       buildCertificateDetailActions(
