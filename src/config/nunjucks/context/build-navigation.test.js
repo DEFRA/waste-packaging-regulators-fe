@@ -24,9 +24,22 @@ describe('#buildAccountNavigation', () => {
     ])
   })
 
-  test('Should return empty array when organisationName is absent', () => {
+  test('Should return empty array when organisationName is absent and nationId is not present', () => {
     const request = mockRequest({ app: { accountDetails: {} } })
     expect(buildAccountNavigation(request)).toEqual([])
+  })
+
+  test('Should fallback to nationId when organisationName is absent', () => {
+    const request = mockRequest({
+      yar: {
+        id: '123',
+        get: (key) => (key === 'user' ? { nationId: 1 } : null)
+      },
+      app: { accountDetails: {} }
+    })
+    expect(buildAccountNavigation(request, 'en')).toEqual([
+      { text: 'Environment Agency' }
+    ])
   })
 
   test('Should return empty array when accountDetails is absent', () => {

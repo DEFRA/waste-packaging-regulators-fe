@@ -11,6 +11,12 @@
     "errorSummary": {
       "title": "There is a problem"
     },
+    "agency": {
+      "1": "Environment Agency",
+      "2": "Northern Ireland Environment Agency",
+      "3": "Scottish Environment Protection Agency",
+      "4": "Natural Resources Wales"
+    },
     "nav": {
       "home": "Home",
       "about": "About",

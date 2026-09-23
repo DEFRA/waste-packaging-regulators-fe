@@ -3,14 +3,14 @@ import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
 import { withForwardedPrefix } from '#server/common/helpers/proxy/forwarded-prefix.js'
 
-export function buildAccountNavigation(request) {
+export function buildAccountNavigation(request, locale = 'en') {
   const user = getSessionUser(request)
   const accountDetails = request.app?.accountDetails
 
   if (accountDetails?.organisationName) {
     return [{ text: accountDetails.organisationName }]
-  } else if (user?.organisationName) {
-    return [{ text: user.organisationName }]
+  } else if (user?.nationId) {
+    return [{ text: translate(locale, `common.agency.${user.nationId}`) }]
   } else {
     return []
   }
