@@ -64,7 +64,7 @@ export function context(request) {
     backlinkText: translate(locale, 'common.nav.back'),
     languageSwitcher: buildLanguageSwitcherUrls(request),
     navigation: buildNavigation(),
-    accountNavigation: buildAccountNavigation(request),
+    accountNavigation: buildAccountNavigation(request, locale),
     regulatorContext: buildRegulatorContext(request, locale),
     hasCookiePolicy: Boolean(request?.state?.cookies_policy),
     cookiePreferenceSet: request?.query?.cookie_preference === 'set',
