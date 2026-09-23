@@ -3,6 +3,12 @@ import { statusCodes } from '../constants/status-codes.js'
 
 // Status codes without an entry here (500, 401, 400 and anything unmapped) fall
 // back to the generic "problem with the service" page.
+//
+// The not-found and access-denied pages claim something about the user's own
+// request, so they are only reached from a status this service decided itself:
+// an unmatched route, a rejected CSRF token, a sign-in without the regulator
+// role. Upstream failures are classified before they get here, in
+// handle-api-error.js, and never borrow these pages.
 const errorPages = {
   [statusCodes.notFound]: {
     view: 'error/not-found',
