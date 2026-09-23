@@ -8,6 +8,10 @@ export function documentTypeFromRegistrationType(registrationType) {
   return registrationType === 'ComplianceScheme' ? 'statement' : 'certificate'
 }
 
+function getBasePath(organisationId, id, documentType, routePrefix = '') {
+  return `${routePrefix}/${organisationId}/${documentType}/${id}`
+}
+
 export function buildCertificateDetailPath(
   organisationId,
   id,
@@ -16,7 +20,7 @@ export function buildCertificateDetailPath(
   routePrefix = ''
 ) {
   return localeUrl(
-    `${routePrefix}/${organisationId}/${documentType}/${id}`,
+    getBasePath(organisationId, id, documentType, routePrefix),
     locale
   )
 }
@@ -27,13 +31,7 @@ export function buildCertificateDetailActionUrls(
   documentType,
   { type, tab, locale = 'en', routePrefix = '' } = {}
 ) {
-  const base = buildCertificateDetailPath(
-    organisationId,
-    id,
-    documentType,
-    locale,
-    routePrefix
-  )
+  const basePath = getBasePath(organisationId, id, documentType, routePrefix)
 
   const qs = new URLSearchParams()
   if (type) {
@@ -45,9 +43,9 @@ export function buildCertificateDetailActionUrls(
   const q = qs.toString() ? `?${qs.toString()}` : ''
 
   return {
-    accept: `${base}/accept${q}`,
-    query: `${base}/query${q}`,
-    cancel: `${base}/cancel/reason${q}`
+    accept: localeUrl(`${basePath}/accept${q}`, locale),
+    query: localeUrl(`${basePath}/query${q}`, locale),
+    cancel: localeUrl(`${basePath}/cancel/reason${q}`, locale)
   }
 }
 
