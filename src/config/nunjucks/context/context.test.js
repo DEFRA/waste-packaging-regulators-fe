@@ -79,6 +79,7 @@ describe('context and cache', () => {
 
       test('Should provide expected context', () => {
         expect(contextResult).toEqual({
+          publicPath: '/public',
           assetPath: '/public/assets',
           breadcrumbs: [],
           getAssetPath: expect.any(Function),
@@ -94,7 +95,7 @@ describe('context and cache', () => {
           regulatorContext: `<div class="defra-internal-service-navigation__context">\n    <a class="govuk-service-navigation__link" href="/signin-oidc">Sign in</a>\n  </div>`,
           routePrefix: '',
           serviceName: en.common.serviceName,
-          serviceUrl: '/',
+          serviceUrl: '/dashboard',
           helpDeskEmail: 'eprcustomerservice@defra.gov.uk',
           ga4: '',
           gtm: '',
@@ -240,6 +241,7 @@ describe('context and cache', () => {
 
       test('Should provide expected context', () => {
         expect(contextResult).toEqual({
+          publicPath: '/public',
           assetPath: '/public/assets',
           breadcrumbs: [],
           getAssetPath: expect.any(Function),
@@ -255,7 +257,7 @@ describe('context and cache', () => {
           regulatorContext: `<div class="defra-internal-service-navigation__context">\n    <a class="govuk-service-navigation__link" href="/signin-oidc">Sign in</a>\n  </div>`,
           routePrefix: '',
           serviceName: en.common.serviceName,
-          serviceUrl: '/',
+          serviceUrl: '/dashboard',
           helpDeskEmail: 'eprcustomerservice@defra.gov.uk',
           ga4: '',
           gtm: '',

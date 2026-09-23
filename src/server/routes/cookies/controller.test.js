@@ -227,7 +227,7 @@ describe('#cookiesController', () => {
       })
 
       expect(statusCode).toBe(302)
-      expect(headers.location).toBe('/home?cookie_preference=set')
+      expect(headers.location).toBe('/?cookie_preference=set')
     })
   })
 
@@ -289,7 +289,7 @@ describe('#cookiesController', () => {
       })
 
       expect(statusCode).toBe(302)
-      expect(headers.location).toBe('/home')
+      expect(headers.location).toBe('/')
     })
   })
 })

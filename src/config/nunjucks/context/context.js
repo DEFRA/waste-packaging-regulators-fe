@@ -52,13 +52,14 @@ export function context(request) {
 
   return {
     cspNonce: request?.plugins?.blankie?.nonces?.script,
+    publicPath: externalAssetPath,
     assetPath: `${externalAssetPath}/assets`,
     routePrefix: getForwardedPrefix(request),
     locale,
     localeUrl: (pathOrUrl) =>
       localeUrl(withForwardedPrefix(request, pathOrUrl), locale),
     serviceName: translate(locale, 'common.serviceName'),
-    serviceUrl: withForwardedPrefix(request, '/'),
+    serviceUrl: withForwardedPrefix(request, '/dashboard'),
     helpDeskEmail: config.get('helpDeskEmail'),
     breadcrumbs: [],
     backlinkText: translate(locale, 'common.nav.back'),

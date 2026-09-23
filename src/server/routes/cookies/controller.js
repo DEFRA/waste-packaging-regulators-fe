@@ -58,7 +58,7 @@ export const cookiesController = {
       breadcrumbs: [
         {
           text: i18n.t('breadcrumbHome'),
-          href: localeUrl(withForwardedPrefix(request, '/home'), locale)
+          href: localeUrl(withForwardedPrefix(request, '/'), locale)
         },
         {
           text: i18n.t('breadcrumbCookies')
@@ -104,7 +104,7 @@ export const cookiesController = {
       return h.redirect(url.pathname + url.search)
     } catch (e) {
       logger.error(e, 'Failed to parse referer URL')
-      return redirectPreservingLang(request, h, '/home', {
+      return redirectPreservingLang(request, h, '/', {
         cookie_preference: 'set'
       })
     }
@@ -121,7 +121,7 @@ export const cookiesController = {
       return h.redirect(url.pathname + url.search)
     } catch (e) {
       logger.error(e, 'Failed to parse referer URL')
-      return redirectPreservingLang(request, h, '/home')
+      return redirectPreservingLang(request, h, '/')
     }
   }
 }
