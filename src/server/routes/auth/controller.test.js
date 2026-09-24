@@ -140,7 +140,7 @@ describe('signinOidcController', () => {
         h
       )
 
-      expect(h.redirect).toHaveBeenCalledWith('/dashboard')
+      expect(h.redirect).toHaveBeenCalledWith('/')
     })
 
     it('redirects to the returnTo URL when one is set', async () => {
@@ -273,11 +273,11 @@ describe('signinOidcController', () => {
       expect(yar.set).not.toHaveBeenCalledWith('user', expect.anything())
     })
 
-    it('still redirects to /dashboard when there are no credentials', async () => {
+    it('still redirects to / when there are no credentials', async () => {
       const h = makeH()
       await signinOidcController.handler({ auth: null, yar: makeYar() }, h)
 
-      expect(h.redirect).toHaveBeenCalledWith('/dashboard')
+      expect(h.redirect).toHaveBeenCalledWith('/')
     })
 
     it('still redirects to returnTo when one is set and there are no credentials', async () => {

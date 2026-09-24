@@ -88,6 +88,12 @@ export const config = convict({
     default: 'eprcustomerservice@defra.gov.uk',
     env: 'HELP_DESK_EMAIL'
   },
+  dashboardUrl: {
+    doc: 'URL of the regulator dashboard frontend. Defaults to /dashboard (works when both apps are behind the shared YARP proxy). Override with an absolute URL for direct access or non-proxied environments.',
+    format: String,
+    default: '/dashboard',
+    env: 'DASHBOARD_URL'
+  },
   maintenance: {
     enabled: {
       doc: 'Shutter the service: every request except the health check and static assets gets the 503 service unavailable page.',
