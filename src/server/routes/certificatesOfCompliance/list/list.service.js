@@ -85,7 +85,8 @@ export function resolveUnsubmittedSort(sortColumn, sortDirection) {
     return UNSUBMITTED_DEFAULT_SORT
   }
 
-  return `${field}[${sortDirection}]`
+  const primarySort = `${field}[${sortDirection}]`
+  return field === 'Name' ? primarySort : `${primarySort},Name[asc]`
 }
 
 export async function fetchAllDeclarations(api, params, traceId) {

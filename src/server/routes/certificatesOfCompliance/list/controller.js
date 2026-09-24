@@ -13,7 +13,11 @@ import {
   getProxyPrefix,
   withForwardedPrefix
 } from '#server/common/helpers/proxy/forwarded-prefix.js'
-import { SEARCH_TERM_MAX_LENGTH } from '../common/constants.js'
+import {
+  SEARCH_TERM_MAX_LENGTH,
+  COMPLIANCE_SCHEMES,
+  DIRECT_PRODUCERS
+} from '../common/constants.js'
 import { cocPageI18n } from '../common/locale-strings.js'
 import { getSessionUser } from '#server/common/helpers/get-session-user.js'
 import { getRegulatorCountryCode } from '#server/common/helpers/regulator-country-code.js'
@@ -55,11 +59,14 @@ export const parsePageNumber = (raw) => {
 const complianceListSortKey = (organisationType) =>
   `complianceListSort:${organisationType}`
 
-export const getDefaultSortColumn = (submissionStatus) => {
+export const getDefaultSortColumn = (submissionStatus, type) => {
   if (submissionStatus !== 'not-submitted') {
     return 'DateSubmitted'
   }
-  return 'OrganisationName'
+  if (type === DIRECT_PRODUCERS) {
+    return 'PercentageMet'
+  }
+  return 'RecyclingObligations'
 }
 
 export function resolveSortForSubmissionStatus(
@@ -70,7 +77,12 @@ export function resolveSortForSubmissionStatus(
   const sortStorageKey = complianceListSortKey(type)
   const storedSorts = request.yar.get(sortStorageKey) ?? {}
 
-  if (request.query.sort) {
+  if (request.query.clearSort === 'true') {
+    delete storedSorts[submissionStatus]
+    request.yar.set(sortStorageKey, storedSorts)
+  }
+
+  if (request.query.clearSort !== 'true' && request.query.sort) {
     const match = request.query.sort.match(/^([^[]+)(?:\[([^\]]+)\])?$/)
     const sortColumn = match ? match[1] : request.query.sort
     const sortDirection = match?.[2] ?? 'asc'
@@ -89,9 +101,11 @@ export function resolveSortForSubmissionStatus(
     }
   }
 
-  const defaultSortColumn = getDefaultSortColumn(submissionStatus)
-  const defaultSortDirection =
-    defaultSortColumn === 'DateSubmitted' ? 'desc' : 'asc'
+  const defaultSortColumn = getDefaultSortColumn(submissionStatus, type)
+  let defaultSortDirection = 'asc'
+  if (defaultSortColumn === 'DateSubmitted') {
+    defaultSortDirection = 'desc'
+  }
 
   return {
     sortColumn: defaultSortColumn,
@@ -110,7 +124,7 @@ function redirectUnauthenticated(request, h, locale) {
 }
 
 function validateListParams(type, submissionStatus) {
-  if (!['direct-producers', 'compliance-schemes'].includes(type)) {
+  if (![DIRECT_PRODUCERS, COMPLIANCE_SCHEMES].includes(type)) {
     throw Boom.badRequest(`Invalid organisation type: ${type}`)
   }
   if (!['pending', 'accepted', 'not-submitted'].includes(submissionStatus)) {
@@ -151,7 +165,7 @@ export const certificatesOfComplianceController = {
     }
 
     const {
-      type = 'direct-producers',
+      type = DIRECT_PRODUCERS,
       tab: submissionStatus = 'pending',
       page = '1'
     } = request.query

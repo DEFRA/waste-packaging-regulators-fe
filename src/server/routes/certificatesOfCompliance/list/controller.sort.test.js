@@ -71,8 +71,50 @@ describe('resolveSortForSubmissionStatus', () => {
     )
 
     expect(result).toEqual({
-      sortColumn: 'OrganisationName',
+      sortColumn: 'PercentageMet',
       sortDirection: 'asc'
     })
+  })
+
+  test('uses correct tab default for compliance schemes', () => {
+    const request = createMockRequest({ tab: 'not-submitted' })
+
+    const result = resolveSortForSubmissionStatus(
+      request,
+      'not-submitted',
+      'compliance-schemes'
+    )
+
+    expect(result).toEqual({
+      sortColumn: 'RecyclingObligations',
+      sortDirection: 'asc'
+    })
+  })
+
+  test('clears stored sort when clearSort=true is passed in query', () => {
+    const request = createMockRequest(
+      { tab: 'not-submitted', clearSort: 'true' },
+      {
+        'complianceListSort:direct-producers': {
+          'not-submitted': { column: 'PercentageMet', direction: 'desc' }
+        }
+      }
+    )
+
+    const result = resolveSortForSubmissionStatus(
+      request,
+      'not-submitted',
+      'direct-producers'
+    )
+
+    expect(result).toEqual({
+      sortColumn: 'PercentageMet',
+      sortDirection: 'asc'
+    })
+
+    // Stored sort should be cleared (deleted or reset)
+    expect(
+      request.yar._store['complianceListSort:direct-producers']['not-submitted']
+    ).toBeUndefined()
   })
 })
