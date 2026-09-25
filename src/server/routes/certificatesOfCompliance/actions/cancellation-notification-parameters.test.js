@@ -19,6 +19,24 @@ describe('mapEnvironmentalRegulatorDisplay', () => {
     expect(mapEnvironmentalRegulatorDisplay(input)).toBe(expected)
   })
 
+  test.each([
+    ['The Environment Agency', 'The Environment Agency'],
+    [
+      'The Scottish Environment Protection Agency',
+      'The Scottish Environment Protection Agency'
+    ],
+    [
+      'The Northern Ireland Environment Agency',
+      'The Northern Ireland Environment Agency'
+    ],
+    ['Natural Resources Wales', 'Natural Resources Wales']
+  ])(
+    'returns %s unchanged when the API already provides the display name',
+    (input, expected) => {
+      expect(mapEnvironmentalRegulatorDisplay(input)).toBe(expected)
+    }
+  )
+
   test('returns unknown values unchanged', () => {
     expect(mapEnvironmentalRegulatorDisplay('Unknown Agency')).toBe(
       'Unknown Agency'
@@ -72,6 +90,20 @@ describe('buildCancellationNotificationParameters', () => {
     })
   })
 
+  test('includes regulator_cy when the Obligations API returns the NRW display name for a Wales-registered org', () => {
+    expect(
+      buildCancellationNotificationParameters({
+        registrationType: 'DirectProducer',
+        environmentalRegulator: 'Natural Resources Wales',
+        businessCountry: 'GB-WLS'
+      })
+    ).toEqual({
+      ...expectedDirectProducerNotifyFields(),
+      regulator: 'Natural Resources Wales',
+      regulator_cy: 'Cyfoeth Naturiol Cymru'
+    })
+  })
+
   test('omits regulator_cy for a Wales-registered org regulated by EA', () => {
     expect(
       buildCancellationNotificationParameters({
@@ -96,6 +128,19 @@ describe('buildCancellationNotificationParameters', () => {
       ...expectedComplianceSchemeNotifyFields(),
       regulator: 'Natural Resources Wales',
       regulator_cy: 'Cyfoeth Naturiol Cymru'
+    })
+  })
+
+  test('accepts the API display name for the regulator on English previews', () => {
+    expect(
+      buildCancellationNotificationParameters({
+        registrationType: 'DirectProducer',
+        environmentalRegulator: 'The Environment Agency',
+        businessCountry: 'GB-ENG'
+      })
+    ).toEqual({
+      ...expectedDirectProducerNotifyFields(),
+      regulator: 'The Environment Agency'
     })
   })
 })
