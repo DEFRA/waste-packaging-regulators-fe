@@ -212,8 +212,7 @@ async function renderCancellationEmailPreview(
     organisationId,
     id,
     reasonKey: reason,
-    traceId: request.getTraceId(),
-    locale
+    traceId: request.getTraceId()
   })
 
   const i18n = cocPageI18n(locale, 'cancel')

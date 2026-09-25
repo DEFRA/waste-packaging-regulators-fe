@@ -287,10 +287,25 @@ describe('buildCancellationEmailPreview', () => {
     expect(preview).toEqual({ error: 'no-recipients' })
   })
 
+  test('resolves the Notify template from the reason key rather than a translated label', async () => {
+    const preview = await buildCancellationEmailPreview({
+      organisationId: scenario.byName('Howco Producers Ltd').organisationId,
+      id: scenario.byName('Howco Producers Ltd').declarationId,
+      reasonKey: 'producer-request',
+      traceId: 'trace-preview'
+    })
+
+    expect(preview.error).toBeUndefined()
+    expect(previewCancellationTemplate).toHaveBeenCalledWith(
+      cancellationEmailTemplateIds.producerRequested.en,
+      expect.any(Object)
+    )
+  })
+
   test('returns unknown-template when no Notify template matches the reason', async () => {
     vi.spyOn(
       cancellationEmailTemplates,
-      'resolveCancellationTemplateId'
+      'resolveCancellationTemplateIdForReasonKey'
     ).mockReturnValue(null)
 
     const preview = await previewFor('Howco Producers Ltd')
