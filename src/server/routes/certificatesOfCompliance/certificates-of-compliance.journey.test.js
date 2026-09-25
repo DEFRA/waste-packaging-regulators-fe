@@ -1216,6 +1216,92 @@ describe('certificates of compliance — journey', () => {
     })
   })
 
+  // Search spans both backends: the declaration search for what has been
+  // submitted, and the unsubmitted endpoint for what has not. These drive the
+  // whole stack so the links the merged rows build are actually followed.
+  describe('search across submitted and not-submitted organisations', () => {
+    let scenario
+
+    beforeEach(() => {
+      scenario = app.given([
+        {
+          name: 'Halton Producers Ltd',
+          organisationId: 'org-halton',
+          reference: '100301',
+          status: 'pending',
+          dateSubmitted: '2027-03-05'
+        },
+        {
+          name: 'Halton Holdings Ltd',
+          organisationId: 'org-halton-holdings',
+          reference: '100302',
+          status: 'not-submitted'
+        },
+        {
+          name: 'Halton Cancelled Ltd',
+          organisationId: 'org-halton-cancelled',
+          reference: '100303',
+          status: 'cancelled',
+          dateSubmitted: '2027-02-01'
+        }
+      ])
+    })
+
+    const search = (term, type = 'direct-producers') =>
+      app.get(
+        `/certificates-of-compliance?type=${type}&search=${encodeURIComponent(term)}`
+      )
+
+    it('one term returns submitted and never-submitted organisations together', async () => {
+      const response = await search('Halton')
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.payload).toContain('Halton Producers Ltd')
+      expect(response.payload).toContain('Halton Holdings Ltd')
+      expect(response.payload).toContain('Halton Cancelled Ltd')
+      // Pending, plus a Not submitted row for each organisation without a live
+      // submission, plus the cancelled declaration itself.
+      expect(response.payload).toContain('4 results for')
+    })
+
+    it('a Not submitted search row leads to the organisation detail page', async () => {
+      const org = scenario.byName('Halton Holdings Ltd')
+      const response = await search('Halton')
+
+      const href = `/certificates-of-compliance/${org.organisationId}?obligationYear=2026&type=direct-producers&tab=pending`
+      expect(response.payload).toContain(href.replaceAll('&', '&amp;'))
+
+      const detail = await app.get(href)
+
+      expect(detail.statusCode).toBe(statusCodes.ok)
+      expect(detail.payload).toContain('Halton Holdings Ltd')
+    })
+
+    it('a cancelled-only organisation offers both its current state and its declaration', async () => {
+      const org = scenario.byName('Halton Cancelled Ltd')
+      const response = await search('Halton Cancelled')
+
+      expect(response.payload).toContain('2 results for')
+
+      const organisationPath = `/certificates-of-compliance/${org.organisationId}?obligationYear=2026&type=direct-producers&tab=pending`
+      const declarationPath = `/certificates-of-compliance/${org.organisationId}/certificate/${org.declarationId}?type=direct-producers&tab=pending`
+
+      expect(response.payload).toContain(
+        organisationPath.replaceAll('&', '&amp;')
+      )
+      expect(response.payload).toContain(
+        declarationPath.replaceAll('&', '&amp;')
+      )
+
+      const organisationPage = await app.get(organisationPath)
+      const declarationPage = await app.get(declarationPath)
+
+      expect(organisationPage.statusCode).toBe(statusCodes.ok)
+      expect(declarationPage.statusCode).toBe(statusCodes.ok)
+      expect(declarationPage.payload).toContain('Halton Cancelled Ltd')
+    })
+  })
+
   describe('CSV download', () => {
     const pendingDownloadUrl =
       '/certificates-of-compliance/download?organisation_type=direct-producers&submission_status=pending'

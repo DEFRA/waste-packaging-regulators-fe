@@ -1,4 +1,8 @@
 import {
+  clearLocaleCacheForTests,
+  seedLocaleDictionaryForTests
+} from '#server/common/helpers/i18n/translate.js'
+import {
   cocPageI18n,
   translateActionLabels,
   translateComplianceDocumentNoun,
@@ -7,6 +11,7 @@ import {
   translateNoData,
   translateOrganisationTypeDisplay,
   translateRegulation43Statement,
+  translateSearchResultCount,
   translateSuccessBanner,
   translateTabSummaryText,
   translateUnknownOrganisation
@@ -107,5 +112,57 @@ describe('locale-strings', () => {
     expect(translateRegulation43Statement(false, 'Acme Ltd', 'en')).toContain(
       'not complied'
     )
+  })
+})
+
+describe('#translateSearchResultCount', () => {
+  afterEach(() => clearLocaleCacheForTests())
+
+  test('splits the singular sentence either side of the term', () => {
+    expect(translateSearchResultCount('en', 1)).toEqual({
+      before: '1 result for "',
+      after: '".'
+    })
+  })
+
+  test('splits the plural sentence either side of the term', () => {
+    expect(translateSearchResultCount('en', 2)).toEqual({
+      before: '2 results for "',
+      after: '".'
+    })
+  })
+
+  test('uses the plural sentence for no results', () => {
+    expect(translateSearchResultCount('en', 0).before).toBe('0 results for "')
+  })
+
+  // The placeholder is the only thing the split relies on. A translation that
+  // drops it must render the sentence without the term, not throw.
+  test('renders the sentence without the term when a translation omits the placeholder', () => {
+    seedLocaleDictionaryForTests('cy', {
+      certificatesOfCompliance: {
+        list: { searchResults: { resultPlural: '{{count}} canlyniad.' } }
+      }
+    })
+
+    expect(translateSearchResultCount('cy', 3)).toEqual({
+      before: '3 canlyniad.',
+      after: ''
+    })
+  })
+
+  // The term never reaches translate(), so a sentence that is nothing but the
+  // placeholder still splits cleanly rather than losing its parts.
+  test('handles a sentence consisting only of the placeholder', () => {
+    seedLocaleDictionaryForTests('cy', {
+      certificatesOfCompliance: {
+        list: { searchResults: { resultSingular: '{{searchTerm}}' } }
+      }
+    })
+
+    expect(translateSearchResultCount('cy', 1)).toEqual({
+      before: '',
+      after: ''
+    })
   })
 })

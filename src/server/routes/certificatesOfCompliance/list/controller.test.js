@@ -740,13 +740,15 @@ describe('#certificatesOfComplianceController', () => {
         expect(new Set(hrefs).size).toBe(2)
       })
 
-      test('Should show the Cancelled tag in grey', async () => {
+      // Yellow rather than grey, matching the detail page: grey is Not submitted,
+      // which now appears in this same table.
+      test('Should show the Cancelled tag in yellow', async () => {
         app.given(MULTI)
         const { result } = await searchFor('Marlow Producers Ltd')
 
         expect(result).toEqual(
           expect.stringContaining(
-            '<strong class="govuk-tag govuk-tag--grey">Cancelled</strong>'
+            '<strong class="govuk-tag govuk-tag--yellow">Cancelled</strong>'
           )
         )
       })
@@ -900,6 +902,282 @@ describe('#certificatesOfComplianceController', () => {
             `a[href="/certificates-of-compliance/${pendingItem.organisationId}/certificate/${pendingItem.id}?type=direct-producers&tab=pending&lang=cy"]`
           )
       ).toHaveLength(1)
+    })
+
+    // "Not submitted" is not a declaration status, so these rows come from the
+    // unsubmitted endpoint rather than the declaration search. They are the only
+    // way search can surface an organisation that still owes a submission.
+    describe('Not submitted organisations', () => {
+      const NEVER_SUBMITTED = [
+        {
+          name: 'Zeina Foods Limited',
+          organisationId: 'org-zeina',
+          reference: '100245',
+          status: 'not-submitted'
+        }
+      ]
+
+      test('Should return a Not submitted organisation for a partial lower-case term', async () => {
+        app.given(NEVER_SUBMITTED)
+        const { result } = await searchFor('zei')
+        const $ = load(result)
+        const rows = $('table').first().find('tbody tr')
+
+        expect($('body').text()).toContain('1 result for')
+        expect(rows).toHaveLength(1)
+        expect(rows.eq(0).text()).toContain('Zeina Foods Limited')
+        expect(rows.eq(0).text()).toContain('Not submitted')
+      })
+
+      test('Should match a Not submitted organisation on its organisation ID', async () => {
+        app.given(NEVER_SUBMITTED)
+        const { result } = await searchFor('10024')
+
+        expect(result).toEqual(expect.stringContaining('Zeina Foods Limited'))
+      })
+
+      test('Should show the Not submitted tag in grey', async () => {
+        app.given(NEVER_SUBMITTED)
+        const { result } = await searchFor('zeina')
+
+        expect(result).toEqual(
+          expect.stringContaining(
+            '<strong class="govuk-tag govuk-tag--grey">Not submitted</strong>'
+          )
+        )
+      })
+
+      // There is no declaration to link to, so the row points at the
+      // organisation itself, the way the not-submitted tab does.
+      test('Should link a Not submitted row to the organisation detail page', async () => {
+        const scenario = app.given(NEVER_SUBMITTED)
+        const org = scenario.byName('Zeina Foods Limited')
+        const { result } = await searchFor('zeina')
+        const $ = load(result)
+
+        const link = $('table')
+          .first()
+          .find(
+            `a[href="/certificates-of-compliance/${org.organisationId}?obligationYear=2026&type=direct-producers&tab=pending"]`
+          )
+
+        expect(link.text().trim()).toBe('Zeina Foods Limited')
+      })
+
+      test('Should show No data where an unsubmitted organisation has no calculated obligations', async () => {
+        app.given([
+          {
+            name: 'Uncalculated Producers Ltd',
+            organisationId: 'org-uncalculated',
+            reference: '100811',
+            status: 'not-submitted',
+            obligations: []
+          }
+        ])
+        const { result } = await searchFor('Uncalculated')
+        const $ = load(result)
+
+        expect($('table').first().find('tbody tr').eq(0).text()).toContain(
+          'No data'
+        )
+      })
+
+      // A cancelled-only organisation reaches both endpoints: it holds no live
+      // declaration, and its cancelled one matched the term. Its current state
+      // leads and the history sits below it.
+      describe('An organisation whose only submission was cancelled', () => {
+        const CANCELLED_ONLY = [
+          {
+            name: 'Cancelled Only Ltd',
+            organisationId: 'org-cancelled-only',
+            reference: '100910',
+            status: 'cancelled',
+            dateSubmitted: '2027-01-05'
+          }
+        ]
+
+        test('Should show a Not submitted row above the Cancelled row', async () => {
+          app.given(CANCELLED_ONLY)
+          const { result } = await searchFor('Cancelled Only Ltd')
+          const $ = load(result)
+          const rows = $('table').first().find('tbody tr')
+
+          expect($('body').text()).toContain('2 results for')
+          expect(rows).toHaveLength(2)
+          expect(rows.eq(0).text()).toContain('Not submitted')
+          expect(rows.eq(1).text()).toContain('Cancelled')
+        })
+
+        test('Should link the two rows to the organisation and to its declaration', async () => {
+          const scenario = app.given(CANCELLED_ONLY)
+          const org = scenario.byName('Cancelled Only Ltd')
+          const { result } = await searchFor('Cancelled Only Ltd')
+          const $ = load(result)
+          const hrefs = $('table')
+            .first()
+            .find('tbody tr a')
+            .map((_, el) => $(el).attr('href'))
+            .get()
+
+          expect(hrefs).toEqual([
+            `/certificates-of-compliance/${org.organisationId}?obligationYear=2026&type=direct-producers&tab=pending`,
+            `/certificates-of-compliance/${org.organisationId}/certificate/${org.declarationId}?type=direct-producers&tab=pending`
+          ])
+        })
+      })
+
+      test('Should keep an organisation rows together with its current row leading', async () => {
+        app.given([
+          {
+            name: 'Grouped Recent Ltd',
+            organisationId: 'org-recent',
+            reference: '100701',
+            status: 'pending',
+            dateSubmitted: '2027-03-05'
+          },
+          {
+            name: 'Grouped Cancelled Ltd',
+            organisationId: 'org-grouped-cancelled',
+            reference: '100702',
+            status: 'cancelled',
+            dateSubmitted: '2027-02-01'
+          },
+          {
+            name: 'Grouped Never Ltd',
+            organisationId: 'org-grouped-never',
+            reference: '100703',
+            status: 'not-submitted'
+          }
+        ])
+        const { result } = await searchFor('Grouped')
+        const $ = load(result)
+        const rows = $('table')
+          .first()
+          .find('tbody tr')
+          .map((_, el) => $(el).text().replace(/\s+/g, ' ').trim())
+          .get()
+
+        expect(rows).toHaveLength(4)
+        expect(rows[0]).toContain('Grouped Recent Ltd')
+        expect(rows[0]).toContain('Pending')
+        // The cancelled-only organisation keeps both of its rows adjacent.
+        expect(rows[1]).toContain('Grouped Cancelled Ltd')
+        expect(rows[1]).toContain('Not submitted')
+        expect(rows[2]).toContain('Grouped Cancelled Ltd')
+        expect(rows[2]).toContain('Cancelled')
+        // Nothing dates the never-submitted organisation, so it tails the list.
+        expect(rows[3]).toContain('Grouped Never Ltd')
+        expect(rows[3]).toContain('Not submitted')
+      })
+
+      test('Should count Not submitted rows in the result total', async () => {
+        app.given([
+          {
+            name: 'Counted Pending Ltd',
+            organisationId: 'org-counted-pending',
+            reference: '100801',
+            status: 'pending'
+          },
+          {
+            name: 'Counted Never Ltd',
+            organisationId: 'org-counted-never',
+            reference: '100802',
+            status: 'not-submitted'
+          }
+        ])
+        const { result } = await searchFor('Counted')
+
+        expect(load(result)('body').text()).toContain('2 results for')
+      })
+
+      // The unsubmitted endpoint owns the membership rule — an organisation with
+      // a live submission is simply not in its result set, and the frontend adds
+      // no suppression of its own.
+      test('Should not show a Not submitted row for an organisation with a live submission', async () => {
+        app.given([
+          {
+            name: 'Resubmitted Ltd',
+            organisationId: 'org-resubmitted',
+            reference: '100905',
+            status: 'pending',
+            dateSubmitted: '2027-02-20',
+            history: [{ status: 'cancelled', dateSubmitted: '2027-01-02' }]
+          }
+        ])
+        const { result } = await searchFor('Resubmitted Ltd')
+        const $ = load(result)
+
+        expect($('table').first().text()).not.toContain('Not submitted')
+      })
+
+      test('Should show Not submitted rows for compliance schemes with the Regulation 43 column', async () => {
+        app.given([
+          {
+            name: 'Scheme Never Submitted Ltd',
+            organisationId: 'org-scheme-never',
+            reference: '530001',
+            type: 'compliance-scheme',
+            status: 'not-submitted'
+          }
+        ])
+        const { result } = await searchFor('Scheme Never', 'compliance-schemes')
+        const $ = load(result)
+        const headings = $('table')
+          .first()
+          .find('thead th')
+          .map((_, el) => $(el).text().trim())
+          .get()
+
+        expect(headings).toEqual([
+          'Organisation name',
+          'Organisation ID',
+          'Submission status',
+          'Recycling obligations',
+          'Regulation 43'
+        ])
+        expect($('table').first().text()).toContain('Not submitted')
+      })
+
+      test('Should retain Welsh locale on a Not submitted row link', async () => {
+        const scenario = app.given(NEVER_SUBMITTED)
+        const org = scenario.byName('Zeina Foods Limited')
+        const { result } = await inject(
+          '/certificates-of-compliance?lang=cy&type=direct-producers&search=zeina'
+        )
+        const $ = load(result)
+
+        expect(
+          $('table')
+            .first()
+            .find(
+              `a[href="/certificates-of-compliance/${org.organisationId}?obligationYear=2026&type=direct-producers&tab=pending&lang=cy"]`
+            )
+        ).toHaveLength(1)
+      })
+    })
+
+    describe('The result count label', () => {
+      test('Should render the search term in bold', async () => {
+        const { result } = await searchFor(pendingItem.organisationName)
+        const $ = load(result)
+        const label = $('#search-results p').first()
+
+        expect(label.find('strong').text()).toBe(pendingItem.organisationName)
+        expect(label.text()).toContain('1 result for "')
+      })
+
+      // The term is user input rendered beside literal markup, so it has to be
+      // escaped rather than interpolated into the translated sentence.
+      test('Should escape a search term containing HTML', async () => {
+        const term = '<img src=x onerror=alert(1)>'
+        const { result } = await searchFor(term)
+        const $ = load(result)
+
+        expect(result).not.toContain('<img src=x')
+        expect(result).toContain('&lt;img src=x')
+        expect($('#search-results strong').first().text()).toBe(term)
+        expect($('#search-results script')).toHaveLength(0)
+      })
     })
   })
 

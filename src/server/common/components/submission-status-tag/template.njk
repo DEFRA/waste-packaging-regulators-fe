@@ -1,0 +1,11 @@
+{% set submissionStatusTag = {
+  'Pending': { colour: 'blue', key: 'pending' },
+  'Accepted': { colour: 'teal', key: 'accepted' },
+  'Cancelled': { colour: 'yellow', key: 'cancelled' },
+  'Not submitted': { colour: 'grey', key: 'notSubmitted' }
+}[params.status] %}
+{%- if submissionStatusTag -%}
+  <strong class="govuk-tag govuk-tag--{{ submissionStatusTag.colour }}">{{ t(params.locale, 'certificatesOfCompliance.common.submissionStatus.' ~ submissionStatusTag.key) }}</strong>
+{%- else -%}
+  <strong class="govuk-tag govuk-tag--blue">{{ params.status }}</strong>
+{%- endif -%}

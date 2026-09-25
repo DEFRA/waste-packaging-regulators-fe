@@ -1,0 +1,8 @@
+{% set documentType = 'statement' if params.organisationType == 'compliance-schemes' else 'certificate' %}
+{% set query = '?type=' ~ params.organisationType ~ '&tab=' ~ params.activeTab %}
+{% if params.item.id == null %}
+  {% set href = params.routePrefix ~ '/' ~ params.item.organisationId ~ '?obligationYear=' ~ params.complianceYear ~ '&type=' ~ params.organisationType ~ '&tab=' ~ params.activeTab %}
+{% else %}
+  {% set href = params.routePrefix ~ '/' ~ params.item.organisationId ~ '/' ~ documentType ~ '/' ~ params.item.id ~ query %}
+{% endif %}
+<a href="{{ localeUrl(href) }}" class="govuk-link govuk-link--no-visited-state">{{ params.item.organisationName }}</a>

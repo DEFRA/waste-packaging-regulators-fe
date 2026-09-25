@@ -14,7 +14,10 @@ import {
   withForwardedPrefix
 } from '#server/common/helpers/proxy/forwarded-prefix.js'
 import { SEARCH_TERM_MAX_LENGTH } from '../common/constants.js'
-import { cocPageI18n } from '../common/locale-strings.js'
+import {
+  cocPageI18n,
+  translateSearchResultCount
+} from '../common/locale-strings.js'
 import { getSessionUser } from '#server/common/helpers/get-session-user.js'
 import { getRegulatorCountryCode } from '#server/common/helpers/regulator-country-code.js'
 import { getCertificatesOfComplianceViewModel } from './list.service.js'
@@ -134,6 +137,7 @@ function buildListViewData(
     isSearch: search !== null,
     searchItems: search?.items ?? [],
     searchResultCount: search?.total ?? 0,
+    searchResultLabel: translateSearchResultCount(locale, search?.total ?? 0),
     searchTruncated: search?.truncated ?? false,
     clearSearchUrl: url(
       `${routePrefix || '/'}?type=${type}&tab=${submissionStatus}`

@@ -1,0 +1,30 @@
+{% from "status-tag/macro.njk" import appStatusTag %}
+{% from "submission-status-tag/macro.njk" import appSubmissionStatusTag %}
+{% from "organisation-link/macro.njk" import appOrganisationLink with context %}
+{#- One row of a compliance table, shared by the tab panel and the search results.
+    Included rather than imported as a macro so it inherits `item` and the request
+    context. The caller sets showSubmissionStatus / showDateSubmitted. -#}
+<tr class="govuk-table__row">
+  <th scope="row" class="govuk-table__header govuk-!-width-one-quarter">
+    {{ appOrganisationLink({ item: item, organisationType: organisationType, activeTab: activeTab, routePrefix: routePrefix, complianceYear: complianceYear }) }}
+  </th>
+  <td class="govuk-table__cell">{{ item.organisationReferenceNumber }}</td>
+  {% if showSubmissionStatus %}
+    <td class="govuk-table__cell">
+      {{ appSubmissionStatusTag({ status: item.submissionStatus, locale: locale }) }}
+    </td>
+  {% endif %}
+  <td class="govuk-table__cell">
+    {{ appStatusTag({ value: item.recyclingObligationsMet, trueText: i18n.ct('statusTag', 'met'), falseText: i18n.ct('statusTag', 'notMet'), locale: locale, i18n: i18n }) }}
+  </td>
+  {% if organisationType == 'compliance-schemes' %}
+    <td class="govuk-table__cell">
+      {{ appStatusTag({ value: item.regulation43Met, trueText: i18n.ct('statusTag', 'compliant'), falseText: i18n.ct('statusTag', 'notCompliant'), locale: locale, i18n: i18n }) }}
+    </td>
+  {% else %}
+    <td class="govuk-table__cell">{% if item.obligationCoveragePercentage != null %}{{ item.obligationCoveragePercentage }}%{% else %}—{% endif %}</td>
+  {% endif %}
+  {% if showDateSubmitted %}
+    <td class="govuk-table__cell">{{ item.dateSubmitted | formatDate('do MMMM yyyy') }}</td>
+  {% endif %}
+</tr>

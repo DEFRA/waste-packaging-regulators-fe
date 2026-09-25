@@ -22,6 +22,27 @@ const tabSummaryKeyByTab = {
   'not-submitted': 'list.tabSummary.notSubmitted'
 }
 
+// Do not collapse this back into one translated string: interpolate() substitutes
+// parameters raw, so bolding the term would need `| safe` and make the search box
+// an HTML injection point.
+const SEARCH_TERM_PLACEHOLDER = '{{searchTerm}}'
+
+export function translateSearchResultCount(locale, count) {
+  const key =
+    count === 1
+      ? 'list.searchResults.resultSingular'
+      : 'list.searchResults.resultPlural'
+
+  const sentence = translateCoc(locale, key, {
+    count: String(count),
+    searchTerm: SEARCH_TERM_PLACEHOLDER
+  })
+
+  const [before, after = ''] = sentence.split(SEARCH_TERM_PLACEHOLDER)
+
+  return { before, after }
+}
+
 export function translateEmptyTabMessage(tab, locale) {
   const key = emptyTabKeyByTab[tab]
   return key ? translateCoc(locale, key) : ''
