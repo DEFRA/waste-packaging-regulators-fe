@@ -68,7 +68,7 @@
       left: 8px;
       width: 36px;
       height: 34px;
-      background: #{$defra-internal-crest} no-repeat 50% 0 / auto 34px;
+      background: govuk-image-url("govuk-crest.svg") no-repeat 50% 0 / auto 34px;
 
     }
   }
@@ -120,8 +120,8 @@
 @supports ((-webkit-mask-position: initial) or (mask-position: initial)) {
   .defra-internal-header__logo::before {
     background: currentcolor;
-    -webkit-mask: #{$defra-internal-crest} no-repeat 50% 0 / auto 34px;
-    mask: #{$defra-internal-crest} no-repeat 50% 0 / auto 34px;
+    -webkit-mask: govuk-image-url("govuk-crest.svg") no-repeat 50% 0 / auto 34px;
+    mask: govuk-image-url("govuk-crest.svg") no-repeat 50% 0 / auto 34px;
   }
 
   // currentcolor is not computed correctly in forced-colours mode, so

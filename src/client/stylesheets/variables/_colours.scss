@@ -19,7 +19,3 @@ $defra-internal-link: #00703c;
 // with dark-blue; there is no "dark green" in the palette, so it is shaded here
 // by the same order of magnitude.
 $defra-internal-link-hover: color.mix(#000000, $defra-internal-link, 40%);
-
-// The crest ships with GOV.UK Frontend. `$govuk-images-path` is re-asserted at
-// the top of application.scss, so the standard helper resolves correctly here.
-$defra-internal-crest: url("/public/assets/images/govuk-crest.svg");
