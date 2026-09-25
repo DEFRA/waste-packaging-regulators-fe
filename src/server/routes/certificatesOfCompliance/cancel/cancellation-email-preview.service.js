@@ -2,10 +2,10 @@ import { previewCancellationTemplate } from '#services/govuk-notify.service.js'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
 import { buildCancellationNotificationParameters } from '../actions/cancellation-notification-parameters.js'
-import { getCancelReasonLabel } from './reasons.js'
+import { isValidCancelReason } from './reasons.js'
 import {
   isWelshOrganisation,
-  resolveCancellationTemplateId
+  resolveCancellationTemplateIdForReasonKey
 } from './cancellation-email-templates.js'
 import { buildCancellationEmailRecipients } from './build-cancellation-email-recipients.js'
 
@@ -66,8 +66,7 @@ export async function buildCancellationEmailPreview({
   }
 
   const registrationType = declaration.organisation?.registrationType
-  const reasonLabel = getCancelReasonLabel(registrationType, reasonKey, locale)
-  if (!reasonLabel) {
+  if (!isValidCancelReason(reasonKey)) {
     return { error: 'invalid-reason' }
   }
 
@@ -87,7 +86,9 @@ export async function buildCancellationEmailPreview({
 
   const previewRecipient = recipients[0]
   const isWelsh = isWelshOrganisation(wasteOrganisation?.businessCountry)
-  const templateId = resolveCancellationTemplateId(reasonLabel, { isWelsh })
+  const templateId = resolveCancellationTemplateIdForReasonKey(reasonKey, {
+    isWelsh
+  })
   if (!templateId) {
     return { error: 'unknown-template' }
   }
