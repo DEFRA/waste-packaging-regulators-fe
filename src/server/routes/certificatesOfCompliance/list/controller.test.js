@@ -420,6 +420,30 @@ describe('#certificatesOfComplianceController', () => {
         direction: 'desc'
       },
       { type: 'direct-producers', tab: 'not-submitted' },
+      {
+        type: 'direct-producers',
+        tab: 'not-submitted',
+        column: 'PercentageMet',
+        direction: 'desc'
+      },
+      {
+        type: 'direct-producers',
+        tab: 'not-submitted',
+        column: 'RecyclingObligations',
+        direction: 'desc'
+      },
+      {
+        type: 'direct-producers',
+        tab: 'not-submitted',
+        column: 'PercentageMet',
+        direction: 'asc'
+      },
+      {
+        type: 'direct-producers',
+        tab: 'not-submitted',
+        column: 'RecyclingObligations',
+        direction: 'asc'
+      },
       { type: 'compliance-schemes', tab: 'pending' },
       {
         type: 'compliance-schemes',
@@ -494,7 +518,19 @@ describe('#certificatesOfComplianceController', () => {
         column: 'DateSubmitted',
         direction: 'desc'
       },
-      { type: 'compliance-schemes', tab: 'not-submitted' }
+      { type: 'compliance-schemes', tab: 'not-submitted' },
+      {
+        type: 'compliance-schemes',
+        tab: 'not-submitted',
+        column: 'RecyclingObligations',
+        direction: 'desc'
+      },
+      {
+        type: 'compliance-schemes',
+        tab: 'not-submitted',
+        column: 'RecyclingObligations',
+        direction: 'asc'
+      }
     ])(
       'Should display sort $direction on column $column on the $type $tab tab',
       async ({ type, tab, column, direction }) => {
@@ -512,12 +548,17 @@ describe('#certificatesOfComplianceController', () => {
 
         const activeSortAnchor = $('th[aria-sort$="ending"] a')
 
-        if (tab === 'not-submitted') {
-          expect(activeSortAnchor).toHaveLength(0)
-          return
+        let activeColumn = column
+        if (!activeColumn) {
+          if (tab === 'not-submitted') {
+            activeColumn =
+              type === 'direct-producers'
+                ? 'PercentageMet'
+                : 'RecyclingObligations'
+          } else {
+            activeColumn = 'DateSubmitted'
+          }
         }
-
-        const activeColumn = column || 'DateSubmitted'
 
         expect(activeSortAnchor).toHaveLength(1)
         expect(activeSortAnchor.find('path')).toHaveLength(1)
@@ -1202,7 +1243,7 @@ describe('#certificatesOfComplianceController', () => {
       'Should show the empty message and hide the table when the %s tab has no items',
       async (tab) => {
         const organisationType = 'direct-producers'
-        const sortColumn = getDefaultSortColumn(tab)
+        const sortColumn = getDefaultSortColumn(tab, organisationType)
 
         vi.spyOn(
           listService,
@@ -1273,6 +1314,36 @@ describe('#certificatesOfComplianceController', () => {
 
       expect(response.result).toContain('sort=DateSubmitted[asc]')
       expect(response.result).toContain('aria-sort="descending"')
+    })
+
+    test('Should clear sort when navigating via tab links', async () => {
+      let cookie = sortSessionCookie
+
+      // Apply a custom sort on the pending tab
+      let response = await app.get(
+        '/certificates-of-compliance?tab=pending&sort=RecyclingObligations[desc]',
+        cookie
+      )
+      cookie = app.nextCookie(response, cookie)
+
+      // Verify the tab link contains clearSort=true
+      const $ = load(response.result)
+      let pendingTabHref = $('.govuk-tabs__tab').first().attr('href') // "Pending" is the first tab
+      expect(pendingTabHref).toContain('clearSort=true')
+
+      if (pendingTabHref.startsWith('?')) {
+        pendingTabHref = '/certificates-of-compliance' + pendingTabHref
+      }
+
+      // Navigate back to the pending tab via its tab link
+      response = await app.get(pendingTabHref, cookie)
+
+      const $after = load(response.result)
+
+      // Verify sort was reset to the default DateSubmitted descending (which renders a link to toggle to ascending)
+      expect($after('th[aria-sort="descending"]').text().trim()).toContain(
+        'Date submitted'
+      )
     })
   })
 

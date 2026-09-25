@@ -2433,9 +2433,17 @@ describe('getCertificatesOfComplianceViewModel', () => {
     describe('resolveUnsubmittedSort', () => {
       test.each([
         ['OrganisationName', 'asc', 'Name[asc]'],
-        ['OrganisationId', 'desc', 'ReferenceNumber[desc]'],
-        ['RecyclingObligations', 'asc', 'RecyclingObligationsMet[asc]'],
-        ['PercentageMet', 'desc', 'ObligationCoveragePercentage[desc]']
+        ['OrganisationId', 'desc', 'ReferenceNumber[desc],Name[asc]'],
+        [
+          'RecyclingObligations',
+          'asc',
+          'RecyclingObligationsMet[asc],Name[asc]'
+        ],
+        [
+          'PercentageMet',
+          'desc',
+          'ObligationCoveragePercentage[desc],Name[asc]'
+        ]
       ])(
         'maps %s[%s] to the endpoint vocabulary',
         (column, direction, expected) => {
@@ -2446,7 +2454,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
       // The controller persists whatever ?sort= it is given per tab, so a column
       // belonging to another tab can arrive here from the session. Falling back
       // keeps it away from the endpoint, which would reject it.
-      test.each(['DateSubmitted', 'Regulation43', 'Nonsense', undefined])(
+      test.each(['DateSubmitted', 'Nonsense', undefined])(
         'falls back to the default sort for the unsupported column %s',
         (column) => {
           expect(resolveUnsubmittedSort(column, 'asc')).toBe('Name[asc]')

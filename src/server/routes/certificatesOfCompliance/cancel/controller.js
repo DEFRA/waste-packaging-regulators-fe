@@ -1,7 +1,6 @@
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
-import { config } from '#config/config.js'
 import { getForwardedPrefix } from '#server/common/helpers/proxy/forwarded-prefix.js'
 import { cancelComplianceDeclaration } from '../actions/cancel.service.js'
 import { getComplianceDeclarationReviewStatus } from '../actions/review-status.service.js'
@@ -235,9 +234,6 @@ async function renderCancellationEmailPreview(
     subject: preview.subject,
     body: preview.body,
     toAddresses: preview.toAddresses,
-    // Standalone preview links static files from /public, not the proxied
-    // /certificates-of-compliance/public path used by getAssetPath elsewhere.
-    assetPath: config.get('assetPath'),
     locale,
     i18n
   })

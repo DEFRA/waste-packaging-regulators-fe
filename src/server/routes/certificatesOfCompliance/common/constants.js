@@ -58,6 +58,7 @@ export const SEARCH_UNSUBMITTED_SORT = 'Name[asc]'
 export const NO_DATA = 'No data'
 export const UNKNOWN_ORGANISATION = 'Unknown organisation'
 export const COMPLIANCE_SCHEMES = 'compliance-schemes'
+export const DIRECT_PRODUCERS = 'direct-producers'
 export const COMPLIANCE_YEAR = 2026
 
 export const emptyTabMessages = {
