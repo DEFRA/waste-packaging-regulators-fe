@@ -6,8 +6,42 @@ import {
 } from '#test-helpers/cancellation-notification-parameters.expected.js'
 import {
   buildCancellationNotificationParameters,
-  mapEnvironmentalRegulatorDisplay
+  mapEnvironmentalRegulatorDisplay,
+  normaliseRegulatorCode
 } from './cancellation-notification-parameters.js'
+
+describe('normaliseRegulatorCode', () => {
+  test.each([
+    ['EA', 'EA'],
+    ['SEPA', 'SEPA'],
+    ['NIEA', 'NIEA'],
+    ['NRW', 'NRW']
+  ])('returns short code %s unchanged', (input, expected) => {
+    expect(normaliseRegulatorCode(input)).toBe(expected)
+  })
+
+  test.each([
+    ['The Environment Agency', 'EA'],
+    ['The Scottish Environment Protection Agency', 'SEPA'],
+    ['The Northern Ireland Environment Agency', 'NIEA'],
+    ['Natural Resources Wales', 'NRW']
+  ])('maps Obligations API display name %s to %s', (input, expected) => {
+    expect(normaliseRegulatorCode(input)).toBe(expected)
+  })
+
+  test('trims whitespace before resolving display names', () => {
+    expect(normaliseRegulatorCode('  Natural Resources Wales  ')).toBe('NRW')
+  })
+
+  test('returns unknown values unchanged', () => {
+    expect(normaliseRegulatorCode('Unknown Agency')).toBe('Unknown Agency')
+  })
+
+  test('returns null and empty string unchanged', () => {
+    expect(normaliseRegulatorCode(null)).toBeNull()
+    expect(normaliseRegulatorCode('')).toBe('')
+  })
+})
 
 describe('mapEnvironmentalRegulatorDisplay', () => {
   test.each([
@@ -15,27 +49,9 @@ describe('mapEnvironmentalRegulatorDisplay', () => {
     ['SEPA', 'The Scottish Environment Protection Agency'],
     ['NIEA', 'The Northern Ireland Environment Agency'],
     ['NRW', 'Natural Resources Wales']
-  ])('maps %s to %s', (input, expected) => {
+  ])('maps short code %s to %s', (input, expected) => {
     expect(mapEnvironmentalRegulatorDisplay(input)).toBe(expected)
   })
-
-  test.each([
-    ['The Environment Agency', 'The Environment Agency'],
-    [
-      'The Scottish Environment Protection Agency',
-      'The Scottish Environment Protection Agency'
-    ],
-    [
-      'The Northern Ireland Environment Agency',
-      'The Northern Ireland Environment Agency'
-    ],
-    ['Natural Resources Wales', 'Natural Resources Wales']
-  ])(
-    'returns %s unchanged when the API already provides the display name',
-    (input, expected) => {
-      expect(mapEnvironmentalRegulatorDisplay(input)).toBe(expected)
-    }
-  )
 
   test('returns unknown values unchanged', () => {
     expect(mapEnvironmentalRegulatorDisplay('Unknown Agency')).toBe(
