@@ -287,13 +287,12 @@ describe('buildCancellationEmailPreview', () => {
     expect(preview).toEqual({ error: 'no-recipients' })
   })
 
-  test('resolves the Notify template from the reason key when the UI locale is cy', async () => {
+  test('resolves the Notify template from the reason key rather than a translated label', async () => {
     const preview = await buildCancellationEmailPreview({
       organisationId: scenario.byName('Howco Producers Ltd').organisationId,
       id: scenario.byName('Howco Producers Ltd').declarationId,
       reasonKey: 'producer-request',
-      traceId: 'trace-preview',
-      locale: 'cy'
+      traceId: 'trace-preview'
     })
 
     expect(preview.error).toBeUndefined()

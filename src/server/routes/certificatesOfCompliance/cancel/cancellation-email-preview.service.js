@@ -57,8 +57,7 @@ export async function buildCancellationEmailPreview({
   organisationId,
   id,
   reasonKey,
-  traceId,
-  locale = 'en'
+  traceId
 }) {
   const declaration = await fetchDeclaration(organisationId, id, traceId)
   if (declaration == null) {
