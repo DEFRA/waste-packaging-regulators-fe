@@ -359,10 +359,10 @@ describe('certificates of compliance — cancel', () => {
 
       expect(response.statusCode).toBe(statusCodes.ok)
       expect(response.payload).toContain(
-        'href="/public/assets/stylesheets/email-preview.css"'
+        'href="/certificates-of-compliance/public/assets/stylesheets/email-preview.css"'
       )
       expect(response.payload).toContain(
-        'src="/public/assets/images/govuk-crest.svg"'
+        'src="/certificates-of-compliance/public/assets/images/govuk-crest.svg"'
       )
 
       const css = await app.get('/public/assets/stylesheets/email-preview.css')
