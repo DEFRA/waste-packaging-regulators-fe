@@ -1,12 +1,6 @@
-{% from "status-tag/macro.njk" import appStatusTag %}
-
 <div id="search-results" class="govuk-!-margin-bottom-6">
   <p class="govuk-body govuk-!-margin-bottom-4">
-    {% if searchResultCount == 1 %}
-      {{ i18n.t('searchResults.resultSingular', { count: searchResultCount, searchTerm: searchTerm }) }}
-    {% else %}
-      {{ i18n.t('searchResults.resultPlural', { count: searchResultCount, searchTerm: searchTerm }) }}
-    {% endif %}
+    {{ searchResultLabel.before }}<strong>{{ searchTerm }}</strong>{{ searchResultLabel.after }}
     <a href="{{ clearSearchUrl }}" class="govuk-link govuk-link--no-visited-state govuk-!-margin-left-2">{{ i18n.t('searchResults.clearSearch') }}</a>
   </p>
 
@@ -34,31 +28,9 @@
       </thead>
       <tbody class="govuk-table__body">
         {% for item in searchItems %}
-          <tr class="govuk-table__row">
-            <th scope="row" class="govuk-table__header govuk-!-width-one-quarter">
-              <a href="{{ localeUrl(routePrefix ~ '/' ~ item.organisationId ~ '/' ~ ('statement' if organisationType == 'compliance-schemes' else 'certificate') ~ '/' ~ item.id ~ '?type=' ~ organisationType ~ '&tab=' ~ activeTab) }}" class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
-            </th>
-            <td class="govuk-table__cell">{{ item.organisationReferenceNumber }}</td>
-            <td class="govuk-table__cell">
-              {% if item.submissionStatus == 'Accepted' %}
-                <strong class="govuk-tag govuk-tag--teal">{{ t(locale, 'certificatesOfCompliance.common.submissionStatus.accepted') }}</strong>
-              {% elif item.submissionStatus == 'Cancelled' %}
-                <strong class="govuk-tag govuk-tag--grey">{{ t(locale, 'certificatesOfCompliance.common.submissionStatus.cancelled') }}</strong>
-              {% else %}
-                <strong class="govuk-tag govuk-tag--blue">{{ item.submissionStatus }}</strong>
-              {% endif %}
-            </td>
-            <td class="govuk-table__cell">
-              {{ appStatusTag({ value: item.recyclingObligationsMet, trueText: i18n.ct('statusTag', 'met'), falseText: i18n.ct('statusTag', 'notMet'), locale: locale, i18n: i18n }) }}
-            </td>
-            {% if organisationType == 'compliance-schemes' %}
-              <td class="govuk-table__cell">
-                {{ appStatusTag({ value: item.regulation43Met, trueText: i18n.ct('statusTag', 'compliant'), falseText: i18n.ct('statusTag', 'notCompliant'), locale: locale, i18n: i18n }) }}
-              </td>
-            {% else %}
-              <td class="govuk-table__cell">{% if item.obligationCoveragePercentage != null %}{{ item.obligationCoveragePercentage }}%{% else %}—{% endif %}</td>
-            {% endif %}
-          </tr>
+          {% set showSubmissionStatus = true %}
+          {% set showDateSubmitted = false %}
+          {% include "certificatesOfCompliance/partials/compliance-row.njk" %}
         {% endfor %}
       </tbody>
     </table>

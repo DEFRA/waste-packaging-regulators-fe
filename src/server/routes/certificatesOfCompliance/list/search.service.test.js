@@ -46,13 +46,34 @@ function buildDeclaration(overrides = {}) {
   }
 }
 
+function buildUnsubmitted(overrides = {}) {
+  return {
+    organisationId: 'org-9',
+    obligationYear: 2026,
+    registrationType: 'DirectProducer',
+    name: 'NEVER SUBMITTED LTD',
+    referenceNumber: '100999',
+    recyclingObligationsMet: null,
+    obligationCoveragePercentage: null,
+    ...overrides
+  }
+}
+
 describe('#getComplianceSearchResults', () => {
   let listComplianceDeclarations
+  let listUnsubmittedComplianceDeclarations
 
   beforeEach(() => {
     listComplianceDeclarations = vi.fn()
+    // Search draws on both endpoints, so every test needs this stubbed even when
+    // it only asserts on the declaration half.
+    listUnsubmittedComplianceDeclarations = vi.fn().mockResolvedValue({
+      unsubmittedOrganisations: [],
+      total: 0
+    })
     createWasteObligationsApiService.mockReturnValue({
-      listComplianceDeclarations
+      listComplianceDeclarations,
+      listUnsubmittedComplianceDeclarations
     })
   })
 
@@ -257,6 +278,190 @@ describe('#getComplianceSearchResults', () => {
       )
 
       expect(result).toEqual({ items: [], total: 0, truncated: false })
+    })
+  })
+
+  describe('not-submitted organisations', () => {
+    beforeEach(() => {
+      config.get.mockImplementation((key) =>
+        key === 'useMockApi' ? false : ''
+      )
+      listComplianceDeclarations.mockResolvedValue({
+        complianceDeclarations: [],
+        total: 0
+      })
+    })
+
+    test('Should request unsubmitted organisations for the same year, type and term', async () => {
+      await getComplianceSearchResults('compliance-schemes', 'zeina', 'trace-1')
+
+      expect(listUnsubmittedComplianceDeclarations).toHaveBeenCalledWith(
+        {
+          obligationYear: 2026,
+          registrationType: 'ComplianceScheme',
+          country: null,
+          search: 'zeina',
+          // DateSubmitted is not in this endpoint's sort vocabulary and would be
+          // rejected, so search asks for name order.
+          sort: 'Name[asc]',
+          page: 1,
+          pageSize: 100
+        },
+        'trace-1'
+      )
+    })
+
+    test('Should pass the regulator country filter to both endpoints', async () => {
+      await getComplianceSearchResults(
+        'direct-producers',
+        'acme',
+        'trace-1',
+        'GB-SCT'
+      )
+
+      expect(listComplianceDeclarations).toHaveBeenCalledWith(
+        expect.objectContaining({ country: 'GB-SCT' }),
+        'trace-1'
+      )
+      expect(listUnsubmittedComplianceDeclarations).toHaveBeenCalledWith(
+        expect.objectContaining({ country: 'GB-SCT' }),
+        'trace-1'
+      )
+    })
+
+    test('Should label an unsubmitted organisation Not submitted and carry no declaration', async () => {
+      listUnsubmittedComplianceDeclarations.mockResolvedValue({
+        unsubmittedOrganisations: [
+          buildUnsubmitted({
+            name: 'NEVER SUBMITTED LTD',
+            referenceNumber: '100999',
+            recyclingObligationsMet: false,
+            obligationCoveragePercentage: 12
+          })
+        ],
+        total: 1
+      })
+
+      const { items } = await getComplianceSearchResults(
+        'direct-producers',
+        'never'
+      )
+
+      expect(items).toEqual([
+        expect.objectContaining({
+          id: null,
+          submissionStatus: 'Not submitted',
+          organisationName: 'NEVER SUBMITTED LTD',
+          organisationReferenceNumber: '100999',
+          recyclingObligationsMet: false,
+          obligationCoveragePercentage: 12,
+          // Regulation 43 is declaration content, and there is no declaration.
+          regulation43Met: null,
+          dateSubmitted: null
+        })
+      ])
+    })
+
+    test('Should sum the totals of both endpoints', async () => {
+      listComplianceDeclarations.mockResolvedValue({
+        complianceDeclarations: [
+          buildDeclaration({ id: 'a' }),
+          buildDeclaration({ id: 'b' })
+        ],
+        total: 2
+      })
+      listUnsubmittedComplianceDeclarations.mockResolvedValue({
+        unsubmittedOrganisations: [buildUnsubmitted()],
+        total: 1
+      })
+
+      const { total, truncated } = await getComplianceSearchResults(
+        'direct-producers',
+        'ltd'
+      )
+
+      expect(total).toBe(3)
+      expect(truncated).toBe(false)
+    })
+
+    test('Should report truncation when only the unsubmitted search is capped', async () => {
+      listUnsubmittedComplianceDeclarations.mockResolvedValue({
+        unsubmittedOrganisations: [buildUnsubmitted()],
+        total: 250
+      })
+
+      const { total, truncated } = await getComplianceSearchResults(
+        'direct-producers',
+        'ltd'
+      )
+
+      expect(total).toBe(250)
+      expect(truncated).toBe(true)
+    })
+
+    // A cancelled-only organisation reaches both endpoints: the unsubmitted one
+    // because it holds no live declaration, the declaration search because its
+    // cancelled submission matched.
+    test('Should lead a cancelled-only organisation with its Not submitted row', async () => {
+      listComplianceDeclarations.mockResolvedValue({
+        complianceDeclarations: [
+          buildDeclaration({
+            id: 'cancelled-1',
+            status: 'Cancelled',
+            organisation: {
+              id: 'org-1',
+              registrationType: 'DirectProducer',
+              name: 'ZEINA FOODS LIMITED',
+              referenceNumber: '100245'
+            }
+          })
+        ],
+        total: 1
+      })
+      listUnsubmittedComplianceDeclarations.mockResolvedValue({
+        unsubmittedOrganisations: [
+          buildUnsubmitted({
+            organisationId: 'org-1',
+            name: 'ZEINA FOODS LIMITED',
+            referenceNumber: '100245'
+          })
+        ],
+        total: 1
+      })
+
+      const { items, total } = await getComplianceSearchResults(
+        'direct-producers',
+        'zeina'
+      )
+
+      expect(items.map((item) => item.submissionStatus)).toEqual([
+        'Not submitted',
+        'Cancelled'
+      ])
+      expect(total).toBe(2)
+    })
+
+    test('Should place an organisation that has never submitted after one that has', async () => {
+      listComplianceDeclarations.mockResolvedValue({
+        complianceDeclarations: [buildDeclaration({ id: 'submitted-1' })],
+        total: 1
+      })
+      listUnsubmittedComplianceDeclarations.mockResolvedValue({
+        unsubmittedOrganisations: [
+          buildUnsubmitted({ organisationId: 'org-never' })
+        ],
+        total: 1
+      })
+
+      const { items } = await getComplianceSearchResults(
+        'direct-producers',
+        'ltd'
+      )
+
+      expect(items.map((item) => item.submissionStatus)).toEqual([
+        'Pending',
+        'Not submitted'
+      ])
     })
   })
 })

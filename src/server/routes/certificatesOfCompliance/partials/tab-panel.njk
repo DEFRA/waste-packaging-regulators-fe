@@ -1,4 +1,3 @@
-{% from "status-tag/macro.njk" import appStatusTag %}
 {% from "sorting-column-header/macro.njk" import appSortingColumnHeader %}
 <div class="govuk-tabs__panel" id="{{ activeTab }}">
   <p class="govuk-body-l govuk-!-margin-bottom-4">
@@ -33,36 +32,9 @@
       </thead>
       <tbody class="govuk-table__body">
         {% for item in items %}
-          <tr class="govuk-table__row">
-            <th scope="row" class="govuk-table__header govuk-!-width-one-quarter">
-              {% if item.id == null %}
-                <a
-                  href="{{ localeUrl(routePrefix ~ '/' ~ item.organisationId ~ '?obligationYear=' ~ complianceYear ~ '&type=' ~ organisationType ~ '&tab=' ~ activeTab) }}"
-                  class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
-              {% else %}
-                <a
-                  href="{{ localeUrl(routePrefix ~ '/' ~ item.organisationId ~ '/' ~ ('statement' if organisationType == 'compliance-schemes' else 'certificate') ~ '/' ~ item.id ~ '?type=' ~ organisationType ~ '&tab=' ~ activeTab) }}"
-                  class="govuk-link govuk-link--no-visited-state">{{ item.organisationName }}</a>
-              {% endif %}
-            </th>
-            <td class="govuk-table__cell">{{ item.organisationReferenceNumber }}</td>
-            <td class="govuk-table__cell">
-              {{ appStatusTag({ value: item.recyclingObligationsMet, trueText: i18n.ct('statusTag', 'met'), falseText: i18n.ct('statusTag', 'notMet'), locale: locale, i18n: i18n }) }}
-            </td>
-            {% if organisationType == 'compliance-schemes' %}
-              <td class="govuk-table__cell">
-                {{ appStatusTag({ value: item.regulation43Met, trueText: i18n.ct('statusTag', 'compliant'), falseText: i18n.ct('statusTag', 'notCompliant'), locale: locale, i18n: i18n }) }}
-              </td>
-            {% else %}
-              <td class="govuk-table__cell">
-                {% if item.obligationCoveragePercentage != null %}
-                  {{ item.obligationCoveragePercentage }}%{% else %}—{% endif %}
-              </td>
-            {% endif %}
-            {% if activeTab != 'not-submitted' %}
-              <td class="govuk-table__cell">{{ item.dateSubmitted | formatDate('do MMMM yyyy') }}</td>
-            {% endif %}
-          </tr>
+          {% set showSubmissionStatus = false %}
+          {% set showDateSubmitted = activeTab != 'not-submitted' %}
+          {% include "certificatesOfCompliance/partials/compliance-row.njk" %}
         {% endfor %}
       </tbody>
     </table>

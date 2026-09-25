@@ -1,5 +1,6 @@
 {% extends 'layouts/page.njk' %}
 {% from "status-tag/macro.njk" import appStatusTag %}
+{% from "submission-status-tag/macro.njk" import appSubmissionStatusTag %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 {% from "csrf-field/macro.njk" import appCsrfField %}
@@ -67,15 +68,14 @@
             <div class="govuk-summary-list__row">
               <dt class="govuk-summary-list__key">{{ i18n.t('summary.submissionStatus') }}</dt>
               <dd class="govuk-summary-list__value">
-                {% if declarationStatus == 'Unsubmitted' %}
-                  <strong class="govuk-tag govuk-tag--grey">{{ t(locale, 'certificatesOfCompliance.common.submissionStatus.notSubmitted') }}</strong>
-                {% elseif reviewStatus == 'Pending' %}
-                  <strong class="govuk-tag govuk-tag--blue">{{ t(locale, 'certificatesOfCompliance.common.submissionStatus.pending') }}</strong>
-                {% elseif reviewStatus == 'Cancelled' %}
-                  <strong class="govuk-tag govuk-tag--yellow">{{ t(locale, 'certificatesOfCompliance.common.submissionStatus.cancelled') }}</strong>
-                {% else %}
-                  <strong class="govuk-tag govuk-tag--teal">{{ t(locale, 'certificatesOfCompliance.common.submissionStatus.accepted') }}</strong>
-                {% endif %}
+                {%- if declarationStatus == 'Unsubmitted' -%}
+                  {% set submissionStatus = 'Not submitted' %}
+                {%- elseif reviewStatus == 'Pending' or reviewStatus == 'Cancelled' -%}
+                  {% set submissionStatus = reviewStatus %}
+                {%- else -%}
+                  {% set submissionStatus = 'Accepted' %}
+                {%- endif -%}
+                {{ appSubmissionStatusTag({ status: submissionStatus, locale: locale }) }}
               </dd>
             </div>
             {% if showSubmittedOn %}

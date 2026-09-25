@@ -28,7 +28,6 @@ export const DOWNLOAD_PAGE_CONCURRENCY = 5
 export const PAGE_SIZE = 20
 export const DECLARATIONS_BATCH_SIZE = 100
 export const SEARCH_TERM_MAX_LENGTH = 100
-export const SEARCH_ERROR_TEXT = 'Enter an organisation name or ID'
 export const CANCELLED_STATUS = 'Cancelled'
 
 // Search spans the pending and accepted tabs at once, in one call at the
@@ -51,6 +50,11 @@ export const searchSubmissionStatusByDeclarationStatus = {
   [statusBySubmissionStatus.accepted]: 'Accepted',
   [CANCELLED_STATUS]: 'Cancelled'
 }
+
+export const SEARCH_STATUS_NOT_SUBMITTED = 'Not submitted'
+
+// DateSubmitted is not in this endpoint's sort vocabulary and would be rejected.
+export const SEARCH_UNSUBMITTED_SORT = 'Name[asc]'
 export const NO_DATA = 'No data'
 export const UNKNOWN_ORGANISATION = 'Unknown organisation'
 export const COMPLIANCE_SCHEMES = 'compliance-schemes'
