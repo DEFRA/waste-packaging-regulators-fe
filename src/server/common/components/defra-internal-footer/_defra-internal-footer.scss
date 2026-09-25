@@ -64,10 +64,10 @@ body:has(> .defra-internal-footer) {
 
 // Fix the copyright logo URL because the default govuk-frontend asset path is incorrect due to SCSS import limitations
 .govuk-footer__copyright-logo::before {
-  background-image: url("/public/assets/images/govuk-crest.svg");
+  background-image: govuk-image-url("govuk-crest.svg");
   
   @supports ((-webkit-mask-position: initial) or (mask-position: initial)) {
-    -webkit-mask-image: url("/public/assets/images/govuk-crest.svg");
-    mask-image: url("/public/assets/images/govuk-crest.svg");
+    -webkit-mask-image: govuk-image-url("govuk-crest.svg");
+    mask-image: govuk-image-url("govuk-crest.svg");
   }
 }
