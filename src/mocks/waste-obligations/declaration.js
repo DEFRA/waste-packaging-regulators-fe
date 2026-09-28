@@ -4,6 +4,7 @@
 import {
   OBLIGATION_YEAR,
   COMPLIANCE_SCHEME,
+  MOCK_BUSINESS_COUNTRY,
   mockRegulatorName,
   mockRegulatorEmail
 } from '#mocks/identities.js'
@@ -36,8 +37,9 @@ export function toDeclaration(record) {
       schemeOperatorName: record.schemeOperatorName ?? null,
       referenceNumber: record.organisationReferenceNumber,
       address: {},
-      regulator: mockRegulatorName,
-      regulatorEmail: mockRegulatorEmail,
+      businessCountry: record.businessCountry ?? MOCK_BUSINESS_COUNTRY,
+      regulator: record.environmentalRegulator ?? mockRegulatorName,
+      regulatorEmail: record.regulatorEmail ?? mockRegulatorEmail,
       companiesHouseNumber: record.companiesHouseNumber ?? null
     },
     obligationYear: OBLIGATION_YEAR,

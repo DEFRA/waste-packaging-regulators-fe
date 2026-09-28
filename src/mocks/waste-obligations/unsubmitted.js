@@ -34,7 +34,7 @@ export function toUnsubmittedOrganisation(record) {
     organisationId: record.organisationId,
     obligationYear: OBLIGATION_YEAR,
     registrationType: record.registrationType,
-    businessCountry: MOCK_BUSINESS_COUNTRY,
+    businessCountry: record.businessCountry ?? MOCK_BUSINESS_COUNTRY,
     name: listOrganisationName(record),
     referenceNumber: record.organisationReferenceNumber,
     ...metricsFor(record.obligations)
