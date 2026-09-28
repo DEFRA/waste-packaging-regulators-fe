@@ -24,6 +24,7 @@ import { contentSecurityPolicy } from './plugins/content-security-policy.js'
 import { forwardedPrefixRedirects } from './plugins/forwarded-prefix-redirects.js'
 import { accountDetailsContext } from './plugins/account-details-context.js'
 import { metrics } from '@defra/cdp-metrics'
+import { resolveMockAuthProfile } from '#mocks/mock-auth-users.js'
 
 /**
  * Bell `location` must be the app origin (see `@hapi/bell`: redirect_uri = location + request.path).
@@ -54,13 +55,10 @@ function registerAuthStrategy(server) {
 
   if (config.get('useMockAuth')) {
     server.auth.scheme('mock', () => ({
-      authenticate: (_request, h) =>
+      authenticate: (request, h) =>
         h.authenticated({
           credentials: {
-            profile: {
-              oid: '00000000-0000-4000-8000-000000000001',
-              email: 'mock-user@test.local'
-            }
+            profile: resolveMockAuthProfile(request)
           }
         })
     }))
