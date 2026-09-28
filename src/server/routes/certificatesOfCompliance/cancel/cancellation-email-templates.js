@@ -28,6 +28,30 @@ const reasonLabelToTemplateKey = {
   'Compliance scheme requested to cancel': 'producerRequested'
 }
 
+const reasonKeyToTemplateKey = {
+  'incorrect-signer': 'notSignedByCorrectPerson',
+  'obligations-changed': 'recyclingObligationsChanged',
+  'submitted-early': 'canMeetRecyclingObligations',
+  'producer-request': 'producerRequested'
+}
+
+function templateIdForKey(templateKey, { isWelsh = false } = {}) {
+  const template = cancellationEmailTemplateIds[templateKey]
+  return isWelsh ? template.cy : template.en
+}
+
+export function resolveCancellationTemplateIdForReasonKey(
+  reasonKey,
+  { isWelsh = false } = {}
+) {
+  const templateKey = reasonKeyToTemplateKey[reasonKey]
+  if (!templateKey) {
+    return null
+  }
+
+  return templateIdForKey(templateKey, { isWelsh })
+}
+
 export function resolveCancellationTemplateId(
   reasonLabel,
   { isWelsh = false } = {}
@@ -37,8 +61,7 @@ export function resolveCancellationTemplateId(
     return null
   }
 
-  const template = cancellationEmailTemplateIds[templateKey]
-  return isWelsh ? template.cy : template.en
+  return templateIdForKey(templateKey, { isWelsh })
 }
 
 export function mapRegistrationTypeToEntityTypeCode(registrationType) {

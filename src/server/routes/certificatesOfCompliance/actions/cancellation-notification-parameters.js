@@ -16,27 +16,45 @@ const REGULATOR_DISPLAY_EN = {
   NRW: NATURAL_RESOURCES_WALES
 }
 
+// Reverse lookup so we can accept either the short code (e.g. NRW) or the
+// full display name (e.g. Natural Resources Wales) — the Obligations API
+// returns the display name.
+const REGULATOR_CODE_BY_DISPLAY = Object.fromEntries(
+  Object.entries(REGULATOR_DISPLAY_EN).map(([code, display]) => [display, code])
+)
+
 const NOTIFY_PERSONALISATION_FIELDS = [
   'certOrStatement',
   'certOrStatementBullet',
   'certOrStatementBullet2'
 ]
 
+export function normaliseRegulatorCode(environmentalRegulator) {
+  if (environmentalRegulator == null || environmentalRegulator === '') {
+    return environmentalRegulator
+  }
+
+  const trimmed = environmentalRegulator.trim()
+  if (REGULATOR_DISPLAY_EN[trimmed]) {
+    return trimmed
+  }
+
+  return REGULATOR_CODE_BY_DISPLAY[trimmed] ?? trimmed
+}
+
 export function mapEnvironmentalRegulatorDisplay(environmentalRegulator) {
   if (environmentalRegulator == null || environmentalRegulator === '') {
     return environmentalRegulator
   }
 
-  return (
-    REGULATOR_DISPLAY_EN[environmentalRegulator.trim()] ??
-    environmentalRegulator
-  )
+  const code = normaliseRegulatorCode(environmentalRegulator)
+  return REGULATOR_DISPLAY_EN[code] ?? environmentalRegulator.trim()
 }
 
 function shouldIncludeRegulatorCy(businessCountry, environmentalRegulator) {
   return (
     isWelshOrganisation(businessCountry) &&
-    environmentalRegulator?.trim() === 'NRW'
+    normaliseRegulatorCode(environmentalRegulator) === 'NRW'
   )
 }
 

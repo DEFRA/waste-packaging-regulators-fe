@@ -4,7 +4,8 @@ import {
   cancellationEmailTemplateIds,
   isWelshOrganisation,
   mapRegistrationTypeToEntityTypeCode,
-  resolveCancellationTemplateId
+  resolveCancellationTemplateId,
+  resolveCancellationTemplateIdForReasonKey
 } from './cancellation-email-templates.js'
 
 describe('cancellation-email-templates', () => {
@@ -55,5 +56,33 @@ describe('cancellation-email-templates', () => {
 
   test('returns null for an unknown reason label', () => {
     expect(resolveCancellationTemplateId('Unknown reason')).toBeNull()
+  })
+
+  test.each([
+    ['incorrect-signer', false, 'notSignedByCorrectPerson'],
+    ['obligations-changed', false, 'recyclingObligationsChanged'],
+    ['submitted-early', false, 'canMeetRecyclingObligations'],
+    ['producer-request', false, 'producerRequested']
+  ])(
+    'resolves English template for reason key "%s"',
+    (reasonKey, isWelsh, templateKey) => {
+      expect(
+        resolveCancellationTemplateIdForReasonKey(reasonKey, { isWelsh })
+      ).toBe(cancellationEmailTemplateIds[templateKey].en)
+    }
+  )
+
+  test('resolves Welsh template for reason key regardless of translated label', () => {
+    expect(
+      resolveCancellationTemplateIdForReasonKey('producer-request', {
+        isWelsh: true
+      })
+    ).toBe(cancellationEmailTemplateIds.producerRequested.cy)
+  })
+
+  test('returns null for an unknown reason key', () => {
+    expect(
+      resolveCancellationTemplateIdForReasonKey('not-a-valid-reason')
+    ).toBeNull()
   })
 })

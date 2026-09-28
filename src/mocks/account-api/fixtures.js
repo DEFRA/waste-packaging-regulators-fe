@@ -145,6 +145,41 @@ export const accountOrganisations = [
       )
     ]
   ),
+  directProducerAccount(orgs.acme.id, orgs.acme.name, orgs.acme.reference, [
+    approvedPerson(
+      'Catherine',
+      'Morris',
+      'catherine.morris@acme.test',
+      '020 7946 0120'
+    ),
+    {
+      userId: 'fa6d3a77-be37-4530-bf7f-7d552ef94170',
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'user@example.com',
+      serviceRole: 'Delegated Person'
+    }
+  ]),
+  directProducerAccount(
+    orgs.bluesky.id,
+    orgs.bluesky.name,
+    orgs.bluesky.reference,
+    [
+      approvedPerson(
+        'James',
+        'Wright',
+        'james.wright@bluesky.test',
+        '020 7946 0121'
+      ),
+      {
+        userId: 'fa6d3a77-be37-4530-bf7f-7d552ef94170',
+        firstName: 'Test',
+        lastName: 'User',
+        email: 'user@example.com',
+        serviceRole: 'Delegated Person'
+      }
+    ]
+  ),
   complianceSchemeAccount(
     orgs.ecopack.id,
     orgs.ecopack.operatorName,
@@ -207,6 +242,112 @@ export const accountOrganisations = [
         'aled.bevan@greencircle.test',
         '020 7946 0111'
       )
+    ]
+  ),
+  complianceSchemeAccount(
+    orgs.nationwide.id,
+    orgs.nationwide.operatorName,
+    orgs.nationwide.reference,
+    orgs.nationwide.companiesHouseNumber,
+    [
+      approvedPerson(
+        'Jane',
+        'Doe',
+        'jane.doe@nationwide.test',
+        '020 7946 0122'
+      ),
+      {
+        userId: 'b1c2d3e4-f5a6-7890-abcd-ef1234567890',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        email: 'jane.doe@ecopack.co.uk',
+        serviceRole: 'Delegated Person'
+      }
+    ]
+  ),
+  complianceSchemeAccount(
+    orgs.riverside.id,
+    orgs.riverside.operatorName,
+    orgs.riverside.reference,
+    orgs.riverside.companiesHouseNumber,
+    [
+      approvedPerson(
+        'Hana',
+        'Okonkwo',
+        'hana.okonkwo@riverside.test',
+        '020 7946 0123'
+      ),
+      {
+        userId: 'b1c2d3e4-f5a6-7890-abcd-ef1234567890',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        email: 'jane.doe@ecopack.co.uk',
+        serviceRole: 'Delegated Person'
+      }
+    ]
+  ),
+  complianceSchemeAccount(
+    orgs.ashcroft.id,
+    orgs.ashcroft.operatorName,
+    orgs.ashcroft.reference,
+    orgs.ashcroft.companiesHouseNumber,
+    [
+      approvedPerson('Jane', 'Doe', 'jane.doe@ashcroft.test', '020 7946 0124'),
+      {
+        userId: 'b1c2d3e4-f5a6-7890-abcd-ef1234567890',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        email: 'jane.doe@ecopack.co.uk',
+        serviceRole: 'Delegated Person'
+      }
+    ]
+  ),
+  complianceSchemeAccount(
+    orgs.bramble.id,
+    orgs.bramble.operatorName,
+    orgs.bramble.reference,
+    orgs.bramble.companiesHouseNumber,
+    [
+      approvedPerson('Jane', 'Doe', 'jane.doe@bramble.test', '020 7946 0125'),
+      {
+        userId: 'b1c2d3e4-f5a6-7890-abcd-ef1234567890',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        email: 'jane.doe@ecopack.co.uk',
+        serviceRole: 'Delegated Person'
+      }
+    ]
+  ),
+  complianceSchemeAccount(
+    orgs.caldera.id,
+    orgs.caldera.operatorName,
+    orgs.caldera.reference,
+    orgs.caldera.companiesHouseNumber,
+    [
+      approvedPerson('Jane', 'Doe', 'jane.doe@caldera.test', '020 7946 0126'),
+      {
+        userId: 'b1c2d3e4-f5a6-7890-abcd-ef1234567890',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        email: 'jane.doe@ecopack.co.uk',
+        serviceRole: 'Delegated Person'
+      }
+    ]
+  ),
+  complianceSchemeAccount(
+    orgs.dovetail.id,
+    orgs.dovetail.operatorName,
+    orgs.dovetail.reference,
+    orgs.dovetail.companiesHouseNumber,
+    [
+      approvedPerson('Jane', 'Doe', 'jane.doe@dovetail.test', '020 7946 0127'),
+      {
+        userId: 'b1c2d3e4-f5a6-7890-abcd-ef1234567890',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        email: 'jane.doe@ecopack.co.uk',
+        serviceRole: 'Delegated Person'
+      }
     ]
   )
 ]
