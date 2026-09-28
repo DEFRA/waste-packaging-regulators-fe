@@ -76,18 +76,29 @@ function computeTotals(rows) {
 export function mapDeclarationMaterialGroups(obligations) {
   const resolvedObligations = obligations ?? []
   const allMapped = resolvedObligations.map(mapObligation)
-  const materials = allMapped.filter(
-    (_, i) => !GLASS_BREAKDOWN_MATERIALS.has(resolvedObligations[i].material)
-  )
+
   const glassBreakdown = allMapped.filter((_, i) =>
     GLASS_BREAKDOWN_MATERIALS.has(resolvedObligations[i].material)
   )
+  const glassBreakdownTotals = computeTotals(glassBreakdown)
+
+  // Replace the raw Glass row with a computed total from the breakdown so the
+  // first table's Glass value always matches the glass breakdown table's total.
+  const materials = allMapped
+    .filter(
+      (_, i) => !GLASS_BREAKDOWN_MATERIALS.has(resolvedObligations[i].material)
+    )
+    .map((m) =>
+      m.name === 'Glass' && glassBreakdown.length > 0
+        ? { ...glassBreakdownTotals, name: 'Glass' }
+        : m
+    )
 
   return {
     materials,
     materialTotals: computeTotals(materials),
     glassBreakdown,
-    glassBreakdownTotals: computeTotals(glassBreakdown)
+    glassBreakdownTotals
   }
 }
 

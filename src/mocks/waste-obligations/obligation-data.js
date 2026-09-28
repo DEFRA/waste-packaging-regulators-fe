@@ -42,7 +42,7 @@ const noDataRow = (material, obligated) => ({
 
 export const mockObligationsMixed = [
   obligationRow('Aluminium', 215, 215, 'Met'),
-  obligationRow('Glass', 640, 500, 'NotMet', { awaitingAcceptance: 40 }),
+  obligationRow('Glass', 640, 380, 'NotMet', { awaitingAcceptance: 20 }),
   obligationRow('PaperBoardFibre', 870, 870, 'Met'),
   obligationRow('Plastic', 1740, 1500, 'NotMet', { awaitingAcceptance: 120 }),
   obligationRow('Steel', 365, 365, 'Met'),
