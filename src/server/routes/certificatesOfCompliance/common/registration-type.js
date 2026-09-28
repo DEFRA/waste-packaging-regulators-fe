@@ -3,7 +3,7 @@ import {
   registrationTypeFromApi
 } from './constants.js'
 import { displayOrNoData } from './display.js'
-import { mapOrganisationName } from './organisation.js'
+import { mapWasteOrganisationName } from './organisation.js'
 
 export function deriveRegistrationType(registrations, obligationYear) {
   const resolvedRegistrations = registrations ?? []
@@ -108,7 +108,7 @@ export function mapWasteOrganisationToDetailFields(
   )
 
   return {
-    companyName: mapOrganisationName(organisation),
+    companyName: mapWasteOrganisationName(organisation, registrationType),
     registrationType,
     organisationType: mapRegistrationTypeToOrganisationType(
       registrationType,

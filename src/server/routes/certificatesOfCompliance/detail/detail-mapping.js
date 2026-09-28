@@ -263,9 +263,10 @@ export function mapObligationToDetail(
     locale
   })
 
-  // Compliance schemes take their name from the waste-organisations record (as
-  // on the listing); direct producers keep the Account API name (waste-org as
-  // fallback).
+  // Compliance schemes take their name from the waste-organisations record: the
+  // trading name, which is what the not-submitted list renders from the
+  // unsubmitted endpoint, so this page and the row it was opened from agree.
+  // Direct producers keep the Account API name (waste-org as fallback).
   const companyName = isComplianceSchemeRegistrationType(
     orgFields.registrationType
   )

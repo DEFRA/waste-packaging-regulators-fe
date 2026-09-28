@@ -200,28 +200,49 @@ describe('organisation and audit detail mapping', () => {
     })
   })
 
-  test('mapWasteOrganisationToDetailFields uses the scheme operator name, not the scheme trading name, for compliance schemes', () => {
+  const complianceSchemeRecord = (tradingName) => ({
+    name: 'Scheme Operator Co',
+    tradingName,
+    companiesHouseNumber: 'CS_GENERATED_0923795',
+    registrations: [
+      {
+        type: 'COMPLIANCE_SCHEME',
+        status: 'REGISTERED',
+        registrationYear: 2026
+      }
+    ]
+  })
+
+  test('mapWasteOrganisationToDetailFields uses the scheme trading name, not the operator name, for compliance schemes', () => {
     expect(
       mapWasteOrganisationToDetailFields(
-        {
-          name: 'Scheme Operator Co',
-          tradingName: 'Trading Scheme Co',
-          companiesHouseNumber: 'CS_GENERATED_0923795',
-          registrations: [
-            {
-              type: 'COMPLIANCE_SCHEME',
-              status: 'REGISTERED',
-              registrationYear: 2026
-            }
-          ]
-        },
+        complianceSchemeRecord('Trading Scheme Co'),
         { obligationYear: 2026 }
       )
     ).toEqual({
-      companyName: 'Scheme Operator Co',
+      companyName: 'Trading Scheme Co',
       registrationType: 'ComplianceScheme',
       organisationType: 'Compliance scheme',
       companiesHouseNumber: 'CS_GENERATED_0923795'
     })
   })
+
+  // waste-organisations applies no validation to tradingName and stores an empty
+  // string verbatim, so blank has to fall back the same way a missing one does.
+  test.each([
+    ['missing', undefined],
+    ['null', null],
+    ['empty', ''],
+    ['whitespace', '   ']
+  ])(
+    'mapWasteOrganisationToDetailFields falls back to the operator name when the trading name is %s',
+    (_label, tradingName) => {
+      expect(
+        mapWasteOrganisationToDetailFields(
+          complianceSchemeRecord(tradingName),
+          { obligationYear: 2026 }
+        ).companyName
+      ).toBe('Scheme Operator Co')
+    }
+  )
 })

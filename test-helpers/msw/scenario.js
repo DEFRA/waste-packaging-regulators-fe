@@ -22,7 +22,7 @@ import {
   createBackends,
   backendHandlers,
   toDeclaration,
-  listOrganisationName
+  unsubmittedOrganisationName
 } from '#mocks/backends.js'
 import { OBLIGATION_YEAR } from '#mocks/identities.js'
 import { mapDeclarationToItem } from '#server/routes/certificatesOfCompliance/list/list.service.js'
@@ -196,10 +196,17 @@ function buildOrganisation(spec, index) {
     registrationType,
     organisationId,
     organisationName: isComplianceScheme ? null : displayName,
+    // For a compliance scheme these two are different names: complianceSchemeName
+    // is the trading name the not-submitted tab shows, schemeOperatorName is the
+    // operator's legal name the submitted tabs show. Both default to the spec's
+    // single `name` so scenarios that do not care are unaffected; set `schemeName`
+    // and/or `operatorName` to drive them apart and exercise the distinction.
     complianceSchemeName: isComplianceScheme
       ? (spec.schemeName ?? displayName)
       : null,
-    schemeOperatorName: isComplianceScheme ? displayName : null,
+    schemeOperatorName: isComplianceScheme
+      ? (spec.operatorName ?? displayName)
+      : null,
     organisationReferenceNumber: reference,
     companiesHouseNumber,
     submissionStatus
@@ -304,7 +311,9 @@ function buildOrganisation(spec, index) {
             id: null,
             organisationId,
             organisationReferenceNumber: reference,
-            organisationName: listOrganisationName(record),
+            // The unsubmitted endpoint serves the trading name, not the
+            // operator name the submitted tabs show — see backends.js.
+            organisationName: unsubmittedOrganisationName(record),
             regulation43Met: null,
             dateSubmitted: null,
             ...unsubmittedMetrics

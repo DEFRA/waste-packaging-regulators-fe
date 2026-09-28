@@ -749,8 +749,8 @@ describe('certificates of compliance — journey', () => {
     beforeEach(() => {
       scenario = app.given([
         {
-          // The heading shows the operator name, not the scheme name, and the
-          // nominated contact is the Approved Person, not the Basic User.
+          // The heading shows the scheme's trading name, not the operator name,
+          // and the nominated contact is the Approved Person, not the Basic User.
           name: 'FuturePack Operators',
           schemeName: 'FuturePack Compliance Scheme',
           type: 'compliance-scheme',
@@ -780,13 +780,34 @@ describe('certificates of compliance — journey', () => {
       ])
     })
 
-    it('headings show the scheme operator, not the compliance scheme name', async () => {
+    it('headings show the compliance scheme trading name, not the scheme operator', async () => {
       const org = scenario.byName('FuturePack Operators')
       const payload = (await app.get(org.detailPath)).payload
       const { heading } = loadDetailPage(payload)
 
-      expect(heading).toBe('FuturePack Operators')
-      expect(payload).not.toContain('FuturePack Compliance Scheme')
+      expect(heading).toBe('FuturePack Compliance Scheme')
+    })
+
+    // AMCR-506: the tab showed the operator's legal name. The scenario above gives
+    // FuturePack a trading name distinct from its operator name, so these two pin
+    // down which one reaches the screen and that the row and the page it opens agree.
+    it('not-submitted list shows the compliance scheme trading name, not the operator', async () => {
+      const response = await app.get(
+        '/certificates-of-compliance?type=compliance-schemes&tab=not-submitted'
+      )
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.payload).toContain('FuturePack Compliance Scheme')
+      expect(response.payload).not.toContain('FuturePack Operators')
+    })
+
+    it('list row and detail heading show the same name', async () => {
+      const org = scenario.byName('FuturePack Operators')
+      const { heading } = loadDetailPage(
+        (await app.get(org.detailPath)).payload
+      )
+
+      expect(heading).toBe(org.expectedRow.organisationName)
     })
 
     it('shows the email address and phone number of the nominated contact', async () => {
