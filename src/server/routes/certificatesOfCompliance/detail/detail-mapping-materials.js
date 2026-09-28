@@ -77,9 +77,11 @@ export function mapDeclarationMaterialGroups(obligations) {
   const resolvedObligations = obligations ?? []
   const allMapped = resolvedObligations.map(mapObligation)
 
-  const glassBreakdown = allMapped.filter((_, i) =>
-    GLASS_BREAKDOWN_MATERIALS.has(resolvedObligations[i].material)
-  )
+  const glassBreakdown = allMapped
+    .filter((_, i) =>
+      GLASS_BREAKDOWN_MATERIALS.has(resolvedObligations[i].material)
+    )
+    .sort((a, b) => a.name.localeCompare(b.name))
   const glassBreakdownTotals = computeTotals(glassBreakdown)
 
   // Replace the raw Glass row with a computed total from the breakdown so the
@@ -93,6 +95,7 @@ export function mapDeclarationMaterialGroups(obligations) {
         ? { ...glassBreakdownTotals, name: 'Glass' }
         : m
     )
+    .sort((a, b) => a.name.localeCompare(b.name))
 
   return {
     materials,
