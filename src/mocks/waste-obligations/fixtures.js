@@ -22,8 +22,16 @@ import {
   MOCK_DECL_HOWCO_PREV_ACCEPTED_ID,
   MOCK_DECL_HOWCO_PREV_CANCELLED_ID,
   MOCK_DECL_CS_PREV_ACCEPTED_ID,
-  MOCK_DECL_CS_PREV_CANCELLED_ID
+  MOCK_DECL_CS_PREV_CANCELLED_ID,
+  mockRegulatorEmailNrw,
+  mockRegulatorEmailSepa,
+  mockRegulatorEmailNiea
 } from '#mocks/identities.js'
+import {
+  mockWelshRegulatorAuditUser,
+  mockScottishRegulatorAuditUser,
+  mockNorthernIrelandRegulatorAuditUser
+} from '#mocks/mock-auth-users.js'
 import {
   mockObligationsAllMet,
   mockObligationsMixed,
@@ -120,6 +128,210 @@ export const complianceRecords = [
     isRegulation43Compliant: false,
     submitterName: 'Priya Rao',
     audit: [mockSubmittedAuditEntry]
+  },
+  {
+    key: 'cwmni-pacio-pending',
+    registrationType: DIRECT_PRODUCER,
+    organisationId: orgs.cwmniPacio.id,
+    organisationName: orgs.cwmniPacio.name,
+    organisationReferenceNumber: orgs.cwmniPacio.reference,
+    companiesHouseNumber: '98765432',
+    businessCountry: 'GB-WLS',
+    environmentalRegulator: 'NRW',
+    regulatorEmail: mockRegulatorEmailNrw,
+    submissionStatus: 'pending',
+    declarationId: 'decl-401582',
+    declarationStatus: MOCK_STATUS_SUBMITTED,
+    created: '2027-01-25T00:00:00Z',
+    updated: '2027-01-25T00:00:00Z',
+    dateSubmitted: '2027-01-25',
+    obligationCoveragePercentage: 91,
+    obligations: mockObligationsMostlyMet,
+    obligationStatus: 'Met',
+    isRegulation43Compliant: true,
+    submitterName: 'Morgan Davies',
+    audit: [
+      {
+        user: {
+          id: 'c3d4e5f6-a7b8-9012-cdef-345678901234',
+          email: 'morgan.davies@cwmni-pacio.test',
+          name: 'Morgan Davies'
+        },
+        timestamp: '2027-01-25T00:00:00Z',
+        action: MOCK_STATUS_SUBMITTED
+      }
+    ]
+  },
+  {
+    key: 'cwmni-pacio-accepted',
+    registrationType: DIRECT_PRODUCER,
+    organisationId: orgs.cwmniPacio.id,
+    organisationName: orgs.cwmniPacio.name,
+    organisationReferenceNumber: orgs.cwmniPacio.reference,
+    companiesHouseNumber: '98765432',
+    businessCountry: 'GB-WLS',
+    environmentalRegulator: 'NRW',
+    regulatorEmail: mockRegulatorEmailNrw,
+    submissionStatus: 'accepted',
+    declarationId: 'decl-401583',
+    declarationStatus: MOCK_STATUS_ACCEPTED,
+    created: '2027-01-20T00:00:00Z',
+    updated: '2027-01-22T09:15:00Z',
+    dateSubmitted: '2027-01-20',
+    obligationCoveragePercentage: 94,
+    obligations: mockObligationsAllMet,
+    obligationStatus: 'Met',
+    isRegulation43Compliant: true,
+    submitterName: 'Morgan Davies',
+    audit: [
+      {
+        user: {
+          id: 'c3d4e5f6-a7b8-9012-cdef-345678901234',
+          email: 'morgan.davies@cwmni-pacio.test',
+          name: 'Morgan Davies'
+        },
+        timestamp: '2027-01-20T00:00:00Z',
+        action: MOCK_STATUS_SUBMITTED
+      },
+      acceptedAudit('2027-01-22T09:15:00Z', mockWelshRegulatorAuditUser)
+    ]
+  },
+  {
+    key: 'highland-pack-pending',
+    registrationType: DIRECT_PRODUCER,
+    organisationId: orgs.highlandPack.id,
+    organisationName: orgs.highlandPack.name,
+    organisationReferenceNumber: orgs.highlandPack.reference,
+    companiesHouseNumber: '76543210',
+    businessCountry: 'GB-SCT',
+    environmentalRegulator: 'SEPA',
+    regulatorEmail: mockRegulatorEmailSepa,
+    submissionStatus: 'pending',
+    declarationId: 'decl-502691',
+    declarationStatus: MOCK_STATUS_SUBMITTED,
+    created: '2027-01-24T00:00:00Z',
+    updated: '2027-01-24T00:00:00Z',
+    dateSubmitted: '2027-01-24',
+    obligationCoveragePercentage: 88,
+    obligations: mockObligationsMostlyMet,
+    obligationStatus: 'Met',
+    isRegulation43Compliant: true,
+    submitterName: 'Angus Fraser',
+    audit: [
+      {
+        user: {
+          id: 'd4e5f6a7-b8c9-0123-defa-456789012346',
+          email: 'angus.fraser@highland-pack.test',
+          name: 'Angus Fraser'
+        },
+        timestamp: '2027-01-24T00:00:00Z',
+        action: MOCK_STATUS_SUBMITTED
+      }
+    ]
+  },
+  {
+    key: 'highland-pack-accepted',
+    registrationType: DIRECT_PRODUCER,
+    organisationId: orgs.highlandPack.id,
+    organisationName: orgs.highlandPack.name,
+    organisationReferenceNumber: orgs.highlandPack.reference,
+    companiesHouseNumber: '76543210',
+    businessCountry: 'GB-SCT',
+    environmentalRegulator: 'SEPA',
+    regulatorEmail: mockRegulatorEmailSepa,
+    submissionStatus: 'accepted',
+    declarationId: 'decl-502692',
+    declarationStatus: MOCK_STATUS_ACCEPTED,
+    created: '2027-01-19T00:00:00Z',
+    updated: '2027-01-21T11:30:00Z',
+    dateSubmitted: '2027-01-19',
+    obligationCoveragePercentage: 96,
+    obligations: mockObligationsAllMet,
+    obligationStatus: 'Met',
+    isRegulation43Compliant: true,
+    submitterName: 'Angus Fraser',
+    audit: [
+      {
+        user: {
+          id: 'd4e5f6a7-b8c9-0123-defa-456789012346',
+          email: 'angus.fraser@highland-pack.test',
+          name: 'Angus Fraser'
+        },
+        timestamp: '2027-01-19T00:00:00Z',
+        action: MOCK_STATUS_SUBMITTED
+      },
+      acceptedAudit('2027-01-21T11:30:00Z', mockScottishRegulatorAuditUser)
+    ]
+  },
+  {
+    key: 'belfast-pack-pending',
+    registrationType: DIRECT_PRODUCER,
+    organisationId: orgs.belfastPack.id,
+    organisationName: orgs.belfastPack.name,
+    organisationReferenceNumber: orgs.belfastPack.reference,
+    companiesHouseNumber: '87651234',
+    businessCountry: 'GB-NIR',
+    environmentalRegulator: 'NIEA',
+    regulatorEmail: mockRegulatorEmailNiea,
+    submissionStatus: 'pending',
+    declarationId: 'decl-603714',
+    declarationStatus: MOCK_STATUS_SUBMITTED,
+    created: '2027-01-23T00:00:00Z',
+    updated: '2027-01-23T00:00:00Z',
+    dateSubmitted: '2027-01-23',
+    obligationCoveragePercentage: 86,
+    obligations: mockObligationsMixed,
+    obligationStatus: 'NotMet',
+    isRegulation43Compliant: false,
+    submitterName: 'Siobhan Kelly',
+    audit: [
+      {
+        user: {
+          id: 'e5f6a7b8-c9d0-1234-efab-567890123457',
+          email: 'siobhan.kelly@belfast-pack.test',
+          name: 'Siobhan Kelly'
+        },
+        timestamp: '2027-01-23T00:00:00Z',
+        action: MOCK_STATUS_SUBMITTED
+      }
+    ]
+  },
+  {
+    key: 'belfast-pack-accepted',
+    registrationType: DIRECT_PRODUCER,
+    organisationId: orgs.belfastPack.id,
+    organisationName: orgs.belfastPack.name,
+    organisationReferenceNumber: orgs.belfastPack.reference,
+    companiesHouseNumber: '87651234',
+    businessCountry: 'GB-NIR',
+    environmentalRegulator: 'NIEA',
+    regulatorEmail: mockRegulatorEmailNiea,
+    submissionStatus: 'accepted',
+    declarationId: 'decl-603715',
+    declarationStatus: MOCK_STATUS_ACCEPTED,
+    created: '2027-01-18T00:00:00Z',
+    updated: '2027-01-20T15:45:00Z',
+    dateSubmitted: '2027-01-18',
+    obligationCoveragePercentage: 93,
+    obligations: mockObligationsAllMet,
+    obligationStatus: 'Met',
+    isRegulation43Compliant: true,
+    submitterName: 'Siobhan Kelly',
+    audit: [
+      {
+        user: {
+          id: 'e5f6a7b8-c9d0-1234-efab-567890123457',
+          email: 'siobhan.kelly@belfast-pack.test',
+          name: 'Siobhan Kelly'
+        },
+        timestamp: '2027-01-18T00:00:00Z',
+        action: MOCK_STATUS_SUBMITTED
+      },
+      acceptedAudit(
+        '2027-01-20T15:45:00Z',
+        mockNorthernIrelandRegulatorAuditUser
+      )
+    ]
   },
 
   {

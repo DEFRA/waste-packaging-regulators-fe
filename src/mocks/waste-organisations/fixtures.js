@@ -6,6 +6,9 @@ import {
   OBLIGATION_YEAR,
   MOCK_REGISTRATION_STATUS,
   MOCK_BUSINESS_COUNTRY,
+  MOCK_BUSINESS_COUNTRY_WALES,
+  MOCK_BUSINESS_COUNTRY_SCOTLAND,
+  MOCK_BUSINESS_COUNTRY_NORTHERN_IRELAND,
   MOCK_REGISTRATION_TIMESTAMP
 } from '#mocks/identities.js'
 
@@ -44,15 +47,16 @@ function directProducerOrganisation(
   name,
   companiesHouseNumber,
   addressLine1,
-  postcode
+  postcode,
+  { businessCountry = MOCK_BUSINESS_COUNTRY, addressCountry = 'EN' } = {}
 ) {
   return {
     id,
     name,
     tradingName: null,
-    businessCountry: MOCK_BUSINESS_COUNTRY,
+    businessCountry,
     companiesHouseNumber,
-    address: { addressLine1, postcode, country: 'EN' },
+    address: { addressLine1, postcode, country: addressCountry },
     registrations: [
       {
         created: MOCK_REGISTRATION_TIMESTAMP,
@@ -137,6 +141,33 @@ export const wasteOrganisations = [
     '31847205',
     '2 Bridge Street',
     'GL1 1AA'
+  ),
+  directProducerOrganisation(
+    orgs.cwmniPacio.id,
+    orgs.cwmniPacio.name,
+    '98765432',
+    '12 Heol y Ffordd',
+    'CF10 1AA',
+    { businessCountry: MOCK_BUSINESS_COUNTRY_WALES, addressCountry: 'GB' }
+  ),
+  directProducerOrganisation(
+    orgs.highlandPack.id,
+    orgs.highlandPack.name,
+    '76543210',
+    '14 Castle Street',
+    'EH1 2NG',
+    { businessCountry: MOCK_BUSINESS_COUNTRY_SCOTLAND, addressCountry: 'GB' }
+  ),
+  directProducerOrganisation(
+    orgs.belfastPack.id,
+    orgs.belfastPack.name,
+    '87651234',
+    '22 Donegall Square',
+    'BT1 5GS',
+    {
+      businessCountry: MOCK_BUSINESS_COUNTRY_NORTHERN_IRELAND,
+      addressCountry: 'GB'
+    }
   ),
   complianceSchemeOrganisation(
     orgs.ecopack.id,
