@@ -14,7 +14,9 @@ Core delivery platform Node.js Frontend Template.
   - [Setup](#setup)
     - [Nix dev shell (optional)](#nix-dev-shell-optional)
   - [Development](#development)
-  - [Backend API profiles](#backend-api-profiles)
+  - [Mock API](#mock-api)
+  - [Country-specific mock data](#country-specific-mock-data)
+  - [Alternate backend API profiles](#alternate-backend-api-profiles)
   - [HTTPS for local development](#https-for-local-development)
   - [Production](#production)
   - [Npm scripts](#npm-scripts)
@@ -120,7 +122,7 @@ To run the application in `development` mode run:
 npm run dev
 ```
 
-This uses mock API responses and a stub auth strategy (no backends required, no B2C round-trip). Routes that check for a signed-in user see a fixed `mock-user` automatically.
+This uses mock API responses and a stub auth strategy (no backends required, no B2C round-trip). Routes that check for a signed-in user see a mock regulator automatically — by default an Environment Agency user. See [Country-specific mock data](#country-specific-mock-data) to sign in as NRW, SEPA, or NIEA instead.
 
 ### Welsh / English (i18n)
 
@@ -158,6 +160,56 @@ same environment.
 
 The mock layer's design, structure and how to work with it: see
 [`src/mocks/README.md`](./src/mocks/README.md).
+
+### Country-specific mock data
+
+When `MOCK_AUTH=true` (the default in local development), the signed-in regulator
+persona and the obligations list country filter can be switched to match each UK
+nation. This lets you eyeball nation-specific journeys — Welsh cancellation emails,
+country-filtered lists, regulator display names — without live backends or real B2C
+accounts.
+
+Set `MOCK_AUTH_USER` (config key `mockAuthUser`, env var `MOCK_AUTH_USER`) to
+choose the regulator persona. Defaults to `en` (Environment Agency). UI language
+(`?lang=cy`, the Cymraeg toggle) is independent — use it only for Welsh/English
+copy, not to select the regulator nation.
+
+| Value | Regulator                              | Session `nationId` | List country filter |
+| ----- | -------------------------------------- | ------------------ | ------------------- |
+| `en`  | Environment Agency (default)           | 1                  | `GB-ENG`            |
+| `cy`  | Natural Resources Wales                | 4                  | `GB-WLS`            |
+| `sct` | Scottish Environment Protection Agency | 3                  | `GB-SCT`            |
+| `nir` | Northern Ireland Environment Agency    | 2                  | `GB-NIR`            |
+
+Examples:
+
+```bash
+# Scotland — list shows only Scottish orgs
+cross-env MOCK_AUTH_USER=sct npm run dev
+
+# Northern Ireland
+cross-env MOCK_AUTH_USER=nir npm run dev
+
+# Wales — NRW regulator; add ?lang=cy in the browser for Welsh UI
+cross-env MOCK_AUTH_USER=cy npm run dev
+```
+
+Each non-England nation has a dedicated direct producer in the default fixtures
+with pending and accepted certificates, wired across all three backend mocks:
+
+| Nation           | Organisation                    | Reference |
+| ---------------- | ------------------------------- | --------- |
+| Wales            | Cwmni Pacio Cymru Ltd           | 401582    |
+| Scotland         | Highland Packaging Ltd          | 502691    |
+| Northern Ireland | Belfast Packaging Solutions Ltd | 603714    |
+
+England continues to use the existing default orgs (Howco, Greenfield, etc.) with
+`GB-ENG` and EA. Compliance records carry per-record `businessCountry`,
+`environmentalRegulator`, and `regulatorEmail`; accepted Welsh, Scottish, and
+Northern Irish records show the matching nation regulator in the audit trail.
+
+Implementation detail: [`src/mocks/mock-auth-users.js`](./src/mocks/mock-auth-users.js)
+and [`src/mocks/identities.js`](./src/mocks/identities.js).
 
 ### Alternate backend API profiles
 
@@ -201,7 +253,9 @@ API auth secrets are not set by the script; inject them separately if the docker
 
 #### Mock AzureB2C auth
 
-Config setting `MOCK_AUTH` allows the dependency on AzureB2C for logging in to be toggled on/off.
+Config setting `MOCK_AUTH` bypasses Azure AD B2C with a stub auth strategy. Pair
+with `MOCK_AUTH_USER` to choose the regulator nation — see
+[Country-specific mock data](#country-specific-mock-data).
 
 ### HTTPS for local development
 
