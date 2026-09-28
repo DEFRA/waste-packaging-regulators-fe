@@ -61,13 +61,3 @@ body:has(> .defra-internal-footer) {
   // keep this row pixel-identical to the GDS footer. Only the link colour is
   // ours, from `&__link` above.
 }
-
-// Fix the copyright logo URL because the default govuk-frontend asset path is incorrect due to SCSS import limitations
-.govuk-footer__copyright-logo::before {
-  background-image: govuk-image-url("govuk-crest.svg");
-  
-  @supports ((-webkit-mask-position: initial) or (mask-position: initial)) {
-    -webkit-mask-image: govuk-image-url("govuk-crest.svg");
-    mask-image: govuk-image-url("govuk-crest.svg");
-  }
-}

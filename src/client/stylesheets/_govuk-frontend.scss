@@ -1,5 +1,5 @@
 @forward 'pkg:@ministryofjustice/frontend/moj/all' with (
-  $moj-assets-path: '/public/assets/',
+  $moj-assets-path: '../../../assets/',
   $moj-font-family: "arial"
 );
 
