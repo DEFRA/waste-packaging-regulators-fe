@@ -254,6 +254,41 @@ describe('govuk-notify.service', () => {
     )
   })
 
+  test('surfaces GOV.UK Notify BadRequest errors on the thrown error', async () => {
+    mockGovukNotifyConfig()
+    const notifyError = new Error('Request failed with status code 400')
+    notifyError.response = {
+      status: 400,
+      data: {
+        errors: [
+          {
+            error: 'BadRequestError',
+            message: 'Missing personalisation: regulator_cy'
+          }
+        ]
+      }
+    }
+    const previewTemplateById = vi.fn().mockRejectedValue(notifyError)
+    NotifyClient.mockImplementation(function MockNotifyClient() {
+      this.previewTemplateById = previewTemplateById
+    })
+
+    await expect(
+      previewCancellationTemplate('template-id', {
+        firstName: 'Jane',
+        lastName: 'Doe'
+      })
+    ).rejects.toMatchObject({
+      message: expect.stringContaining('Missing personalisation: regulator_cy'),
+      notifyErrors: [
+        {
+          error: 'BadRequestError',
+          message: 'Missing personalisation: regulator_cy'
+        }
+      ]
+    })
+  })
+
   test('uses the text field when Notify preview body is absent', async () => {
     mockGovukNotifyConfig()
     const previewTemplateById = vi.fn().mockResolvedValue({

@@ -294,6 +294,15 @@ export function createNotifyClient(apiKey, baseUrl) {
   return new NotifyClient(baseUrl, apiKey)
 }
 
+function decorateNotifyError(error, templateId) {
+  const notifyErrors = error?.response?.data?.errors
+  if (Array.isArray(notifyErrors) && notifyErrors.length > 0) {
+    error.notifyErrors = notifyErrors
+    error.message = `GOV.UK Notify preview failed for template ${templateId}: ${JSON.stringify(notifyErrors)}`
+  }
+  return error
+}
+
 export async function previewCancellationTemplate(templateId, personalisation) {
   const apiKey = config.get('govukNotify.apiKey')
   if (!apiKey) {
@@ -304,7 +313,12 @@ export async function previewCancellationTemplate(templateId, personalisation) {
 
   const baseUrl = config.get('govukNotify.baseUrl')
   const client = createNotifyClient(apiKey, baseUrl)
-  const response = await client.previewTemplateById(templateId, personalisation)
+  let response
+  try {
+    response = await client.previewTemplateById(templateId, personalisation)
+  } catch (error) {
+    throw decorateNotifyError(error, templateId)
+  }
   const data = response.data ?? response
   const rawBody = data.body ?? data.text ?? ''
 
