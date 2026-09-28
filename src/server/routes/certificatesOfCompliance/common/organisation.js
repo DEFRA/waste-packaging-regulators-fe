@@ -32,10 +32,11 @@ export function mapOrganisationName(organisation) {
 // The registration type is passed in rather than read off the record: a
 // waste-organisations record carries `registrations`, not a resolved type.
 export function mapWasteOrganisationName(organisation, registrationType) {
-  if (isComplianceSchemeRegistrationType(registrationType)) {
-    if (!isBlank(organisation.tradingName)) {
-      return organisation.tradingName
-    }
+  if (
+    isComplianceSchemeRegistrationType(registrationType) &&
+    !isBlank(organisation.tradingName)
+  ) {
+    return organisation.tradingName
   }
   return organisation.name ?? UNKNOWN_ORGANISATION
 }
