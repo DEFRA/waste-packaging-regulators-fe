@@ -992,6 +992,15 @@ describe('certificates of compliance — journey', () => {
         expect(materials.totals.statusTag).toEqual(notMet)
       })
 
+      it('renders Glass tonnages in the materials table equal to the glass breakdown totals', async () => {
+        const { materials, glass } = loadDetailPage(
+          (await app.get(org.detailPath)).payload
+        )
+        const glassRow = materials.rows.find((r) => r.material === 'Glass')
+
+        expect(glassRow.tonnages).toEqual(glass.totals.tonnages)
+      })
+
       it('renders the correct 3-state tag per glass row', async () => {
         const { glass } = loadDetailPage(
           (await app.get(org.detailPath)).payload
