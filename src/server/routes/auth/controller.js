@@ -19,6 +19,7 @@ import { translate } from '#server/common/helpers/i18n/translate.js'
 const MAX_LOGOUT_REDIRECTS = 10
 const DEFAULT_SESSION_COOKIE_NAME = 'session'
 const DEFAULT_COOKIE_PATHS = ['/', '/certificates-of-compliance', '/dashboard']
+const SIGNED_OUT_PATH = '/signed-out'
 
 function isRedirectStatus(status) {
   return (
@@ -89,7 +90,11 @@ function normaliseCookiePath(path) {
   }
 
   const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
-  return withLeadingSlash.replace(/\/+$/, '')
+  let end = withLeadingSlash.length
+  while (end > 1 && withLeadingSlash[end - 1] === '/') {
+    end -= 1
+  }
+  return withLeadingSlash.slice(0, end)
 }
 
 function getCookiePathsToClear(request) {
@@ -135,7 +140,7 @@ function isBroadcastLogoutRequest(request) {
 
 function buildSignOutRedirect(h, azure, request) {
   if (isBackgroundLogoutRequest(request)) {
-    return h.response().code(204)
+    return h.response().code(statusCodes.noContent)
   }
 
   if (config.get('useMockAuth')) {
@@ -146,20 +151,20 @@ function buildSignOutRedirect(h, azure, request) {
         return redirectWithLocale(
           h,
           request,
-          `/signed-out?returnTo=${encodedReturnTo}`
+          `${SIGNED_OUT_PATH}?returnTo=${encodedReturnTo}`
         )
       }
       return h.redirect(chainedReturnTo)
     }
-    return redirectWithLocale(h, request, '/signed-out')
+    return redirectWithLocale(h, request, SIGNED_OUT_PATH)
   }
 
   const prefix = getB2cAuthorityPrefix(azure)
   if (!prefix) {
-    return redirectWithLocale(h, request, '/signed-out')
+    return redirectWithLocale(h, request, SIGNED_OUT_PATH)
   }
 
-  const pathOrUrl = azure.postLogoutRedirectPath || '/signed-out'
+  const pathOrUrl = azure.postLogoutRedirectPath || SIGNED_OUT_PATH
   const postLogoutUri = resolvePostLogoutAbsoluteUri(request, pathOrUrl, azure)
   return h.redirect(buildB2cLogoutUrl(prefix, postLogoutUri))
 }
