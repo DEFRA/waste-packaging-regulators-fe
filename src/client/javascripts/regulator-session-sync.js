@@ -20,7 +20,7 @@ function clearAuthRevoked() {
 function redirectIfRevoked() {
   try {
     if (localStorage.getItem(STORAGE_KEY)) {
-      window.location.href = '/signed-out'
+      window.location.href = '/logout'
     }
   } catch {
     // localStorage may be unavailable

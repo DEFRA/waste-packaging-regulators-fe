@@ -22,6 +22,7 @@ import { getCacheEngine } from './common/helpers/session-cache/cache-engine.js'
 import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './plugins/content-security-policy.js'
 import { forwardedPrefixRedirects } from './plugins/forwarded-prefix-redirects.js'
+import { accountDetailsContext } from './plugins/account-details-context.js'
 import { metrics } from '@defra/cdp-metrics'
 
 /**
@@ -179,6 +180,7 @@ export async function createServer() {
     secureContext,
     pulse,
     sessionCache,
+    accountDetailsContext,
     nunjucksConfig,
     maintenance,
     crumb,

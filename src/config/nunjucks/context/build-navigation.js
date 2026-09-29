@@ -28,8 +28,8 @@ export function buildRegulatorContext(request, locale = 'en') {
     let html = '<div class="defra-internal-service-navigation__context">'
     if (accountDetails?.firstName && accountDetails?.lastName) {
       html += `${accountDetails.firstName} ${accountDetails.lastName} &nbsp;|&nbsp; `
-    } else if (user.name) {
-      html += `${user.name} &nbsp;|&nbsp; `
+    } else if (user.name?.trim()) {
+      html += `${user.name.trim()} &nbsp;|&nbsp; `
     } else {
       html += ''
     }
