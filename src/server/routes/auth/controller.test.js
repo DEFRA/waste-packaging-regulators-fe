@@ -298,18 +298,24 @@ describe('signOutController', () => {
     redirectUri: 'https://myapp.com/auth/callback'
   }
 
-  function makeSignOutRequest() {
+  function makeSignOutRequest(overrides = {}) {
     return {
       yar: { reset: vi.fn() },
+      query: {},
       headers: { host: 'localhost:3000' },
       server: { info: { protocol: 'http' } },
       info: { host: 'localhost:3000' },
-      log: vi.fn()
+      log: vi.fn(),
+      ...overrides
     }
   }
 
   beforeEach(() => {
-    mockConfigGet.mockReturnValue(azureConfig)
+    mockConfigGet.mockImplementation((key) => {
+      if (key === 'useMockAuth') return false
+      if (key === 'auth.azureAdB2c') return azureConfig
+      return undefined
+    })
     mockGetB2cAuthorityPrefix.mockReturnValue(
       'https://mytenant.b2clogin.com/mytenant.onmicrosoft.com/B2C_1_signupsignin'
     )
@@ -333,11 +339,44 @@ describe('signOutController', () => {
       expect(request.yar.reset).toHaveBeenCalled()
     })
 
-    it('unstates the Bell Azure AD B2C cookie', async () => {
+    it('unstates auth cookies across known path variants', async () => {
       const h = makeH()
       await signOutController.handler(makeSignOutRequest(), h)
 
-      expect(h.unstate).toHaveBeenCalledWith('bell-azure-ad-b2c')
+      expect(h.unstate).toHaveBeenCalledWith('session', { path: '/' })
+      expect(h.unstate).toHaveBeenCalledWith('session', {
+        path: '/certificates-of-compliance'
+      })
+      expect(h.unstate).toHaveBeenCalledWith('session', { path: '/dashboard' })
+      expect(h.unstate).toHaveBeenCalledWith('bell-azure-ad-b2c', {
+        path: '/'
+      })
+      expect(h.unstate).toHaveBeenCalledWith('bell-azure-ad-b2c', {
+        path: '/certificates-of-compliance'
+      })
+      expect(h.unstate).toHaveBeenCalledWith('bell-azure-ad-b2c', {
+        path: '/dashboard'
+      })
+    })
+
+    it('also clears cookies for x-forwarded-prefix path', async () => {
+      const h = makeH()
+      await signOutController.handler(
+        makeSignOutRequest({
+          headers: {
+            host: 'localhost:3000',
+            'x-forwarded-prefix': '/packaging-waste-regulators'
+          }
+        }),
+        h
+      )
+
+      expect(h.unstate).toHaveBeenCalledWith('session', {
+        path: '/packaging-waste-regulators'
+      })
+      expect(h.unstate).toHaveBeenCalledWith('bell-azure-ad-b2c', {
+        path: '/packaging-waste-regulators'
+      })
     })
 
     it('does not throw when yar is absent', async () => {
@@ -377,9 +416,15 @@ describe('signOutController', () => {
     })
 
     it('uses postLogoutRedirectPath from config as the path', async () => {
-      mockConfigGet.mockReturnValue({
-        ...azureConfig,
-        postLogoutRedirectPath: '/custom-signed-out'
+      mockConfigGet.mockImplementation((key) => {
+        if (key === 'useMockAuth') return false
+        if (key === 'auth.azureAdB2c') {
+          return {
+            ...azureConfig,
+            postLogoutRedirectPath: '/custom-signed-out'
+          }
+        }
+        return undefined
       })
       await signOutController.handler(makeSignOutRequest(), makeH())
 
@@ -391,7 +436,13 @@ describe('signOutController', () => {
     })
 
     it('defaults postLogoutRedirectPath to /signed-out when not configured', async () => {
-      mockConfigGet.mockReturnValue({ redirectUri: 'https://myapp.com/cb' })
+      mockConfigGet.mockImplementation((key) => {
+        if (key === 'useMockAuth') return false
+        if (key === 'auth.azureAdB2c') {
+          return { redirectUri: 'https://myapp.com/cb' }
+        }
+        return undefined
+      })
       await signOutController.handler(makeSignOutRequest(), makeH())
 
       expect(mockResolvePostLogoutAbsoluteUri).toHaveBeenCalledWith(
@@ -402,7 +453,85 @@ describe('signOutController', () => {
     })
   })
 
+  describe('mock auth logout', () => {
+    beforeEach(() => {
+      mockConfigGet.mockImplementation((key) => {
+        if (key === 'useMockAuth') return true
+        if (key === 'auth.azureAdB2c') return azureConfig
+        return undefined
+      })
+    })
+
+    it('redirects to /signed-out without calling B2C logout', async () => {
+      const h = makeH()
+      await signOutController.handler(makeSignOutRequest(), h)
+
+      expect(h.redirect).toHaveBeenCalledWith('/signed-out')
+      expect(mockBuildB2cLogoutUrl).not.toHaveBeenCalled()
+    })
+
+    it('redirects to an absolute returnTo query param when chained from dashboard', async () => {
+      const h = makeH()
+      await signOutController.handler(
+        makeSignOutRequest({
+          query: { returnTo: 'https://localhost:7154/signed-out' }
+        }),
+        h
+      )
+
+      expect(h.redirect).toHaveBeenCalledWith(
+        'https://localhost:7154/signed-out'
+      )
+    })
+
+    it('redirects to CSOC signed-out first for broadcast chained logouts', async () => {
+      const h = makeH()
+      await signOutController.handler(
+        makeSignOutRequest({
+          query: {
+            returnTo: 'https://localhost:7154/signed-out',
+            broadcast: 'true'
+          }
+        }),
+        h
+      )
+
+      expect(h.redirect).toHaveBeenCalledWith(
+        '/signed-out?returnTo=https%3A%2F%2Flocalhost%3A7154%2Fsigned-out'
+      )
+    })
+
+    it('returns 204 for background logout requests', async () => {
+      const h = {
+        ...makeH(),
+        response: vi.fn(() => ({
+          code: vi.fn(() => 'background-logout-response')
+        }))
+      }
+
+      const result = await signOutController.handler(
+        makeSignOutRequest({
+          query: { background: 'true' }
+        }),
+        h
+      )
+
+      expect(result).toBe('background-logout-response')
+      expect(h.redirect).not.toHaveBeenCalled()
+    })
+  })
+
   describe('external logoutUrl', () => {
+    function mockAzureConfig(overrides = {}) {
+      mockConfigGet.mockImplementation((key) => {
+        if (key === 'useMockAuth') return false
+        if (key === 'auth.azureAdB2c') {
+          return { ...azureConfig, ...overrides }
+        }
+        return undefined
+      })
+    }
+
     function makeFetchResponse({ status = 200, location, cookies } = {}) {
       const headers = new Headers()
       if (location) headers.set('location', location)
@@ -413,10 +542,7 @@ describe('signOutController', () => {
     }
 
     it('fetches the external logoutUrl when configured', async () => {
-      mockConfigGet.mockReturnValue({
-        ...azureConfig,
-        logoutUrl: 'https://external.example.com/logout'
-      })
+      mockAzureConfig({ logoutUrl: 'https://external.example.com/logout' })
       const fetchSpy = vi
         .spyOn(global, 'fetch')
         .mockResolvedValue(makeFetchResponse({ status: 200 }))
@@ -437,10 +563,7 @@ describe('signOutController', () => {
     })
 
     it('unstates cookies returned by the external logout response', async () => {
-      mockConfigGet.mockReturnValue({
-        ...azureConfig,
-        logoutUrl: 'https://external.example.com/logout'
-      })
+      mockAzureConfig({ logoutUrl: 'https://external.example.com/logout' })
       vi.spyOn(global, 'fetch').mockResolvedValue(
         makeFetchResponse({
           status: 200,
@@ -455,10 +578,7 @@ describe('signOutController', () => {
     })
 
     it('follows redirects and clears cookies at each hop', async () => {
-      mockConfigGet.mockReturnValue({
-        ...azureConfig,
-        logoutUrl: 'https://external.example.com/logout'
-      })
+      mockAzureConfig({ logoutUrl: 'https://external.example.com/logout' })
       vi.spyOn(global, 'fetch')
         .mockResolvedValueOnce(
           makeFetchResponse({
@@ -481,10 +601,7 @@ describe('signOutController', () => {
     })
 
     it('logs an error when fetch throws', async () => {
-      mockConfigGet.mockReturnValue({
-        ...azureConfig,
-        logoutUrl: 'https://external.example.com/logout'
-      })
+      mockAzureConfig({ logoutUrl: 'https://external.example.com/logout' })
       vi.spyOn(global, 'fetch').mockRejectedValue(new Error('Network failure'))
       const request = makeSignOutRequest()
       await signOutController.handler(request, makeH())
@@ -496,10 +613,7 @@ describe('signOutController', () => {
     })
 
     it('still redirects to the B2C logout URL after a fetch error', async () => {
-      mockConfigGet.mockReturnValue({
-        ...azureConfig,
-        logoutUrl: 'https://external.example.com/logout'
-      })
+      mockAzureConfig({ logoutUrl: 'https://external.example.com/logout' })
       vi.spyOn(global, 'fetch').mockRejectedValue(new Error('Network failure'))
       const h = makeH()
       await signOutController.handler(makeSignOutRequest(), h)

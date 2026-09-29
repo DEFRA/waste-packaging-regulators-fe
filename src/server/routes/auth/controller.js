@@ -17,6 +17,9 @@ import {
 import { translate } from '#server/common/helpers/i18n/translate.js'
 
 const MAX_LOGOUT_REDIRECTS = 10
+const DEFAULT_SESSION_COOKIE_NAME = 'session'
+const DEFAULT_COOKIE_PATHS = ['/', '/certificates-of-compliance', '/dashboard']
+const SIGNED_OUT_PATH = '/signed-out'
 
 function isRedirectStatus(status) {
   return (
@@ -69,16 +72,99 @@ function resetAuthSession(request, h) {
   if (request.yar) {
     request.yar.reset()
   }
-  h.unstate(BELL_AZURE_AD_B2C_COOKIE)
+  clearAuthCookies(request, h)
+}
+
+function normaliseCookiePath(path) {
+  if (!path || typeof path !== 'string') {
+    return null
+  }
+
+  const trimmed = path.trim()
+  if (!trimmed) {
+    return null
+  }
+
+  if (trimmed === '/') {
+    return '/'
+  }
+
+  const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+  let end = withLeadingSlash.length
+  while (end > 1 && withLeadingSlash[end - 1] === '/') {
+    end -= 1
+  }
+  return withLeadingSlash.slice(0, end)
+}
+
+function getCookiePathsToClear(request) {
+  const paths = new Set(
+    DEFAULT_COOKIE_PATHS.map((path) => normaliseCookiePath(path))
+  )
+
+  const forwardedPrefix = request.headers?.['x-forwarded-prefix']
+  if (typeof forwardedPrefix === 'string') {
+    const firstPrefix = forwardedPrefix.split(',')[0]
+    paths.add(normaliseCookiePath(firstPrefix))
+  }
+
+  return [...paths].filter(Boolean)
+}
+
+function clearAuthCookies(request, h) {
+  const sessionCookieName =
+    config.get('session.cache.name') || DEFAULT_SESSION_COOKIE_NAME
+  const cookiePaths = getCookiePathsToClear(request)
+
+  for (const path of cookiePaths) {
+    h.unstate(sessionCookieName, { path })
+    h.unstate(BELL_AZURE_AD_B2C_COOKIE, { path })
+  }
+}
+
+function resolveChainedLogoutReturnTo(request) {
+  const returnTo = request.query?.returnTo
+  if (typeof returnTo === 'string' && /^https?:\/\//i.test(returnTo)) {
+    return returnTo
+  }
+  return null
+}
+
+function isBackgroundLogoutRequest(request) {
+  return request.query?.background === 'true'
+}
+
+function isBroadcastLogoutRequest(request) {
+  return request.query?.broadcast === 'true'
 }
 
 function buildSignOutRedirect(h, azure, request) {
-  const prefix = getB2cAuthorityPrefix(azure)
-  if (!prefix) {
-    return redirectWithLocale(h, request, '/signed-out')
+  if (isBackgroundLogoutRequest(request)) {
+    return h.response().code(statusCodes.noContent)
   }
 
-  const pathOrUrl = azure.postLogoutRedirectPath || '/signed-out'
+  if (config.get('useMockAuth')) {
+    const chainedReturnTo = resolveChainedLogoutReturnTo(request)
+    if (chainedReturnTo) {
+      if (isBroadcastLogoutRequest(request)) {
+        const encodedReturnTo = encodeURIComponent(chainedReturnTo)
+        return redirectWithLocale(
+          h,
+          request,
+          `${SIGNED_OUT_PATH}?returnTo=${encodedReturnTo}`
+        )
+      }
+      return h.redirect(chainedReturnTo)
+    }
+    return redirectWithLocale(h, request, SIGNED_OUT_PATH)
+  }
+
+  const prefix = getB2cAuthorityPrefix(azure)
+  if (!prefix) {
+    return redirectWithLocale(h, request, SIGNED_OUT_PATH)
+  }
+
+  const pathOrUrl = azure.postLogoutRedirectPath || SIGNED_OUT_PATH
   const postLogoutUri = resolvePostLogoutAbsoluteUri(request, pathOrUrl, azure)
   return h.redirect(buildB2cLogoutUrl(prefix, postLogoutUri))
 }
@@ -113,7 +199,7 @@ export const signOutController = {
 
     const azure = config.get('auth.azureAdB2c')
     const logoutUrl = azure.logoutUrl
-    if (logoutUrl) {
+    if (!config.get('useMockAuth') && logoutUrl) {
       await callExternalLogout(request, h, logoutUrl)
     }
 
