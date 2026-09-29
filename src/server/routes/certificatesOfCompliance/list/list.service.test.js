@@ -1018,18 +1018,16 @@ describe('getCertificatesOfComplianceViewModel', () => {
           'decl-1'
         )
 
-        const glassBreakdownMaterials = new Set([
-          'GlassRemelt',
-          'RemainingGlass'
-        ])
-        const expectedMaterials = mockDetailData.obligations.filter(
+        const glassBreakdownMaterials = new Set(['Glass', 'GlassRemelt'])
+        const expectedNonGlass = mockDetailData.obligations.filter(
           (o) => !glassBreakdownMaterials.has(o.material)
         )
         const expectedGlass = mockDetailData.obligations.filter((o) =>
           glassBreakdownMaterials.has(o.material)
         )
 
-        expect(vm.materials).toHaveLength(expectedMaterials.length)
+        // materials includes non-glass rows plus one synthetic Glass total row
+        expect(vm.materials).toHaveLength(expectedNonGlass.length + 1)
         expect(vm.glassBreakdown).toHaveLength(expectedGlass.length)
       })
 
@@ -1039,11 +1037,12 @@ describe('getCertificatesOfComplianceViewModel', () => {
           'decl-1'
         )
 
-        const expectedTotal = mockDetailData.obligations
-          .filter(
-            (o) => !['GlassRemelt', 'RemainingGlass'].includes(o.material)
-          )
-          .reduce((sum, o) => sum + o.tonnages.obligated, 0)
+        // materialTotals includes non-glass materials plus the synthetic Glass
+        // total (= GlassRemelt + Glass combined), so it equals all obligations.
+        const expectedTotal = mockDetailData.obligations.reduce(
+          (sum, o) => sum + o.tonnages.obligated,
+          0
+        )
 
         expect(vm.materialTotals.obligationToMeet).toBe(expectedTotal)
       })
@@ -1476,14 +1475,12 @@ describe('getCertificatesOfComplianceViewModel', () => {
             'decl-1'
           )
 
-          const glassBreakdownMaterials = new Set([
-            'GlassRemelt',
-            'RemainingGlass'
-          ])
-          const expectedMaterials = mockObligationData.obligations.filter(
+          const glassBreakdownMaterials = new Set(['Glass', 'GlassRemelt'])
+          const expectedNonGlass = mockObligationData.obligations.filter(
             (o) => !glassBreakdownMaterials.has(o.material)
           )
-          expect(vm.materials).toHaveLength(expectedMaterials.length)
+          // materials includes non-glass rows plus one synthetic Glass total row
+          expect(vm.materials).toHaveLength(expectedNonGlass.length + 1)
           expect(vm.materials[0].name).toBe(
             mockObligationData.obligations[0].material
           )

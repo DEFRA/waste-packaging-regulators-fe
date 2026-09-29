@@ -84,18 +84,20 @@ export function mapDeclarationMaterialGroups(obligations) {
     .sort((a, b) => a.name.localeCompare(b.name))
   const glassBreakdownTotals = computeTotals(glassBreakdown)
 
-  // Replace the raw Glass row with a computed total from the breakdown so the
-  // first table's Glass value always matches the glass breakdown table's total.
-  const materials = allMapped
-    .filter(
-      (_, i) => !GLASS_BREAKDOWN_MATERIALS.has(resolvedObligations[i].material)
-    )
-    .map((m) =>
-      m.name === 'Glass' && glassBreakdown.length > 0
-        ? { ...glassBreakdownTotals, name: 'Glass' }
-        : m
-    )
-    .sort((a, b) => a.name.localeCompare(b.name))
+  // Both Glass and GlassRemelt are breakdown materials. Inject a synthetic
+  // Glass total row into the main table so its value always matches the glass
+  // breakdown table's total.
+  const nonGlassMaterials = allMapped.filter(
+    (_, i) => !GLASS_BREAKDOWN_MATERIALS.has(resolvedObligations[i].material)
+  )
+  const syntheticGlassRow =
+    glassBreakdown.length > 0
+      ? [{ ...glassBreakdownTotals, name: 'Glass' }]
+      : []
+
+  const materials = [...nonGlassMaterials, ...syntheticGlassRow].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  )
 
   return {
     materials,
