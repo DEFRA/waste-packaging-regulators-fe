@@ -18,9 +18,9 @@ export async function loadAccountDetails(request) {
   const user = getSessionUser(request)
   if (!user) {
     return {
-      user: undefined,
-      accountDetails: undefined,
-      accountDetailsError: undefined
+      user: null,
+      accountDetails: null,
+      accountDetailsError: null
     }
   }
 
@@ -46,7 +46,7 @@ export async function loadAccountDetails(request) {
           accountDetails.nationId === undefined &&
           accountDetails.serviceRoleId === undefined)
       ) {
-        accountDetails = undefined
+        accountDetails = null
         accountDetailsError = 'We could not load your account details.'
       }
     } catch (err) {
