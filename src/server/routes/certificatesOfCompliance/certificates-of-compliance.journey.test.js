@@ -1007,15 +1007,17 @@ describe('certificates of compliance — journey', () => {
           glass.rows.map((r) => [r.material, r.statusTag])
         )
 
-        expect(byName.GlassRemelt).toEqual(notMet)
-        expect(byName.Glass).toEqual(noData)
+        expect(byName['Glass remelt']).toEqual(notMet)
+        expect(byName['Remaining glass']).toEqual(noData)
       })
 
-      it('renders 0 in the tonnage cells of the null-tonnage Glass row', async () => {
+      it('renders 0 in the tonnage cells of the null-tonnage Remaining glass row', async () => {
         const { glass } = loadDetailPage(
           (await app.get(org.detailPath)).payload
         )
-        const remainingGlass = glass.rows.find((r) => r.material === 'Glass')
+        const remainingGlass = glass.rows.find(
+          (r) => r.material === 'Remaining glass'
+        )
 
         expect(remainingGlass.tonnages).toEqual({
           obligationToMeet: '220',

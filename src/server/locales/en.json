@@ -306,7 +306,19 @@
         "totals": "Totals",
         "noData": "No data",
         "glassBreakdownHeading": "Glass recycling obligation breakdown",
-        "glassBreakdownCaption": "Glass recycling obligation breakdown by material, in tonnes"
+        "glassBreakdownCaption": "Glass recycling obligation breakdown by material, in tonnes",
+        "materialNames": {
+          "Aluminium": "Aluminium",
+          "Glass": "Glass",
+          "PaperBoardFibre": "Paper, board or fibre-based composite material",
+          "Plastic": "Plastic",
+          "Steel": "Steel",
+          "Wood": "Wood"
+        },
+        "glassBreakdownNames": {
+          "Glass": "Remaining glass",
+          "GlassRemelt": "Glass remelt"
+        }
       },
       "currentYear": {
         "heading": "Current year",

@@ -75,7 +75,7 @@ describe('detail-mapping-materials.js', () => {
         'Wood'
       ])
       expect(glassBreakdown.map((r) => r.name)).toEqual([
-        'Glass', // remaining glass
+        'Glass',
         'GlassRemelt'
       ])
     })
