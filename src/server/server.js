@@ -55,7 +55,7 @@ function registerAuthStrategy(server) {
 
   if (config.get('useMockAuth')) {
     server.auth.scheme('mock', () => ({
-      authenticate: (request, h) =>
+      authenticate: (_request, h) =>
         h.authenticated({
           credentials: {
             profile: resolveMockAuthProfile()
