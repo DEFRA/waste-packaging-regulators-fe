@@ -19,21 +19,21 @@ export const mockEnglishRegulatorAuditUser = {
 export const mockWelshRegulatorAuditUser = {
   id: MOCK_AUTH_USER_OIDS.cy,
   name: 'Elin Evans',
-  email: 'elin.evans@cyfoethnaturiolcymru.gov.uk',
+  email: 'mock-welsh-user@test.local',
   locale: 'cy'
 }
 
 export const mockScottishRegulatorAuditUser = {
   id: MOCK_AUTH_USER_OIDS.sct,
   name: 'Fiona MacLeod',
-  email: 'fiona.macleod@sepa.org.uk',
+  email: 'mock-scottish-user@test.local',
   locale: 'en'
 }
 
 export const mockNorthernIrelandRegulatorAuditUser = {
   id: MOCK_AUTH_USER_OIDS.nir,
   name: "Patrick O'Neill",
-  email: 'patrick.oneill@daera-ni.gov.uk',
+  email: 'mock-northern-ireland-user@test.local',
   locale: 'en'
 }
 
@@ -50,7 +50,7 @@ export const mockAccountUser = {
 export const mockWelshAccountUser = {
   firstName: 'Elin',
   lastName: 'Evans',
-  email: 'elin.evans@cyfoethnaturiolcymru.gov.uk',
+  email: 'mock-welsh-user@test.local',
   telephone: '0300 065 3000',
   serviceRole: 'Regulator Admin',
   serviceRoleId: 4,
@@ -60,7 +60,7 @@ export const mockWelshAccountUser = {
 export const mockScottishAccountUser = {
   firstName: 'Fiona',
   lastName: 'MacLeod',
-  email: 'fiona.macleod@sepa.org.uk',
+  email: 'mock-scottish-user@test.local',
   telephone: '01786 457700',
   serviceRole: 'Regulator Admin',
   serviceRoleId: 4,
@@ -72,7 +72,7 @@ export const mockScottishAccountUser = {
 export const mockNorthernIrelandAccountUser = {
   firstName: 'Patrick',
   lastName: "O'Neill",
-  email: 'patrick.oneill@daera-ni.gov.uk',
+  email: 'mock-northern-ireland-user@test.local',
   telephone: '028 9056 9600',
   serviceRole: 'Regulator Admin',
   serviceRoleId: 4,
@@ -119,11 +119,11 @@ function mockAuthProfileForKey(key) {
 }
 
 function resolveMockAuthUserKey() {
-  const key = process.env.MOCK_AUTH_USER ?? config.get('mockAuthUser')
+  const key = config.get('mockAuthUser')
   return MOCK_AUTH_USER_KEYS.includes(key) ? key : 'en'
 }
 
-export function resolveMockAuthProfile(_request) {
+export function resolveMockAuthProfile() {
   return mockAuthProfileForKey(resolveMockAuthUserKey())
 }
 

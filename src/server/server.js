@@ -58,7 +58,7 @@ function registerAuthStrategy(server) {
       authenticate: (request, h) =>
         h.authenticated({
           credentials: {
-            profile: resolveMockAuthProfile(request)
+            profile: resolveMockAuthProfile()
           }
         })
     }))

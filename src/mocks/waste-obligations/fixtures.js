@@ -25,7 +25,10 @@ import {
   MOCK_DECL_CS_PREV_CANCELLED_ID,
   mockRegulatorEmailNrw,
   mockRegulatorEmailSepa,
-  mockRegulatorEmailNiea
+  mockRegulatorEmailNiea,
+  MOCK_BUSINESS_COUNTRY_WALES,
+  MOCK_BUSINESS_COUNTRY_SCOTLAND,
+  MOCK_BUSINESS_COUNTRY_NORTHERN_IRELAND
 } from '#mocks/identities.js'
 import {
   mockWelshRegulatorAuditUser,
@@ -136,7 +139,7 @@ export const complianceRecords = [
     organisationName: orgs.cwmniPacio.name,
     organisationReferenceNumber: orgs.cwmniPacio.reference,
     companiesHouseNumber: '98765432',
-    businessCountry: 'GB-WLS',
+    businessCountry: MOCK_BUSINESS_COUNTRY_WALES,
     environmentalRegulator: 'NRW',
     regulatorEmail: mockRegulatorEmailNrw,
     submissionStatus: 'pending',
@@ -153,7 +156,7 @@ export const complianceRecords = [
     audit: [
       {
         user: {
-          id: 'c3d4e5f6-a7b8-9012-cdef-345678901234',
+          id: 'c3d4e5f6-a7b8-4012-cdef-345678901234',
           email: 'morgan.davies@cwmni-pacio.test',
           name: 'Morgan Davies'
         },
@@ -169,7 +172,7 @@ export const complianceRecords = [
     organisationName: orgs.cwmniPacio.name,
     organisationReferenceNumber: orgs.cwmniPacio.reference,
     companiesHouseNumber: '98765432',
-    businessCountry: 'GB-WLS',
+    businessCountry: MOCK_BUSINESS_COUNTRY_WALES,
     environmentalRegulator: 'NRW',
     regulatorEmail: mockRegulatorEmailNrw,
     submissionStatus: 'accepted',
@@ -186,7 +189,7 @@ export const complianceRecords = [
     audit: [
       {
         user: {
-          id: 'c3d4e5f6-a7b8-9012-cdef-345678901234',
+          id: 'c3d4e5f6-a7b8-4012-cdef-345678901234',
           email: 'morgan.davies@cwmni-pacio.test',
           name: 'Morgan Davies'
         },
@@ -203,7 +206,7 @@ export const complianceRecords = [
     organisationName: orgs.highlandPack.name,
     organisationReferenceNumber: orgs.highlandPack.reference,
     companiesHouseNumber: '76543210',
-    businessCountry: 'GB-SCT',
+    businessCountry: MOCK_BUSINESS_COUNTRY_SCOTLAND,
     environmentalRegulator: 'SEPA',
     regulatorEmail: mockRegulatorEmailSepa,
     submissionStatus: 'pending',
@@ -236,7 +239,7 @@ export const complianceRecords = [
     organisationName: orgs.highlandPack.name,
     organisationReferenceNumber: orgs.highlandPack.reference,
     companiesHouseNumber: '76543210',
-    businessCountry: 'GB-SCT',
+    businessCountry: MOCK_BUSINESS_COUNTRY_SCOTLAND,
     environmentalRegulator: 'SEPA',
     regulatorEmail: mockRegulatorEmailSepa,
     submissionStatus: 'accepted',
@@ -270,7 +273,7 @@ export const complianceRecords = [
     organisationName: orgs.belfastPack.name,
     organisationReferenceNumber: orgs.belfastPack.reference,
     companiesHouseNumber: '87651234',
-    businessCountry: 'GB-NIR',
+    businessCountry: MOCK_BUSINESS_COUNTRY_NORTHERN_IRELAND,
     environmentalRegulator: 'NIEA',
     regulatorEmail: mockRegulatorEmailNiea,
     submissionStatus: 'pending',
@@ -303,7 +306,7 @@ export const complianceRecords = [
     organisationName: orgs.belfastPack.name,
     organisationReferenceNumber: orgs.belfastPack.reference,
     companiesHouseNumber: '87651234',
-    businessCountry: 'GB-NIR',
+    businessCountry: MOCK_BUSINESS_COUNTRY_NORTHERN_IRELAND,
     environmentalRegulator: 'NIEA',
     regulatorEmail: mockRegulatorEmailNiea,
     submissionStatus: 'accepted',

@@ -148,7 +148,7 @@ export const wasteOrganisations = [
     '98765432',
     '12 Heol y Ffordd',
     'CF10 1AA',
-    { businessCountry: MOCK_BUSINESS_COUNTRY_WALES, addressCountry: 'GB' }
+    { businessCountry: MOCK_BUSINESS_COUNTRY_WALES, addressCountry: 'WLS' }
   ),
   directProducerOrganisation(
     orgs.highlandPack.id,
@@ -156,7 +156,7 @@ export const wasteOrganisations = [
     '76543210',
     '14 Castle Street',
     'EH1 2NG',
-    { businessCountry: MOCK_BUSINESS_COUNTRY_SCOTLAND, addressCountry: 'GB' }
+    { businessCountry: MOCK_BUSINESS_COUNTRY_SCOTLAND, addressCountry: 'SCT' }
   ),
   directProducerOrganisation(
     orgs.belfastPack.id,
@@ -166,7 +166,7 @@ export const wasteOrganisations = [
     'BT1 5GS',
     {
       businessCountry: MOCK_BUSINESS_COUNTRY_NORTHERN_IRELAND,
-      addressCountry: 'GB'
+      addressCountry: 'NIR'
     }
   ),
   complianceSchemeOrganisation(
