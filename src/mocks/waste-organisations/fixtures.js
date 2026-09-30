@@ -17,16 +17,16 @@ import {
 // and (filtered by registration type) by GET /organisations.
 function complianceSchemeOrganisation(
   id,
+  schemeName,
   operatorName,
-  tradingName,
   companiesHouseNumber,
   addressLine1,
   postcode = 'SW1A 1AA'
 ) {
   return {
     id,
-    name: operatorName,
-    tradingName,
+    name: schemeName,
+    tradingName: operatorName,
     businessCountry: MOCK_BUSINESS_COUNTRY,
     companiesHouseNumber,
     address: { addressLine1, postcode, country: 'EN' },
@@ -171,93 +171,93 @@ export const wasteOrganisations = [
   ),
   complianceSchemeOrganisation(
     orgs.ecopack.id,
-    orgs.ecopack.operatorName,
     orgs.ecopack.name,
+    orgs.ecopack.operatorName,
     orgs.ecopack.companiesHouseNumber,
     'EcoPack House'
   ),
   complianceSchemeOrganisation(
     orgs.greencircle.id,
-    orgs.greencircle.operatorName,
     orgs.greencircle.name,
+    orgs.greencircle.operatorName,
     orgs.greencircle.companiesHouseNumber,
     'GreenCircle House'
   ),
   complianceSchemeOrganisation(
     orgs.kestrel.id,
-    orgs.kestrel.operatorName,
     orgs.kestrel.name,
+    orgs.kestrel.operatorName,
     orgs.kestrel.companiesHouseNumber,
     'Kestrel House'
   ),
   complianceSchemeOrganisation(
     orgs.larchwood.id,
-    orgs.larchwood.operatorName,
     orgs.larchwood.name,
+    orgs.larchwood.operatorName,
     orgs.larchwood.companiesHouseNumber,
     'Larchwood House'
   ),
   complianceSchemeOrganisation(
     orgs.nationwide.id,
-    orgs.nationwide.operatorName,
     orgs.nationwide.name,
+    orgs.nationwide.operatorName,
     orgs.nationwide.companiesHouseNumber,
     'Nationwide House'
   ),
   complianceSchemeOrganisation(
     orgs.riverside.id,
-    orgs.riverside.operatorName,
     orgs.riverside.name,
+    orgs.riverside.operatorName,
     orgs.riverside.companiesHouseNumber,
     'Riverside House'
   ),
   complianceSchemeOrganisation(
     orgs.ashcroft.id,
-    orgs.ashcroft.operatorName,
     orgs.ashcroft.name,
+    orgs.ashcroft.operatorName,
     orgs.ashcroft.companiesHouseNumber,
     'Ashcroft House'
   ),
   complianceSchemeOrganisation(
     orgs.bramble.id,
-    orgs.bramble.operatorName,
     orgs.bramble.name,
+    orgs.bramble.operatorName,
     orgs.bramble.companiesHouseNumber,
     'Bramble House'
   ),
   complianceSchemeOrganisation(
     orgs.caldera.id,
-    orgs.caldera.operatorName,
     orgs.caldera.name,
+    orgs.caldera.operatorName,
     orgs.caldera.companiesHouseNumber,
     'Caldera House'
   ),
   complianceSchemeOrganisation(
     orgs.dovetail.id,
-    orgs.dovetail.operatorName,
     orgs.dovetail.name,
+    orgs.dovetail.operatorName,
     orgs.dovetail.companiesHouseNumber,
     'Dovetail House'
   ),
   complianceSchemeOrganisation(
     orgs.futurepack.id,
-    orgs.futurepack.operatorName,
     orgs.futurepack.name,
+    orgs.futurepack.operatorName,
     orgs.futurepack.companiesHouseNumber,
     'FuturePack House'
   ),
   complianceSchemeOrganisation(
     orgs.metroline.id,
-    orgs.metroline.operatorName,
     orgs.metroline.name,
+    orgs.metroline.operatorName,
     orgs.metroline.companiesHouseNumber,
     'Metroline House',
     'M2 5BQ'
   ),
   complianceSchemeOrganisation(
     orgs.southgate.id,
-    orgs.southgate.operatorName,
     orgs.southgate.name,
+    orgs.southgate.operatorName,
     orgs.southgate.companiesHouseNumber,
     'Southgate House',
     'N14 6BS'
@@ -288,8 +288,8 @@ export const wasteOrganisations = [
   ),
   complianceSchemeOrganisation(
     orgs.beacon.id,
-    orgs.beacon.operatorName,
     orgs.beacon.name,
+    orgs.beacon.operatorName,
     orgs.beacon.companiesHouseNumber,
     'Beacon House'
   )

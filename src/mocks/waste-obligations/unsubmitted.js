@@ -1,8 +1,11 @@
 // Pure projection of a compliance record to the GET /compliance-declarations/unsubmitted
 // row shape. No state — the store composes this over its record set.
 
-import { OBLIGATION_YEAR, MOCK_BUSINESS_COUNTRY } from '#mocks/identities.js'
-import { listOrganisationName } from './declaration.js'
+import {
+  OBLIGATION_YEAR,
+  MOCK_BUSINESS_COUNTRY,
+  COMPLIANCE_SCHEME
+} from '#mocks/identities.js'
 // The real backend materialises these two metrics from the same calculation the
 // detail page runs, so the mock derives them with the very same helpers rather
 // than restating the arithmetic. Crossing into the app layer from a mock is
@@ -29,13 +32,29 @@ function metricsFor(obligations) {
   }
 }
 
+function isBlank(value) {
+  return value == null || String(value).trim() === ''
+}
+
+// Deliberately NOT declaration.js's listOrganisationName: submitted tabs show the
+// scheme operator from the declaration snapshot, but the unsubmitted endpoint
+// materialises waste-organisations Name — the compliance scheme's own name.
+export function unsubmittedOrganisationName(record) {
+  if (record.registrationType !== COMPLIANCE_SCHEME) {
+    return record.organisationName
+  }
+
+  const schemeName = record.complianceSchemeName
+  return isBlank(schemeName) ? record.schemeOperatorName : schemeName
+}
+
 export function toUnsubmittedOrganisation(record) {
   return {
     organisationId: record.organisationId,
     obligationYear: OBLIGATION_YEAR,
     registrationType: record.registrationType,
     businessCountry: record.businessCountry ?? MOCK_BUSINESS_COUNTRY,
-    name: listOrganisationName(record),
+    name: unsubmittedOrganisationName(record),
     referenceNumber: record.organisationReferenceNumber,
     ...metricsFor(record.obligations)
   }
