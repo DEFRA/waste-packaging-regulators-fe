@@ -7,10 +7,12 @@ export function buildAccountNavigation(request, locale = 'en') {
   const user = getSessionUser(request)
   const accountDetails = request.app?.accountDetails
 
-  if (accountDetails?.organisationName) {
+  const nationId = accountDetails?.nationId ?? user?.nationId
+
+  if (nationId) {
+    return [{ text: translate(locale, `common.agency.${nationId}`) }]
+  } else if (accountDetails?.organisationName) {
     return [{ text: accountDetails.organisationName }]
-  } else if (user?.nationId) {
-    return [{ text: translate(locale, `common.agency.${user.nationId}`) }]
   } else {
     return []
   }
@@ -28,8 +30,8 @@ export function buildRegulatorContext(request, locale = 'en') {
     let html = '<div class="defra-internal-service-navigation__context">'
     if (accountDetails?.firstName && accountDetails?.lastName) {
       html += `${accountDetails.firstName} ${accountDetails.lastName} &nbsp;|&nbsp; `
-    } else if (user.name) {
-      html += `${user.name} &nbsp;|&nbsp; `
+    } else if (user.name?.trim()) {
+      html += `${user.name.trim()} &nbsp;|&nbsp; `
     } else {
       html += ''
     }

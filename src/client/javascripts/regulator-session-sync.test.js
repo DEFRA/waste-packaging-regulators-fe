@@ -115,7 +115,7 @@ describe('initRegulatorSessionSync', () => {
     expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull()
   })
 
-  it('redirects to signed-out when another tab broadcasts logout', () => {
+  it('redirects to logout when another tab broadcasts logout', () => {
     const { storage, location, listeners } = setupBrowser()
     storage.setItem(STORAGE_KEY, '1')
 
@@ -126,7 +126,7 @@ describe('initRegulatorSessionSync', () => {
       newValue: String(Date.now())
     })
 
-    expect(location.href).toBe('/signed-out')
+    expect(location.href).toBe('/logout')
   })
 
   it('reloads when visibility recheck finds the session is no longer signed in', async () => {

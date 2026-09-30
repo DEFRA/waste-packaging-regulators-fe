@@ -22,6 +22,7 @@ import { getCacheEngine } from './common/helpers/session-cache/cache-engine.js'
 import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './plugins/content-security-policy.js'
 import { forwardedPrefixRedirects } from './plugins/forwarded-prefix-redirects.js'
+import { accountDetailsContext } from './plugins/account-details-context.js'
 import { metrics } from '@defra/cdp-metrics'
 
 /**
@@ -109,7 +110,7 @@ function registerAuthStrategy(server) {
 }
 
 function createHapiServer(tls) {
-  return hapi.server({
+  const server = hapi.server({
     tls,
     host: config.get('host'),
     port: config.get('port'),
@@ -147,6 +148,12 @@ function createHapiServer(tls) {
       contextualize: applyForwardedPrefixToCookiePath
     }
   })
+
+  // Disable the path-prefix contextualize function for the cookies policy cookie
+  // so that its path remains `/` and applies to all apps sharing the same proxy domain.
+  server.state('cookies_policy', { contextualize: () => {} })
+
+  return server
 }
 
 export async function createServer() {
@@ -179,6 +186,7 @@ export async function createServer() {
     secureContext,
     pulse,
     sessionCache,
+    accountDetailsContext,
     nunjucksConfig,
     maintenance,
     crumb,

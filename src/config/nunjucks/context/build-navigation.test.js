@@ -15,13 +15,25 @@ describe('#buildNavigation', () => {
 })
 
 describe('#buildAccountNavigation', () => {
-  test('Should return organisation name when available in accountDetails', () => {
+  test('Should prefer localised agency name over Account API organisationName', () => {
     const request = mockRequest({
-      app: { accountDetails: { organisationName: 'Environment Agency' } }
+      app: {
+        accountDetails: {
+          organisationName: 'Regulator Org - Nation 1',
+          nationId: 1
+        }
+      }
     })
-    expect(buildAccountNavigation(request)).toEqual([
+    expect(buildAccountNavigation(request, 'en')).toEqual([
       { text: 'Environment Agency' }
     ])
+  })
+
+  test('Should fallback to organisationName when nationId is absent', () => {
+    const request = mockRequest({
+      app: { accountDetails: { organisationName: 'Custom Agency' } }
+    })
+    expect(buildAccountNavigation(request)).toEqual([{ text: 'Custom Agency' }])
   })
 
   test('Should return empty array when organisationName is absent and nationId is not present', () => {
