@@ -128,7 +128,4 @@ export const declarationStatusByReviewStatus = {
   Cancelled: 'Cancelled'
 }
 
-export const GLASS_BREAKDOWN_MATERIALS = new Set([
-  'GlassRemelt',
-  'RemainingGlass'
-])
+export const GLASS_BREAKDOWN_MATERIALS = new Set(['Glass', 'GlassRemelt'])

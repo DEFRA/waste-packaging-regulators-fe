@@ -9,31 +9,28 @@ import { materialRow } from '#test-helpers/msw/obligations.js'
 // The organisations every assertion below traces back to are declared once in
 // the shared world, so the input that produces each asserted value is visible
 // here rather than in a per-scenario fixture.
-const GLASS_BREAKDOWN_MATERIALS = new Set(['GlassRemelt', 'RemainingGlass'])
+const GLASS_BREAKDOWN_MATERIALS = new Set(['Glass', 'GlassRemelt'])
 
 // A fully-met set of obligations with varied tonnages, so the material and totals assertions
 // are distinctive and trace back to these numbers.
 const metObligations = [
   materialRow('Aluminium', 215, 215),
-  materialRow('Glass', 640, 640),
   materialRow('PaperBoardFibre', 870, 870),
   materialRow('Plastic', 1740, 1740),
   materialRow('Steel', 365, 365),
   materialRow('Wood', 80, 80),
   materialRow('GlassRemelt', 420, 420),
-  materialRow('RemainingGlass', 220, 220)
+  materialRow('Glass', 220, 220)
 ]
 const metMaterials = metObligations.filter(
   (o) => !GLASS_BREAKDOWN_MATERIALS.has(o.material)
 )
-const metGlassBreakdown = metObligations.filter((o) =>
-  GLASS_BREAKDOWN_MATERIALS.has(o.material)
-)
-const metTotalObligated = metMaterials.reduce(
+// Total includes all materials: non-glass + synthetic Glass (= GlassRemelt + Glass)
+const metTotalObligated = metObligations.reduce(
   (sum, o) => sum + o.tonnages.obligated,
   0
 )
-const metTotalAccepted = metMaterials.reduce(
+const metTotalAccepted = metObligations.reduce(
   (sum, o) => sum + o.tonnages.accepted,
   0
 )
@@ -348,8 +345,12 @@ describe('#certificatesOfComplianceDetailController', () => {
 
   it('should render all main material names in the recycling obligations table', async () => {
     const response = await app.get(pendingDp.detailPath)
+    const displayNames = {
+      PaperBoardFibre: 'Paper, board or fibre-based composite material'
+    }
     for (const obligation of metMaterials) {
-      expect(response.payload).toContain(obligation.material)
+      const expected = displayNames[obligation.material] ?? obligation.material
+      expect(response.payload).toContain(expected)
     }
   })
 
@@ -370,11 +371,10 @@ describe('#certificatesOfComplianceDetailController', () => {
     expect(response.payload).toContain(String(metTotalAccepted))
   })
 
-  it('should render glass breakdown material names', async () => {
+  it('should render glass breakdown material display names', async () => {
     const response = await app.get(pendingDp.detailPath)
-    for (const obligation of metGlassBreakdown) {
-      expect(response.payload).toContain(obligation.material)
-    }
+    expect(response.payload).toContain('Glass remelt')
+    expect(response.payload).toContain('Remaining glass')
   })
 
   it('should render two Totals rows — one per table', async () => {

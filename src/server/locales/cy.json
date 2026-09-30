@@ -299,7 +299,19 @@
         "totals": "Cyfansymiau",
         "noData": "Dim data",
         "glassBreakdownHeading": "Dadansoddiad o’r rhwymedigaeth ailgylchu gwydr",
-        "glassBreakdownCaption": "Crynodeb o’r Rhwymedigaeth ailgylchu gwydr yn ôl deunydd, mewn tunelli"
+        "glassBreakdownCaption": "Crynodeb o’r Rhwymedigaeth ailgylchu gwydr yn ôl deunydd, mewn tunelli",
+        "materialNames": {
+          "Aluminium": "Alwminiwm",
+          "Glass": "Gwydr",
+          "PaperBoardFibre": "Papur, cardfwrdd neu ddeunydd cyfansawdd ffeibr",
+          "Plastic": "Plastig",
+          "Steel": "Dur",
+          "Wood": "Pren"
+        },
+        "glassBreakdownNames": {
+          "Glass": "Gwydr sy’n weddill",
+          "GlassRemelt": "Gwydr aildoddi"
+        }
       },
       "currentYear": {
         "heading": "Blwyddyn gyfredol",

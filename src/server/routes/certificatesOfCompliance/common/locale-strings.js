@@ -134,6 +134,36 @@ export function translateCancellationNotificationField(
   )
 }
 
+export function translateMaterialGroups(materialGroups, locale) {
+  const { materials, glassBreakdown, ...rest } = materialGroups
+
+  const translatedMaterials = materials
+    .map((m) => ({
+      ...m,
+      name:
+        translateCoc(locale, `detail.obligations.materialNames.${m.name}`) ||
+        m.name
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name))
+
+  const translatedGlassBreakdown = glassBreakdown
+    .map((r) => ({
+      ...r,
+      name:
+        translateCoc(
+          locale,
+          `detail.obligations.glassBreakdownNames.${r.name}`
+        ) || r.name
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name))
+
+  return {
+    ...rest,
+    materials: translatedMaterials,
+    glassBreakdown: translatedGlassBreakdown
+  }
+}
+
 export function translateRegulation43Statement(
   regulation43Met,
   organisationName,

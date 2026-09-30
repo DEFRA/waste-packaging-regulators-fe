@@ -1,4 +1,7 @@
-import { translateActionLabels } from '../common/locale-strings.js'
+import {
+  translateActionLabels,
+  translateMaterialGroups
+} from '../common/locale-strings.js'
 import {
   displayOrNoData,
   complianceDocumentNoun,
@@ -196,7 +199,10 @@ function buildDeclarationViewModel(
       submitterName,
       locale
     }),
-    ...mapDeclarationMaterialGroups(obligations),
+    ...translateMaterialGroups(
+      mapDeclarationMaterialGroups(obligations),
+      locale
+    ),
     actions: resolveDeclarationActions(
       reviewStatus,
       resolvedOrganisationId,
@@ -256,7 +262,10 @@ export function mapObligationToDetail(
   } = {}
 ) {
   const obligations = data?.obligations ?? []
-  const materialGroups = mapDeclarationMaterialGroups(obligations)
+  const materialGroups = translateMaterialGroups(
+    mapDeclarationMaterialGroups(obligations),
+    locale
+  )
 
   const orgFields = mapWasteOrganisationToDetailFields(organisation, {
     obligationYear,

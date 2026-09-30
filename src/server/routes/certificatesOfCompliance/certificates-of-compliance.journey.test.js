@@ -10,13 +10,12 @@ import { materialRow, noDataRow } from '#test-helpers/msw/obligations.js'
 // per-material tonnages and statuses are visible next to the assertions.
 const ALL_MATERIALS = [
   'Aluminium',
-  'Glass',
   'PaperBoardFibre',
   'Plastic',
   'Steel',
   'Wood',
   'GlassRemelt',
-  'RemainingGlass'
+  'Glass'
 ]
 const allMetObligations = ALL_MATERIALS.map((material) =>
   materialRow(material, 100, 100)
@@ -26,13 +25,12 @@ const allNoDataObligations = ALL_MATERIALS.map((material) =>
 )
 const mixedObligations = [
   materialRow('Aluminium', 215, 215, 'Met'),
-  materialRow('Glass', 640, 500, 'NotMet'),
   materialRow('PaperBoardFibre', 870, 870, 'Met'),
   materialRow('Plastic', 1740, 1500, 'NotMet'),
   materialRow('Steel', 365, 365, 'Met'),
   noDataRow('Wood', 80),
   materialRow('GlassRemelt', 420, 380, 'NotMet'),
-  noDataRow('RemainingGlass', 220)
+  noDataRow('Glass', 220)
 ]
 
 const REGISTRATION_TYPE = {
@@ -1009,16 +1007,16 @@ describe('certificates of compliance — journey', () => {
           glass.rows.map((r) => [r.material, r.statusTag])
         )
 
-        expect(byName.GlassRemelt).toEqual(notMet)
-        expect(byName.RemainingGlass).toEqual(noData)
+        expect(byName['Glass remelt']).toEqual(notMet)
+        expect(byName['Remaining glass']).toEqual(noData)
       })
 
-      it('renders 0 in the tonnage cells of the null-tonnage RemainingGlass row', async () => {
+      it('renders 0 in the tonnage cells of the null-tonnage Remaining glass row', async () => {
         const { glass } = loadDetailPage(
           (await app.get(org.detailPath)).payload
         )
         const remainingGlass = glass.rows.find(
-          (r) => r.material === 'RemainingGlass'
+          (r) => r.material === 'Remaining glass'
         )
 
         expect(remainingGlass.tonnages).toEqual({

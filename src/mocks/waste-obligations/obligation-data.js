@@ -18,13 +18,12 @@ const obligationRow = (material, obligated, accepted, status, extra = {}) => ({
 
 export const mockObligationsAllMet = [
   obligationRow('Aluminium', 215, 215, 'Met'),
-  obligationRow('Glass', 640, 640, 'Met'),
   obligationRow('PaperBoardFibre', 870, 870, 'Met'),
   obligationRow('Plastic', 1740, 1740, 'Met'),
   obligationRow('Steel', 365, 365, 'Met'),
   obligationRow('Wood', 80, 80, 'Met'),
   obligationRow('GlassRemelt', 420, 420, 'Met'),
-  obligationRow('RemainingGlass', 220, 220, 'Met')
+  obligationRow('Glass', 220, 220, 'Met')
 ]
 
 const noDataRow = (material, obligated) => ({
@@ -42,37 +41,34 @@ const noDataRow = (material, obligated) => ({
 
 export const mockObligationsMixed = [
   obligationRow('Aluminium', 215, 215, 'Met'),
-  obligationRow('Glass', 640, 380, 'NotMet', { awaitingAcceptance: 20 }),
   obligationRow('PaperBoardFibre', 870, 870, 'Met'),
   obligationRow('Plastic', 1740, 1500, 'NotMet', { awaitingAcceptance: 120 }),
   obligationRow('Steel', 365, 365, 'Met'),
   noDataRow('Wood', 80),
   obligationRow('GlassRemelt', 420, 380, 'NotMet', { awaitingAcceptance: 20 }),
-  noDataRow('RemainingGlass', 220)
+  noDataRow('Glass', 220)
 ]
 
-// Every material met bar one that falls short — 4186 accepted of 4550 obligated,
-// which derives to 92% coverage with a NotMet recycling status.
+// Every material met bar one that falls short — 3546 accepted of 3910 obligated,
+// which derives to ~90% coverage with a NotMet recycling status.
 export const mockObligationsMostlyMet = [
   obligationRow('Aluminium', 215, 215, 'Met'),
-  obligationRow('Glass', 640, 640, 'Met'),
   obligationRow('PaperBoardFibre', 870, 870, 'Met'),
   obligationRow('Plastic', 1740, 1376, 'NotMet', { awaitingAcceptance: 120 }),
   obligationRow('Steel', 365, 365, 'Met'),
   obligationRow('Wood', 80, 80, 'Met'),
   obligationRow('GlassRemelt', 420, 420, 'Met'),
-  obligationRow('RemainingGlass', 220, 220, 'Met')
+  obligationRow('Glass', 220, 220, 'Met')
 ]
 
 export const mockObligationsAllZero = [
   'Aluminium',
-  'Glass',
   'PaperBoardFibre',
   'Plastic',
   'Steel',
   'Wood',
   'GlassRemelt',
-  'RemainingGlass'
+  'Glass'
 ].map((material) => ({
   material,
   recyclingTarget: 0,
@@ -91,13 +87,12 @@ export const mockObligationsAllZero = [
 // "No data" recycling status exactly as a live organisation with no return would.
 export const defaultObligations = [
   { material: 'Aluminium', obligated: 215 },
-  { material: 'Glass', obligated: 0 },
   { material: 'PaperBoardFibre', obligated: 870 },
   { material: 'Plastic', obligated: 1740 },
   { material: 'Steel', obligated: 365 },
   { material: 'Wood', obligated: 80 },
   { material: 'GlassRemelt', obligated: 0 },
-  { material: 'RemainingGlass', obligated: 0 }
+  { material: 'Glass', obligated: 0 }
 ].map(({ material, obligated }) => ({
   material,
   recyclingTarget: 1,
