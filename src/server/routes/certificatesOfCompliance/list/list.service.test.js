@@ -1840,7 +1840,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.companyName).toBe('Unknown organisation')
         })
 
-        test('maps compliance scheme organisation name from the scheme operator name, not the scheme trading name', async () => {
+        test('maps compliance scheme organisation name from waste-organisations name, not tradingName', async () => {
           createWasteObligationsApiService.mockReturnValue({
             getComplianceObligation: vi
               .fn()
@@ -1849,8 +1849,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
           createWasteOrganisationsApiService.mockReturnValue({
             getOrganisation: vi.fn().mockResolvedValue({
               id: 'org-cs',
-              name: 'Scheme Operator Co',
-              tradingName: 'Trading Scheme Co',
+              name: 'Valpak Compliance Scheme',
+              tradingName: 'Scheme Operator Co',
               registrations: complianceSchemeRegistrations,
               referenceNumber: '183551'
             })
@@ -1862,7 +1862,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
             { obligationYear: 2026 }
           )
 
-          expect(vm.companyName).toBe('Scheme Operator Co')
+          expect(vm.companyName).toBe('Valpak Compliance Scheme')
           expect(vm.complianceTypeLabel).toBe('2026 statement of compliance')
         })
 
@@ -1916,8 +1916,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
             createWasteOrganisationsApiService.mockReturnValue({
               getOrganisation: vi.fn().mockResolvedValue({
                 id: 'org-cs',
-                name: 'Scheme Operator Co',
-                tradingName: 'Trading Scheme Co',
+                name: 'Valpak Compliance Scheme',
+                tradingName: 'Scheme Operator Co',
                 registrations: complianceSchemeRegistrations,
                 companiesHouseNumber: 'CHN-CS-1'
               })
@@ -2023,7 +2023,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
             expect(vm.declarationEmailAddress).toBe('No data')
             expect(vm.companyPhoneNumber).toBe('No data')
-            expect(vm.companyName).toBe('Scheme Operator Co')
+            expect(vm.companyName).toBe('Valpak Compliance Scheme')
             expect(vm.organisationRef).toBe('530001')
           })
 
