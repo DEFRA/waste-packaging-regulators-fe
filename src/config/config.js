@@ -75,6 +75,12 @@ export const config = convict({
     default: !isProduction,
     env: 'MOCK_AUTH'
   },
+  mockAuthUser: {
+    doc: 'Mock auth profile when useMockAuth is true: en (EA), cy (NRW), sct (SEPA), or nir (NIEA). UI locale (?lang=) is independent.',
+    format: ['en', 'cy', 'sct', 'nir'],
+    default: 'en',
+    env: 'MOCK_AUTH_USER'
+  },
   mockErrorStatus: {
     doc: 'When mock API responses are in use, force every mocked service call to fail with this HTTP status. Used to walk a journey into the error pages without a real backend. Null disables it.',
     format: Number,

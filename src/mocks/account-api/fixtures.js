@@ -2,6 +2,12 @@
 // contacts, plus the stand-in signed-in user returned for the submitter lookup.
 
 import { orgs } from '#mocks/identities.js'
+import {
+  mockAccountUser,
+  mockWelshAccountUser
+} from '#mocks/mock-auth-users.js'
+
+export { mockAccountUser, mockWelshAccountUser }
 
 // Account API organisations — carry the reference number and the nominated
 // contacts. Direct producers are matched by external id (== organisation id);
@@ -180,6 +186,45 @@ export const accountOrganisations = [
       }
     ]
   ),
+  directProducerAccount(
+    orgs.cwmniPacio.id,
+    orgs.cwmniPacio.name,
+    orgs.cwmniPacio.reference,
+    [
+      approvedPerson(
+        'Morgan',
+        'Davies',
+        'morgan.davies@cwmni-pacio.test',
+        '029 2046 0100'
+      )
+    ]
+  ),
+  directProducerAccount(
+    orgs.highlandPack.id,
+    orgs.highlandPack.name,
+    orgs.highlandPack.reference,
+    [
+      approvedPerson(
+        'Angus',
+        'Fraser',
+        'angus.fraser@highland-pack.test',
+        '0131 555 0100'
+      )
+    ]
+  ),
+  directProducerAccount(
+    orgs.belfastPack.id,
+    orgs.belfastPack.name,
+    orgs.belfastPack.reference,
+    [
+      approvedPerson(
+        'Siobhan',
+        'Kelly',
+        'siobhan.kelly@belfast-pack.test',
+        '028 9056 0100'
+      )
+    ]
+  ),
   complianceSchemeAccount(
     orgs.ecopack.id,
     orgs.ecopack.operatorName,
@@ -351,16 +396,3 @@ export const accountOrganisations = [
     ]
   )
 ]
-
-// A default Account user returned for the submitter-phone lookup on submitted
-// declarations (GET /api/users/user-organisations). The submitter's phone number
-// is a secondary field, so a single stand-in user is enough.
-export const mockAccountUser = {
-  firstName: 'John',
-  lastName: 'Doe',
-  email: 'john.doe@example.org',
-  telephone: '01234 567890',
-  serviceRole: 'Regulator Admin',
-  serviceRoleId: 4,
-  organisations: [{ name: 'Example Environment Agency', nationId: 1 }]
-}

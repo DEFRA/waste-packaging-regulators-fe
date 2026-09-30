@@ -13,6 +13,9 @@ export const MOCK_STATUS_CANCELLED = 'Cancelled'
 export const MOCK_STATUS_QUERIED = 'Queried'
 export const MOCK_REGISTRATION_STATUS = 'REGISTERED'
 export const MOCK_BUSINESS_COUNTRY = 'GB-ENG'
+export const MOCK_BUSINESS_COUNTRY_WALES = 'GB-WLS'
+export const MOCK_BUSINESS_COUNTRY_SCOTLAND = 'GB-SCT'
+export const MOCK_BUSINESS_COUNTRY_NORTHERN_IRELAND = 'GB-NIR'
 export const MOCK_REGISTRATION_TIMESTAMP = '2026-03-31T23:20:34.294+00:00'
 
 export const MOCK_CS_SUBMITTED_TIMESTAMP = '2027-01-20T00:00:00Z'
@@ -33,6 +36,12 @@ export const MOCK_DECL_CS_PREV_CANCELLED_ID = '7c5e16bf9d2c09785759d002'
 
 export const mockRegulatorName = 'EA'
 export const mockRegulatorEmail = 'ea@environment-agency.gov.uk'
+export const mockRegulatorNameNrw = 'NRW'
+export const mockRegulatorEmailNrw = 'regulator@naturalresourceswales.gov.uk'
+export const mockRegulatorNameSepa = 'SEPA'
+export const mockRegulatorEmailSepa = 'packagingproducers@sepa.org.uk'
+export const mockRegulatorNameNiea = 'NIEA'
+export const mockRegulatorEmailNiea = 'packagingproducers@daera-ni.gov.uk'
 
 // One entry per organisation with all of its shared identity — the ids, names,
 // reference numbers and Companies House numbers the three backend mocks describe
@@ -199,5 +208,20 @@ export const orgs = {
     name: 'Beacon Compliance Scheme',
     operatorName: 'Beacon Group',
     companiesHouseNumber: 'CS_GENERATED_2244668'
+  },
+  cwmniPacio: {
+    id: '8f4e2a1b-3c5d-4e6f-9a0b-1c2d3e4f5a6b',
+    name: 'Cwmni Pacio Cymru Ltd',
+    reference: '401582'
+  },
+  highlandPack: {
+    id: '1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f801',
+    name: 'Highland Packaging Ltd',
+    reference: '502691'
+  },
+  belfastPack: {
+    id: '2b3c4d5e-6f70-8192-a3b4-c5d6e7f80912',
+    name: 'Belfast Packaging Solutions Ltd',
+    reference: '603714'
   }
 }

@@ -6,7 +6,7 @@ import { http, HttpResponse } from 'msw'
 
 import { config } from '#config/config.js'
 import { dataHandler, notFound, trimTrailingSlash } from '#mocks/http.js'
-import { mockAccountUser } from './fixtures.js'
+import { resolveMockAccountUser } from '#mocks/mock-auth-users.js'
 
 export function accountHandlers(data) {
   const base = trimTrailingSlash(config.get('accountApi.baseUrl'))
@@ -53,7 +53,10 @@ export function accountHandlers(data) {
     ),
     http.get(
       `${base}/api/users/user-organisations`,
-      dataHandler(() => HttpResponse.json({ user: mockAccountUser }))
+      dataHandler(({ request }) => {
+        const userId = new URL(request.url).searchParams.get('userId')
+        return HttpResponse.json({ user: resolveMockAccountUser(userId) })
+      })
     ),
     http.post(tokenEndpoint, () =>
       HttpResponse.json({

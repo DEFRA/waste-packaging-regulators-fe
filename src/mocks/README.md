@@ -69,6 +69,51 @@ mocks/
   instead of data, to walk a journey into the real error pages without a failing
   backend.
 
+## Country-specific data
+
+The default fixture set includes direct producers for Wales, Scotland, and
+Northern Ireland, each with pending and accepted compliance records. England is
+covered by the existing default orgs (Howco, Greenfield, etc.), which default to
+`GB-ENG` and EA when no country fields are set on the record.
+
+Each nation-specific org is described once in `identities.js` (`orgs.cwmniPacio`,
+`orgs.highlandPack`, `orgs.belfastPack`) and referenced from all three backend
+fixtures. Records carry `businessCountry`, `environmentalRegulator`, and
+`regulatorEmail`; `declaration.js` projects those onto the API declaration shape
+instead of hardcoding EA.
+
+| Nation           | Org slug       | `businessCountry` | Regulator |
+| ---------------- | -------------- | ----------------- | --------- |
+| Wales            | `cwmniPacio`   | `GB-WLS`          | NRW       |
+| Scotland         | `highlandPack` | `GB-SCT`          | SEPA      |
+| Northern Ireland | `belfastPack`  | `GB-NIR`          | NIEA      |
+
+### Mock auth personas
+
+`mock-auth-users.js` centralises the signed-in regulator and Account API user
+profiles. When `MOCK_AUTH=true`, `resolveMockAuthProfile` picks the auth
+credentials and `resolveMockAccountUser` returns the matching Account API profile
+(by oid).
+
+`MOCK_AUTH_USER` (config: `mockAuthUser`, default `en`) selects the persona:
+
+- `en` — Environment Agency (`nationId` 1)
+- `cy` — Natural Resources Wales (`nationId` 4)
+- `sct` — SEPA (`nationId` 3)
+- `nir` — NIEA (`nationId` 2)
+
+UI locale (`?lang=cy`) does not change the mock auth profile.
+
+Accepted records for Wales, Scotland, and Northern Ireland use the corresponding
+audit user from `mock-auth-users.js` so the detail page audit trail matches the
+nation regulator.
+
+To add another nation-specific org, add its identity to `identities.js` first,
+then add the record to `waste-obligations/fixtures.js` and mirror it in
+`waste-organisations/fixtures.js` and `account-api/fixtures.js`. See the root
+[README country-specific mock data section](../../README.md#country-specific-mock-data)
+for local run examples.
+
 ## Changing the data and writing tests
 
 - **Default (local) data** lives in `<api>/fixtures.js`. To add an organisation,
