@@ -61,7 +61,7 @@ describe('detail-mapping-materials.js', () => {
         obligation('GlassRemelt', 420, 420, 'Met'),
         obligation('Steel', 365, 365, 'Met'),
         obligation('Plastic', 1740, 1740, 'Met'),
-        obligation('PaperBoardFibre', 870, 870, 'Met')
+        obligation('Paper', 870, 870, 'Met')
       ]
       const { materials, glassBreakdown } =
         mapDeclarationMaterialGroups(obligations)
@@ -69,7 +69,7 @@ describe('detail-mapping-materials.js', () => {
       expect(materials.map((m) => m.name)).toEqual([
         'Aluminium',
         'Glass', // synthetic total
-        'PaperBoardFibre',
+        'Paper',
         'Plastic',
         'Steel',
         'Wood'
