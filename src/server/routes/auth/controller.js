@@ -12,8 +12,10 @@ import { createAccountApiService } from '#services/account-api.service.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import {
   clearAuthLocale,
+  localeUrl,
   redirectWithLocale
 } from '#server/common/helpers/i18n/locale-url.js'
+import { withForwardedPrefix } from '#server/common/helpers/proxy/forwarded-prefix.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
 
 const MAX_LOGOUT_REDIRECTS = 10
@@ -213,7 +215,12 @@ export const signedOutController = {
     return h.view('auth/signed-out', {
       pageTitle: translate(locale, 'auth.signedOut.pageTitle'),
       heading: translate(locale, 'auth.signedOut.heading'),
-      message: translate(locale, 'auth.signedOut.message')
+      message: translate(locale, 'auth.signedOut.message'),
+      linkText: translate(locale, 'auth.signedOut.linkText'),
+      serviceUrl: localeUrl(
+        withForwardedPrefix(request, '/signin-oidc'),
+        locale
+      )
     })
   }
 }

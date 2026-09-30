@@ -29,7 +29,7 @@ describe('translate', () => {
   })
 
   test('falls back to English when Welsh key missing', () => {
-    expect(translate('cy', 'common.serviceName')).toBe(en.common.serviceName)
+    expect(translate('cy', 'common.agency.1')).toBe(en.common.agency['1'])
   })
 
   test('falls back to English when Welsh value is blank', () => {
