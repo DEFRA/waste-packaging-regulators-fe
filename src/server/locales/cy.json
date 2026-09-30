@@ -1,5 +1,6 @@
 {
   "common": {
+    "serviceName": "pEPR: Gwasanaeth Rheolewyr",
     "organisationName": "Adran yr Amgylchedd,<br>Bwyd a Materion Gwledig",
     "continue": "Parhau",
     "yes": "Ydw",
@@ -109,7 +110,7 @@
     "signedOut": {
       "pageTitle": "Wedi allgofnodi",
       "heading": "Wedi allgofnodi",
-      "message": "Rydych chi wedi cael eich allgofnodi."
+      "message": "Rydych wedi allgofnodi o'r gwasanaeth Rheolewr."
     }
   },
   "compliance": {

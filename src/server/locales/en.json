@@ -116,7 +116,8 @@
     "signedOut": {
       "pageTitle": "Signed out",
       "heading": "Signed out",
-      "message": "You have been signed out."
+      "message": "You have signed out of the Regulator service.",
+      "linkText": "Sign in again"
     }
   },
   "compliance": {
