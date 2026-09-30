@@ -7,10 +7,12 @@ export function buildAccountNavigation(request, locale = 'en') {
   const user = getSessionUser(request)
   const accountDetails = request.app?.accountDetails
 
-  if (accountDetails?.organisationName) {
+  const nationId = accountDetails?.nationId ?? user?.nationId
+
+  if (nationId) {
+    return [{ text: translate(locale, `common.agency.${nationId}`) }]
+  } else if (accountDetails?.organisationName) {
     return [{ text: accountDetails.organisationName }]
-  } else if (user?.nationId) {
-    return [{ text: translate(locale, `common.agency.${user.nationId}`) }]
   } else {
     return []
   }
