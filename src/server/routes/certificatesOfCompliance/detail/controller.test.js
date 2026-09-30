@@ -15,7 +15,7 @@ const GLASS_BREAKDOWN_MATERIALS = new Set(['Glass', 'GlassRemelt'])
 // are distinctive and trace back to these numbers.
 const metObligations = [
   materialRow('Aluminium', 215, 215),
-  materialRow('PaperBoardFibre', 870, 870),
+  materialRow('Paper', 870, 870),
   materialRow('Plastic', 1740, 1740),
   materialRow('Steel', 365, 365),
   materialRow('Wood', 80, 80),
@@ -346,7 +346,7 @@ describe('#certificatesOfComplianceDetailController', () => {
   it('should render all main material names in the recycling obligations table', async () => {
     const response = await app.get(pendingDp.detailPath)
     const displayNames = {
-      PaperBoardFibre: 'Paper, board or fibre-based composite material'
+      Paper: 'Paper, board or fibre-based composite material'
     }
     for (const obligation of metMaterials) {
       const expected = displayNames[obligation.material] ?? obligation.material

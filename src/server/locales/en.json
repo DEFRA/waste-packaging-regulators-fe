@@ -310,7 +310,7 @@
         "materialNames": {
           "Aluminium": "Aluminium",
           "Glass": "Glass",
-          "PaperBoardFibre": "Paper, board or fibre-based composite material",
+          "Paper": "Paper, board or fibre-based composite material",
           "Plastic": "Plastic",
           "Steel": "Steel",
           "Wood": "Wood"

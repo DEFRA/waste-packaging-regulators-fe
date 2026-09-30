@@ -18,7 +18,7 @@ const obligationRow = (material, obligated, accepted, status, extra = {}) => ({
 
 export const mockObligationsAllMet = [
   obligationRow('Aluminium', 215, 215, 'Met'),
-  obligationRow('PaperBoardFibre', 870, 870, 'Met'),
+  obligationRow('Paper', 870, 870, 'Met'),
   obligationRow('Plastic', 1740, 1740, 'Met'),
   obligationRow('Steel', 365, 365, 'Met'),
   obligationRow('Wood', 80, 80, 'Met'),
@@ -41,7 +41,7 @@ const noDataRow = (material, obligated) => ({
 
 export const mockObligationsMixed = [
   obligationRow('Aluminium', 215, 215, 'Met'),
-  obligationRow('PaperBoardFibre', 870, 870, 'Met'),
+  obligationRow('Paper', 870, 870, 'Met'),
   obligationRow('Plastic', 1740, 1500, 'NotMet', { awaitingAcceptance: 120 }),
   obligationRow('Steel', 365, 365, 'Met'),
   noDataRow('Wood', 80),
@@ -53,7 +53,7 @@ export const mockObligationsMixed = [
 // which derives to ~90% coverage with a NotMet recycling status.
 export const mockObligationsMostlyMet = [
   obligationRow('Aluminium', 215, 215, 'Met'),
-  obligationRow('PaperBoardFibre', 870, 870, 'Met'),
+  obligationRow('Paper', 870, 870, 'Met'),
   obligationRow('Plastic', 1740, 1376, 'NotMet', { awaitingAcceptance: 120 }),
   obligationRow('Steel', 365, 365, 'Met'),
   obligationRow('Wood', 80, 80, 'Met'),
@@ -63,7 +63,7 @@ export const mockObligationsMostlyMet = [
 
 export const mockObligationsAllZero = [
   'Aluminium',
-  'PaperBoardFibre',
+  'Paper',
   'Plastic',
   'Steel',
   'Wood',
@@ -87,7 +87,7 @@ export const mockObligationsAllZero = [
 // "No data" recycling status exactly as a live organisation with no return would.
 export const defaultObligations = [
   { material: 'Aluminium', obligated: 215 },
-  { material: 'PaperBoardFibre', obligated: 870 },
+  { material: 'Paper', obligated: 870 },
   { material: 'Plastic', obligated: 1740 },
   { material: 'Steel', obligated: 365 },
   { material: 'Wood', obligated: 80 },

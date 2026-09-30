@@ -10,7 +10,7 @@ import { materialRow, noDataRow } from '#test-helpers/msw/obligations.js'
 // per-material tonnages and statuses are visible next to the assertions.
 const ALL_MATERIALS = [
   'Aluminium',
-  'PaperBoardFibre',
+  'Paper',
   'Plastic',
   'Steel',
   'Wood',
@@ -25,7 +25,7 @@ const allNoDataObligations = ALL_MATERIALS.map((material) =>
 )
 const mixedObligations = [
   materialRow('Aluminium', 215, 215, 'Met'),
-  materialRow('PaperBoardFibre', 870, 870, 'Met'),
+  materialRow('Paper', 870, 870, 'Met'),
   materialRow('Plastic', 1740, 1500, 'NotMet'),
   materialRow('Steel', 365, 365, 'Met'),
   noDataRow('Wood', 80),
