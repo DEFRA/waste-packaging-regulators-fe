@@ -43,7 +43,9 @@ import {
   PAGE_SIZE,
   DECLARATIONS_BATCH_SIZE,
   COMPLIANCE_YEAR,
-  NO_DATA
+  NO_DATA,
+  wasteOrganisationsRegistrationStatus,
+  wasteOrganisationsRegistrationType
 } from '../common/constants.js'
 
 // Canonical declaration shapes projected from the default records, fed to the fake
@@ -60,10 +62,18 @@ const mockObligationData = {
 // waste-organisations records carry no registrationType — it is derived from
 // the registrations they do carry, so fixtures must supply those instead.
 const complianceSchemeRegistrations = [
-  { type: 'COMPLIANCE_SCHEME', registrationYear: 2026, status: 'REGISTERED' }
+  {
+    type: wasteOrganisationsRegistrationType.COMPLIANCE_SCHEME,
+    registrationYear: 2026,
+    status: wasteOrganisationsRegistrationStatus.REGISTERED
+  }
 ]
 const directProducerRegistrations = [
-  { type: 'LARGE_PRODUCER', registrationYear: 2026, status: 'REGISTERED' }
+  {
+    type: wasteOrganisationsRegistrationType.LARGE_PRODUCER,
+    registrationYear: 2026,
+    status: wasteOrganisationsRegistrationStatus.REGISTERED
+  }
 ]
 
 const makeDeclaration = ({
@@ -806,8 +816,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
           companiesHouseNumber: '17121895',
           registrations: [
             {
-              type: 'LARGE_PRODUCER',
-              status: 'REGISTERED',
+              type: wasteOrganisationsRegistrationType.LARGE_PRODUCER,
+              status: wasteOrganisationsRegistrationStatus.REGISTERED,
               registrationYear: 2026
             }
           ]
@@ -1840,7 +1850,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.companyName).toBe('Unknown organisation')
         })
 
-        test('maps compliance scheme organisation name from waste-organisations name, not tradingName', async () => {
+        test('maps compliance scheme organisation name from waste-organisations tradingName', async () => {
           createWasteObligationsApiService.mockReturnValue({
             getComplianceObligation: vi
               .fn()
@@ -1862,7 +1872,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
             { obligationYear: 2026 }
           )
 
-          expect(vm.companyName).toBe('Valpak Compliance Scheme')
+          expect(vm.companyName).toBe('Scheme Operator Co')
           expect(vm.complianceTypeLabel).toBe('2026 statement of compliance')
         })
 
@@ -1898,7 +1908,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
             mockAccountApi.getOrganisationsByExternalIds.mockResolvedValue({
               organisations: [
                 {
-                  externalId: 'account-guid-dp',
+                  externalId: 'org-abc',
                   name: 'Account Producer Ltd',
                   referenceNumber: '600124'
                 }
@@ -1968,7 +1978,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
             expect(
               mockAccountApi.getOrganisationWithPersonsOrNull
-            ).toHaveBeenCalledWith('account-guid-dp', 'trace-dp')
+            ).toHaveBeenCalledWith('org-abc', 'trace-dp')
             expect(vm.declarationEmailAddress).toBe('nadia.clarke@example.test')
             expect(vm.companyPhoneNumber).toBe('020 7946 0103')
           })
@@ -2023,7 +2033,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
             expect(vm.declarationEmailAddress).toBe('No data')
             expect(vm.companyPhoneNumber).toBe('No data')
-            expect(vm.companyName).toBe('Valpak Compliance Scheme')
+            expect(vm.companyName).toBe('Scheme Operator Co')
             expect(vm.organisationRef).toBe('530001')
           })
 
@@ -2076,8 +2086,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
               companiesHouseNumber: '17121895',
               registrations: [
                 {
-                  type: 'LARGE_PRODUCER',
-                  status: 'REGISTERED',
+                  type: wasteOrganisationsRegistrationType.LARGE_PRODUCER,
+                  status: wasteOrganisationsRegistrationStatus.REGISTERED,
                   registrationYear: 2026,
                   updated: '2026-03-31T23:20:34.294+00:00'
                 }

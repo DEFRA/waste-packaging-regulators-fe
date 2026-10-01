@@ -50,7 +50,10 @@ async function fetchAccountOrganisationDetails(
     [organisationId],
     traceId
   )
-  return mapAccountOrganisationDetails(organisations[0])
+  const organisation = organisations.find(
+    (candidate) => candidate.externalId === organisationId
+  )
+  return mapAccountOrganisationDetails(organisation)
 }
 
 async function fetchSchemeOperatorAccountDetails(

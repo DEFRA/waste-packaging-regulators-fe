@@ -74,10 +74,21 @@ export const organisationTypeDisplayNames = {
   ComplianceScheme: 'Compliance scheme'
 }
 
+// waste-organisations API wire values for registration.type and .status.
+export const wasteOrganisationsRegistrationType = {
+  COMPLIANCE_SCHEME: 'COMPLIANCE_SCHEME',
+  LARGE_PRODUCER: 'LARGE_PRODUCER',
+  SMALL_PRODUCER: 'SMALL_PRODUCER'
+}
+
+export const wasteOrganisationsRegistrationStatus = {
+  REGISTERED: 'REGISTERED'
+}
+
 export const registrationTypeFromApi = {
-  COMPLIANCE_SCHEME: 'ComplianceScheme',
-  SMALL_PRODUCER: 'DirectProducer',
-  LARGE_PRODUCER: 'DirectProducer'
+  [wasteOrganisationsRegistrationType.COMPLIANCE_SCHEME]: 'ComplianceScheme',
+  [wasteOrganisationsRegistrationType.SMALL_PRODUCER]: 'DirectProducer',
+  [wasteOrganisationsRegistrationType.LARGE_PRODUCER]: 'DirectProducer'
 }
 
 export const certificateActionLabelsByRegistrationType = {

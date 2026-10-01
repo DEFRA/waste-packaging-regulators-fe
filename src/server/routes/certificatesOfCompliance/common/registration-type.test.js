@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'vitest'
 import {
+  wasteOrganisationsRegistrationStatus,
+  wasteOrganisationsRegistrationType
+} from './constants.js'
+import {
   deriveRegistrationType,
   mapCompaniesHouseNumberFromWasteOrganisation,
   mapRegistrationTypeToOrganisationType,
@@ -25,8 +29,8 @@ describe('organisation and audit detail mapping', () => {
       deriveRegistrationType(
         [
           {
-            type: 'LARGE_PRODUCER',
-            status: 'REGISTERED',
+            type: wasteOrganisationsRegistrationType.LARGE_PRODUCER,
+            status: wasteOrganisationsRegistrationStatus.REGISTERED,
             registrationYear: 2026
           }
         ],
@@ -40,8 +44,8 @@ describe('organisation and audit detail mapping', () => {
       deriveRegistrationType(
         [
           {
-            type: 'COMPLIANCE_SCHEME',
-            status: 'REGISTERED',
+            type: wasteOrganisationsRegistrationType.COMPLIANCE_SCHEME,
+            status: wasteOrganisationsRegistrationStatus.REGISTERED,
             registrationYear: 2026
           }
         ],
@@ -62,8 +66,8 @@ describe('organisation and audit detail mapping', () => {
       deriveRegistrationType(
         [
           {
-            type: 'LARGE_PRODUCER',
-            status: 'REGISTERED',
+            type: wasteOrganisationsRegistrationType.LARGE_PRODUCER,
+            status: wasteOrganisationsRegistrationStatus.REGISTERED,
             registrationYear: 2024
           }
         ],
@@ -78,13 +82,13 @@ describe('organisation and audit detail mapping', () => {
       deriveRegistrationType(
         [
           {
-            type: 'SMALL_PRODUCER',
-            status: 'REGISTERED',
+            type: wasteOrganisationsRegistrationType.SMALL_PRODUCER,
+            status: wasteOrganisationsRegistrationStatus.REGISTERED,
             registrationYear: 2026
           },
           {
-            type: 'LARGE_PRODUCER',
-            status: 'REGISTERED',
+            type: wasteOrganisationsRegistrationType.LARGE_PRODUCER,
+            status: wasteOrganisationsRegistrationStatus.REGISTERED,
             registrationYear: 2026,
             updated: '2026-01-01T00:00:00Z'
           }
@@ -184,8 +188,8 @@ describe('organisation and audit detail mapping', () => {
           companiesHouseNumber: '17121895',
           registrations: [
             {
-              type: 'LARGE_PRODUCER',
-              status: 'REGISTERED',
+              type: wasteOrganisationsRegistrationType.LARGE_PRODUCER,
+              status: wasteOrganisationsRegistrationStatus.REGISTERED,
               registrationYear: 2026
             }
           ]
@@ -200,7 +204,7 @@ describe('organisation and audit detail mapping', () => {
     })
   })
 
-  test('mapWasteOrganisationToDetailFields uses the compliance scheme name from waste-organisations name', () => {
+  test('mapWasteOrganisationToDetailFields uses the compliance scheme trading name from waste-organisations', () => {
     expect(
       mapWasteOrganisationToDetailFields(
         {
@@ -209,8 +213,8 @@ describe('organisation and audit detail mapping', () => {
           companiesHouseNumber: 'CS_GENERATED_0923795',
           registrations: [
             {
-              type: 'COMPLIANCE_SCHEME',
-              status: 'REGISTERED',
+              type: wasteOrganisationsRegistrationType.COMPLIANCE_SCHEME,
+              status: wasteOrganisationsRegistrationStatus.REGISTERED,
               registrationYear: 2026
             }
           ]
@@ -218,7 +222,7 @@ describe('organisation and audit detail mapping', () => {
         { obligationYear: 2026 }
       )
     ).toEqual({
-      companyName: 'Valpak Compliance Scheme',
+      companyName: 'Scheme Operator Co',
       registrationType: 'ComplianceScheme',
       organisationType: 'Compliance scheme',
       companiesHouseNumber: 'CS_GENERATED_0923795'

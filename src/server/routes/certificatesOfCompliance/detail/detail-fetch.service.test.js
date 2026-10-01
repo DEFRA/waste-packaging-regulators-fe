@@ -1,4 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
+import {
+  wasteOrganisationsRegistrationStatus,
+  wasteOrganisationsRegistrationType
+} from '../common/constants.js'
 import { getDeclarationDetail } from './detail-fetch.service.js'
 import * as detailMapping from './detail-mapping.js'
 
@@ -40,6 +44,60 @@ describe('detail-fetch.service.js', () => {
       expect(detailMapping.mapObligationToDetail).toHaveBeenCalledWith(
         { some: 'data' },
         { organisationId: 'org1', obligationYear: 2025, locale: 'en' }
+      )
+    })
+
+    it('matches Account organisation by external id when multiple are returned', async () => {
+      const obligationsApi = {
+        getComplianceObligation: vi.fn().mockResolvedValue({ some: 'data' })
+      }
+      const organisationsApi = {
+        getOrganisation: vi.fn().mockResolvedValue({
+          registrationType: 'DirectProducer',
+          name: 'BRIDGE LTD',
+          registrations: [
+            {
+              type: wasteOrganisationsRegistrationType.LARGE_PRODUCER,
+              status: wasteOrganisationsRegistrationStatus.REGISTERED,
+              registrationYear: 2026
+            }
+          ]
+        })
+      }
+      const accountApi = {
+        getOrganisationsByExternalIds: vi.fn().mockResolvedValue({
+          organisations: [
+            {
+              externalId: '497f6eca-6276-4993-bfeb-53cbbbba6f08',
+              name: 'Howco Group plc',
+              referenceNumber: '101411'
+            },
+            {
+              externalId: 'd1e2f3a4-b5c6-7890-abcd-ef1234567890',
+              name: 'BRIDGE LTD',
+              referenceNumber: '155796'
+            }
+          ],
+          notFoundExternalIds: []
+        }),
+        getOrganisationWithPersonsOrNull: vi.fn().mockResolvedValue(null)
+      }
+
+      await getDeclarationDetail(
+        obligationsApi,
+        organisationsApi,
+        accountApi,
+        'd1e2f3a4-b5c6-7890-abcd-ef1234567890',
+        null,
+        { traceId: 'trace1', obligationYear: 2026 }
+      )
+
+      expect(detailMapping.mapObligationToDetail).toHaveBeenCalledWith(
+        { some: 'data' },
+        expect.objectContaining({
+          accountOrganisationName: 'BRIDGE LTD',
+          accountOrganisationReferenceNumber: '155796'
+        })
       )
     })
 
