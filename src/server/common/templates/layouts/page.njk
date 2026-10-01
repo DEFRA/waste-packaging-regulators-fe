@@ -7,6 +7,7 @@
 {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
 {% from "govuk/components/cookie-banner/macro.njk" import govukCookieBanner %}
+{% from "govuk/components/skip-link/macro.njk" import govukSkipLink %}
 {% from "govuk/components/back-link/macro.njk" import govukBackLink %}
 
 {# Import custom components globally #}
@@ -67,6 +68,7 @@
   <link href="{{ getAssetPath('src/client/stylesheets/application.scss') }}" rel="stylesheet">
 {% endblock %}
 
+{% block govukSkipLink %}{% endblock %}
 {% block header %}
   {{ defraInternalHeader({
     organisationName: t(locale, "common.organisationName") | safe,
@@ -178,6 +180,10 @@
       </form>
     {% endif %}
   {% endif %}
+  {{ govukSkipLink({
+    text: t(locale, "common.skipLink"),
+    href: "#main-content"
+  }) }}
 {% endblock %}
 
 {% block pageTitle %}
