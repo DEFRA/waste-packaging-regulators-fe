@@ -24,7 +24,7 @@
          input value or an error message, and renders its own form with no slot
          for the hidden inputs that keep the user on the same type and tab. #}
       <div class="v3-search-panel govuk-!-margin-bottom-4">
-        <div class="moj-search">
+        <search class="moj-search">
           <form action="{{ localeUrl(routePrefix or '/') }}" method="get" novalidate>
             {% if locale == 'cy' %}
               <input type="hidden" name="lang" value="cy">
@@ -32,6 +32,13 @@
             <input type="hidden" name="type" value="{{ organisationType }}">
             <input type="hidden" name="tab" value="{{ activeTab }}">
             <input type="hidden" name="sort" value="{{ sort.column }}[{{ sort.direction }}]">
+
+            {% set searchButtonHtml %}
+              {{ govukButton({
+                classes: "moj-search__button govuk-!-margin-bottom-0 govuk-!-margin-left-2",
+                text: t(locale, "common.search")
+              }) }}
+            {% endset %}
 
             {{ govukInput({
               classes: "moj-search__input",
@@ -43,15 +50,18 @@
               name: "search",
               type: "search",
               value: searchTerm,
-              errorMessage: errors.search if errors
-            }) }}
-
-            {{ govukButton({
-              classes: "moj-search__button govuk-!-margin-bottom-0",
-              text: t(locale, "common.search")
+              errorMessage: errors.search if errors,
+              inputWrapper: {
+                classes: "moj-search__input-wrapper"
+              },
+              formGroup: {
+                afterInput: {
+                  html: searchButtonHtml
+                }
+              }
             }) }}
           </form>
-        </div>
+        </search>
       </div>
     </div>
   </div>
