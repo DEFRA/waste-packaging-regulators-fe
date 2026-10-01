@@ -747,8 +747,8 @@ describe('certificates of compliance — journey', () => {
     beforeEach(() => {
       scenario = app.given([
         {
-          // The heading shows the scheme name, not the operator name, and the
-          // nominated contact is the Approved Person, not the Basic User.
+          // The heading shows the trading name, not the scheme registered name,
+          // and the nominated contact is the Approved Person, not the Basic User.
           name: 'FuturePack Operators',
           schemeName: 'FuturePack Compliance Scheme',
           type: 'compliance-scheme',
@@ -778,22 +778,22 @@ describe('certificates of compliance — journey', () => {
       ])
     })
 
-    it('headings show the compliance scheme name, not the scheme operator', async () => {
+    it('headings show the trading name, not the scheme registered name', async () => {
       const org = scenario.byName('FuturePack Operators')
       const payload = (await app.get(org.detailPath)).payload
       const { heading } = loadDetailPage(payload)
 
-      expect(heading).toBe('FuturePack Compliance Scheme')
+      expect(heading).toBe('FuturePack Operators')
     })
 
-    it('not-submitted list shows the compliance scheme name, not the operator', async () => {
+    it('not-submitted list shows the trading name, not the scheme registered name', async () => {
       const response = await app.get(
         '/certificates-of-compliance?type=compliance-schemes&tab=not-submitted'
       )
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).toContain('FuturePack Compliance Scheme')
-      expect(response.payload).not.toContain('FuturePack Operators')
+      expect(response.payload).toContain('FuturePack Operators')
+      expect(response.payload).not.toContain('FuturePack Compliance Scheme')
     })
 
     it('list row and detail heading show the same name', async () => {
