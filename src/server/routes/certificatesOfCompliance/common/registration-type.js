@@ -1,9 +1,11 @@
 import {
   organisationTypeDisplayNames,
-  registrationTypeFromApi
+  registrationTypeFromApi,
+  UNKNOWN_ORGANISATION,
+  wasteOrganisationsRegistrationStatus
 } from './constants.js'
 import { displayOrNoData } from './display.js'
-import { mapOrganisationName } from './organisation.js'
+import { formatOrganisationName } from './organisation.js'
 
 export function deriveRegistrationType(registrations, obligationYear) {
   const resolvedRegistrations = registrations ?? []
@@ -19,7 +21,8 @@ export function deriveRegistrationType(registrations, obligationYear) {
       return null
     }
     const registered = pool.filter(
-      (registration) => registration.status === 'REGISTERED'
+      (registration) =>
+        registration.status === wasteOrganisationsRegistrationStatus.REGISTERED
     )
     const candidates = registered.length > 0 ? registered : pool
     const selected = candidates.reduce((best, current) => {
@@ -107,8 +110,13 @@ export function mapWasteOrganisationToDetailFields(
     obligationYear
   )
 
+  const companyName =
+    formatOrganisationName(organisation, obligationYear) ||
+    organisation.name ||
+    UNKNOWN_ORGANISATION
+
   return {
-    companyName: mapOrganisationName(organisation),
+    companyName,
     registrationType,
     organisationType: mapRegistrationTypeToOrganisationType(
       registrationType,
