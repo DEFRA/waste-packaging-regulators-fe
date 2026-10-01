@@ -200,12 +200,12 @@ describe('organisation and audit detail mapping', () => {
     })
   })
 
-  test('mapWasteOrganisationToDetailFields uses the scheme operator name, not the scheme trading name, for compliance schemes', () => {
+  test('mapWasteOrganisationToDetailFields uses the compliance scheme name from waste-organisations name', () => {
     expect(
       mapWasteOrganisationToDetailFields(
         {
-          name: 'Scheme Operator Co',
-          tradingName: 'Trading Scheme Co',
+          name: 'Valpak Compliance Scheme',
+          tradingName: 'Scheme Operator Co',
           companiesHouseNumber: 'CS_GENERATED_0923795',
           registrations: [
             {
@@ -218,7 +218,7 @@ describe('organisation and audit detail mapping', () => {
         { obligationYear: 2026 }
       )
     ).toEqual({
-      companyName: 'Scheme Operator Co',
+      companyName: 'Valpak Compliance Scheme',
       registrationType: 'ComplianceScheme',
       organisationType: 'Compliance scheme',
       companiesHouseNumber: 'CS_GENERATED_0923795'

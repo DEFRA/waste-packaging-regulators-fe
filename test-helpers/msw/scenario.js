@@ -22,7 +22,7 @@ import {
   createBackends,
   backendHandlers,
   toDeclaration,
-  listOrganisationName
+  unsubmittedOrganisationName
 } from '#mocks/backends.js'
 import { OBLIGATION_YEAR } from '#mocks/identities.js'
 import { mapDeclarationToItem } from '#server/routes/certificatesOfCompliance/list/list.service.js'
@@ -178,6 +178,12 @@ function buildOrganisation(spec, index) {
         : null
 
   const displayName = spec.name
+  const operatorName = isComplianceScheme
+    ? (spec.operatorName ?? displayName)
+    : null
+  const schemeName = isComplianceScheme
+    ? (spec.schemeName ?? displayName)
+    : null
   const organisationId = spec.organisationId ?? `scenario-org-${index}`
   const reference = spec.reference ?? `SCN${String(index + 1).padStart(4, '0')}`
   const companiesHouseNumber =
@@ -196,10 +202,8 @@ function buildOrganisation(spec, index) {
     registrationType,
     organisationId,
     organisationName: isComplianceScheme ? null : displayName,
-    complianceSchemeName: isComplianceScheme
-      ? (spec.schemeName ?? displayName)
-      : null,
-    schemeOperatorName: isComplianceScheme ? displayName : null,
+    complianceSchemeName: schemeName,
+    schemeOperatorName: operatorName,
     organisationReferenceNumber: reference,
     companiesHouseNumber,
     submissionStatus
@@ -240,8 +244,8 @@ function buildOrganisation(spec, index) {
 
   const wasteOrganisation = {
     id: organisationId,
-    name: displayName,
-    tradingName: isComplianceScheme ? (spec.schemeName ?? displayName) : null,
+    name: isComplianceScheme ? schemeName : displayName,
+    tradingName: operatorName,
     businessCountry: 'GB-ENG',
     companiesHouseNumber,
     address: {
@@ -262,7 +266,7 @@ function buildOrganisation(spec, index) {
 
   const account = {
     externalId: organisationId,
-    name: displayName,
+    name: isComplianceScheme ? operatorName : displayName,
     referenceNumber: reference,
     companiesHouseNumber: isComplianceScheme ? companiesHouseNumber : null,
     isComplianceScheme,
@@ -304,7 +308,7 @@ function buildOrganisation(spec, index) {
             id: null,
             organisationId,
             organisationReferenceNumber: reference,
-            organisationName: listOrganisationName(record),
+            organisationName: unsubmittedOrganisationName(record),
             regulation43Met: null,
             dateSubmitted: null,
             ...unsubmittedMetrics

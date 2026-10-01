@@ -13,13 +13,19 @@ import {
   isSubmittedRecord,
   listOrganisationName
 } from './waste-obligations/declaration.js'
+import { unsubmittedOrganisationName } from './waste-obligations/unsubmitted.js'
 import { obligationsHandlers } from './waste-obligations/handlers.js'
 import { createOrganisationsStore } from './waste-organisations/store.js'
 import { organisationsHandlers } from './waste-organisations/handlers.js'
 import { createAccountStore } from './account-api/store.js'
 import { accountHandlers } from './account-api/handlers.js'
 
-export { toDeclaration, isSubmittedRecord, listOrganisationName }
+export {
+  toDeclaration,
+  isSubmittedRecord,
+  listOrganisationName,
+  unsubmittedOrganisationName
+}
 
 export function createBackends({
   records = [],
