@@ -1,6 +1,7 @@
 import { localeToBcp47 } from '#server/common/helpers/i18n/locales.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
-import { isDate, parseISO } from 'date-fns'
+import { format, isDate, parseISO } from 'date-fns'
+import { cy, enGB } from 'date-fns/locale'
 
 const DATE_TIME_AT_KEY = 'common.dateTime.at'
 
@@ -49,9 +50,14 @@ export function formatSubmissionDate(isoString, locale = 'en') {
   return formatDateTime(isoString, locale, { useParseIso: true })
 }
 
-export function formatDate(isoString, locale = 'en') {
+export function formatDate(isoString, locale = 'en', formatStr = null) {
   if (!isoString) {
     return null
+  }
+
+  if (formatStr) {
+    const dateFnsLocale = locale === 'cy' ? cy : enGB
+    return format(new Date(isoString), formatStr, { locale: dateFnsLocale })
   }
 
   return new Date(isoString).toLocaleDateString(localeToBcp47(locale), {
