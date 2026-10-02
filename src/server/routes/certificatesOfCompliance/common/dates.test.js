@@ -14,8 +14,26 @@ describe('dates', () => {
     expect(formatDate('2026-01-15T00:00:00.000Z', 'cy')).toMatch(/Ionawr|2026/)
   })
 
+  test('formatDate with format string produces English ordinal date', () => {
+    expect(formatDate('2026-01-15T00:00:00.000Z', 'en', 'do MMMM yyyy')).toBe(
+      '15th January 2026'
+    )
+  })
+
+  test('formatDate with format string produces Welsh ordinal date', () => {
+    expect(formatDate('2026-01-15T00:00:00.000Z', 'cy', 'do MMMM yyyy')).toBe(
+      '15fed Ionawr 2026'
+    )
+  })
+
   test('formatSubmissionDate returns null for empty input', () => {
     expect(formatSubmissionDate(null, 'en')).toBeNull()
+  })
+
+  test('formatSubmissionDate accepts a Date object', () => {
+    const date = new Date('2026-01-15T14:30:00.000Z')
+    const result = formatSubmissionDate(date, 'en')
+    expect(result).toContain('2026')
   })
 
   test('formatSubmissionDate uses locale dateTime connector for English and Welsh', () => {

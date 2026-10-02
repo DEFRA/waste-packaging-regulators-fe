@@ -951,6 +951,25 @@ describe('#certificatesOfComplianceController', () => {
       ).toHaveLength(1)
     })
 
+    test('Should format DateSubmitted with Welsh locale', async () => {
+      // Aldbury Producers Ltd is a pending org. In the list, DateSubmitted is shown.
+      const { result } = await inject(
+        '/certificates-of-compliance?lang=cy&type=direct-producers&tab=pending'
+      )
+      const $ = load(result)
+
+      const tableRows = $('table.govuk-table tbody tr')
+      // Find the row for Aldbury Producers Ltd
+      const aldburyRow = tableRows.filter((i, el) =>
+        $(el).text().includes('Aldbury Producers Ltd')
+      )
+
+      // Get the last cell (DateSubmitted)
+      const dateText = aldburyRow.find('td').last().text().trim()
+
+      expect(dateText).toBe('15fed Ionawr 2027')
+    })
+
     // "Not submitted" is not a declaration status, so these rows come from the
     // unsubmitted endpoint rather than the declaration search. They are the only
     // way search can surface an organisation that still owes a submission.

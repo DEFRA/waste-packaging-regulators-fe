@@ -26,6 +26,7 @@ import { getSessionUser } from '#server/common/helpers/get-session-user.js'
 import { getRegulatorCountryCode } from '#server/common/helpers/regulator-country-code.js'
 import { getCertificatesOfComplianceViewModel } from './list.service.js'
 import { getComplianceSearchResults } from './search.service.js'
+import { formatDate } from '../common/dates.js'
 
 export const parseSearchTerm = (rawSearch, locale = 'en') => {
   if (rawSearch === undefined) {
@@ -135,6 +136,11 @@ function validateListParams(type, submissionStatus) {
   }
 }
 
+const formatItemDate = (item, locale) => ({
+  ...item,
+  dateSubmitted: formatDate(item.dateSubmitted, locale, 'do MMMM yyyy')
+})
+
 function buildListViewData(
   viewModel,
   search,
@@ -144,12 +150,15 @@ function buildListViewData(
   const errorPrefix = translate(locale, 'common.errorPrefix')
   return {
     ...viewModel,
+    items: viewModel.items.map((item) => formatItemDate(item, locale)),
     locale,
     i18n,
     searchTerm,
     errors,
     isSearch: search !== null,
-    searchItems: search?.items ?? [],
+    searchItems: (search?.items ?? []).map((item) =>
+      formatItemDate(item, locale)
+    ),
     searchResultCount: search?.total ?? 0,
     searchResultLabel: translateSearchResultCount(locale, search?.total ?? 0),
     searchTruncated: search?.truncated ?? false,
