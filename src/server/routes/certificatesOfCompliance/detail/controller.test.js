@@ -195,6 +195,63 @@ describe('#certificatesOfComplianceDetailController', () => {
 
       expect(response.payload).toContain(`href="/certificates-of-compliance"`)
     })
+
+    it('should return to the parent detail page when fromDetail is present', async () => {
+      const parentPath = `${pendingDp.detailPath}?type=directProducer&tab=pending`
+      const parentResponse = await app.get(parentPath)
+      const { currentYear } = loadDetailPage(parentResponse.payload)
+      const cancelledLink = currentYear.rows.find(
+        (row) => row.action === 'Cancelled'
+      )?.viewSubmissionUrl
+
+      const response = await app.get(cancelledLink)
+
+      expect(response.payload).toContain('Back')
+      expect(response.payload).not.toContain('Back to all submissions')
+      expect(response.payload).toContain(
+        `href="${pendingDp.detailPath}?type=directProducer&amp;tab=pending"`
+      )
+    })
+
+    it('should keep the list back link when fromDetail is absent', async () => {
+      const cancelledHistory = pendingDp.history.find(
+        (h) => h.action === 'Cancelled'
+      )
+      const response = await app.get(
+        `${cancelledHistory.url}?type=directProducer&tab=pending`
+      )
+
+      expect(response.payload).toContain('Back to all submissions')
+      expect(response.payload).toContain(
+        'href="/certificates-of-compliance?type=directProducer&amp;tab=pending"'
+      )
+    })
+
+    it('should ignore an unsafe fromDetail value and fall back to the list', async () => {
+      const cancelledHistory = pendingDp.history.find(
+        (h) => h.action === 'Cancelled'
+      )
+      const response = await app.get(
+        `${cancelledHistory.url}?fromDetail=https%3A%2F%2Fevil.example`
+      )
+
+      expect(response.payload).toContain('Back to all submissions')
+      expect(response.payload).toContain('href="/certificates-of-compliance"')
+    })
+
+    it('should preserve Welsh locale on the parent back link', async () => {
+      const parentPath = `${pendingDp.detailPath}?type=directProducer&tab=pending&lang=cy`
+      const parentResponse = await app.get(parentPath)
+      const { currentYear } = loadDetailPage(parentResponse.payload)
+      const cancelledLink = currentYear.rows[0]?.viewSubmissionUrl
+
+      const response = await app.get(cancelledLink)
+
+      expect(response.payload).toContain('Yn ôl')
+      expect(response.payload).toContain(
+        `href="${pendingDp.detailPath}?type=directProducer&amp;tab=pending&amp;lang=cy"`
+      )
+    })
   })
 
   describe('parseObligationYearQuery', () => {
@@ -529,26 +586,42 @@ describe('#certificatesOfComplianceDetailController', () => {
     it('links each current year row to the declaration that action was taken on', async () => {
       const response = await app.get(pendingDp.detailPath)
       const { currentYear } = loadDetailPage(response.payload)
+      const cancelledHistoryUrl = pendingDp.history.find(
+        (h) => h.action === 'Cancelled'
+      ).url
+      const acceptedHistoryUrl = pendingDp.history.find(
+        (h) => h.action === 'Accepted'
+      ).url
 
-      expect(currentYear.rows[0].viewSubmissionUrl).toBe(
-        pendingDp.history.find((h) => h.action === 'Cancelled').url
+      expect(currentYear.rows[0].viewSubmissionUrl).toContain(
+        cancelledHistoryUrl
       )
-      expect(currentYear.rows[1].viewSubmissionUrl).toBe(
-        pendingDp.history.find((h) => h.action === 'Accepted').url
+      expect(currentYear.rows[0].viewSubmissionUrl).toContain('fromDetail=')
+      expect(currentYear.rows[1].viewSubmissionUrl).toContain(
+        acceptedHistoryUrl
       )
+      expect(currentYear.rows[1].viewSubmissionUrl).toContain('fromDetail=')
     })
 
     it('links compliance scheme current year rows to prior accepted and cancelled declarations', async () => {
       const response = await app.get(pendingCs.detailPath)
       const { currentYear } = loadDetailPage(response.payload)
+      const cancelledHistoryUrl = pendingCs.history.find(
+        (h) => h.action === 'Cancelled'
+      ).url
+      const acceptedHistoryUrl = pendingCs.history.find(
+        (h) => h.action === 'Accepted'
+      ).url
 
       expect(currentYear.rows).toHaveLength(2)
-      expect(currentYear.rows[0].viewSubmissionUrl).toBe(
-        pendingCs.history.find((h) => h.action === 'Cancelled').url
+      expect(currentYear.rows[0].viewSubmissionUrl).toContain(
+        cancelledHistoryUrl
       )
-      expect(currentYear.rows[1].viewSubmissionUrl).toBe(
-        pendingCs.history.find((h) => h.action === 'Accepted').url
+      expect(currentYear.rows[0].viewSubmissionUrl).toContain('fromDetail=')
+      expect(currentYear.rows[1].viewSubmissionUrl).toContain(
+        acceptedHistoryUrl
       )
+      expect(currentYear.rows[1].viewSubmissionUrl).toContain('fromDetail=')
     })
 
     it('loads the accepted submission when following a current year View submission link', async () => {

@@ -215,7 +215,13 @@ function buildDeclarationViewModel(
       resolvedOrganisationId,
       historyDeclarations,
       locale,
-      routePrefix
+      routePrefix,
+      {
+        parentDeclarationId: resolvedId,
+        parentRegistrationType: organisation.registrationType,
+        type,
+        tab
+      }
     ),
     showObligations: (obligations ?? []).length !== 0
   }

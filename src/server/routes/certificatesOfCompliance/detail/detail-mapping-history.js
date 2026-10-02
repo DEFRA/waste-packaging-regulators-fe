@@ -92,18 +92,30 @@ function buildCurrentYearViewSubmissionUrl(
   declaration,
   fallbackOrganisationId,
   locale = 'en',
-  routePrefix = ''
+  routePrefix = '',
+  { parentDeclarationId, parentDetailPath, type, tab } = {}
 ) {
   const organisationId = declaration.organisation?.id ?? fallbackOrganisationId
   const documentType = documentTypeFromRegistrationType(
     declaration.organisation?.registrationType
   )
+  const queryParams = { type, tab }
+
+  if (
+    parentDeclarationId &&
+    parentDetailPath &&
+    declaration.id !== parentDeclarationId
+  ) {
+    queryParams.fromDetail = parentDetailPath
+  }
+
   return buildCertificateDetailPath(
     organisationId,
     declaration.id,
     documentType,
     locale,
-    routePrefix
+    routePrefix,
+    queryParams
   )
 }
 
@@ -148,16 +160,34 @@ export function mapCurrentYearHistory(
   fallbackOrganisationId,
   declarations = [],
   locale = 'en',
-  routePrefix = ''
+  routePrefix = '',
+  { parentDeclarationId, parentRegistrationType, type, tab } = {}
 ) {
   const rows = []
+  const parentDetailPath =
+    parentDeclarationId && parentRegistrationType
+      ? buildCertificateDetailPath(
+          fallbackOrganisationId,
+          parentDeclarationId,
+          documentTypeFromRegistrationType(parentRegistrationType),
+          locale,
+          routePrefix,
+          { type, tab }
+        )
+      : null
 
   for (const declaration of declarations) {
     const viewSubmissionUrl = buildCurrentYearViewSubmissionUrl(
       declaration,
       fallbackOrganisationId,
       locale,
-      routePrefix
+      routePrefix,
+      {
+        parentDeclarationId,
+        parentDetailPath,
+        type,
+        tab
+      }
     )
     const transitionAudits = getCurrentYearTransitionAudits(declaration)
 

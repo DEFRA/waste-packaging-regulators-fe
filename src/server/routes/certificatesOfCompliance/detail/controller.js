@@ -26,7 +26,12 @@ export const certificatesOfComplianceDetailController = {
 
     const { organisationId, id } = request.params
     const traceId = request.headers[config.get('tracing.header')]
-    const { type, tab, obligationYear: queryObligationYear } = request.query
+    const {
+      type,
+      tab,
+      obligationYear: queryObligationYear,
+      fromDetail
+    } = request.query
     const obligationYear =
       id == null ? parseObligationYearQuery(queryObligationYear) : undefined
     const locale = getLocale(request)
@@ -46,7 +51,8 @@ export const certificatesOfComplianceDetailController = {
         locale,
         routePrefix: getForwardedPrefix(request),
         type,
-        tab
+        tab,
+        fromDetail
       }
     ).catch((error) => {
       handleApiError(request, error)

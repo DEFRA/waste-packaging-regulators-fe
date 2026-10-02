@@ -7,6 +7,76 @@ import { buildCertificateSuccessBanner } from '../actions/detail-actions.js'
 import { cocPageI18n } from '../common/locale-strings.js'
 import { getDeclarationDetail } from './detail-fetch.service.js'
 
+const DETAIL_PATH_PATTERN =
+  /^\/[^/]+\/(certificate|statement)\/[^/?#]+(?:\?[^#]*)?$/i
+
+/**
+ * Validates a relative return path from a history View submission link.
+ *
+ * @param {string|undefined} fromDetail
+ * @param {string} [routePrefix]
+ * @returns {string|null}
+ */
+export function validateFromDetailPath(fromDetail, routePrefix = '') {
+  if (typeof fromDetail !== 'string' || !fromDetail.trim()) {
+    return null
+  }
+
+  const path = fromDetail.trim()
+  if (!path.startsWith('/') || path.includes('://') || path.includes('..')) {
+    return null
+  }
+
+  if (routePrefix) {
+    const prefix = routePrefix.replace(/\/$/, '')
+    if (path !== prefix && !path.startsWith(`${prefix}/`)) {
+      return null
+    }
+  } else if (!DETAIL_PATH_PATTERN.test(path)) {
+    return null
+  }
+
+  return path
+}
+
+export function buildDetailBacklink({
+  type,
+  tab,
+  fromDetail,
+  locale = 'en',
+  routePrefix = ''
+}) {
+  const validatedFromDetail = validateFromDetailPath(fromDetail, routePrefix)
+
+  if (validatedFromDetail) {
+    return {
+      backlink: localeUrl(validatedFromDetail, locale),
+      backlinkText: translate(locale, 'common.nav.back')
+    }
+  }
+
+  const backlinkQueryParams = new URLSearchParams()
+  if (type) {
+    backlinkQueryParams.append('type', type)
+  }
+  if (tab) {
+    backlinkQueryParams.append('tab', tab)
+  }
+
+  const queryString = backlinkQueryParams.toString()
+  const backlinkPath = queryString
+    ? `${routePrefix || '/'}?${queryString}`
+    : routePrefix || '/'
+
+  return {
+    backlink: localeUrl(backlinkPath, locale),
+    backlinkText: translate(
+      locale,
+      'certificatesOfCompliance.detail.backlinkText'
+    )
+  }
+}
+
 export async function getCertificateOfComplianceDetailViewModel(
   organisationId,
   id,
@@ -17,7 +87,8 @@ export async function getCertificateOfComplianceDetailViewModel(
     locale = 'en',
     routePrefix = '',
     type,
-    tab
+    tab,
+    fromDetail
   } = {}
 ) {
   const obligationsApi = createWasteObligationsApiService()
@@ -35,27 +106,19 @@ export async function getCertificateOfComplianceDetailViewModel(
 
   const i18n = cocPageI18n(locale, 'detail')
 
-  const backlinkQueryParams = new URLSearchParams()
-  if (type) {
-    backlinkQueryParams.append('type', type)
-  }
-  if (tab) {
-    backlinkQueryParams.append('tab', tab)
-  }
-
-  const queryString = backlinkQueryParams.toString()
-  const backlinkPath = queryString
-    ? `${routePrefix || '/'}?${queryString}`
-    : routePrefix || '/'
+  const { backlink, backlinkText } = buildDetailBacklink({
+    type,
+    tab,
+    fromDetail,
+    locale,
+    routePrefix
+  })
 
   return {
     pageTitle: detail.companyName,
     heading: detail.companyName,
-    backlink: localeUrl(backlinkPath, locale),
-    backlinkText: translate(
-      locale,
-      'certificatesOfCompliance.detail.backlinkText'
-    ),
+    backlink,
+    backlinkText,
     successBanner: buildCertificateSuccessBanner(
       bannerFlags,
       detail.registrationType,

@@ -17,10 +17,23 @@ export function buildCertificateDetailPath(
   id,
   documentType,
   locale = 'en',
-  routePrefix = ''
+  routePrefix = '',
+  { type, tab, fromDetail } = {}
 ) {
+  const qs = new URLSearchParams()
+  if (type) {
+    qs.set('type', type)
+  }
+  if (tab) {
+    qs.set('tab', tab)
+  }
+  if (fromDetail) {
+    qs.set('fromDetail', fromDetail)
+  }
+  const query = qs.toString() ? `?${qs.toString()}` : ''
+
   return localeUrl(
-    getBasePath(organisationId, id, documentType, routePrefix),
+    `${getBasePath(organisationId, id, documentType, routePrefix)}${query}`,
     locale
   )
 }

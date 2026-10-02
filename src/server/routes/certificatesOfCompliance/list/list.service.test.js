@@ -1383,8 +1383,11 @@ describe('getCertificatesOfComplianceViewModel', () => {
           const vm = await runDetailVm(mockDetailData, [cancelled])
 
           expect(vm.currentYearActions[0].reason).toBeNull()
-          expect(vm.currentYearActions[0].viewSubmissionUrl).toBe(
+          expect(vm.currentYearActions[0].viewSubmissionUrl).toContain(
             '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificate/decl-cancelled-no-reason'
+          )
+          expect(vm.currentYearActions[0].viewSubmissionUrl).toContain(
+            'fromDetail='
           )
         })
 
@@ -1412,8 +1415,11 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.currentYearActions[0].by).toBe('Jane Regulator')
           expect(vm.currentYearActions[0].action).toBe('Accepted')
           expect(vm.currentYearActions[0].reason).toBe('')
-          expect(vm.currentYearActions[0].viewSubmissionUrl).toBe(
+          expect(vm.currentYearActions[0].viewSubmissionUrl).toContain(
             '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificate/decl-accepted-history'
+          )
+          expect(vm.currentYearActions[0].viewSubmissionUrl).toContain(
+            'fromDetail='
           )
         })
 

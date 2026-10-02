@@ -87,6 +87,73 @@ describe('detail-mapping-history.js', () => {
       expect(rows).toHaveLength(0)
     })
 
+    it('appends fromDetail when a history row links to a different declaration', () => {
+      const declarations = [
+        {
+          id: 'decl-cancelled',
+          status: 'Cancelled',
+          updated: '2025-03-01T12:00:00Z',
+          organisation: {
+            id: 'org-1',
+            registrationType: 'DirectProducer'
+          },
+          audit: []
+        }
+      ]
+
+      const rows = mapCurrentYearHistory(
+        'org-1',
+        declarations,
+        'en',
+        '/certificates-of-compliance',
+        {
+          parentDeclarationId: 'decl-parent',
+          parentRegistrationType: 'DirectProducer',
+          type: 'directProducer',
+          tab: 'pending'
+        }
+      )
+
+      const url = new URL(rows[0].viewSubmissionUrl, 'http://test')
+      expect(url.pathname).toBe(
+        '/certificates-of-compliance/org-1/certificate/decl-cancelled'
+      )
+      expect(url.searchParams.get('type')).toBe('directProducer')
+      expect(url.searchParams.get('tab')).toBe('pending')
+      expect(url.searchParams.get('fromDetail')).toBe(
+        '/certificates-of-compliance/org-1/certificate/decl-parent?type=directProducer&tab=pending'
+      )
+    })
+
+    it('does not append fromDetail when the history row links to the current declaration', () => {
+      const declarations = [
+        {
+          id: 'decl-current',
+          status: 'Accepted',
+          updated: '2025-02-01T12:00:00Z',
+          organisation: {
+            id: 'org-1',
+            registrationType: 'DirectProducer'
+          },
+          audit: []
+        }
+      ]
+
+      const rows = mapCurrentYearHistory(
+        'org-1',
+        declarations,
+        'en',
+        '/certificates-of-compliance',
+        {
+          parentDeclarationId: 'decl-current',
+          parentRegistrationType: 'DirectProducer'
+        }
+      )
+
+      const url = new URL(rows[0].viewSubmissionUrl, 'http://test')
+      expect(url.searchParams.has('fromDetail')).toBe(false)
+    })
+
     it('returns null reason for an unknown transition action', () => {
       const declarations = [
         {
