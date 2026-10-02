@@ -330,7 +330,7 @@
         "by": "By",
         "reason": "Reason",
         "viewSubmissionHidden": "View submission",
-        "viewSubmissionLink": "View submission",
+        "viewSubmissionLink": "View submission (opens in new tab)",
         "actionAccepted": "Accepted",
         "actionCancelled": "Cancelled"
       }

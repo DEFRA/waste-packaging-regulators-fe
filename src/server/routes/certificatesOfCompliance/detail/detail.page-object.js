@@ -190,7 +190,11 @@ function readCurrentYear($) {
         viewSubmissionUrl: cells
           .eq(CURRENT_YEAR_COLUMN.LINK)
           .find('a')
-          .attr('href')
+          .attr('href'),
+        viewSubmissionTarget: cells
+          .eq(CURRENT_YEAR_COLUMN.LINK)
+          .find('a')
+          .attr('target')
       }
     })
   return { rows }
