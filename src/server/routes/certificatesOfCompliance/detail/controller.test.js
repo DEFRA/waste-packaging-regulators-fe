@@ -523,7 +523,10 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(currentYear.rows).toHaveLength(2)
       for (const row of currentYear.rows) {
         expect(row.viewSubmissionUrl).toBeTruthy()
+        expect(row.viewSubmissionTarget).toBe('_blank')
+        expect(row.viewSubmissionRel).toBe('noopener noreferrer')
       }
+      expect(response.payload).toContain('View submission (opens in new tab)')
     })
 
     it('links each current year row to the declaration that action was taken on', async () => {
