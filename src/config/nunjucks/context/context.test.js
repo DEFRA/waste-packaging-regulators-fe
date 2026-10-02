@@ -106,6 +106,17 @@ describe('context and cache', () => {
         })
       })
 
+      test('Should append lang=cy to dashboard serviceUrl for Welsh requests', () => {
+        const welshRequest = {
+          ...mockRequest,
+          query: { lang: 'cy' }
+        }
+
+        const result = contextImport.context(welshRequest)
+
+        expect(result.serviceUrl).toBe('/dashboard?lang=cy')
+      })
+
       describe('With valid asset path', () => {
         test('Should provide expected asset path', () => {
           expect(contextResult.getAssetPath('application.js')).toBe(

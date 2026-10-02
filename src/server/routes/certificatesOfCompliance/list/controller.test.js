@@ -917,6 +917,9 @@ describe('#certificatesOfComplianceController', () => {
       const { result } = await inject('/certificates-of-compliance')
       const $ = load(result)
 
+      expect($('.govuk-service-navigation__service-name a').attr('href')).toBe(
+        '/dashboard'
+      )
       expect($('body').text()).not.toContain('result for')
       expect($('a:contains("Clear search")')).toHaveLength(0)
     })
@@ -928,6 +931,9 @@ describe('#certificatesOfComplianceController', () => {
       const $ = load(result)
 
       expect($('html').attr('lang')).toBe('cy')
+      expect($('.govuk-service-navigation__service-name a').attr('href')).toBe(
+        '/dashboard?lang=cy'
+      )
       expect($('input[name="lang"]').attr('value')).toBe('cy')
       expect(
         $(
