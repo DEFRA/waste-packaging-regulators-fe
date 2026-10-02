@@ -524,7 +524,6 @@ describe('#certificatesOfComplianceDetailController', () => {
       for (const row of currentYear.rows) {
         expect(row.viewSubmissionUrl).toBeTruthy()
         expect(row.viewSubmissionTarget).toBe('_blank')
-        expect(row.viewSubmissionRel).toBe('noopener noreferrer')
       }
       expect(response.payload).toContain('View submission (opens in new tab)')
     })

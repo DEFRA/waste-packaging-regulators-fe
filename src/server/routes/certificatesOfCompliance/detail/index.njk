@@ -316,7 +316,7 @@
                 <td class="govuk-table__cell">{{ row.by }}</td>
                 <td class="govuk-table__cell">{{ row.reason if row.reason else '' }}</td>
                 <td class="govuk-table__cell">
-                  <a href="{{ row.viewSubmissionUrl }}" class="govuk-link" target="_blank" rel="noopener noreferrer">{{ i18n.t('currentYear.viewSubmissionLink') }}</a>
+                  <a href="{{ row.viewSubmissionUrl }}" class="govuk-link" target="_blank">{{ i18n.t('currentYear.viewSubmissionLink') }}</a>
                 </td>
               </tr>
             {% endfor %}
