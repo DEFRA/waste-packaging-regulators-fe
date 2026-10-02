@@ -100,6 +100,26 @@ describe('certificate detail action helpers', () => {
     )
   })
 
+  test('buildCertificateDetailPath appends type, tab, and fromDetail query params', () => {
+    expect(
+      buildCertificateDetailPath(
+        'org-1',
+        'decl-1',
+        'certificate',
+        'en',
+        '/certificates-of-compliance',
+        {
+          type: 'directProducer',
+          tab: 'pending',
+          fromDetail:
+            '/certificates-of-compliance/org-1/certificate/decl-parent?type=directProducer&tab=pending'
+        }
+      )
+    ).toBe(
+      '/certificates-of-compliance/org-1/certificate/decl-1?type=directProducer&tab=pending&fromDetail=%2Fcertificates-of-compliance%2Forg-1%2Fcertificate%2Fdecl-parent%3Ftype%3DdirectProducer%26tab%3Dpending'
+    )
+  })
+
   test('buildCertificateDetailActions appends locale, type, and tab to urls', () => {
     expect(
       buildCertificateDetailActions(
@@ -307,12 +327,29 @@ describe('certificate detail action helpers', () => {
   test('mapSessionUserToApiUser maps session user to API user', () => {
     expect(
       mapSessionUserToApiUser({
-        id: 'user-oid-123',
+        id: '00000000-0000-4000-8000-000000000001',
         email: 'regulator@example.com',
         name: 'Bob Smith'
       })
     ).toEqual({
-      id: 'user-oid-123',
+      id: '00000000-0000-4000-8000-000000000001',
+      email: 'regulator@example.com',
+      name: 'Bob Smith'
+    })
+  })
+
+  test('mapSessionUserToApiUser resolves id and email from auth profile claims', () => {
+    expect(
+      mapSessionUserToApiUser({
+        profile: {
+          sub: '11111111-1111-4111-8111-111111111111',
+          emails: ['regulator@example.com']
+        },
+        firstName: 'Bob',
+        lastName: 'Smith'
+      })
+    ).toEqual({
+      id: '11111111-1111-4111-8111-111111111111',
       email: 'regulator@example.com',
       name: 'Bob Smith'
     })
@@ -321,22 +358,32 @@ describe('certificate detail action helpers', () => {
   test('mapSessionUserToApiUser defaults name to "Unknown" when absent', () => {
     expect(
       mapSessionUserToApiUser({
-        id: 'user-oid-123',
+        id: '00000000-0000-4000-8000-000000000001',
         email: 'regulator@example.com'
       })
     ).toEqual({
-      id: 'user-oid-123',
+      id: '00000000-0000-4000-8000-000000000001',
       email: 'regulator@example.com',
       name: 'Unknown'
     })
   })
 
-  test('mapSessionUserToApiUser falls back to mock user when id or email is missing', () => {
+  test('mapSessionUserToApiUser falls back to mock user when id or email is missing and useMockApi is true', () => {
+    config.get.mockReturnValue(true)
+
     expect(mapSessionUserToApiUser({})).toEqual({
       id: 'mock-user',
       email: 'mock-user@test.local',
       name: 'Mock User'
     })
+  })
+
+  test('mapSessionUserToApiUser throws when id or email is missing and useMockApi is false', () => {
+    config.get.mockImplementation((key) => key === 'useMockApi' && false)
+
+    expect(() => mapSessionUserToApiUser({})).toThrow(
+      'Cannot resolve regulator user id and email for obligations API'
+    )
   })
 
   test('readAndClearCertificateActionBannerFlags clears the query banner when shown', () => {
@@ -376,7 +423,11 @@ describe('certificate detail action helpers', () => {
       await approveComplianceDeclaration(
         'org-1',
         'decl-1',
-        { id: 'user-oid-1', email: 'user@example.com', name: 'John Doe' },
+        {
+          id: '00000000-0000-4000-8000-000000000099',
+          email: 'user@example.com',
+          name: 'John Doe'
+        },
         'trace-1'
       )
 
@@ -386,7 +437,7 @@ describe('certificate detail action helpers', () => {
           id: 'decl-1',
           status: 'Accepted',
           user: {
-            id: 'user-oid-1',
+            id: '00000000-0000-4000-8000-000000000099',
             email: 'user@example.com',
             name: 'John Doe'
           }
@@ -405,7 +456,11 @@ describe('certificate detail action helpers', () => {
       await cancelComplianceDeclaration(
         'org-1',
         'decl-1',
-        { id: 'user-oid-1', email: 'user@example.com', name: 'John Doe' },
+        {
+          id: '00000000-0000-4000-8000-000000000099',
+          email: 'user@example.com',
+          name: 'John Doe'
+        },
         'Producer requested to cancel',
         'trace-1',
         {
@@ -422,7 +477,7 @@ describe('certificate detail action helpers', () => {
           status: 'Cancelled',
           reason: 'Producer requested to cancel',
           user: {
-            id: 'user-oid-1',
+            id: '00000000-0000-4000-8000-000000000099',
             email: 'user@example.com',
             name: 'John Doe'
           },

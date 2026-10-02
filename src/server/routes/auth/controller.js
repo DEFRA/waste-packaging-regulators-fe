@@ -172,18 +172,25 @@ function buildSignOutRedirect(h, azure, request) {
 export const signinOidcController = {
   async handler(request, h) {
     if (request.auth?.credentials) {
+      const profile = request.auth.credentials.profile
+      const userId = profile.oid ?? profile.sub
       const apiAccount = createAccountApiService()
-      const user = await apiAccount.getAccountDetailsById(
-        request.auth.credentials.profile.oid
-      )
+      const user = await apiAccount.getAccountDetailsById(userId)
       if (!isRegulator(user)) {
         request.yar.clear('returnTo')
         clearAuthLocale(request)
         return Boom.forbidden('User does not hold a regulator service role')
       }
-      user.id = request.auth.credentials.profile.oid
-      user.email = request.auth.credentials.profile.email
+      user.id = userId
+      user.email = profile.email ?? profile.emails?.[0] ?? user.contactEmail
       user.name = `${user.firstName} ${user.lastName}`
+      user.authProfile = {
+        oid: profile.oid,
+        sub: profile.sub,
+        email: profile.email,
+        emails: profile.emails
+      }
+      user.profile = user.authProfile
       request.yar.set('user', user)
     }
     const returnTo = request.yar.get('returnTo') || '/'

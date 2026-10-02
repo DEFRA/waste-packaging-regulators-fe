@@ -20,7 +20,7 @@ export const certificatesOfComplianceAccept = {
           method: 'POST',
           path: '/{organisationId}/{documentType}/{id}/accept',
           options: {
-            auth: false,
+            auth: { mode: 'try', strategy: 'azure-ad-b2c' },
             ...certificatesOfComplianceAcceptPostController
           }
         }

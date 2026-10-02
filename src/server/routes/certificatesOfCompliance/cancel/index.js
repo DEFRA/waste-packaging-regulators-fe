@@ -43,6 +43,7 @@ export const certificatesOfComplianceCancel = {
           method: 'POST',
           path: '/{organisationId}/{documentType}/{id}/cancel',
           options: {
+            auth: { mode: 'try', strategy: 'azure-ad-b2c' },
             ...certificatesOfComplianceCancelPostController
           }
         }

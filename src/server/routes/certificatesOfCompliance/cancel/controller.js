@@ -1,3 +1,4 @@
+import { enrichRegulatorSessionUser } from '#server/common/helpers/get-session-user.js'
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
@@ -456,7 +457,7 @@ export const certificatesOfComplianceCancelPostController = {
       await cancelComplianceDeclaration(
         organisationId,
         id,
-        request.yar.get('user'),
+        enrichRegulatorSessionUser(request),
         reasonLabel,
         request.getTraceId(),
         { registrationType, environmentalRegulator, businessCountry }

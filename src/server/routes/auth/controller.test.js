@@ -98,6 +98,12 @@ describe('signinOidcController', () => {
 
       const stored = yar.set.mock.calls.find(([key]) => key === 'user')?.[1]
       expect(stored?.id).toBe('user-oid-123')
+      expect(stored?.authProfile).toEqual({
+        oid: 'user-oid-123',
+        sub: undefined,
+        email: 'jane@example.com',
+        emails: undefined
+      })
     })
 
     it('stores the user in yar with email from credentials profile', async () => {
@@ -109,6 +115,32 @@ describe('signinOidcController', () => {
 
       const stored = yar.set.mock.calls.find(([key]) => key === 'user')?.[1]
       expect(stored?.email).toBe('jane@example.com')
+    })
+
+    it('uses profile sub when oid is absent and falls back to contactEmail', async () => {
+      const yar = makeYar()
+      await signinOidcController.handler(
+        {
+          auth: {
+            credentials: {
+              profile: {
+                sub: '22222222-2222-4222-8222-222222222222',
+                emails: ['jane.smith@test.gov.uk']
+              }
+            }
+          },
+          yar
+        },
+        makeH()
+      )
+
+      expect(mockGetAccountDetailsById).toHaveBeenCalledWith(
+        '22222222-2222-4222-8222-222222222222'
+      )
+
+      const stored = yar.set.mock.calls.find(([key]) => key === 'user')?.[1]
+      expect(stored?.id).toBe('22222222-2222-4222-8222-222222222222')
+      expect(stored?.email).toBe('jane.smith@test.gov.uk')
     })
 
     it('stores the user in yar with name derived from firstName and lastName', async () => {
