@@ -32,7 +32,10 @@ export function validateFromDetailPath(fromDetail, routePrefix = '') {
     if (path !== prefix && !path.startsWith(`${prefix}/`)) {
       return null
     }
-  } else if (!DETAIL_PATH_PATTERN.test(path)) {
+    return path
+  }
+
+  if (!DETAIL_PATH_PATTERN.test(path)) {
     return null
   }
 
