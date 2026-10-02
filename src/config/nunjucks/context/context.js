@@ -59,7 +59,7 @@ export function context(request) {
     localeUrl: (pathOrUrl) =>
       localeUrl(withForwardedPrefix(request, pathOrUrl), locale),
     serviceName: translate(locale, 'common.serviceName'),
-    serviceUrl: config.get('dashboardUrl'),
+    serviceUrl: localeUrl(config.get('dashboardUrl'), locale),
     helpDeskEmail: config.get('helpDeskEmail'),
     breadcrumbs: [],
     backlinkText: translate(locale, 'common.nav.back'),
