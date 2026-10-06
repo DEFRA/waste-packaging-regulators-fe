@@ -69,11 +69,6 @@ export const emptyTabMessages = {
   'not-submitted': 'There are no outstanding submissions'
 }
 
-export const organisationTypeDisplayNames = {
-  DirectProducer: 'Direct producer',
-  ComplianceScheme: 'Compliance scheme'
-}
-
 // waste-organisations API wire values for registration.type and .status.
 export const wasteOrganisationsRegistrationType = {
   COMPLIANCE_SCHEME: 'COMPLIANCE_SCHEME',
