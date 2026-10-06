@@ -28,7 +28,6 @@
 
   params:
     organisationName  {string}  logo lock-up text; use <br> to control wrapping
-    homepageUrl       {string}  where the lock-up links to (default "/")
     navigation        {array}   [{ text, href, current, visuallyHiddenText }]
                                 shown top right; omit on a signed-out page to
                                 hide the account menu. No `href` renders plain
@@ -45,9 +44,9 @@
   <div class="govuk-width-container">
     <div class="defra-internal-header__main">
       <div class="defra-internal-header__logo">
-        <a class="defra-internal-header__logo-link" href="{{ params.homepageUrl | default('/') }}">
+        <span class="defra-internal-header__logo-link">
           {{ params.organisationName | default("Department for Environment,<br>Food &amp; Rural Affairs") | safe }}
-        </a>
+        </span>
       </div>
       {# A div, not a nav. The GOV.UK header marks its navigation up as `nav`
          because it is a set of destinations; a name and one action is not. #}

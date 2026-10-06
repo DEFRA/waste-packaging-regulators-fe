@@ -25,10 +25,6 @@
     @include govuk-link-style-no-visited-state;
     @include govuk-link-style-no-underline;
   }
-
-  // The lock-up is a link that must not look like one — it is the page
-  // identifying itself. The GDS text-link style: black in every state, with the
-  // underline on hover coming from the `a` rule above.
   //
   // Written out in full rather than as `&__logo-link` on purpose. Nested like
   // this it compiles to `.defra-internal-header .defra-internal-header__logo-link`
