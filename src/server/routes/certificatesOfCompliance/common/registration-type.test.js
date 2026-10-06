@@ -108,6 +108,18 @@ describe('organisation and audit detail mapping', () => {
       )
     })
 
+    test.each([
+      ['DirectProducer', 'cy', 'Cynhyrchydd uniongyrchol'],
+      ['ComplianceScheme', 'cy', 'Cynllun cydymffurfio']
+    ])(
+      'maps %s to its display name in locale %s',
+      (registrationType, locale, expected) => {
+        expect(
+          mapRegistrationTypeToOrganisationType(registrationType, locale)
+        ).toBe(expected)
+      }
+    )
+
     test.each([[null], [undefined], ['']])(
       'returns No data for %s',
       (registrationType) => {
@@ -200,6 +212,30 @@ describe('organisation and audit detail mapping', () => {
       companyName: 'POP QUEST LTD',
       registrationType: 'DirectProducer',
       organisationType: 'Direct producer',
+      companiesHouseNumber: '17121895'
+    })
+  })
+
+  test('mapWasteOrganisationToDetailFields maps translated organisationType when locale is provided', () => {
+    expect(
+      mapWasteOrganisationToDetailFields(
+        {
+          name: 'POP QUEST LTD',
+          companiesHouseNumber: '17121895',
+          registrations: [
+            {
+              type: wasteOrganisationsRegistrationType.LARGE_PRODUCER,
+              status: wasteOrganisationsRegistrationStatus.REGISTERED,
+              registrationYear: 2026
+            }
+          ]
+        },
+        { obligationYear: 2026, locale: 'cy' }
+      )
+    ).toEqual({
+      companyName: 'POP QUEST LTD',
+      registrationType: 'DirectProducer',
+      organisationType: 'Cynhyrchydd uniongyrchol',
       companiesHouseNumber: '17121895'
     })
   })

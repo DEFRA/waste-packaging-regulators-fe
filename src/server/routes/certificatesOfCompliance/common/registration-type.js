@@ -1,9 +1,9 @@
 import {
-  organisationTypeDisplayNames,
   registrationTypeFromApi,
   UNKNOWN_ORGANISATION,
   wasteOrganisationsRegistrationStatus
 } from './constants.js'
+import { translate } from '#server/common/helpers/i18n/translate.js'
 import { displayOrNoData } from './display.js'
 import { formatOrganisationName } from './organisation.js'
 
@@ -77,12 +77,23 @@ export function mapRegistrationTypeToOrganisationType(
   registrationType,
   locale = 'en'
 ) {
-  return displayOrNoData(
-    Object.hasOwn(organisationTypeDisplayNames, registrationType)
-      ? organisationTypeDisplayNames[registrationType]
-      : registrationType,
-    locale
-  )
+  let translatedType
+
+  if (registrationType === 'DirectProducer') {
+    translatedType = translate(
+      locale,
+      'certificatesOfCompliance.common.organisationType.directProducer'
+    )
+  } else if (registrationType === 'ComplianceScheme') {
+    translatedType = translate(
+      locale,
+      'certificatesOfCompliance.common.organisationType.complianceScheme'
+    )
+  } else {
+    translatedType = registrationType
+  }
+
+  return displayOrNoData(translatedType, locale)
 }
 
 export function mapCompaniesHouseNumberFromWasteOrganisation(
