@@ -507,6 +507,22 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(response.payload).toContain('22 May 2026 at 14:18')
     })
 
+    it('shows the accepted history row at the same time as the accepted date', async () => {
+      const response = await app.get(acceptedOnly.detailPath)
+      const { accepted, currentYear } = loadDetailPage(response.payload)
+
+      expect(accepted.acceptedDate).toBe('15 April 2026 at 11:20')
+      expect(currentYear.rows[0].date).toBe(accepted.acceptedDate)
+    })
+
+    it('shows the cancelled history row at the same time as the cancelled date', async () => {
+      const response = await app.get(cancelledOnly.detailPath)
+      const { cancellation, currentYear } = loadDetailPage(response.payload)
+
+      expect(cancellation.cancelledDate).toBe('8 April 2026 at 10:00')
+      expect(currentYear.rows[0].date).toBe(cancellation.cancelledDate)
+    })
+
     it('renders rows in the order returned by the API (newest first)', async () => {
       const response = await app.get(pendingDp.detailPath)
       const cancelledIdx = response.payload.indexOf('22 May 2026 at 14:18')

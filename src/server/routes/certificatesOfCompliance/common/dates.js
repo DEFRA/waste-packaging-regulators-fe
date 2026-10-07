@@ -17,29 +17,22 @@ function parseDateTimeInput(isoString, useParseIso) {
   return new Date(isoString)
 }
 
-function formatDateTime(
-  isoString,
-  locale,
-  { timeZone, useParseIso = false } = {}
-) {
+function formatDateTime(isoString, locale, { useParseIso = false } = {}) {
   if (!isoString) {
     return null
   }
 
   const bcp47 = localeToBcp47(locale)
   const d = parseDateTimeInput(isoString, useParseIso)
-  const localeOptions = timeZone ? { timeZone } : {}
   const datePart = d.toLocaleDateString(bcp47, {
     day: 'numeric',
     month: 'long',
-    year: 'numeric',
-    ...localeOptions
+    year: 'numeric'
   })
   const timePart = d.toLocaleTimeString(bcp47, {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false,
-    ...localeOptions
+    hour12: false
   })
   const atWord = translate(locale, DATE_TIME_AT_KEY)
 
@@ -68,5 +61,5 @@ export function formatDate(isoString, locale = 'en', formatStr = null) {
 }
 
 export function formatHistoryDate(isoString, locale = 'en') {
-  return formatDateTime(isoString, locale, { timeZone: 'UTC' })
+  return formatDateTime(isoString, locale)
 }
