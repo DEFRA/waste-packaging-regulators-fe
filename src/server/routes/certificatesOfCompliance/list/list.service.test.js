@@ -1411,10 +1411,30 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
           expect(vm.currentYearActions[0].by).toBe('Jane Regulator')
           expect(vm.currentYearActions[0].action).toBe('Accepted')
-          expect(vm.currentYearActions[0].reason).toBe('')
+          expect(vm.currentYearActions[0].reason).toBe('Not applicable')
           expect(vm.currentYearActions[0].viewSubmissionUrl).toBe(
             '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificate/decl-accepted-history'
           )
+        })
+
+        test('maps by to No data when the accept audit user has no name', async () => {
+          const accepted = {
+            ...mockDetailData,
+            id: 'decl-accepted-no-name',
+            status: 'Accepted',
+            updated: '2026-06-10T14:30:00Z',
+            audit: [
+              {
+                action: 'Accepted',
+                timestamp: '2026-06-10T14:30:00Z',
+                user: { id: 'regulator-1', email: 'regulator@example.test' }
+              }
+            ]
+          }
+          const vm = await runDetailVm(mockDetailData, [accepted])
+
+          expect(vm.currentYearActions[0].by).toBe('No data')
+          expect(vm.currentYearActions[0].reason).toBe('Not applicable')
         })
 
         test('includes the current Accepted declaration when the year list still has it as Submitted', async () => {

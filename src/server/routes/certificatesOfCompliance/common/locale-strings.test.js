@@ -9,6 +9,7 @@ import {
   translateComplianceTypeLabel,
   translateEmptyTabMessage,
   translateNoData,
+  translateNotApplicable,
   translateOrganisationTypeDisplay,
   translateRegulation43Statement,
   translateSearchResultCount,
@@ -78,6 +79,10 @@ describe('locale-strings', () => {
   test('translateNoData and translateUnknownOrganisation return locale strings', () => {
     expect(translateNoData('en')).toBe('No data')
     expect(translateUnknownOrganisation('en')).toBe('Unknown organisation')
+  })
+
+  test('translateNotApplicable returns the current year reason string', () => {
+    expect(translateNotApplicable('en')).toBe('Not applicable')
   })
 
   test('translateComplianceDocumentNoun maps registration types', () => {

@@ -46,7 +46,8 @@ describe('detail-mapping-history.js', () => {
       expect(rows[0]).toEqual(
         expect.objectContaining({
           action: 'Accepted',
-          reason: '',
+          reason: 'Not applicable',
+          by: 'No data',
           date: expect.any(String),
           viewSubmissionUrl: expect.any(String)
         })
@@ -68,10 +69,32 @@ describe('detail-mapping-history.js', () => {
         expect.objectContaining({
           action: 'Cancelled',
           reason: null, // mapHistoryReason for Cancelled without transitionAudit is null
+          by: 'No data',
           date: expect.any(String),
           viewSubmissionUrl: expect.any(String)
         })
       )
+    })
+
+    it('maps by to No data when the audit user has no name', () => {
+      const declarations = [
+        {
+          id: '127',
+          status: 'Accepted',
+          updated: '2025-06-01T12:00:00Z',
+          audit: [
+            {
+              action: 'Accepted',
+              timestamp: '2025-06-01T12:00:00Z',
+              user: { id: 'regulator-1', email: 'regulator@example.test' }
+            }
+          ]
+        }
+      ]
+      const rows = mapCurrentYearHistory('org1', declarations)
+      expect(rows).toHaveLength(1)
+      expect(rows[0].by).toBe('No data')
+      expect(rows[0].reason).toBe('Not applicable')
     })
 
     it('ignores declarations without transition audits if status is neither Accepted nor Cancelled', () => {
@@ -102,7 +125,7 @@ describe('detail-mapping-history.js', () => {
       // So it will fallback to row from status.
       const rows = mapCurrentYearHistory('org1', declarations)
       expect(rows).toHaveLength(1)
-      expect(rows[0].reason).toBe('') // Accepted status reason is ''
+      expect(rows[0].reason).toBe('Not applicable')
     })
   })
 })
