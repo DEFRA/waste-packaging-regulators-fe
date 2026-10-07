@@ -587,8 +587,12 @@ describe('#certificatesOfComplianceDetailController', () => {
 
       expect(currentYear.rows).toHaveLength(2)
       for (const row of currentYear.rows) {
-        expect(row.viewSubmissionUrl).toBeTruthy()
-        expect(row.viewSubmissionTarget).toBe('_blank')
+        if (row.action === 'Cancelled') {
+          expect(row.viewSubmissionUrl).toBeTruthy()
+          expect(row.viewSubmissionTarget).toBe('_blank')
+        } else {
+          expect(row.viewSubmissionUrl).toBeUndefined()
+        }
       }
       expect(response.payload).toContain('View submission (opens in new tab)')
     })
@@ -600,9 +604,7 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(currentYear.rows[0].viewSubmissionUrl).toBe(
         pendingDp.history.find((h) => h.action === 'Cancelled').url
       )
-      expect(currentYear.rows[1].viewSubmissionUrl).toBe(
-        pendingDp.history.find((h) => h.action === 'Accepted').url
-      )
+      expect(currentYear.rows[1].viewSubmissionUrl).toBeUndefined()
     })
 
     it('links compliance scheme current year rows to prior accepted and cancelled declarations', async () => {
@@ -613,25 +615,7 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(currentYear.rows[0].viewSubmissionUrl).toBe(
         pendingCs.history.find((h) => h.action === 'Cancelled').url
       )
-      expect(currentYear.rows[1].viewSubmissionUrl).toBe(
-        pendingCs.history.find((h) => h.action === 'Accepted').url
-      )
-    })
-
-    it('loads the accepted submission when following a current year View submission link', async () => {
-      const listResponse = await app.get(pendingDp.detailPath)
-      const { currentYear } = loadDetailPage(listResponse.payload)
-      const acceptedLink = currentYear.rows.find(
-        (row) => row.action === 'Accepted'
-      )?.viewSubmissionUrl
-
-      const detailResponse = await app.get(acceptedLink)
-      const acceptedPage = loadDetailPage(detailResponse.payload)
-
-      expect(detailResponse.statusCode).toBe(statusCodes.ok)
-      expect(acceptedPage.summaryRows.submissionStatus?.tag?.text).toBe(
-        'Accepted'
-      )
+      expect(currentYear.rows[1].viewSubmissionUrl).toBeUndefined()
     })
 
     it('loads the cancelled submission when following a current year View submission link', async () => {
@@ -650,14 +634,12 @@ describe('#certificatesOfComplianceDetailController', () => {
       )
     })
 
-    it('links an Accepted-only current year row to that accepted submission', async () => {
+    it('does not link an Accepted-only current year row to a submission', async () => {
       const response = await app.get(acceptedOnly.detailPath)
       const { currentYear } = loadDetailPage(response.payload)
 
       expect(currentYear.rows).toHaveLength(1)
-      expect(currentYear.rows[0].viewSubmissionUrl).toBe(
-        acceptedOnly.detailPath
-      )
+      expect(currentYear.rows[0].viewSubmissionUrl).toBeUndefined()
     })
 
     it('links a Cancelled-only current year row to that cancelled submission', async () => {

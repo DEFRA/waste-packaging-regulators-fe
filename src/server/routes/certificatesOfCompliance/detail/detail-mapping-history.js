@@ -126,7 +126,7 @@ function buildCurrentYearHistoryRow(
     action: entry.action,
     by: displayOrNoData(entry.user?.name, locale),
     reason: mapHistoryReason(entry.action, entry, locale),
-    viewSubmissionUrl
+    ...(entry.action === 'Cancelled' && { viewSubmissionUrl })
   }
 }
 
@@ -141,7 +141,7 @@ function buildCurrentYearHistoryRowFromStatus(
     action: declaration.status,
     by: displayOrNoData(null, locale),
     reason: mapHistoryReason(declaration.status, null, locale),
-    viewSubmissionUrl
+    ...(declaration.status === 'Cancelled' && { viewSubmissionUrl })
   }
 }
 
