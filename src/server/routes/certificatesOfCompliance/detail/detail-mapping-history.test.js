@@ -1,11 +1,74 @@
 import { describe, expect, it } from 'vitest'
 import { NO_DATA, NOT_APPLICABLE } from '../common/constants.js'
 import {
+  mapAcceptedOutcomeFields,
+  mapCancelledOutcomeFields,
   mapQueriedOutcome,
   mapCurrentYearHistory
 } from './detail-mapping-history.js'
 
 describe('detail-mapping-history.js', () => {
+  describe('mapAcceptedOutcomeFields', () => {
+    it('returns default null fields if status is not Accepted', () => {
+      expect(mapAcceptedOutcomeFields({ status: 'Pending' })).toEqual({
+        showAcceptedOutcome: false,
+        acceptedBy: null,
+        acceptedDate: null
+      })
+    })
+
+    it('returns mapped accepted details if status is Accepted', () => {
+      const data = {
+        status: 'Accepted',
+        updated: '2025-02-01T12:00:00Z',
+        audit: [
+          {
+            action: 'Accepted',
+            user: { name: 'John Doe' },
+            timestamp: '2025-01-01T12:00:00Z'
+          }
+        ]
+      }
+      expect(mapAcceptedOutcomeFields(data)).toEqual({
+        showAcceptedOutcome: true,
+        acceptedBy: 'John Doe',
+        acceptedDate: expect.any(String)
+      })
+    })
+  })
+
+  describe('mapCancelledOutcomeFields', () => {
+    it('returns default null fields if status is not Cancelled', () => {
+      expect(mapCancelledOutcomeFields({ status: 'Pending' })).toEqual({
+        showCancelledOutcome: false,
+        cancelledBy: null,
+        cancelledDate: null,
+        cancellationReason: null
+      })
+    })
+
+    it('returns mapped cancelled details if status is Cancelled', () => {
+      const data = {
+        status: 'Cancelled',
+        updated: '2025-02-01T12:00:00Z',
+        audit: [
+          {
+            action: 'Cancelled',
+            user: { name: 'Jane Smith' },
+            timestamp: '2025-01-01T12:00:00Z',
+            reason: 'Requested by user'
+          }
+        ]
+      }
+      expect(mapCancelledOutcomeFields(data)).toEqual({
+        showCancelledOutcome: true,
+        cancelledBy: 'Jane Smith',
+        cancelledDate: expect.any(String),
+        cancellationReason: 'Requested by user'
+      })
+    })
+  })
+
   describe('mapQueriedOutcome', () => {
     it('returns null if status is Queried but queryDetails is missing', () => {
       expect(mapQueriedOutcome({ status: 'Queried' })).toBeNull()
@@ -49,8 +112,7 @@ describe('detail-mapping-history.js', () => {
           action: 'Accepted',
           reason: NOT_APPLICABLE,
           by: NO_DATA,
-          date: expect.any(String),
-          viewSubmissionUrl: expect.any(String)
+          date: expect.any(String)
         })
       )
     })
@@ -127,6 +189,62 @@ describe('detail-mapping-history.js', () => {
       const rows = mapCurrentYearHistory('org1', declarations)
       expect(rows).toHaveLength(1)
       expect(rows[0].reason).toBe(NOT_APPLICABLE)
+    })
+
+    it('handles declarations with Accepted transition audits', () => {
+      const declarations = [
+        {
+          id: '127',
+          status: 'Accepted',
+          updated: '2025-06-01T12:00:00Z',
+          audit: [
+            {
+              action: 'Accepted',
+              timestamp: '2025-06-01T12:00:00Z',
+              user: { name: 'Bob' }
+            }
+          ]
+        }
+      ]
+      const rows = mapCurrentYearHistory('org1', declarations)
+      expect(rows).toHaveLength(1)
+      expect(rows[0]).toEqual(
+        expect.objectContaining({
+          action: 'Accepted',
+          by: 'Bob',
+          date: expect.any(String)
+        })
+      )
+      expect(rows[0].viewSubmissionUrl).toBeUndefined()
+    })
+
+    it('handles declarations with Cancelled transition audits', () => {
+      const declarations = [
+        {
+          id: '128',
+          status: 'Cancelled',
+          updated: '2025-07-01T12:00:00Z',
+          audit: [
+            {
+              action: 'Cancelled',
+              timestamp: '2025-07-01T12:00:00Z',
+              user: { name: 'Alice' },
+              reason: 'Oops'
+            }
+          ]
+        }
+      ]
+      const rows = mapCurrentYearHistory('org1', declarations)
+      expect(rows).toHaveLength(1)
+      expect(rows[0]).toEqual(
+        expect.objectContaining({
+          action: 'Cancelled',
+          by: 'Alice',
+          reason: 'Oops',
+          date: expect.any(String),
+          viewSubmissionUrl: expect.any(String)
+        })
+      )
     })
   })
 })

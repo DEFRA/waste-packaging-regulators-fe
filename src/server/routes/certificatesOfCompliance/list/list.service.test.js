@@ -1413,9 +1413,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.currentYearActions[0].by).toBe('Jane Regulator')
           expect(vm.currentYearActions[0].action).toBe('Accepted')
           expect(vm.currentYearActions[0].reason).toBe(NOT_APPLICABLE)
-          expect(vm.currentYearActions[0].viewSubmissionUrl).toBe(
-            '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificate/decl-accepted-history'
-          )
+          expect(vm.currentYearActions[0].viewSubmissionUrl).toBeUndefined()
         })
 
         test('maps by to No data when the accept audit user has no name', async () => {
