@@ -56,6 +56,7 @@ describe('#certificatesOfComplianceDetailController', () => {
   let cancelledOnly
   let emptyHistoryDp
   let missingRegulatorNameDp
+  let notSubmittedWithHistory
 
   // A fresh world each test, so an action in one test never leaks into the next.
   beforeEach(() => {
@@ -162,6 +163,18 @@ describe('#certificatesOfComplianceDetailController', () => {
             reason: 'Details could not be verified'
           }
         ]
+      },
+      {
+        name: 'Kingsway Producers Ltd',
+        status: 'not-submitted',
+        history: [
+          {
+            status: 'cancelled',
+            at: '2026-06-10T09:00:00Z',
+            by: 'James Walker',
+            reason: 'Tonnages could not be verified'
+          }
+        ]
       }
     ])
 
@@ -175,6 +188,7 @@ describe('#certificatesOfComplianceDetailController', () => {
     cancelledOnly = scenario.byName('Brookvale Producers Ltd')
     emptyHistoryDp = scenario.byName('Lone Producers Ltd')
     missingRegulatorNameDp = scenario.byName('Riverside Producers Ltd')
+    notSubmittedWithHistory = scenario.byName('Kingsway Producers Ltd')
   })
 
   it('should return a 200 status code', async () => {
@@ -548,6 +562,31 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(
         currentYear.rows.find((row) => row.action === 'Cancelled')?.reason
       ).toBe('Details could not be verified')
+    })
+
+    it('renders the empty-state message for a not submitted organisation with no decisions', async () => {
+      const response = await app.get(notSubmitted.detailPath)
+      const { currentYear } = loadDetailPage(response.payload)
+
+      expect(currentYear.rows).toHaveLength(0)
+      expect(response.payload).toContain('No previous submissions')
+    })
+
+    it('renders the current year decisions for a not submitted organisation', async () => {
+      const response = await app.get(notSubmittedWithHistory.detailPath)
+      const { currentYear } = loadDetailPage(response.payload)
+
+      expect(response.payload).toContain('Not submitted')
+      expect(response.payload).not.toContain('No previous submissions')
+      expect(currentYear.rows).toHaveLength(1)
+      expect(currentYear.rows[0]).toMatchObject({
+        date: '10 June 2026 at 09:00',
+        action: 'Cancelled',
+        by: 'James Walker',
+        reason: 'Tonnages could not be verified',
+        viewSubmissionUrl: notSubmittedWithHistory.history[0].url,
+        viewSubmissionTarget: '_blank'
+      })
     })
 
     it('renders both Accepted and Cancelled rows when the org has both', async () => {

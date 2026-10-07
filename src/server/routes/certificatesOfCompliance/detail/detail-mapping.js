@@ -253,12 +253,15 @@ export function mapDeclarationToDetail(
 export function mapObligationToDetail(
   data,
   {
+    organisationId,
     obligationYear,
     organisation,
     accountOrganisationName,
     accountOrganisationReferenceNumber,
     accountOrganisationContact,
-    locale = 'en'
+    declarationsForYear,
+    locale = 'en',
+    routePrefix = ''
   } = {}
 ) {
   const obligations = data?.obligations ?? []
@@ -329,7 +332,12 @@ export function mapObligationToDetail(
     cancelledBy: null,
     cancelledDate: null,
     cancellationReason: null,
-    currentYearActions: [],
+    currentYearActions: mapCurrentYearHistory(
+      organisationId,
+      declarationsForYear,
+      locale,
+      routePrefix
+    ),
     showObligations: obligations.length !== 0
   }
 }

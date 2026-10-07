@@ -49,7 +49,10 @@ describe('detail-fetch.service.js', () => {
 
     it('matches Account organisation by external id when multiple are returned', async () => {
       const obligationsApi = {
-        getComplianceObligation: vi.fn().mockResolvedValue({ some: 'data' })
+        getComplianceObligation: vi.fn().mockResolvedValue({ some: 'data' }),
+        listOrganisationComplianceDeclarations: vi
+          .fn()
+          .mockResolvedValue({ complianceDeclarations: [] })
       }
       const organisationsApi = {
         getOrganisation: vi.fn().mockResolvedValue({
@@ -103,7 +106,10 @@ describe('detail-fetch.service.js', () => {
 
     it('fetches scheme operator account details for not submitted compliance schemes', async () => {
       const obligationsApi = {
-        getComplianceObligation: vi.fn().mockResolvedValue({ some: 'data' })
+        getComplianceObligation: vi.fn().mockResolvedValue({ some: 'data' }),
+        listOrganisationComplianceDeclarations: vi
+          .fn()
+          .mockResolvedValue({ complianceDeclarations: [] })
       }
       const organisationsApi = {
         getOrganisation: vi.fn().mockResolvedValue({
@@ -135,6 +141,81 @@ describe('detail-fetch.service.js', () => {
         accountApi.getOrganisationsByCompaniesHouseNumbers
       ).toHaveBeenCalledWith(['CS123'], 'trace1')
       expect(detailMapping.mapObligationToDetail).toHaveBeenCalled()
+    })
+
+    describe('not submitted current year history', () => {
+      const organisationsApi = {
+        getOrganisation: vi.fn().mockResolvedValue({
+          registrationType: 'DirectProducer'
+        })
+      }
+      const accountApi = {
+        getOrganisationsByExternalIds: vi
+          .fn()
+          .mockResolvedValue({ organisations: [] })
+      }
+
+      it('passes the declarations for the obligation year and route prefix to the mapper', async () => {
+        const declarations = [{ id: 'decl-cancelled', status: 'Cancelled' }]
+        const obligationsApi = {
+          getComplianceObligation: vi.fn().mockResolvedValue({ some: 'data' }),
+          listOrganisationComplianceDeclarations: vi
+            .fn()
+            .mockResolvedValue({ complianceDeclarations: declarations })
+        }
+
+        await getDeclarationDetail(
+          obligationsApi,
+          organisationsApi,
+          accountApi,
+          'org1',
+          null,
+          {
+            traceId: 'trace1',
+            obligationYear: 2026,
+            routePrefix: '/certificates-of-compliance'
+          }
+        )
+
+        expect(
+          obligationsApi.listOrganisationComplianceDeclarations
+        ).toHaveBeenCalledWith(
+          { organisationId: 'org1', obligationYear: 2026 },
+          'trace1'
+        )
+        expect(detailMapping.mapObligationToDetail).toHaveBeenCalledWith(
+          { some: 'data' },
+          expect.objectContaining({
+            organisationId: 'org1',
+            declarationsForYear: declarations,
+            routePrefix: '/certificates-of-compliance'
+          })
+        )
+      })
+
+      it('skips the declarations lookup when the obligation year is missing', async () => {
+        const obligationsApi = {
+          getComplianceObligation: vi.fn().mockResolvedValue({ some: 'data' }),
+          listOrganisationComplianceDeclarations: vi.fn()
+        }
+
+        await getDeclarationDetail(
+          obligationsApi,
+          organisationsApi,
+          accountApi,
+          'org1',
+          null,
+          { traceId: 'trace1' }
+        )
+
+        expect(
+          obligationsApi.listOrganisationComplianceDeclarations
+        ).not.toHaveBeenCalled()
+        expect(detailMapping.mapObligationToDetail).toHaveBeenCalledWith(
+          { some: 'data' },
+          expect.objectContaining({ declarationsForYear: [] })
+        )
+      })
     })
   })
 })
