@@ -5,6 +5,7 @@ import * as detailService from './detail.service.js'
 import { loadDetailPage } from './detail.page-object.js'
 import { setupRegulatorsApp } from '#test-helpers/msw/harness.js'
 import { materialRow } from '#test-helpers/msw/obligations.js'
+import { NO_DATA, NOT_APPLICABLE } from '../common/constants.js'
 
 // The organisations every assertion below traces back to are declared once in
 // the shared world, so the input that produces each asserted value is visible
@@ -517,7 +518,7 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(response.payload).toContain('govuk-tag govuk-tag--teal')
       expect(currentYear.rows).toHaveLength(1)
       expect(currentYear.rows[0].by).toBe('James Walker')
-      expect(currentYear.rows[0].reason).toBe('Not applicable')
+      expect(currentYear.rows[0].reason).toBe(NOT_APPLICABLE)
     })
 
     it('renders a Cancelled-only page with the yellow tag and the audit reason', async () => {
@@ -539,11 +540,11 @@ describe('#certificatesOfComplianceDetailController', () => {
 
       expect(currentYear.rows).toHaveLength(2)
       for (const row of currentYear.rows) {
-        expect(row.by).toBe('No data')
+        expect(row.by).toBe(NO_DATA)
       }
       expect(
         currentYear.rows.find((row) => row.action === 'Accepted')?.reason
-      ).toBe('Not applicable')
+      ).toBe(NOT_APPLICABLE)
       expect(
         currentYear.rows.find((row) => row.action === 'Cancelled')?.reason
       ).toBe('Details could not be verified')

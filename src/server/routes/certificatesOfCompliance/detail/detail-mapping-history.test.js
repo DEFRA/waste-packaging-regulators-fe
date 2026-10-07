@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { NO_DATA, NOT_APPLICABLE } from '../common/constants.js'
 import {
   mapQueriedOutcome,
   mapCurrentYearHistory
@@ -46,8 +47,8 @@ describe('detail-mapping-history.js', () => {
       expect(rows[0]).toEqual(
         expect.objectContaining({
           action: 'Accepted',
-          reason: 'Not applicable',
-          by: 'No data',
+          reason: NOT_APPLICABLE,
+          by: NO_DATA,
           date: expect.any(String),
           viewSubmissionUrl: expect.any(String)
         })
@@ -69,7 +70,7 @@ describe('detail-mapping-history.js', () => {
         expect.objectContaining({
           action: 'Cancelled',
           reason: null, // mapHistoryReason for Cancelled without transitionAudit is null
-          by: 'No data',
+          by: NO_DATA,
           date: expect.any(String),
           viewSubmissionUrl: expect.any(String)
         })
@@ -93,8 +94,8 @@ describe('detail-mapping-history.js', () => {
       ]
       const rows = mapCurrentYearHistory('org1', declarations)
       expect(rows).toHaveLength(1)
-      expect(rows[0].by).toBe('No data')
-      expect(rows[0].reason).toBe('Not applicable')
+      expect(rows[0].by).toBe(NO_DATA)
+      expect(rows[0].reason).toBe(NOT_APPLICABLE)
     })
 
     it('ignores declarations without transition audits if status is neither Accepted nor Cancelled', () => {
@@ -125,7 +126,7 @@ describe('detail-mapping-history.js', () => {
       // So it will fallback to row from status.
       const rows = mapCurrentYearHistory('org1', declarations)
       expect(rows).toHaveLength(1)
-      expect(rows[0].reason).toBe('Not applicable')
+      expect(rows[0].reason).toBe(NOT_APPLICABLE)
     })
   })
 })

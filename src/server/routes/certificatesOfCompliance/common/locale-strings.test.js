@@ -17,6 +17,7 @@ import {
   translateTabSummaryText,
   translateUnknownOrganisation
 } from './locale-strings.js'
+import { NOT_APPLICABLE } from './constants.js'
 
 describe('locale-strings', () => {
   test('cocPageI18n scopes keys under certificatesOfCompliance', () => {
@@ -82,7 +83,7 @@ describe('locale-strings', () => {
   })
 
   test('translateNotApplicable returns the current year reason string', () => {
-    expect(translateNotApplicable('en')).toBe('Not applicable')
+    expect(translateNotApplicable('en')).toBe(NOT_APPLICABLE)
   })
 
   test('translateComplianceDocumentNoun maps registration types', () => {

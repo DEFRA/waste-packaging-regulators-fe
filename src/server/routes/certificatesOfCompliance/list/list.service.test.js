@@ -44,6 +44,7 @@ import {
   DECLARATIONS_BATCH_SIZE,
   COMPLIANCE_YEAR,
   NO_DATA,
+  NOT_APPLICABLE,
   wasteOrganisationsRegistrationStatus,
   wasteOrganisationsRegistrationType
 } from '../common/constants.js'
@@ -1411,7 +1412,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
           expect(vm.currentYearActions[0].by).toBe('Jane Regulator')
           expect(vm.currentYearActions[0].action).toBe('Accepted')
-          expect(vm.currentYearActions[0].reason).toBe('Not applicable')
+          expect(vm.currentYearActions[0].reason).toBe(NOT_APPLICABLE)
           expect(vm.currentYearActions[0].viewSubmissionUrl).toBe(
             '/497f6eca-6276-4993-bfeb-53cbbbba6f08/certificate/decl-accepted-history'
           )
@@ -1433,8 +1434,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
           }
           const vm = await runDetailVm(mockDetailData, [accepted])
 
-          expect(vm.currentYearActions[0].by).toBe('No data')
-          expect(vm.currentYearActions[0].reason).toBe('Not applicable')
+          expect(vm.currentYearActions[0].by).toBe(NO_DATA)
+          expect(vm.currentYearActions[0].reason).toBe(NOT_APPLICABLE)
         })
 
         test('includes the current Accepted declaration when the year list still has it as Submitted', async () => {
