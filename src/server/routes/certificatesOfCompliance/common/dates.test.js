@@ -55,4 +55,69 @@ describe('dates', () => {
     expect(english).toContain(` ${translate('en', 'common.dateTime.at')} `)
     expect(welsh).toContain(` ${translate('cy', 'common.dateTime.at')} `)
   })
+
+  // Production runs with TZ=Europe/London (see Dockerfile); the test script
+  // forces TZ=UTC, so these tests switch to the production zone.
+  describe('in the production time zone', () => {
+    const originalTz = process.env.TZ
+    const at = (locale) => translate(locale, 'common.dateTime.at')
+
+    beforeAll(() => {
+      process.env.TZ = 'Europe/London'
+    })
+
+    afterAll(() => {
+      process.env.TZ = originalTz
+    })
+
+    test.each([
+      ['GMT (winter)', '2026-01-15T14:30:00.000Z', '15 January 2026', '14:30'],
+      [
+        'BST (summer)',
+        '2026-10-01T15:41:45.686+00:00',
+        '1 October 2026',
+        '16:41'
+      ],
+      [
+        'BST past UTC midnight',
+        '2026-06-30T23:30:00.000Z',
+        '1 July 2026',
+        '00:30'
+      ],
+      [
+        'BST before clocks go back',
+        '2026-10-25T00:30:00.000Z',
+        '25 October 2026',
+        '01:30'
+      ],
+      [
+        'GMT after clocks go back',
+        '2026-10-25T01:30:00.000Z',
+        '25 October 2026',
+        '01:30'
+      ],
+      [
+        'BST after clocks go forward',
+        '2026-03-29T01:30:00.000Z',
+        '29 March 2026',
+        '02:30'
+      ]
+    ])(
+      'history and submission dates show the same UK time: %s',
+      (_, isoString, date, time) => {
+        const expected = `${date} ${at('en')} ${time}`
+
+        expect(formatHistoryDate(isoString, 'en')).toBe(expected)
+        expect(formatSubmissionDate(isoString, 'en')).toBe(expected)
+      }
+    )
+
+    test('Welsh history and submission dates show the same UK time', () => {
+      const isoString = '2026-06-30T23:30:00.000Z'
+      const expected = `1 Gorffennaf 2026 ${at('cy')} 00:30`
+
+      expect(formatHistoryDate(isoString, 'cy')).toBe(expected)
+      expect(formatSubmissionDate(isoString, 'cy')).toBe(expected)
+    })
+  })
 })
