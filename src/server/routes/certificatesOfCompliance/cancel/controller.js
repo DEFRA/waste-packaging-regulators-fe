@@ -450,14 +450,14 @@ export const certificatesOfComplianceCancelPostController = {
 
     const { registrationType, environmentalRegulator, businessCountry } =
       await fetchCancelViewModel(organisationId, id, request, locale)
-    const reasonLabel = getCancelReasonLabel(registrationType, reason, locale)
+    const apiReasonLabel = getCancelReasonLabel(registrationType, reason, 'en')
 
     try {
       await cancelComplianceDeclaration(
         organisationId,
         id,
         request.yar.get('user'),
-        reasonLabel,
+        apiReasonLabel,
         request.getTraceId(),
         { registrationType, environmentalRegulator, businessCountry }
       )
