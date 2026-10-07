@@ -56,6 +56,7 @@ export const SEARCH_STATUS_NOT_SUBMITTED = 'Not submitted'
 // DateSubmitted is not in this endpoint's sort vocabulary and would be rejected.
 export const SEARCH_UNSUBMITTED_SORT = 'Name[asc]'
 export const NO_DATA = 'No data'
+export const NOT_APPLICABLE = 'Not applicable'
 export const UNKNOWN_ORGANISATION = 'Unknown organisation'
 export const COMPLIANCE_SCHEMES = 'compliance-schemes'
 export const DIRECT_PRODUCERS = 'direct-producers'

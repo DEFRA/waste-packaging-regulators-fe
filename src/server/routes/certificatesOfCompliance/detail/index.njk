@@ -307,14 +307,10 @@
               <tr class="govuk-table__row">
                 <td class="govuk-table__cell">{{ row.date }}</td>
                 <td class="govuk-table__cell">
-                  {% if row.action === 'Accepted' %}
-                    <strong class="govuk-tag govuk-tag--blue govuk-!-font-size-16">{{ i18n.t('currentYear.actionAccepted') }}</strong>
-                  {% elif row.action === 'Cancelled' %}
-                    <strong class="govuk-tag govuk-tag--grey govuk-!-font-size-16">{{ i18n.t('currentYear.actionCancelled') }}</strong>
-                  {% endif %}
+                  {{ appSubmissionStatusTag({ status: row.action, locale: locale }) }}
                 </td>
                 <td class="govuk-table__cell">{{ row.by }}</td>
-                <td class="govuk-table__cell">{{ row.reason if row.reason else '' }}</td>
+                <td class="govuk-table__cell">{{ row.reason }}</td>
                 <td class="govuk-table__cell">
                   <a href="{{ row.viewSubmissionUrl }}" class="govuk-link" target="_blank">{{ i18n.t('currentYear.viewSubmissionLink') }}</a>
                 </td>

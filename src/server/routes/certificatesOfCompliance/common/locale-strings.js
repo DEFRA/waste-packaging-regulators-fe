@@ -93,6 +93,10 @@ export function translateNoData(locale) {
   return translateCoc(locale, 'common.noData')
 }
 
+export function translateNotApplicable(locale) {
+  return translateCoc(locale, 'detail.currentYear.reasonNotApplicable')
+}
+
 export function translateUnknownOrganisation(locale) {
   return translateCoc(locale, 'common.unknownOrganisation')
 }

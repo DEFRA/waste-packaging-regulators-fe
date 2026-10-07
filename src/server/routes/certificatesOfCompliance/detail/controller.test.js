@@ -5,6 +5,7 @@ import * as detailService from './detail.service.js'
 import { loadDetailPage } from './detail.page-object.js'
 import { setupRegulatorsApp } from '#test-helpers/msw/harness.js'
 import { materialRow } from '#test-helpers/msw/obligations.js'
+import { NO_DATA, NOT_APPLICABLE } from '../common/constants.js'
 
 // The organisations every assertion below traces back to are declared once in
 // the shared world, so the input that produces each asserted value is visible
@@ -54,6 +55,7 @@ describe('#certificatesOfComplianceDetailController', () => {
   let acceptedOnly
   let cancelledOnly
   let emptyHistoryDp
+  let missingRegulatorNameDp
 
   // A fresh world each test, so an action in one test never leaks into the next.
   beforeEach(() => {
@@ -143,7 +145,24 @@ describe('#certificatesOfComplianceDetailController', () => {
         cancelledDate: '2026-04-08T10:00:00Z',
         cancelledReason: 'Information could not be verified'
       },
-      { name: 'Lone Producers Ltd', status: 'pending' }
+      { name: 'Lone Producers Ltd', status: 'pending' },
+      {
+        name: 'Riverside Producers Ltd',
+        status: 'pending',
+        history: [
+          {
+            status: 'accepted',
+            at: '2026-02-01T09:00:00Z',
+            by: ''
+          },
+          {
+            status: 'cancelled',
+            at: '2026-03-01T10:00:00Z',
+            by: '',
+            reason: 'Details could not be verified'
+          }
+        ]
+      }
     ])
 
     pendingDp = scenario.byName(PENDING_DP_NAME)
@@ -155,6 +174,7 @@ describe('#certificatesOfComplianceDetailController', () => {
     acceptedOnly = scenario.byName('Hillcrest Producers Ltd')
     cancelledOnly = scenario.byName('Brookvale Producers Ltd')
     emptyHistoryDp = scenario.byName('Lone Producers Ltd')
+    missingRegulatorNameDp = scenario.byName('Riverside Producers Ltd')
   })
 
   it('should return a 200 status code', async () => {
@@ -485,20 +505,49 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(response.payload).not.toContain('No previous submissions')
     })
 
-    it('renders an Accepted-only page with the blue tag, regulator name, and empty reason', async () => {
-      const response = await app.get(acceptedOnly.detailPath)
-      expect(response.payload).toContain('15 April 2026 at 11:20')
-      expect(response.payload).toContain('govuk-tag govuk-tag--blue')
-      expect(response.payload).toContain('James Walker')
-      expect(response.payload).not.toContain('Not applicable')
+    it('renders the Date actioned column heading', async () => {
+      const response = await app.get(pendingDp.detailPath)
+      expect(response.payload).toContain('Date actioned')
     })
 
-    it('renders a Cancelled-only page with the grey tag, submitter, and the audit reason', async () => {
+    it('renders an Accepted-only page with the teal tag, regulator name, and Not applicable reason', async () => {
+      const response = await app.get(acceptedOnly.detailPath)
+      const { currentYear } = loadDetailPage(response.payload)
+
+      expect(response.payload).toContain('15 April 2026 at 11:20')
+      expect(response.payload).toContain('govuk-tag govuk-tag--teal')
+      expect(currentYear.rows).toHaveLength(1)
+      expect(currentYear.rows[0].by).toBe('James Walker')
+      expect(currentYear.rows[0].reason).toBe(NOT_APPLICABLE)
+    })
+
+    it('renders a Cancelled-only page with the yellow tag and the audit reason', async () => {
       const response = await app.get(cancelledOnly.detailPath)
+      const { currentYear } = loadDetailPage(response.payload)
+
       expect(response.payload).toContain('8 April 2026 at 10:00')
-      expect(response.payload).toContain('govuk-tag govuk-tag--grey')
-      expect(response.payload).toContain('Test Submitter C')
-      expect(response.payload).toContain('Information could not be verified')
+      expect(response.payload).toContain('govuk-tag govuk-tag--yellow')
+      expect(currentYear.rows).toHaveLength(1)
+      expect(currentYear.rows[0].by).toBe('James Walker')
+      expect(currentYear.rows[0].reason).toBe(
+        'Information could not be verified'
+      )
+    })
+
+    it('renders No data in By when the regulator name is missing for both decisions', async () => {
+      const response = await app.get(missingRegulatorNameDp.detailPath)
+      const { currentYear } = loadDetailPage(response.payload)
+
+      expect(currentYear.rows).toHaveLength(2)
+      for (const row of currentYear.rows) {
+        expect(row.by).toBe(NO_DATA)
+      }
+      expect(
+        currentYear.rows.find((row) => row.action === 'Accepted')?.reason
+      ).toBe(NOT_APPLICABLE)
+      expect(
+        currentYear.rows.find((row) => row.action === 'Cancelled')?.reason
+      ).toBe('Details could not be verified')
     })
 
     it('renders both Accepted and Cancelled rows when the org has both', async () => {
