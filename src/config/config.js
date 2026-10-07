@@ -117,12 +117,14 @@ export const config = convict({
   GA4: {
     doc: 'Google Analytics 4 ID',
     format: String,
-    default: ''
+    default: 'G-4M1Z0WGY6J',
+    env: 'GA4'
   },
   GTM: {
     doc: 'Google Tag Manager ID',
     format: String,
-    default: ''
+    default: 'GTM-52C6V74Q',
+    env: 'GTM'
   },
   isDevelopment: {
     doc: 'If this application running in the development environment',
