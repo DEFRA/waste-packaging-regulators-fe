@@ -79,10 +79,10 @@ export function initRegulatorSessionSync() {
     }
   })
 
-  document.addEventListener('visibilitychange', () => {
+  document.addEventListener('visibilitychange', async () => {
     if (document.visibilityState === 'visible') {
       redirectIfRevoked()
-      recheckAuthOnVisible()
+      await recheckAuthOnVisible()
     }
   })
 }
