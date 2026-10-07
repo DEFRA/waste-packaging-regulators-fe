@@ -6,7 +6,12 @@ vi.mock('#services/govuk-notify.service.js', async (importOriginal) => {
   return createCancellationEmailNotifyModuleMock(importOriginal)
 })
 
+vi.mock('../actions/cancel.service.js', () => ({
+  cancelComplianceDeclaration: vi.fn().mockResolvedValue(undefined)
+}))
+
 import { setupRegulatorsApp } from '#test-helpers/msw/harness.js'
+import { cancelComplianceDeclaration } from '../actions/cancel.service.js'
 import {
   loadReasonPage,
   loadCheckPage,
@@ -402,6 +407,10 @@ describe('certificates of compliance — cancel', () => {
   })
 
   describe('POST cancel (the action)', () => {
+    beforeEach(() => {
+      vi.mocked(cancelComplianceDeclaration).mockClear()
+    })
+
     it('redirects unauthenticated users to /signin-oidc', async () => {
       const response = await app.post(
         actionUrlFor(DP_ITEM),
@@ -461,6 +470,21 @@ describe('certificates of compliance — cancel', () => {
       expect(cancelResponse.statusCode).toBe(302)
       expect(cancelResponse.headers.location).toBe(
         `${detailUrlFor(DP_ITEM)}?type=directProducer&tab=pending`
+      )
+    })
+
+    it('sends the English reason label to the Obligations API when the UI locale is Welsh', async () => {
+      const cookie = await app.signIn()
+      const response = await app.post(
+        `${actionUrlFor(CS_ITEM)}?lang=cy`,
+        'cancel-reason=producer-request',
+        cookie
+      )
+
+      expect(response.statusCode).toBe(302)
+      expect(cancelComplianceDeclaration).toHaveBeenCalledOnce()
+      expect(cancelComplianceDeclaration.mock.calls[0][3]).toBe(
+        'Compliance scheme requested to cancel'
       )
     })
   })
