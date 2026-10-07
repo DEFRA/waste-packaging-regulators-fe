@@ -1,4 +1,5 @@
 import { displayOrNoData } from '../common/display.js'
+import { translateNotApplicable } from '../common/locale-strings.js'
 import {
   formatSubmissionDate,
   formatDate,
@@ -77,10 +78,10 @@ export function mapQueriedOutcome(data, locale = 'en') {
     : null
 }
 
-function mapHistoryReason(status, transitionAudit) {
+function mapHistoryReason(status, transitionAudit, locale = 'en') {
   switch (status) {
     case 'Accepted':
-      return ''
+      return translateNotApplicable(locale)
     case 'Cancelled':
       return transitionAudit?.reason ?? null
     default:
@@ -123,8 +124,8 @@ function buildCurrentYearHistoryRow(
     sortTimestamp: entry.timestamp ?? declaration.updated,
     date: formatHistoryDate(entry.timestamp ?? declaration.updated, locale),
     action: entry.action,
-    by: entry.user?.name ?? '',
-    reason: mapHistoryReason(entry.action, entry),
+    by: displayOrNoData(entry.user?.name, locale),
+    reason: mapHistoryReason(entry.action, entry, locale),
     viewSubmissionUrl
   }
 }
@@ -138,8 +139,8 @@ function buildCurrentYearHistoryRowFromStatus(
     sortTimestamp: declaration.updated,
     date: formatHistoryDate(declaration.updated, locale),
     action: declaration.status,
-    by: '',
-    reason: mapHistoryReason(declaration.status, null),
+    by: displayOrNoData(null, locale),
+    reason: mapHistoryReason(declaration.status, null, locale),
     viewSubmissionUrl
   }
 }
