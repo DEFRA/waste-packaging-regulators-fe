@@ -250,6 +250,40 @@ export function mapDeclarationToDetail(
   })
 }
 
+// Compliance schemes take their trading name from waste-organisations — the
+// same field the not-submitted list renders from the unsubmitted endpoint.
+// Direct producers keep the Account API name (waste-org as fallback).
+function resolveObligationCompanyName(orgFields, accountOrganisationName) {
+  return isComplianceSchemeRegistrationType(orgFields.registrationType)
+    ? orgFields.companyName
+    : (accountOrganisationName ?? orgFields.companyName)
+}
+
+function mapObligationContactFields(
+  organisation,
+  { accountOrganisationReferenceNumber, accountOrganisationContact, locale }
+) {
+  const noData = displayOrNoData(null, locale)
+  return {
+    // Organisation ID mirrors the listing: the Account API reference number
+    // (or "No data"). Never the internal external id / GUID.
+    organisationRef: displayOrNoData(
+      accountOrganisationReferenceNumber ?? organisation?.referenceNumber,
+      locale
+    ),
+    nameOnAccount: noData,
+    declarationEmailAddress: displayOrNoData(
+      accountOrganisationContact?.email,
+      locale
+    ),
+    companyPhoneNumber: displayOrNoData(
+      accountOrganisationContact?.telephoneNumber,
+      locale
+    ),
+    declarationSignedBy: noData
+  }
+}
+
 export function mapObligationToDetail(
   data,
   {
@@ -274,17 +308,10 @@ export function mapObligationToDetail(
     obligationYear,
     locale
   })
-
-  // Compliance schemes take their trading name from waste-organisations — the
-  // same field the not-submitted list renders from the unsubmitted endpoint.
-  // Direct producers keep the Account API name (waste-org as fallback).
-  const companyName = isComplianceSchemeRegistrationType(
-    orgFields.registrationType
+  const companyName = resolveObligationCompanyName(
+    orgFields,
+    accountOrganisationName
   )
-    ? orgFields.companyName
-    : (accountOrganisationName ?? orgFields.companyName)
-
-  const noData = displayOrNoData(null, locale)
 
   return {
     complianceYear: obligationYear == null ? null : String(obligationYear),
@@ -306,23 +333,12 @@ export function mapObligationToDetail(
     ),
     recyclingObligationsMet: deriveRecyclingObligationsMet(obligations),
     regulation43Met: null,
-    dateDeclarationSubmitted: noData,
-    // Organisation ID mirrors the listing: the Account API reference number
-    // (or "No data"). Never the internal external id / GUID.
-    organisationRef: displayOrNoData(
-      accountOrganisationReferenceNumber ?? organisation?.referenceNumber,
+    dateDeclarationSubmitted: displayOrNoData(null, locale),
+    ...mapObligationContactFields(organisation, {
+      accountOrganisationReferenceNumber,
+      accountOrganisationContact,
       locale
-    ),
-    nameOnAccount: noData,
-    declarationEmailAddress: displayOrNoData(
-      accountOrganisationContact?.email,
-      locale
-    ),
-    companyPhoneNumber: displayOrNoData(
-      accountOrganisationContact?.telephoneNumber,
-      locale
-    ),
-    declarationSignedBy: noData,
+    }),
     ...materialGroups,
     actions: noDetailActions(locale),
     showAcceptedOutcome: false,
