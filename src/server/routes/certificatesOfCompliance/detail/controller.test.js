@@ -503,7 +503,7 @@ describe('#certificatesOfComplianceDetailController', () => {
   })
 
   describe('Cancellation reason locale', () => {
-    it('displays a Welsh stored reason in English on the summary and current year table', async () => {
+    it('displays a Welsh stored reason in English on the cancellation summary', async () => {
       const welshReason = getCancelReasonLabel(
         'DirectProducer',
         'producer-request',
@@ -523,10 +523,11 @@ describe('#certificatesOfComplianceDetailController', () => {
       const response = await app.get(org.detailPath)
       const { cancellation, currentYear } = loadDetailPage(response.payload)
 
+      expect(cancellation.present).toBe(true)
       expect(cancellation.reason).toBe('Producer requested to cancel')
-      expect(currentYear.rows).toHaveLength(1)
-      expect(currentYear.rows[0].reason).toBe('Producer requested to cancel')
       expect(response.payload).not.toContain(welshReason)
+      expect(response.payload).not.toContain('Current year')
+      expect(currentYear.rows).toHaveLength(0)
     })
   })
 
