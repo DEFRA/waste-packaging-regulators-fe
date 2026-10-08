@@ -13,31 +13,33 @@
     </a>
   </p>
   {% if items.length > 0 %}
-    <table class="govuk-table v3-compact-table">
-      <caption class="govuk-table__caption govuk-visually-hidden">{{ tabSummaryText | capitalize }}</caption>
-      <thead class="govuk-table__head">
-        <tr class="govuk-table__row">
-          {{ appSortingColumnHeader({ sortable: false, firstColumn: true, columnName: 'OrganisationName', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.organisationName'), locale: locale, i18n: i18n }) }}
-          {{ appSortingColumnHeader({ sortable: false, columnName: 'OrganisationId', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.organisationId'), locale: locale, i18n: i18n }) }}
-          {{ appSortingColumnHeader({ sort: sort, columnName: 'RecyclingObligations', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.recyclingObligations'), sortable: true, defaultDirection: 'asc', locale: locale, i18n: i18n }) }}
-          {% if organisationType == 'compliance-schemes' %}
-            {{ appSortingColumnHeader({ sort: sort, columnName: 'Regulation43', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.regulation43'), sortable: activeTab != 'not-submitted', defaultDirection: 'asc', locale: locale, i18n: i18n }) }}
-          {% else %}
-            {{ appSortingColumnHeader({ sort: sort, columnName: 'PercentageMet', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.percentageMet'), sortable: true, defaultDirection: 'asc', locale: locale, i18n: i18n }) }}
-          {% endif %}
-          {% if activeTab != 'not-submitted' %}
-            {{ appSortingColumnHeader({ sort: sort, columnName: 'DateSubmitted', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.dateSubmitted'), defaultDirection: 'desc', locale: locale, i18n: i18n }) }}
-          {% endif %}
-        </tr>
-      </thead>
-      <tbody class="govuk-table__body">
-        {% for item in items %}
-          {% set showSubmissionStatus = false %}
-          {% set showDateSubmitted = activeTab != 'not-submitted' %}
-          {% include "certificatesOfCompliance/partials/compliance-row.njk" %}
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="moj-scrollable-pane" role="region" aria-label="{{ tabSummaryText | capitalize }}" tabindex="0">
+      <table class="govuk-table v3-compact-table">
+        <caption class="govuk-table__caption govuk-visually-hidden">{{ tabSummaryText | capitalize }}</caption>
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            {{ appSortingColumnHeader({ sortable: false, firstColumn: true, columnName: 'OrganisationName', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.organisationName'), locale: locale, i18n: i18n }) }}
+            {{ appSortingColumnHeader({ sortable: false, columnName: 'OrganisationId', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.organisationId'), locale: locale, i18n: i18n }) }}
+            {{ appSortingColumnHeader({ sort: sort, columnName: 'RecyclingObligations', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.recyclingObligations'), sortable: true, defaultDirection: 'asc', locale: locale, i18n: i18n }) }}
+            {% if organisationType == 'compliance-schemes' %}
+              {{ appSortingColumnHeader({ sort: sort, columnName: 'Regulation43', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.regulation43'), sortable: activeTab != 'not-submitted', defaultDirection: 'asc', locale: locale, i18n: i18n }) }}
+            {% else %}
+              {{ appSortingColumnHeader({ sort: sort, columnName: 'PercentageMet', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.percentageMet'), sortable: true, defaultDirection: 'asc', locale: locale, i18n: i18n }) }}
+            {% endif %}
+            {% if activeTab != 'not-submitted' %}
+              {{ appSortingColumnHeader({ sort: sort, columnName: 'DateSubmitted', columnLabel: t(locale, 'certificatesOfCompliance.common.columns.dateSubmitted'), defaultDirection: 'desc', locale: locale, i18n: i18n }) }}
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for item in items %}
+            {% set showSubmissionStatus = false %}
+            {% set showDateSubmitted = activeTab != 'not-submitted' %}
+            {% include "certificatesOfCompliance/partials/compliance-row.njk" %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
     {% include "pagination/template.njk" %}
   {% else %}
     <p class="govuk-body">{{ emptyTabMessage }}</p>

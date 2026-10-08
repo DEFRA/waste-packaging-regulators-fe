@@ -717,6 +717,29 @@ describe('#certificatesOfComplianceDetailController', () => {
     })
   })
 
+  describe('Scrollable panes', () => {
+    it('wraps the obligations table in a moj-scrollable-pane', async () => {
+      const response = await app.get(pendingDp.detailPath)
+      expect(response.payload).toContain(
+        '<div class="moj-scrollable-pane" role="region" aria-label="Recycling obligations by material, in tonnes" tabindex="0">'
+      )
+    })
+
+    it('wraps the glass breakdown table in a moj-scrollable-pane', async () => {
+      const response = await app.get(pendingDp.detailPath)
+      expect(response.payload).toContain(
+        '<div class="moj-scrollable-pane" role="region" aria-label="Glass recycling obligation breakdown by material, in tonnes" tabindex="0">'
+      )
+    })
+
+    it('wraps the current year history table in a moj-scrollable-pane', async () => {
+      const response = await app.get(pendingDp.detailPath)
+      expect(response.payload).toContain(
+        '<div class="moj-scrollable-pane" role="region" aria-label="Current year submission history" tabindex="0">'
+      )
+    })
+  })
+
   it('should render an error page when the obligations API returns 500', async () => {
     vi.spyOn(
       detailService,
