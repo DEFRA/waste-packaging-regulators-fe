@@ -1548,7 +1548,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
 
       describe('not-submitted path — no declaration id', () => {
-        test('calls getComplianceObligation, getOrganisation, and getOrganisationsByExternalIds in parallel', async () => {
+        test('calls getComplianceObligation, getOrganisation and listOrganisationComplianceDeclarations in parallel, then getOrganisationsByExternalIds', async () => {
           const mockObligationsApi = {
             listOrganisationComplianceDeclarations: vi
               .fn()
@@ -1587,6 +1587,12 @@ describe('getCertificatesOfComplianceViewModel', () => {
           )
           expect(mockOrganisationsApi.getOrganisation).toHaveBeenCalledWith(
             { organisationId: 'org-abc' },
+            'trace-z'
+          )
+          expect(
+            mockObligationsApi.listOrganisationComplianceDeclarations
+          ).toHaveBeenCalledWith(
+            { organisationId: 'org-abc', obligationYear: 2026 },
             'trace-z'
           )
           expect(
