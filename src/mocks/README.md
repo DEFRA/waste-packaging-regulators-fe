@@ -114,6 +114,10 @@ then add the record to `waste-obligations/fixtures.js` and mirror it in
 [README country-specific mock data section](../../README.md#country-specific-mock-data)
 for local run examples.
 
+## Cancellation reason strings
+
+Current-year history and cancelled declaration audit entries should use the **canonical English reason strings** from [`canonical-reason-labels.js`](../src/server/routes/certificatesOfCompliance/cancel/canonical-reason-labels.js) (aligned with waste-obligations). Bespoke text (e.g. `Submitted after the deadline.`) is reserved for fixtures that intentionally test non-standard display passthrough.
+
 ## Changing the data and writing tests
 
 - **Default (local) data** lives in `<api>/fixtures.js`. To add an organisation,

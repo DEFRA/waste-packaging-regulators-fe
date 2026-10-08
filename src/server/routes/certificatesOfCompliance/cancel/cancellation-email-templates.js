@@ -1,3 +1,5 @@
+import { canonicalLabelToTemplateKey as reasonLabelToTemplateKey } from './canonical-reason-labels.js'
+
 // GOV.UK Notify template IDs — kept in sync with waste-obligations GovukNotifyOptions.
 export const cancellationEmailTemplateIds = {
   notSignedByCorrectPerson: {
@@ -16,16 +18,6 @@ export const cancellationEmailTemplateIds = {
     en: '3e03c93f-955c-4db3-936c-bfa3f7725a5f',
     cy: 'e419a544-e1b3-4ea5-b8eb-a074e63aea1a'
   }
-}
-
-const reasonLabelToTemplateKey = {
-  'Not signed by correct person': 'notSignedByCorrectPerson',
-  'Recycling obligations changed': 'recyclingObligationsChanged',
-  'Producer can meet recycling obligations': 'canMeetRecyclingObligations',
-  'Compliance scheme can meet recycling obligations':
-    'canMeetRecyclingObligations',
-  'Producer requested to cancel': 'producerRequested',
-  'Compliance scheme requested to cancel': 'producerRequested'
 }
 
 const reasonKeyToTemplateKey = {

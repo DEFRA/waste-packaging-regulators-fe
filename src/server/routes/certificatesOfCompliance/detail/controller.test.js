@@ -5,6 +5,7 @@ import * as detailService from './detail.service.js'
 import { loadDetailPage } from './detail.page-object.js'
 import { setupRegulatorsApp } from '#test-helpers/msw/harness.js'
 import { materialRow } from '#test-helpers/msw/obligations.js'
+import { getCancelReasonLabel } from '../cancel/reasons.js'
 import { NO_DATA, NOT_APPLICABLE } from '../common/constants.js'
 
 // The organisations every assertion below traces back to are declared once in
@@ -498,6 +499,34 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(response.payload).toContain('Accepted by')
       expect(response.payload).toContain('James Walker')
       expect(response.payload).toContain('12 January 2027 at 12:05')
+    })
+  })
+
+  describe('Cancellation reason locale', () => {
+    it('displays a Welsh stored reason in English on the summary and current year table', async () => {
+      const welshReason = getCancelReasonLabel(
+        'DirectProducer',
+        'producer-request',
+        'cy'
+      )
+      const scenario = app.given([
+        {
+          name: 'Locale Reason Producers Ltd',
+          status: 'cancelled',
+          listed: false,
+          cancelledBy: 'James Walker',
+          cancelledDate: '2026-04-08T10:00:00Z',
+          cancelledReason: welshReason
+        }
+      ])
+      const org = scenario.byName('Locale Reason Producers Ltd')
+      const response = await app.get(org.detailPath)
+      const { cancellation, currentYear } = loadDetailPage(response.payload)
+
+      expect(cancellation.reason).toBe('Producer requested to cancel')
+      expect(currentYear.rows).toHaveLength(1)
+      expect(currentYear.rows[0].reason).toBe('Producer requested to cancel')
+      expect(response.payload).not.toContain(welshReason)
     })
   })
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { getCancelReasonLabel } from '../cancel/reasons.js'
 import { NO_DATA, NOT_APPLICABLE } from '../common/constants.js'
 import {
   mapAcceptedOutcomeFields,
@@ -6,6 +7,12 @@ import {
   mapQueriedOutcome,
   mapCurrentYearHistory
 } from './detail-mapping-history.js'
+
+const WELSH_PRODUCER_REQUEST_REASON = getCancelReasonLabel(
+  'DirectProducer',
+  'producer-request',
+  'cy'
+)
 
 describe('detail-mapping-history.js', () => {
   describe('mapAcceptedOutcomeFields', () => {
@@ -66,6 +73,26 @@ describe('detail-mapping-history.js', () => {
         cancelledDate: expect.any(String),
         cancellationReason: 'Requested by user'
       })
+    })
+
+    it('localises a Welsh stored reason to English on the summary', () => {
+      const data = {
+        status: 'Cancelled',
+        updated: '2025-02-01T12:00:00Z',
+        organisation: { registrationType: 'DirectProducer' },
+        audit: [
+          {
+            action: 'Cancelled',
+            user: { name: 'Jane Smith' },
+            timestamp: '2025-01-01T12:00:00Z',
+            reason: WELSH_PRODUCER_REQUEST_REASON
+          }
+        ]
+      }
+
+      expect(mapCancelledOutcomeFields(data, 'en').cancellationReason).toBe(
+        'Producer requested to cancel'
+      )
     })
   })
 
@@ -245,6 +272,28 @@ describe('detail-mapping-history.js', () => {
           viewSubmissionUrl: expect.any(String)
         })
       )
+    })
+
+    it('localises a Welsh stored reason to English in the current year table', () => {
+      const declarations = [
+        {
+          id: '129',
+          status: 'Cancelled',
+          updated: '2025-08-01T12:00:00Z',
+          organisation: { registrationType: 'DirectProducer' },
+          audit: [
+            {
+              action: 'Cancelled',
+              timestamp: '2025-08-01T12:00:00Z',
+              user: { name: 'Alice' },
+              reason: WELSH_PRODUCER_REQUEST_REASON
+            }
+          ]
+        }
+      ]
+
+      const rows = mapCurrentYearHistory('org1', declarations, 'en')
+      expect(rows[0].reason).toBe('Producer requested to cancel')
     })
   })
 })
