@@ -503,7 +503,7 @@ describe('#certificatesOfComplianceDetailController', () => {
   })
 
   describe('Cancellation reason locale', () => {
-    it('displays a Welsh stored reason in English on the summary and current year table', async () => {
+    it('displays a Welsh stored reason in English on the cancellation summary', async () => {
       const welshReason = getCancelReasonLabel(
         'DirectProducer',
         'producer-request',
@@ -523,10 +523,11 @@ describe('#certificatesOfComplianceDetailController', () => {
       const response = await app.get(org.detailPath)
       const { cancellation, currentYear } = loadDetailPage(response.payload)
 
+      expect(cancellation.present).toBe(true)
       expect(cancellation.reason).toBe('Producer requested to cancel')
-      expect(currentYear.rows).toHaveLength(1)
-      expect(currentYear.rows[0].reason).toBe('Producer requested to cancel')
       expect(response.payload).not.toContain(welshReason)
+      expect(response.payload).not.toContain('Current year')
+      expect(currentYear.rows).toHaveLength(0)
     })
   })
 
@@ -713,6 +714,29 @@ describe('#certificatesOfComplianceDetailController', () => {
     it('does not render View submission links when the current year table is empty', async () => {
       const response = await app.get(emptyHistoryDp.detailPath)
       expect(response.payload).not.toContain('View submission')
+    })
+  })
+
+  describe('Scrollable panes', () => {
+    it('wraps the obligations table in a moj-scrollable-pane', async () => {
+      const response = await app.get(pendingDp.detailPath)
+      expect(response.payload).toContain(
+        '<div class="moj-scrollable-pane" role="region" aria-label="Recycling obligations by material, in tonnes" tabindex="0">'
+      )
+    })
+
+    it('wraps the glass breakdown table in a moj-scrollable-pane', async () => {
+      const response = await app.get(pendingDp.detailPath)
+      expect(response.payload).toContain(
+        '<div class="moj-scrollable-pane" role="region" aria-label="Glass recycling obligation breakdown by material, in tonnes" tabindex="0">'
+      )
+    })
+
+    it('wraps the current year history table in a moj-scrollable-pane', async () => {
+      const response = await app.get(pendingDp.detailPath)
+      expect(response.payload).toContain(
+        '<div class="moj-scrollable-pane" role="region" aria-label="Current year submission history" tabindex="0">'
+      )
     })
   })
 

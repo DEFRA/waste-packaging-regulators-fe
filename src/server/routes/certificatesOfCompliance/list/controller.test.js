@@ -1245,6 +1245,20 @@ describe('#certificatesOfComplianceController', () => {
         expect($('#search-results script')).toHaveLength(0)
       })
     })
+
+    test('Should wrap search results tables in moj-scrollable-pane', async () => {
+      const { result } = await searchFor('Aldbury')
+      const $ = load(result)
+      const tables = $('table.govuk-table.v3-compact-table')
+      expect(tables.length).toBeGreaterThan(0)
+
+      tables.each((_, table) => {
+        const parent = $(table).parent()
+        expect(parent.hasClass('moj-scrollable-pane')).toBe(true)
+        expect(parent.attr('role')).toBe('region')
+        expect(parent.attr('tabindex')).toBe('0')
+      })
+    })
   })
 
   describe('Pagination', () => {
@@ -1586,5 +1600,32 @@ describe('#certificatesOfComplianceController', () => {
         expect(statusCode).toBe(statusCodes.ok)
       }
     )
+  })
+
+  describe('Scrollable panes', () => {
+    test('Should wrap data tables in moj-scrollable-pane', async () => {
+      app.given([
+        {
+          name: 'Aldbury Producers Ltd',
+          organisationId: '12345',
+          reference: '100504',
+          status: 'pending',
+          dateSubmitted: '2027-02-14'
+        }
+      ])
+      const { payload } = await inject(
+        '/certificates-of-compliance?type=direct-producers&tab=pending'
+      )
+      const $ = load(payload)
+      const tables = $('table.govuk-table.v3-compact-table')
+      expect(tables.length).toBeGreaterThan(0)
+
+      tables.each((_, table) => {
+        const parent = $(table).parent()
+        expect(parent.hasClass('moj-scrollable-pane')).toBe(true)
+        expect(parent.attr('role')).toBe('region')
+        expect(parent.attr('tabindex')).toBe('0')
+      })
+    })
   })
 })
