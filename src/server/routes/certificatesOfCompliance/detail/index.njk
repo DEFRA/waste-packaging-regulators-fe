@@ -201,87 +201,91 @@
       {%  if showObligations %}
         <p class="govuk-body-m govuk-!-margin-bottom-3">{{ i18n.t('obligations.valuesInTonnes') }}</p>
 
-        <table class="govuk-table" data-testid="obligations-table">
-          <caption class="govuk-table__caption govuk-visually-hidden">{{ i18n.t('obligations.tableCaption') }}</caption>
-          <thead class="govuk-table__head">
-            <tr class="govuk-table__row">
-              <th scope="col" class="govuk-table__header">{{ i18n.t('obligations.material') }}</th>
-              <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.obligationToMeet') }}</th>
-              <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.awaitingAcceptance') }}</th>
-              <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.accepted') }}</th>
-              <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.outstanding') }}</th>
-              <th scope="col" class="govuk-table__header">{{ i18n.t('obligations.status') }}</th>
-            </tr>
-          </thead>
-          <tbody class="govuk-table__body">
-            {% for material in materials %}
+        <div class="moj-scrollable-pane" role="region" tabindex="0" aria-label="{{ i18n.t('obligations.tableCaption') }}">
+          <table class="govuk-table" data-testid="obligations-table">
+            <caption class="govuk-table__caption govuk-visually-hidden">{{ i18n.t('obligations.tableCaption') }}</caption>
+            <thead class="govuk-table__head">
               <tr class="govuk-table__row">
-                <th scope="row" class="govuk-table__header">{{ material.name }}</th>
-                <td class="govuk-table__cell govuk-table__cell--numeric">{{ material.obligationToMeet }}</td>
-                <td class="govuk-table__cell govuk-table__cell--numeric">{{ material.awaitingAcceptance }}</td>
-                <td class="govuk-table__cell govuk-table__cell--numeric">{{ material.accepted }}</td>
-                <td class="govuk-table__cell govuk-table__cell--numeric">{{ material.outstanding }}</td>
+                <th scope="col" class="govuk-table__header">{{ i18n.t('obligations.material') }}</th>
+                <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.obligationToMeet') }}</th>
+                <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.awaitingAcceptance') }}</th>
+                <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.accepted') }}</th>
+                <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.outstanding') }}</th>
+                <th scope="col" class="govuk-table__header">{{ i18n.t('obligations.status') }}</th>
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              {% for material in materials %}
+                <tr class="govuk-table__row">
+                  <th scope="row" class="govuk-table__header">{{ material.name }}</th>
+                  <td class="govuk-table__cell govuk-table__cell--numeric">{{ material.obligationToMeet }}</td>
+                  <td class="govuk-table__cell govuk-table__cell--numeric">{{ material.awaitingAcceptance }}</td>
+                  <td class="govuk-table__cell govuk-table__cell--numeric">{{ material.accepted }}</td>
+                  <td class="govuk-table__cell govuk-table__cell--numeric">{{ material.outstanding }}</td>
+                  <td class="govuk-table__cell">
+                    {{ materialStatusTag(material.status) }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot class="govuk-table__foot">
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">{{ i18n.t('obligations.totals') }}</th>
+                <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.obligationToMeet }}</td>
+                <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.awaitingAcceptance }}</td>
+                <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.accepted }}</td>
+                <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.outstanding }}</td>
                 <td class="govuk-table__cell">
-                  {{ materialStatusTag(material.status) }}
+                  {{ materialStatusTag(materialTotals.status) }}
                 </td>
               </tr>
-            {% endfor %}
-          </tbody>
-          <tfoot class="govuk-table__foot">
-            <tr class="govuk-table__row">
-              <th scope="row" class="govuk-table__header">{{ i18n.t('obligations.totals') }}</th>
-              <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.obligationToMeet }}</td>
-              <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.awaitingAcceptance }}</td>
-              <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.accepted }}</td>
-              <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ materialTotals.outstanding }}</td>
-              <td class="govuk-table__cell">
-                {{ materialStatusTag(materialTotals.status) }}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
+            </tfoot>
+          </table>
+        </div>
 
         <h3 class="govuk-heading-s govuk-!-margin-top-8">{{ i18n.t('obligations.glassBreakdownHeading') }}</h3>
 
-        <table class="govuk-table" data-testid="glass-breakdown-table">
-          <caption class="govuk-table__caption govuk-visually-hidden">{{ i18n.t('obligations.glassBreakdownCaption') }}</caption>
-          <thead class="govuk-table__head">
-            <tr class="govuk-table__row">
-              <th scope="col" class="govuk-table__header">{{ i18n.t('obligations.material') }}</th>
-              <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.obligationToMeet') }}</th>
-              <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.awaitingAcceptance') }}</th>
-              <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.accepted') }}</th>
-              <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.outstanding') }}</th>
-              <th scope="col" class="govuk-table__header">{{ i18n.t('obligations.status') }}</th>
-            </tr>
-          </thead>
-          <tbody class="govuk-table__body">
-            {% for row in glassBreakdown %}
+        <div class="moj-scrollable-pane" role="region" tabindex="0" aria-label="{{ i18n.t('obligations.glassBreakdownCaption') }}">
+          <table class="govuk-table" data-testid="glass-breakdown-table">
+            <caption class="govuk-table__caption govuk-visually-hidden">{{ i18n.t('obligations.glassBreakdownCaption') }}</caption>
+            <thead class="govuk-table__head">
               <tr class="govuk-table__row">
-                <th scope="row" class="govuk-table__header">{{ row.name }}</th>
-                <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.obligationToMeet }}</td>
-                <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.awaitingAcceptance }}</td>
-                <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.accepted }}</td>
-                <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.outstanding }}</td>
+                <th scope="col" class="govuk-table__header">{{ i18n.t('obligations.material') }}</th>
+                <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.obligationToMeet') }}</th>
+                <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.awaitingAcceptance') }}</th>
+                <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.accepted') }}</th>
+                <th scope="col" class="govuk-table__header govuk-table__header--numeric">{{ i18n.t('obligations.outstanding') }}</th>
+                <th scope="col" class="govuk-table__header">{{ i18n.t('obligations.status') }}</th>
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              {% for row in glassBreakdown %}
+                <tr class="govuk-table__row">
+                  <th scope="row" class="govuk-table__header">{{ row.name }}</th>
+                  <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.obligationToMeet }}</td>
+                  <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.awaitingAcceptance }}</td>
+                  <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.accepted }}</td>
+                  <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.outstanding }}</td>
+                  <td class="govuk-table__cell">
+                    {{ materialStatusTag(row.status) }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot class="govuk-table__foot">
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">{{ i18n.t('obligations.totals') }}</th>
+                <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.obligationToMeet }}</td>
+                <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.awaitingAcceptance }}</td>
+                <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.accepted }}</td>
+                <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.outstanding }}</td>
                 <td class="govuk-table__cell">
-                  {{ materialStatusTag(row.status) }}
+                  {{ materialStatusTag(glassBreakdownTotals.status) }}
                 </td>
               </tr>
-            {% endfor %}
-          </tbody>
-          <tfoot class="govuk-table__foot">
-            <tr class="govuk-table__row">
-              <th scope="row" class="govuk-table__header">{{ i18n.t('obligations.totals') }}</th>
-              <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.obligationToMeet }}</td>
-              <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.awaitingAcceptance }}</td>
-              <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.accepted }}</td>
-              <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold">{{ glassBreakdownTotals.outstanding }}</td>
-              <td class="govuk-table__cell">
-                {{ materialStatusTag(glassBreakdownTotals.status) }}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
+            </tfoot>
+          </table>
+        </div>
       {% else %}
         <p class="govuk-body-m" data-testid="obligations-no-data">{{ i18n.t('obligations.noData') }}</p>
       {% endif %}
@@ -291,35 +295,37 @@
       {% if currentYearActions.length === 0 %}
         <p class="govuk-body">{{ i18n.t('currentYear.noPreviousSubmissions') }}</p>
       {% else %}
-        <table class="govuk-table" data-testid="current-year-table">
-          <caption class="govuk-table__caption govuk-visually-hidden">{{ i18n.t('currentYear.tableCaption') }}</caption>
-          <thead class="govuk-table__head">
-            <tr class="govuk-table__row">
-              <th scope="col" class="govuk-table__header">{{ i18n.t('currentYear.date') }}</th>
-              <th scope="col" class="govuk-table__header">{{ i18n.t('currentYear.action') }}</th>
-              <th scope="col" class="govuk-table__header">{{ i18n.t('currentYear.by') }}</th>
-              <th scope="col" class="govuk-table__header">{{ i18n.t('currentYear.reason') }}</th>
-              <th scope="col" class="govuk-table__header"><span class="govuk-visually-hidden">{{ i18n.t('currentYear.viewSubmissionHidden') }}</span></th>
-            </tr>
-          </thead>
-          <tbody class="govuk-table__body">
-            {% for row in currentYearActions %}
+        <div class="moj-scrollable-pane" role="region" tabindex="0" aria-label="{{ i18n.t('currentYear.tableCaption') }}">
+          <table class="govuk-table" data-testid="current-year-table">
+            <caption class="govuk-table__caption govuk-visually-hidden">{{ i18n.t('currentYear.tableCaption') }}</caption>
+            <thead class="govuk-table__head">
               <tr class="govuk-table__row">
-                <td class="govuk-table__cell">{{ row.date }}</td>
-                <td class="govuk-table__cell">
-                  {{ appSubmissionStatusTag({ status: row.action, locale: locale }) }}
-                </td>
-                <td class="govuk-table__cell">{{ row.by }}</td>
-                <td class="govuk-table__cell">{{ row.reason }}</td>
-                <td class="govuk-table__cell">
-                  {% if row.action === 'Cancelled' %}
-                    <a href="{{ row.viewSubmissionUrl }}" class="govuk-link" target="_blank">{{ i18n.t('currentYear.viewSubmissionLink') }}</a>
-                  {% endif %}
-                </td>
+                <th scope="col" class="govuk-table__header">{{ i18n.t('currentYear.date') }}</th>
+                <th scope="col" class="govuk-table__header">{{ i18n.t('currentYear.action') }}</th>
+                <th scope="col" class="govuk-table__header">{{ i18n.t('currentYear.by') }}</th>
+                <th scope="col" class="govuk-table__header">{{ i18n.t('currentYear.reason') }}</th>
+                <th scope="col" class="govuk-table__header"><span class="govuk-visually-hidden">{{ i18n.t('currentYear.viewSubmissionHidden') }}</span></th>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+            </thead>
+            <tbody class="govuk-table__body">
+              {% for row in currentYearActions %}
+                <tr class="govuk-table__row">
+                  <td class="govuk-table__cell">{{ row.date }}</td>
+                  <td class="govuk-table__cell">
+                    {{ appSubmissionStatusTag({ status: row.action, locale: locale }) }}
+                  </td>
+                  <td class="govuk-table__cell">{{ row.by }}</td>
+                  <td class="govuk-table__cell">{{ row.reason }}</td>
+                  <td class="govuk-table__cell">
+                    {% if row.action === 'Cancelled' %}
+                      <a href="{{ row.viewSubmissionUrl }}" class="govuk-link" target="_blank">{{ i18n.t('currentYear.viewSubmissionLink') }}</a>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       {% endif %}
 
       <hr class="govuk-section-break govuk-section-break--l">

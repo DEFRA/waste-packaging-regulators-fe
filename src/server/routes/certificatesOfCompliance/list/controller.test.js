@@ -1245,6 +1245,19 @@ describe('#certificatesOfComplianceController', () => {
         expect($('#search-results script')).toHaveLength(0)
       })
     })
+
+    test('Should wrap search results tables in moj-scrollable-pane', async () => {
+      const { result } = await searchFor(pendingItem.organisationName)
+      const $ = load(result)
+
+      const searchResultsTable = $('#search-results table.govuk-table')
+      expect(searchResultsTable.length).toBeGreaterThan(0)
+
+      const parent = searchResultsTable.parent()
+      expect(parent.hasClass('moj-scrollable-pane')).toBe(true)
+      expect(parent.attr('role')).toBe('region')
+      expect(parent.attr('tabindex')).toBe('0')
+    })
   })
 
   describe('Pagination', () => {
@@ -1558,6 +1571,24 @@ describe('#certificatesOfComplianceController', () => {
 
       expect($('table tbody tr')).toHaveLength(1)
       expect(payload).toContain('Never Submitted Ltd')
+    })
+  })
+
+  describe('Scrollable panes', () => {
+    test('Should wrap data tables in moj-scrollable-pane', async () => {
+      const { payload } = await inject('/certificates-of-compliance')
+      const $ = load(payload)
+
+      // Get all tables and ensure their parent is moj-scrollable-pane
+      const tables = $('table.govuk-table')
+      expect(tables.length).toBeGreaterThan(0)
+
+      tables.each((_, table) => {
+        const parent = $(table).parent()
+        expect(parent.hasClass('moj-scrollable-pane')).toBe(true)
+        expect(parent.attr('role')).toBe('region')
+        expect(parent.attr('tabindex')).toBe('0')
+      })
     })
   })
 
