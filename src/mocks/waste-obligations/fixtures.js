@@ -892,7 +892,7 @@ export const complianceRecords = [
     audit: [
       cancelledAudit(
         MOCK_CURRENT_YEAR_CANCELLED_TIMESTAMP,
-        'Test cancellation reason'
+        'Producer requested to cancel'
       )
     ]
   },
