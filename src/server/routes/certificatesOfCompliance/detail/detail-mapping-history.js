@@ -10,6 +10,7 @@ import {
   documentTypeFromRegistrationType
 } from '../actions/detail-actions.js'
 import { findAuditEntryByAction, auditAction } from './audit.js'
+import { displayStoredCancelReason } from '../cancel/reasons.js'
 
 export function mapAcceptedOutcomeFields(data, locale = 'en') {
   if (data.status !== 'Accepted') {
@@ -54,7 +55,14 @@ export function mapCancelledOutcomeFields(data, locale = 'en') {
       formatSubmissionDate(cancelledAudit?.timestamp ?? data.updated, locale),
       locale
     ),
-    cancellationReason: displayOrNoData(cancelledAudit?.reason, locale)
+    cancellationReason: displayOrNoData(
+      displayStoredCancelReason(
+        cancelledAudit?.reason,
+        data.organisation?.registrationType,
+        locale
+      ),
+      locale
+    )
   }
 }
 
@@ -78,12 +86,23 @@ export function mapQueriedOutcome(data, locale = 'en') {
     : null
 }
 
-function mapHistoryReason(status, transitionAudit, locale = 'en') {
+function mapHistoryReason(
+  status,
+  transitionAudit,
+  locale = 'en',
+  registrationType
+) {
   switch (status) {
     case 'Accepted':
       return translateNotApplicable(locale)
     case 'Cancelled':
-      return transitionAudit?.reason ?? null
+      return (
+        displayStoredCancelReason(
+          transitionAudit?.reason,
+          registrationType,
+          locale
+        ) ?? null
+      )
     default:
       return null
   }
@@ -125,7 +144,12 @@ function buildCurrentYearHistoryRow(
     date: formatHistoryDate(entry.timestamp ?? declaration.updated, locale),
     action: entry.action,
     by: displayOrNoData(entry.user?.name, locale),
-    reason: mapHistoryReason(entry.action, entry, locale),
+    reason: mapHistoryReason(
+      entry.action,
+      entry,
+      locale,
+      declaration.organisation?.registrationType
+    ),
     ...(entry.action === 'Cancelled' && { viewSubmissionUrl })
   }
 }
@@ -140,7 +164,12 @@ function buildCurrentYearHistoryRowFromStatus(
     date: formatHistoryDate(declaration.updated, locale),
     action: declaration.status,
     by: displayOrNoData(null, locale),
-    reason: mapHistoryReason(declaration.status, null, locale),
+    reason: mapHistoryReason(
+      declaration.status,
+      null,
+      locale,
+      declaration.organisation?.registrationType
+    ),
     ...(declaration.status === 'Cancelled' && { viewSubmissionUrl })
   }
 }
