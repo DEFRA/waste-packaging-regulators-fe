@@ -75,7 +75,7 @@ describe('canonical-reason-labels.js', () => {
   it('defines a legacy alias for RequestedToCancel', () => {
     expect(LEGACY_CANCEL_REASON_ALIASES.RequestedToCancel).toEqual({
       key: PRODUCER_REQUEST_REASON_KEY,
-      registrationType: 'DirectProducer'
+      registrationType: null
     })
   })
 })

@@ -53,7 +53,7 @@ const canonicalLabelToReasonKeyMap = {
 export const LEGACY_CANCEL_REASON_ALIASES = {
   RequestedToCancel: {
     key: PRODUCER_REQUEST_REASON_KEY,
-    registrationType: 'DirectProducer'
+    registrationType: null
   }
 }
 

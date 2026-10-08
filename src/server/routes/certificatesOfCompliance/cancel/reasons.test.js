@@ -78,7 +78,7 @@ describe('reasons.js', () => {
         resolveCancelReasonKeyFromStoredLabel('RequestedToCancel')
       ).toEqual({
         key: PRODUCER_REQUEST_REASON_KEY,
-        registrationType: 'DirectProducer'
+        registrationType: null
       })
     })
   })
@@ -140,6 +140,10 @@ describe('reasons.js', () => {
       expect(
         displayStoredCancelReason('RequestedToCancel', 'DirectProducer', 'en')
       ).toBe('Producer requested to cancel')
+
+      expect(
+        displayStoredCancelReason('RequestedToCancel', 'ComplianceScheme', 'en')
+      ).toBe('Compliance scheme requested to cancel')
 
       const welshLabel = getCancelReasonLabel(
         'DirectProducer',
