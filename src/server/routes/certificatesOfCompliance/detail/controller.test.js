@@ -535,17 +535,14 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(currentYear.rows[0].reason).toBe(NOT_APPLICABLE)
     })
 
-    it('renders a Cancelled-only page with the yellow tag and the audit reason', async () => {
+    it('does not render the Current year section on a cancelled submission', async () => {
       const response = await app.get(cancelledOnly.detailPath)
       const { currentYear } = loadDetailPage(response.payload)
 
-      expect(response.payload).toContain('8 April 2026 at 10:00')
       expect(response.payload).toContain('govuk-tag govuk-tag--yellow')
-      expect(currentYear.rows).toHaveLength(1)
-      expect(currentYear.rows[0].by).toBe('James Walker')
-      expect(currentYear.rows[0].reason).toBe(
-        'Information could not be verified'
-      )
+      expect(response.payload).not.toContain('Current year')
+      expect(response.payload).not.toContain('No previous submissions')
+      expect(currentYear.rows).toHaveLength(0)
     })
 
     it('renders No data in By when the regulator name is missing for both decisions', async () => {
@@ -603,14 +600,6 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(currentYear.rows[0].date).toBe(accepted.acceptedDate)
     })
 
-    it('shows the cancelled history row at the same time as the cancelled date', async () => {
-      const response = await app.get(cancelledOnly.detailPath)
-      const { cancellation, currentYear } = loadDetailPage(response.payload)
-
-      expect(cancellation.cancelledDate).toBe('8 April 2026 at 10:00')
-      expect(currentYear.rows[0].date).toBe(cancellation.cancelledDate)
-    })
-
     it('renders rows in the order returned by the API (newest first)', async () => {
       const response = await app.get(pendingDp.detailPath)
       const cancelledIdx = response.payload.indexOf('22 May 2026 at 14:18')
@@ -657,7 +646,7 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(currentYear.rows[1].viewSubmissionUrl).toBeUndefined()
     })
 
-    it('loads the cancelled submission when following a current year View submission link', async () => {
+    it('loads the cancelled submission without the Current year section when following a current year View submission link', async () => {
       const listResponse = await app.get(pendingDp.detailPath)
       const { currentYear } = loadDetailPage(listResponse.payload)
       const cancelledLink = currentYear.rows.find(
@@ -671,6 +660,7 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(cancelledPage.summaryRows.submissionStatus?.tag?.text).toBe(
         'Cancelled'
       )
+      expect(detailResponse.payload).not.toContain('Current year')
     })
 
     it('does not link an Accepted-only current year row to a submission', async () => {
@@ -679,16 +669,6 @@ describe('#certificatesOfComplianceDetailController', () => {
 
       expect(currentYear.rows).toHaveLength(1)
       expect(currentYear.rows[0].viewSubmissionUrl).toBeUndefined()
-    })
-
-    it('links a Cancelled-only current year row to that cancelled submission', async () => {
-      const response = await app.get(cancelledOnly.detailPath)
-      const { currentYear } = loadDetailPage(response.payload)
-
-      expect(currentYear.rows).toHaveLength(1)
-      expect(currentYear.rows[0].viewSubmissionUrl).toBe(
-        cancelledOnly.detailPath
-      )
     })
 
     it('does not render View submission links when the current year table is empty', async () => {

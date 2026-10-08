@@ -1333,6 +1333,24 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.cancellationReason).toBe('Submitted after the deadline.')
       })
 
+      test('does not fetch the declarations for the year on a Cancelled declaration', async () => {
+        mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
+          ...mockDetailData,
+          status: 'Cancelled'
+        })
+
+        const vm = await getCertificateOfComplianceDetailViewModel(
+          'org-abc',
+          'decl-cancelled'
+        )
+
+        expect(
+          mockObligationsApi.listOrganisationComplianceDeclarations
+        ).not.toHaveBeenCalled()
+        expect(vm.showCurrentYear).toBe(false)
+        expect(vm.currentYearActions).toEqual([])
+      })
+
       test('sets declarationStatus from declaration data.status', async () => {
         mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
           ...mockDetailData,
