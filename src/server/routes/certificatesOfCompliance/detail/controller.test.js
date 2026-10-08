@@ -545,6 +545,16 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(currentYear.rows).toHaveLength(0)
     })
 
+    it('renders the cancellation details on a cancelled submission', async () => {
+      const response = await app.get(cancelledOnly.detailPath)
+      const { cancellation } = loadDetailPage(response.payload)
+
+      expect(cancellation.present).toBe(true)
+      expect(cancellation.cancelledBy).toBe('James Walker')
+      expect(cancellation.cancelledDate).toBe('8 April 2026 at 10:00')
+      expect(cancellation.reason).toBe('Information could not be verified')
+    })
+
     it('renders No data in By when the regulator name is missing for both decisions', async () => {
       const response = await app.get(missingRegulatorNameDp.detailPath)
       const { currentYear } = loadDetailPage(response.payload)
