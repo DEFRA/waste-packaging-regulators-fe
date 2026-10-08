@@ -1548,8 +1548,11 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
 
       describe('not-submitted path — no declaration id', () => {
-        test('calls getComplianceObligation, getOrganisation, and getOrganisationsByExternalIds in parallel', async () => {
+        test('calls getComplianceObligation, getOrganisation and listOrganisationComplianceDeclarations in parallel, then getOrganisationsByExternalIds', async () => {
           const mockObligationsApi = {
+            listOrganisationComplianceDeclarations: vi
+              .fn()
+              .mockResolvedValue({ complianceDeclarations: [] }),
             getComplianceObligation: vi
               .fn()
               .mockResolvedValue(mockObligationData)
@@ -1587,12 +1590,21 @@ describe('getCertificatesOfComplianceViewModel', () => {
             'trace-z'
           )
           expect(
+            mockObligationsApi.listOrganisationComplianceDeclarations
+          ).toHaveBeenCalledWith(
+            { organisationId: 'org-abc', obligationYear: 2026 },
+            'trace-z'
+          )
+          expect(
             mockAccountApi.getOrganisationsByExternalIds
           ).toHaveBeenCalledWith(['org-abc'], 'trace-z')
         })
 
         test('populates companyName from Account API', async () => {
           createWasteObligationsApiService.mockReturnValue({
+            listOrganisationComplianceDeclarations: vi
+              .fn()
+              .mockResolvedValue({ complianceDeclarations: [] }),
             getComplianceObligation: vi
               .fn()
               .mockResolvedValue(mockObligationData)
@@ -1629,6 +1641,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
         test('populates organisationRef from Account API referenceNumber', async () => {
           createWasteObligationsApiService.mockReturnValue({
+            listOrganisationComplianceDeclarations: vi
+              .fn()
+              .mockResolvedValue({ complianceDeclarations: [] }),
             getComplianceObligation: vi
               .fn()
               .mockResolvedValue(mockObligationData)
@@ -1662,6 +1677,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
         test('falls back to waste-organisations referenceNumber when Account API has no match', async () => {
           createWasteObligationsApiService.mockReturnValue({
+            listOrganisationComplianceDeclarations: vi
+              .fn()
+              .mockResolvedValue({ complianceDeclarations: [] }),
             getComplianceObligation: vi
               .fn()
               .mockResolvedValue(mockObligationData)
@@ -1686,6 +1704,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
         test('shows No data (not the external id) when Account API and waste-organisations have no referenceNumber', async () => {
           createWasteObligationsApiService.mockReturnValue({
+            listOrganisationComplianceDeclarations: vi
+              .fn()
+              .mockResolvedValue({ complianceDeclarations: [] }),
             getComplianceObligation: vi
               .fn()
               .mockResolvedValue(mockObligationData)
@@ -1709,6 +1730,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
         test('falls back to waste-organisations name when Account API returns no match', async () => {
           createWasteObligationsApiService.mockReturnValue({
+            listOrganisationComplianceDeclarations: vi
+              .fn()
+              .mockResolvedValue({ complianceDeclarations: [] }),
             getComplianceObligation: vi
               .fn()
               .mockResolvedValue(mockObligationData)
@@ -1733,6 +1757,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
         test('resolves a compliance-scheme name from waste-organisations and reference number by Companies House number', async () => {
           createWasteObligationsApiService.mockReturnValue({
+            listOrganisationComplianceDeclarations: vi
+              .fn()
+              .mockResolvedValue({ complianceDeclarations: [] }),
             getComplianceObligation: vi
               .fn()
               .mockResolvedValue(mockObligationData)
@@ -1774,6 +1801,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
         test('resolves the compliance-scheme operator when a producer shares the Companies House number', async () => {
           createWasteObligationsApiService.mockReturnValue({
+            listOrganisationComplianceDeclarations: vi
+              .fn()
+              .mockResolvedValue({ complianceDeclarations: [] }),
             getComplianceObligation: vi
               .fn()
               .mockResolvedValue(mockObligationData)
@@ -1814,6 +1844,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
         test('shows "No data" when only a non-compliance-scheme organisation matches the Companies House number', async () => {
           createWasteObligationsApiService.mockReturnValue({
+            listOrganisationComplianceDeclarations: vi
+              .fn()
+              .mockResolvedValue({ complianceDeclarations: [] }),
             getComplianceObligation: vi
               .fn()
               .mockResolvedValue(mockObligationData)
@@ -1848,6 +1881,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
         test('falls back to Unknown organisation when Account API has no match and waste-organisations has no name', async () => {
           createWasteObligationsApiService.mockReturnValue({
+            listOrganisationComplianceDeclarations: vi
+              .fn()
+              .mockResolvedValue({ complianceDeclarations: [] }),
             getComplianceObligation: vi
               .fn()
               .mockResolvedValue(mockObligationData)
@@ -1871,6 +1907,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
         test('maps compliance scheme organisation name from waste-organisations tradingName', async () => {
           createWasteObligationsApiService.mockReturnValue({
+            listOrganisationComplianceDeclarations: vi
+              .fn()
+              .mockResolvedValue({ complianceDeclarations: [] }),
             getComplianceObligation: vi
               .fn()
               .mockResolvedValue(mockObligationData)
@@ -1913,6 +1952,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
           function setupDirectProducer() {
             createWasteObligationsApiService.mockReturnValue({
+              listOrganisationComplianceDeclarations: vi
+                .fn()
+                .mockResolvedValue({ complianceDeclarations: [] }),
               getComplianceObligation: vi
                 .fn()
                 .mockResolvedValue(mockObligationData)
@@ -1938,6 +1980,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
           function setupComplianceScheme() {
             createWasteObligationsApiService.mockReturnValue({
+              listOrganisationComplianceDeclarations: vi
+                .fn()
+                .mockResolvedValue({ complianceDeclarations: [] }),
               getComplianceObligation: vi
                 .fn()
                 .mockResolvedValue(mockObligationData)
@@ -2094,6 +2139,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
         test('derives registration type and companies house from waste-organisations GET shape', async () => {
           createWasteObligationsApiService.mockReturnValue({
+            listOrganisationComplianceDeclarations: vi
+              .fn()
+              .mockResolvedValue({ complianceDeclarations: [] }),
             getComplianceObligation: vi
               .fn()
               .mockResolvedValue(mockObligationData)
@@ -2130,6 +2178,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
         test('sets showSubmittedOn and showNameOnAccount to false', async () => {
           createWasteObligationsApiService.mockReturnValue({
+            listOrganisationComplianceDeclarations: vi
+              .fn()
+              .mockResolvedValue({ complianceDeclarations: [] }),
             getComplianceObligation: vi
               .fn()
               .mockResolvedValue(mockObligationData)
@@ -2155,6 +2206,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
         test('derives recyclingObligationsMet from obligation material totals', async () => {
           createWasteObligationsApiService.mockReturnValue({
+            listOrganisationComplianceDeclarations: vi
+              .fn()
+              .mockResolvedValue({ complianceDeclarations: [] }),
             getComplianceObligation: vi.fn().mockResolvedValue({
               obligations: mockObligationData.obligations.map((o, i) =>
                 i === 0 ? { ...o, status: 'NotMet' } : { ...o, status: 'Met' }
@@ -2181,6 +2235,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
         test('sets recyclingObligationsMet to true when all obligation materials are met', async () => {
           createWasteObligationsApiService.mockReturnValue({
+            listOrganisationComplianceDeclarations: vi
+              .fn()
+              .mockResolvedValue({ complianceDeclarations: [] }),
             getComplianceObligation: vi.fn().mockResolvedValue({
               obligations: mockObligationData.obligations.map((o) => ({
                 ...o,
@@ -2208,6 +2265,9 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
         test('sets recyclingObligationsMet to null when obligations are absent', async () => {
           createWasteObligationsApiService.mockReturnValue({
+            listOrganisationComplianceDeclarations: vi
+              .fn()
+              .mockResolvedValue({ complianceDeclarations: [] }),
             getComplianceObligation: vi
               .fn()
               .mockResolvedValue({ obligations: null })

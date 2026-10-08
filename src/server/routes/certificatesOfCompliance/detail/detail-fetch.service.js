@@ -121,6 +121,26 @@ async function fetchOrganisationContact(accountApi, externalId, traceId) {
   return mapOrganisationContact(organisationWithPersons)
 }
 
+// An organisation can be not submitted for the year and still hold accepted or
+// cancelled declarations, which feed the Current year history table.
+async function fetchDeclarationsForYear(
+  obligationsApi,
+  organisationId,
+  obligationYear,
+  traceId
+) {
+  if (obligationYear == null) {
+    return []
+  }
+
+  const listResponse =
+    await obligationsApi.listOrganisationComplianceDeclarations(
+      { organisationId, obligationYear },
+      traceId
+    )
+  return listResponse?.complianceDeclarations ?? []
+}
+
 async function getNotSubmittedDeclarationDetail({
   obligationsApi,
   organisationsApi,
@@ -128,18 +148,26 @@ async function getNotSubmittedDeclarationDetail({
   organisationId,
   obligationYear,
   traceId,
-  locale = 'en'
+  locale = 'en',
+  routePrefix = ''
 }) {
   // The waste-organisations record is needed before the Account lookup so we
   // know whether to resolve by external id (direct producers) or Companies
   // House number (compliance schemes).
-  const [unsubmittedObligationData, organisation] = await Promise.all([
-    obligationsApi.getComplianceObligation(
-      { organisationId, obligationYear },
-      traceId
-    ),
-    organisationsApi.getOrganisation({ organisationId }, traceId)
-  ])
+  const [unsubmittedObligationData, organisation, declarationsForYear] =
+    await Promise.all([
+      obligationsApi.getComplianceObligation(
+        { organisationId, obligationYear },
+        traceId
+      ),
+      organisationsApi.getOrganisation({ organisationId }, traceId),
+      fetchDeclarationsForYear(
+        obligationsApi,
+        organisationId,
+        obligationYear,
+        traceId
+      )
+    ])
   const accountOrganisation = await fetchNotSubmittedAccountOrganisation(
     accountApi,
     organisation,
@@ -154,7 +182,9 @@ async function getNotSubmittedDeclarationDetail({
     accountOrganisationName: accountOrganisation.name,
     accountOrganisationReferenceNumber: accountOrganisation.referenceNumber,
     accountOrganisationContact: accountOrganisation.contact,
-    locale
+    declarationsForYear,
+    locale,
+    routePrefix
   })
 }
 
@@ -226,7 +256,8 @@ export async function getDeclarationDetail(
       organisationId,
       obligationYear,
       traceId,
-      locale
+      locale,
+      routePrefix
     })
   }
 
