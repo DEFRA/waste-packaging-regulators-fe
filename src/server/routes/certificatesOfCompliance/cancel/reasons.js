@@ -1,4 +1,8 @@
 import { translate } from '#server/common/helpers/i18n/translate.js'
+import {
+  canonicalLabelToReasonKey,
+  LEGACY_CANCEL_REASON_ALIASES
+} from './canonical-reason-labels.js'
 
 const REASON_BASE = 'certificatesOfCompliance.cancel.reason'
 
@@ -56,4 +60,76 @@ export function getCancelReasonLabel(registrationType, reason, locale) {
     `${REASON_BASE}.reasons.${key}.label`,
     wordingFor(registrationType, locale)
   )
+}
+
+const REGISTRATION_TYPES = ['DirectProducer', 'ComplianceScheme']
+
+function registrationTypesToTry(registrationType) {
+  if (
+    registrationType === 'ComplianceScheme' ||
+    registrationType === 'DirectProducer'
+  ) {
+    return [registrationType]
+  }
+  return REGISTRATION_TYPES
+}
+
+function resolveFromWelshStoredLabel(storedReason, registrationType) {
+  for (const regType of registrationTypesToTry(registrationType)) {
+    for (const reasonKey of Object.keys(cancelReasonKeys)) {
+      if (getCancelReasonLabel(regType, reasonKey, 'cy') === storedReason) {
+        return { key: reasonKey, registrationType: regType }
+      }
+    }
+  }
+
+  return null
+}
+
+export function resolveCancelReasonKeyFromStoredLabel(
+  storedReason,
+  registrationType
+) {
+  if (!storedReason) {
+    return null
+  }
+
+  const canonical = canonicalLabelToReasonKey(storedReason)
+  if (canonical) {
+    return canonical
+  }
+
+  const legacy = LEGACY_CANCEL_REASON_ALIASES[storedReason]
+  if (legacy) {
+    return legacy
+  }
+
+  return resolveFromWelshStoredLabel(storedReason, registrationType)
+}
+
+export function displayStoredCancelReason(
+  storedReason,
+  registrationType,
+  locale
+) {
+  if (!storedReason) {
+    return null
+  }
+
+  const resolved = resolveCancelReasonKeyFromStoredLabel(
+    storedReason,
+    registrationType
+  )
+  if (!resolved) {
+    return storedReason
+  }
+
+  const regType =
+    resolved.registrationType ??
+    (registrationType === 'ComplianceScheme' ||
+    registrationType === 'DirectProducer'
+      ? registrationType
+      : 'DirectProducer')
+
+  return getCancelReasonLabel(regType, resolved.key, locale)
 }
