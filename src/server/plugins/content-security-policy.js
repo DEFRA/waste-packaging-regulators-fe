@@ -1,6 +1,7 @@
 import Blankie from 'blankie'
 
 const googleAnalyticsUrl = 'https://www.google-analytics.com'
+const googleTagManagerUrl = 'https://www.googletagmanager.com'
 
 /**
  * Manage content security policies.
@@ -17,6 +18,7 @@ const contentSecurityPolicy = {
       'self',
       'wss',
       'data:',
+      googleTagManagerUrl,
       googleAnalyticsUrl,
       'https://region1.google-analytics.com',
       'https://analytics.google.com'
@@ -26,15 +28,10 @@ const contentSecurityPolicy = {
     scriptSrc: [
       'self',
       "'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='",
-      'https://www.googletagmanager.com',
+      googleTagManagerUrl,
       googleAnalyticsUrl
     ],
-    imgSrc: [
-      'self',
-      'data:',
-      googleAnalyticsUrl,
-      'https://www.googletagmanager.com'
-    ],
+    imgSrc: ['self', 'data:', googleAnalyticsUrl, googleTagManagerUrl],
     frameSrc: ['self', 'data:'],
     objectSrc: ['none'],
     frameAncestors: ['none'],
