@@ -197,6 +197,12 @@ export function mapCurrentYearHistory(
   return sorted.map(({ sortTimestamp: _sortTimestamp, ...row }) => row)
 }
 
+// The Current year section shows on the current submission only, never on a
+// cancelled submission view.
+export function showsCurrentYear(status) {
+  return status !== 'Cancelled'
+}
+
 export function buildCurrentYearDeclarations(
   declarationsForYear,
   data,
@@ -205,7 +211,9 @@ export function buildCurrentYearDeclarations(
 ) {
   const declarations = [...(declarationsForYear ?? [])]
 
-  if ((status === 'Accepted' || status === 'Cancelled') && declarationId) {
+  // The year's list can still hold a just-accepted declaration as Submitted,
+  // so the accepted one being viewed replaces it.
+  if (status === 'Accepted' && declarationId) {
     const withoutCurrent = declarations.filter(
       (declaration) => declaration.id !== declarationId
     )

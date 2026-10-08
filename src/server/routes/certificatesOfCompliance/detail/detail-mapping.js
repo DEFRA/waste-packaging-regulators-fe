@@ -29,7 +29,8 @@ import {
   mapCancelledOutcomeFields,
   mapQueriedOutcome,
   mapCurrentYearHistory,
-  buildCurrentYearDeclarations
+  buildCurrentYearDeclarations,
+  showsCurrentYear
 } from './detail-mapping-history.js'
 
 export { deriveRecyclingObligationsMet } from './detail-mapping-materials.js'
@@ -217,6 +218,7 @@ function buildDeclarationViewModel(
       locale,
       routePrefix
     ),
+    showCurrentYear: showsCurrentYear(data.status),
     showObligations: (obligations ?? []).length !== 0
   }
 }
@@ -354,6 +356,7 @@ export function mapObligationToDetail(
       locale,
       routePrefix
     ),
+    showCurrentYear: true,
     showObligations: obligations.length !== 0
   }
 }

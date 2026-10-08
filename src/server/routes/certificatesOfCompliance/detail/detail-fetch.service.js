@@ -6,6 +6,7 @@ import {
   mapDeclarationToDetail,
   mapObligationToDetail
 } from './detail-mapping.js'
+import { showsCurrentYear } from './detail-mapping-history.js'
 import { deriveRegistrationType } from '../common/registration-type.js'
 import { isComplianceSchemeRegistrationType } from '../common/display.js'
 import { resolveSchemeOperators } from '../common/scheme-operator.js'
@@ -121,8 +122,8 @@ async function fetchOrganisationContact(accountApi, externalId, traceId) {
   return mapOrganisationContact(organisationWithPersons)
 }
 
-// An organisation can be not submitted for the year and still hold accepted or
-// cancelled declarations, which feed the Current year history table.
+// The year's accepted and cancelled declarations feed the Current year history
+// table. An organisation can be not submitted for the year and still hold them.
 async function fetchDeclarationsForYear(
   obligationsApi,
   organisationId,
@@ -207,19 +208,25 @@ async function getSubmittedDeclarationDetail({
   )
 
   if (declaration != null) {
-    const [listResponse, submitterPhoneNumber, wasteOrganisation] =
+    // A view without the Current year section skips the year's declarations
+    // lookup.
+    const [declarationsForYear, submitterPhoneNumber, wasteOrganisation] =
       await Promise.all([
-        obligationsApi.listOrganisationComplianceDeclarations(
-          { organisationId, obligationYear: declaration.obligationYear },
-          traceId
-        ),
+        showsCurrentYear(declaration.status)
+          ? fetchDeclarationsForYear(
+              obligationsApi,
+              organisationId,
+              declaration.obligationYear,
+              traceId
+            )
+          : [],
         fetchSubmitterPhoneNumber(accountApi, declaration.audit, traceId),
         organisationsApi.getOrganisation({ organisationId }, traceId)
       ])
     return mapDeclarationToDetail(declaration, {
       organisationId,
       id,
-      declarationsForYear: listResponse?.complianceDeclarations ?? [],
+      declarationsForYear,
       submitterPhoneNumber,
       wasteOrganisation,
       locale,
