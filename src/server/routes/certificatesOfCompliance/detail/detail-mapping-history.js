@@ -89,8 +89,8 @@ export function mapQueriedOutcome(data, locale = 'en') {
 function mapHistoryReason(
   status,
   transitionAudit,
-  locale = 'en',
-  registrationType
+  registrationType,
+  locale = 'en'
 ) {
   switch (status) {
     case 'Accepted':
@@ -147,8 +147,8 @@ function buildCurrentYearHistoryRow(
     reason: mapHistoryReason(
       entry.action,
       entry,
-      locale,
-      declaration.organisation?.registrationType
+      declaration.organisation?.registrationType,
+      locale
     ),
     ...(entry.action === 'Cancelled' && { viewSubmissionUrl })
   }
@@ -167,8 +167,8 @@ function buildCurrentYearHistoryRowFromStatus(
     reason: mapHistoryReason(
       declaration.status,
       null,
-      locale,
-      declaration.organisation?.registrationType
+      declaration.organisation?.registrationType,
+      locale
     ),
     ...(declaration.status === 'Cancelled' && { viewSubmissionUrl })
   }

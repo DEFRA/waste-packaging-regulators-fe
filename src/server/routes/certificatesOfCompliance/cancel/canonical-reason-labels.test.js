@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  allCanonicalCancelReasonLabels,
   CANONICAL_CANCEL_REASON_LABELS,
   canonicalLabelToReasonKey,
-  LEGACY_CANCEL_REASON_ALIASES
+  LEGACY_CANCEL_REASON_ALIASES,
+  PRODUCER_REQUEST_REASON_KEY
 } from './canonical-reason-labels.js'
 
 describe('canonical-reason-labels.js', () => {
@@ -38,16 +40,30 @@ describe('canonical-reason-labels.js', () => {
       canonicalLabelToReasonKey(
         CANONICAL_CANCEL_REASON_LABELS.PRODUCER_REQUESTED_TO_CANCEL
       )
-    ).toEqual({ key: 'producer-request', registrationType: 'DirectProducer' })
+    ).toEqual({
+      key: PRODUCER_REQUEST_REASON_KEY,
+      registrationType: 'DirectProducer'
+    })
 
     expect(
       canonicalLabelToReasonKey(
         CANONICAL_CANCEL_REASON_LABELS.COMPLIANCE_SCHEME_REQUESTED_TO_CANCEL
       )
     ).toEqual({
-      key: 'producer-request',
+      key: PRODUCER_REQUEST_REASON_KEY,
       registrationType: 'ComplianceScheme'
     })
+  })
+
+  it('returns null for empty stored reasons', () => {
+    expect(canonicalLabelToReasonKey(null)).toBeNull()
+    expect(canonicalLabelToReasonKey('')).toBeNull()
+  })
+
+  it('returns all canonical English labels', () => {
+    expect(allCanonicalCancelReasonLabels()).toEqual(
+      Object.values(CANONICAL_CANCEL_REASON_LABELS)
+    )
   })
 
   it('returns null for unknown stored reasons', () => {
@@ -58,7 +74,7 @@ describe('canonical-reason-labels.js', () => {
 
   it('defines a legacy alias for RequestedToCancel', () => {
     expect(LEGACY_CANCEL_REASON_ALIASES.RequestedToCancel).toEqual({
-      key: 'producer-request',
+      key: PRODUCER_REQUEST_REASON_KEY,
       registrationType: 'DirectProducer'
     })
   })

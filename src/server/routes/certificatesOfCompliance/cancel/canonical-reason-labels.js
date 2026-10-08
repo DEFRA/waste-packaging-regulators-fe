@@ -21,6 +21,8 @@ const {
   COMPLIANCE_SCHEME_REQUESTED_TO_CANCEL
 } = CANONICAL_CANCEL_REASON_LABELS
 
+export const PRODUCER_REQUEST_REASON_KEY = 'producer-request'
+
 const canonicalLabelToReasonKeyMap = {
   [NOT_SIGNED_BY_CORRECT_PERSON]: {
     key: 'incorrect-signer',
@@ -39,18 +41,18 @@ const canonicalLabelToReasonKeyMap = {
     registrationType: 'ComplianceScheme'
   },
   [PRODUCER_REQUESTED_TO_CANCEL]: {
-    key: 'producer-request',
+    key: PRODUCER_REQUEST_REASON_KEY,
     registrationType: 'DirectProducer'
   },
   [COMPLIANCE_SCHEME_REQUESTED_TO_CANCEL]: {
-    key: 'producer-request',
+    key: PRODUCER_REQUEST_REASON_KEY,
     registrationType: 'ComplianceScheme'
   }
 }
 
 export const LEGACY_CANCEL_REASON_ALIASES = {
   RequestedToCancel: {
-    key: 'producer-request',
+    key: PRODUCER_REQUEST_REASON_KEY,
     registrationType: 'DirectProducer'
   }
 }

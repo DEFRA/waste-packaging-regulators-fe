@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { CANONICAL_CANCEL_REASON_LABELS } from './canonical-reason-labels.js'
+import {
+  CANONICAL_CANCEL_REASON_LABELS,
+  PRODUCER_REQUEST_REASON_KEY
+} from './canonical-reason-labels.js'
 import {
   displayStoredCancelReason,
   getCancelReasonLabel,
@@ -15,9 +18,14 @@ describe('reasons.js', () => {
           'DirectProducer'
         )
       ).toEqual({
-        key: 'producer-request',
+        key: PRODUCER_REQUEST_REASON_KEY,
         registrationType: 'DirectProducer'
       })
+    })
+
+    it('returns null for empty stored reasons', () => {
+      expect(resolveCancelReasonKeyFromStoredLabel(null)).toBeNull()
+      expect(resolveCancelReasonKeyFromStoredLabel('')).toBeNull()
     })
 
     it('resolves a Welsh direct producer label', () => {
@@ -30,7 +38,7 @@ describe('reasons.js', () => {
       expect(
         resolveCancelReasonKeyFromStoredLabel(welshLabel, 'DirectProducer')
       ).toEqual({
-        key: 'producer-request',
+        key: PRODUCER_REQUEST_REASON_KEY,
         registrationType: 'DirectProducer'
       })
     })
@@ -42,7 +50,7 @@ describe('reasons.js', () => {
           undefined
         )
       ).toEqual({
-        key: 'producer-request',
+        key: PRODUCER_REQUEST_REASON_KEY,
         registrationType: 'ComplianceScheme'
       })
     })
@@ -60,7 +68,7 @@ describe('reasons.js', () => {
           'DirectProducer'
         )
       ).toEqual({
-        key: 'producer-request',
+        key: PRODUCER_REQUEST_REASON_KEY,
         registrationType: 'DirectProducer'
       })
     })
@@ -69,13 +77,27 @@ describe('reasons.js', () => {
       expect(
         resolveCancelReasonKeyFromStoredLabel('RequestedToCancel')
       ).toEqual({
-        key: 'producer-request',
+        key: PRODUCER_REQUEST_REASON_KEY,
         registrationType: 'DirectProducer'
       })
     })
   })
 
   describe('displayStoredCancelReason', () => {
+    it('returns null for empty stored reasons', () => {
+      expect(displayStoredCancelReason(null, 'DirectProducer', 'en')).toBeNull()
+      expect(displayStoredCancelReason('', 'DirectProducer', 'en')).toBeNull()
+    })
+
+    it('uses the organisation registration type when the canonical key is shared', () => {
+      expect(
+        displayStoredCancelReason(
+          CANONICAL_CANCEL_REASON_LABELS.NOT_SIGNED_BY_CORRECT_PERSON,
+          'ComplianceScheme',
+          'en'
+        )
+      ).toBe('Not signed by correct person')
+    })
     it('displays an English label when the audit stores Welsh text', () => {
       const welshLabel = getCancelReasonLabel(
         'DirectProducer',
