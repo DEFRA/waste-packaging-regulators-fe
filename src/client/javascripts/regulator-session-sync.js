@@ -1,6 +1,8 @@
 const STORAGE_KEY = 'regulator-auth-revoked'
 const LOGOUT_LINK_SELECTOR = 'a[href*="/logout"]'
 
+let logoutUrl = '/logout'
+
 function markAuthRevoked() {
   try {
     localStorage.setItem(STORAGE_KEY, String(Date.now()))
@@ -18,9 +20,13 @@ function clearAuthRevoked() {
 }
 
 function redirectIfRevoked() {
+  if (!document.querySelector(LOGOUT_LINK_SELECTOR)) {
+    return
+  }
+
   try {
     if (localStorage.getItem(STORAGE_KEY)) {
-      window.location.href = '/logout'
+      window.location.href = logoutUrl
     }
   } catch {
     // localStorage may be unavailable
@@ -55,6 +61,8 @@ async function recheckAuthOnVisible() {
 }
 
 export function initRegulatorSessionSync() {
+  logoutUrl = '/logout'
+
   if (window.location.pathname.includes('/signed-out')) {
     markAuthRevoked()
 
@@ -65,13 +73,16 @@ export function initRegulatorSessionSync() {
     return
   }
 
-  document.querySelectorAll(LOGOUT_LINK_SELECTOR).forEach((link) => {
-    link.addEventListener('click', () => markAuthRevoked())
-  })
+  const logoutLinks = document.querySelectorAll(LOGOUT_LINK_SELECTOR)
 
-  if (document.querySelector(LOGOUT_LINK_SELECTOR)) {
+  if (logoutLinks.length > 0) {
+    logoutUrl = logoutLinks[0].getAttribute('href') || '/logout'
     clearAuthRevoked()
   }
+
+  logoutLinks.forEach((link) => {
+    link.addEventListener('click', () => markAuthRevoked())
+  })
 
   window.addEventListener('storage', (event) => {
     if (event.key === STORAGE_KEY && event.newValue) {
