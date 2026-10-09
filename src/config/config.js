@@ -463,7 +463,25 @@ export const config = convict({
         format: String,
         default: '',
         env: 'AZURE_AD_B2C_LOGOUT_URL'
+      },
+      cookieTtlMs: {
+        doc: 'Bell OAuth cookie TTL in milliseconds',
+        format: Number,
+        default: 10000,
+        env: 'AUTH_COOKIE_TTL_MS'
       }
+    },
+    revalidationTtlMs: {
+      doc: 'How long yar auth is trusted before redirecting to sign-in again (0 disables)',
+      format: Number,
+      default: isTest ? 0 : 10000,
+      env: 'AUTH_REVALIDATION_TTL_MS'
+    },
+    siblingCookiePaths: {
+      doc: 'Path prefixes for sibling apps whose auth cookies to clear on logout',
+      format: Array,
+      default: ['/manage-waste-dashboard', '/regulators'],
+      env: 'AUTH_SIBLING_COOKIE_PATHS'
     }
   },
   govukNotify: {

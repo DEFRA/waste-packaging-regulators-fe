@@ -133,6 +133,22 @@ describe('signinOidcController', () => {
       expect(stored).toMatchObject(mockAccountDetails)
     })
 
+    it('stores authValidatedAt when sign-in succeeds', async () => {
+      const yar = makeYar()
+      const before = Date.now()
+      await signinOidcController.handler(
+        { auth: { credentials }, yar },
+        makeH()
+      )
+      const after = Date.now()
+
+      const validatedAt = yar.set.mock.calls.find(
+        ([key]) => key === 'authValidatedAt'
+      )?.[1]
+      expect(validatedAt).toBeGreaterThanOrEqual(before)
+      expect(validatedAt).toBeLessThanOrEqual(after)
+    })
+
     it('redirects to / when no returnTo is set', async () => {
       const h = makeH()
       await signinOidcController.handler(

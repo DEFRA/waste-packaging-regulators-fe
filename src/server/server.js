@@ -22,6 +22,7 @@ import { getCacheEngine } from './common/helpers/session-cache/cache-engine.js'
 import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './plugins/content-security-policy.js'
 import { forwardedPrefixRedirects } from './plugins/forwarded-prefix-redirects.js'
+import { siblingAuthLogout } from './plugins/sibling-auth-logout.js'
 import { accountDetailsContext } from './plugins/account-details-context.js'
 import { metrics } from '@defra/cdp-metrics'
 import { resolveMockAuthProfile } from '#mocks/mock-auth-users.js'
@@ -97,6 +98,7 @@ function registerAuthStrategy(server) {
     clientSecret: azureAdB2cConfig.clientSecret,
     isSecure: azureAdB2cConfig.isSecure,
     location: (request) => bellRedirectLocation(request),
+    ttl: azureAdB2cConfig.cookieTtlMs,
     config: {
       tenant: azureAdB2cConfig.domain,
       discovery:
@@ -190,7 +192,8 @@ export async function createServer() {
     crumb,
     Scooter,
     contentSecurityPolicy,
-    forwardedPrefixRedirects
+    forwardedPrefixRedirects,
+    siblingAuthLogout
   ])
 
   registerAuthStrategy(server)

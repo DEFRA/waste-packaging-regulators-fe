@@ -18,7 +18,13 @@ import { translate } from '#server/common/helpers/i18n/translate.js'
 
 const MAX_LOGOUT_REDIRECTS = 10
 const DEFAULT_SESSION_COOKIE_NAME = 'session'
-const DEFAULT_COOKIE_PATHS = ['/', '/certificates-of-compliance', '/dashboard']
+const DEFAULT_COOKIE_PATHS = [
+  '/',
+  '/certificates-of-compliance',
+  '/dashboard',
+  '/regulators',
+  '/packaging-waste-regulators'
+]
 const SIGNED_OUT_PATH = '/signed-out'
 
 function isRedirectStatus(status) {
@@ -185,6 +191,7 @@ export const signinOidcController = {
       user.email = request.auth.credentials.profile.email
       user.name = `${user.firstName} ${user.lastName}`
       request.yar.set('user', user)
+      request.yar.set('authValidatedAt', Date.now())
     }
     const returnTo = request.yar.get('returnTo') || '/'
     request.yar.clear('returnTo')
