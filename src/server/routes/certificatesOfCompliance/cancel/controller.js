@@ -10,7 +10,7 @@ import {
 } from '../actions/session.service.js'
 import { canCancelComplianceDeclaration } from '../actions/status.js'
 import { getCertificateOfComplianceDetailViewModel } from '../detail/detail.service.js'
-import { redirectToSignIn } from '../detail/actions-controller.js'
+import { requireRegulatorSession } from '#server/auth/require-regulator-session.js'
 import { cocPageI18n, translateCoc } from '../common/locale-strings.js'
 import {
   buildCancelReasonItems,
@@ -240,8 +240,9 @@ async function renderCancellationEmailPreview(
 
 export const certificatesOfComplianceCancelReasonGetController = {
   async handler(request, h) {
-    if (!request.yar.get('user')) {
-      return redirectToSignIn(request, h)
+    const authRedirect = requireRegulatorSession(request, h)
+    if (authRedirect) {
+      return authRedirect
     }
 
     const locale = getLocale(request)
@@ -265,8 +266,9 @@ export const certificatesOfComplianceCancelReasonGetController = {
 
 export const certificatesOfComplianceCancelReasonPostController = {
   async handler(request, h) {
-    if (!request.yar.get('user')) {
-      return redirectToSignIn(request, h)
+    const authRedirect = requireRegulatorSession(request, h)
+    if (authRedirect) {
+      return authRedirect
     }
 
     const locale = getLocale(request)
@@ -288,8 +290,9 @@ export const certificatesOfComplianceCancelReasonPostController = {
 }
 
 async function guardCancelWithReason(request, h) {
-  if (!request.yar.get('user')) {
-    return { earlyResponse: redirectToSignIn(request, h) }
+  const authRedirect = requireRegulatorSession(request, h)
+  if (authRedirect) {
+    return { earlyResponse: authRedirect }
   }
 
   const locale = getLocale(request)
@@ -419,8 +422,9 @@ export const certificatesOfComplianceCancelEmailPreviewGetController = {
 
 export const certificatesOfComplianceCancelPostController = {
   async handler(request, h) {
-    if (!request.yar.get('user')) {
-      return redirectToSignIn(request, h)
+    const authRedirect = requireRegulatorSession(request, h)
+    if (authRedirect) {
+      return authRedirect
     }
 
     const locale = getLocale(request)
