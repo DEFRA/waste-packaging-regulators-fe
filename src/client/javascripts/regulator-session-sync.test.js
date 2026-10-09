@@ -126,12 +126,13 @@ describe('initRegulatorSessionSync', () => {
   it('redirects to logout when another tab broadcasts logout', () => {
     const { storage, location, listeners } = setupBrowser()
     storage.setItem(STORAGE_KEY, '1')
-    document.querySelectorAll.mockReturnValue([
-      {
-        getAttribute: () => '/cy/defra/logout',
-        addEventListener: vi.fn()
-      }
-    ])
+
+    const logoutLink = {
+      getAttribute: () => '/cy/defra/logout',
+      addEventListener: vi.fn()
+    }
+    document.querySelectorAll.mockReturnValue([logoutLink])
+    document.querySelector.mockReturnValue(logoutLink)
 
     initRegulatorSessionSync()
 
@@ -316,16 +317,17 @@ describe('initRegulatorSessionSync', () => {
   })
 
   it('uses default logout URL if link has no href attribute', () => {
+    const { listeners } = setupBrowser()
     const logoutLink = { getAttribute: () => null, addEventListener: vi.fn() }
-    setupBrowser()
     document.querySelectorAll.mockReturnValue([logoutLink])
+    document.querySelector.mockReturnValue(logoutLink)
 
     initRegulatorSessionSync()
 
-    expect(logoutLink.addEventListener).toHaveBeenCalledWith(
-      'click',
-      expect.any(Function)
-    )
+    globalThis.localStorage.setItem(STORAGE_KEY, '123')
+    dispatchEvent(listeners, 'storage', { key: STORAGE_KEY, newValue: '123' })
+
+    expect(window.location.href).toBe('/logout')
   })
 
   it('ignores storage events for other keys or with no new value', () => {
@@ -340,6 +342,6 @@ describe('initRegulatorSessionSync', () => {
     })
     dispatchEvent(listeners, 'storage', { key: STORAGE_KEY, newValue: '' })
 
-    expect(window.location.href).not.toBe('/logout')
+    expect(window.location.href).toBe('/')
   })
 })

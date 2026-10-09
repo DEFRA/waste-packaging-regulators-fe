@@ -20,6 +20,10 @@ function clearAuthRevoked() {
 }
 
 function redirectIfRevoked() {
+  if (!document.querySelector(LOGOUT_LINK_SELECTOR)) {
+    return
+  }
+
   try {
     if (localStorage.getItem(STORAGE_KEY)) {
       window.location.href = logoutUrl
@@ -57,6 +61,8 @@ async function recheckAuthOnVisible() {
 }
 
 export function initRegulatorSessionSync() {
+  logoutUrl = '/logout'
+
   if (window.location.pathname.includes('/signed-out')) {
     markAuthRevoked()
 
