@@ -6,7 +6,7 @@ import convictFormatWithValidator from 'convict-format-with-validator'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const tenSecondsMs = 10000
+const fifteenSecondsMs = 15000
 const fourHoursMs = 14400000
 const oneWeekMs = 604800000
 const DEFAULT_DEV_CLIENT_ID = 'Developer'
@@ -203,7 +203,7 @@ export const config = convict({
       ttl: {
         doc: 'Session cookie ttl. Kept short so an expired session re-runs /signin-oidc against Azure AD B2C, signing the user out of CSOC once they have signed out of a sibling app.',
         format: Number,
-        default: tenSecondsMs,
+        default: fifteenSecondsMs,
         env: 'SESSION_COOKIE_TTL'
       },
       password: {
