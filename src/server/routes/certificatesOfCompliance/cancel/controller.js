@@ -75,6 +75,18 @@ function checkPath(request, organisationId, id, documentType, reason, locale) {
   )
 }
 
+function cancelPath(request, organisationId, id, documentType, reason, locale) {
+  return buildPath(
+    request,
+    organisationId,
+    id,
+    documentType,
+    locale,
+    '/cancel',
+    { reason }
+  )
+}
+
 function emailPreviewPath(
   request,
   organisationId,
@@ -320,8 +332,7 @@ async function guardCancelWithReason(request, h) {
     documentType,
     reason,
     type: request.query.type,
-    tab: request.query.tab,
-    queryString: getBaseQueryString(request)
+    tab: request.query.tab
   }
 }
 
@@ -332,16 +343,7 @@ export const certificatesOfComplianceCancelCheckGetController = {
       return ctx.earlyResponse
     }
 
-    const {
-      locale,
-      organisationId,
-      id,
-      documentType,
-      reason,
-      type,
-      tab,
-      queryString
-    } = ctx
+    const { locale, organisationId, id, documentType, reason, type, tab } = ctx
 
     const { companyName, registrationType } = await fetchCancelViewModel(
       organisationId,
@@ -386,7 +388,14 @@ export const certificatesOfComplianceCancelCheckGetController = {
         reason,
         locale
       ),
-      queryString,
+      cancelActionUrl: cancelPath(
+        request,
+        organisationId,
+        id,
+        documentType,
+        reason,
+        locale
+      ),
       type,
       tab,
       locale,
@@ -414,6 +423,28 @@ export const certificatesOfComplianceCancelEmailPreviewGetController = {
     } catch (error) {
       return handleApiError(request, error)
     }
+  }
+}
+
+/**
+ * Must never perform the cancellation: a GET lands here when the sign-in round
+ * trip returns the user to the confirm-and-send POST URL.
+ */
+export const certificatesOfComplianceCancelGetController = {
+  handler(request, h) {
+    const locale = getLocale(request)
+    const { organisationId, id, documentType } = request.params
+    const { reason } = request.query
+    return h.redirect(
+      checkPath(
+        request,
+        organisationId,
+        id,
+        documentType,
+        isValidCancelReason(reason) ? reason : null,
+        locale
+      )
+    )
   }
 }
 

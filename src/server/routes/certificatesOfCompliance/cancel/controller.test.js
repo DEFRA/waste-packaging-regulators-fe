@@ -314,6 +314,10 @@ describe('certificates of compliance — cancel', () => {
       )
       // The reason is carried into the action POST via a hidden field.
       expect(page.hiddenReason).toBe('producer-request')
+      // …and in the action URL, so it survives a sign-in round trip.
+      expect(page.formAction).toBe(
+        `${actionUrlFor(DP_ITEM)}?reason=producer-request`
+      )
       expect(page.emailLink).toBe(
         'View the cancellation email (opens in new tab)'
       )
@@ -324,6 +328,18 @@ describe('certificates of compliance — cancel', () => {
         "we'll cancel the certificate and email the person who submitted it"
       )
       expect(page.confirmButton).toBe('Confirm and send')
+    })
+
+    it('posts to the action URL preserving type and tab query parameters', async () => {
+      const cookie = await app.signIn()
+      const response = await app.get(
+        `${checkUrlFor(DP_ITEM)}?type=directProducer&tab=pending&reason=producer-request`,
+        cookie
+      )
+
+      expect(loadCheckPage(response.payload).formAction).toBe(
+        `${actionUrlFor(DP_ITEM)}?type=directProducer&tab=pending&reason=producer-request`
+      )
     })
 
     it('shows statement inset text for a Compliance Scheme', async () => {
@@ -403,6 +419,50 @@ describe('certificates of compliance — cancel', () => {
       expect(page.bodyHtml).toContain('Doe')
       expect(page.bodyHtml).toContain('ea@environment-agency.gov.uk')
       expect(page.bodyHtml).toContain('<h2>Preview section</h2>')
+    })
+  })
+
+  describe('GET cancel (return from sign-in)', () => {
+    beforeEach(() => {
+      vi.mocked(cancelComplianceDeclaration).mockClear()
+    })
+
+    it('redirects to the check page with the reason and does not cancel', async () => {
+      const cookie = await app.signIn()
+      const response = await app.get(
+        `${actionUrlFor(DP_ITEM)}?reason=producer-request`,
+        cookie
+      )
+
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe(
+        `${checkUrlFor(DP_ITEM)}?reason=producer-request`
+      )
+      expect(cancelComplianceDeclaration).not.toHaveBeenCalled()
+    })
+
+    it('preserves type, tab and Welsh locale on the check page redirect', async () => {
+      const cookie = await app.signIn()
+      const response = await app.get(
+        `${actionUrlFor(DP_ITEM)}?type=directProducer&tab=pending&reason=producer-request&lang=cy`,
+        cookie
+      )
+
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe(
+        `${checkUrlFor(DP_ITEM)}?type=directProducer&tab=pending&reason=producer-request&lang=cy`
+      )
+    })
+
+    it('drops an unrecognised reason so the check page sends the user back to choose one', async () => {
+      const cookie = await app.signIn()
+      const response = await app.get(
+        `${actionUrlFor(DP_ITEM)}?reason=nonsense`,
+        cookie
+      )
+
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe(checkUrlFor(DP_ITEM))
     })
   })
 

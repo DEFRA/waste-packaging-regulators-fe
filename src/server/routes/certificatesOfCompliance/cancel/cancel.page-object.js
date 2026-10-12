@@ -64,7 +64,7 @@ export function loadCheckPage(payload) {
     insetText: $('.govuk-inset-text').text().trim(),
     hiddenReason: $('input[name="cancel-reason"]').attr('value'),
     confirmButton: $('main .govuk-button').first().text().trim(),
-    formAction: $('form').attr('action')
+    formAction: $('input[name="cancel-reason"]').closest('form').attr('action')
   }
 }
 
