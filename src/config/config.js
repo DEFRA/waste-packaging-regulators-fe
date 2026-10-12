@@ -6,14 +6,29 @@ import convictFormatWithValidator from 'convict-format-with-validator'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const fifteenSecondsMs = 15000
+const tenSecondsMs = 10000
 const fourHoursMs = 14400000
-const oneWeekMs = 604800000
-const DEFAULT_DEV_CLIENT_ID = 'Developer'
-
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
 const isDevelopment = process.env.NODE_ENV === 'development'
+
+function defaultSessionCookieTtlMs() {
+  const mockAuthEnv = process.env.MOCK_AUTH
+  const usesMockAuth =
+    mockAuthEnv === 'true' ||
+    mockAuthEnv === '1' ||
+    (mockAuthEnv !== 'false' && !isProduction)
+
+  if (usesMockAuth) {
+    return fourHoursMs
+  }
+
+  return tenSecondsMs
+}
+
+const defaultSessionCookieTtl = defaultSessionCookieTtlMs()
+const oneWeekMs = 604800000
+const DEFAULT_DEV_CLIENT_ID = 'Developer'
 
 convict.addFormats(convictFormatWithValidator)
 
@@ -201,9 +216,9 @@ export const config = convict({
     },
     cookie: {
       ttl: {
-        doc: 'Session cookie ttl. Kept short so an expired session re-runs /signin-oidc against Azure AD B2C, signing the user out of CSOC once they have signed out of a sibling app.',
+        doc: 'Session cookie ttl. Real B2C (MOCK_AUTH off) uses 10s so CSOC re-runs /signin-oidc regularly; mock auth keeps 4 hours for stable local and journey tests. Override with SESSION_COOKIE_TTL.',
         format: Number,
-        default: fifteenSecondsMs,
+        default: defaultSessionCookieTtl,
         env: 'SESSION_COOKIE_TTL'
       },
       password: {
