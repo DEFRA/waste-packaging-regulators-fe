@@ -1,25 +1,25 @@
 import {
   defaultSessionCookieTtlMs,
   fourHoursMs,
-  tenSecondsMs
+  thirtySecondsMs
 } from './default-session-cookie-ttl.js'
 
 describe('#defaultSessionCookieTtlMs', () => {
-  it('returns 10 seconds for production with real B2C', () => {
+  it('returns 30 seconds for production with real B2C', () => {
     expect(
       defaultSessionCookieTtlMs({
         NODE_ENV: 'production',
         MOCK_AUTH: 'false'
       })
-    ).toBe(tenSecondsMs)
+    ).toBe(thirtySecondsMs)
   })
 
-  it('returns 10 seconds for production when MOCK_AUTH is unset', () => {
+  it('returns 30 seconds for production when MOCK_AUTH is unset', () => {
     expect(
       defaultSessionCookieTtlMs({
         NODE_ENV: 'production'
       })
-    ).toBe(tenSecondsMs)
+    ).toBe(thirtySecondsMs)
   })
 
   it('returns 4 hours when MOCK_AUTH is true', () => {

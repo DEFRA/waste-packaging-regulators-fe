@@ -1,4 +1,4 @@
-export const tenSecondsMs = 10000
+export const thirtySecondsMs = 30000
 export const fourHoursMs = 14400000
 
 export function defaultSessionCookieTtlMs(env = process.env) {
@@ -13,5 +13,5 @@ export function defaultSessionCookieTtlMs(env = process.env) {
     return fourHoursMs
   }
 
-  return tenSecondsMs
+  return thirtySecondsMs
 }

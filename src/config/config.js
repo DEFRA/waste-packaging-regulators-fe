@@ -205,7 +205,7 @@ export const config = convict({
     },
     cookie: {
       ttl: {
-        doc: 'Session cookie ttl. Real B2C (MOCK_AUTH off) uses 10s so CSOC re-runs /signin-oidc regularly; mock auth keeps 4 hours for stable local and journey tests. Override with SESSION_COOKIE_TTL.',
+        doc: 'Session cookie ttl. Real B2C (MOCK_AUTH off) uses 30s so CSOC re-runs /signin-oidc regularly; mock auth keeps 4 hours for stable local and journey tests. Override with SESSION_COOKIE_TTL.',
         format: Number,
         default: defaultSessionCookieTtl,
         env: 'SESSION_COOKIE_TTL'
