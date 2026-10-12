@@ -4,15 +4,20 @@ import { fileURLToPath } from 'node:url'
 
 import convictFormatWithValidator from 'convict-format-with-validator'
 
-const dirname = path.dirname(fileURLToPath(import.meta.url))
+import {
+  defaultSessionCookieTtlMs,
+  fourHoursMs
+} from './default-session-cookie-ttl.js'
 
-const fourHoursMs = 14400000
-const oneWeekMs = 604800000
-const DEFAULT_DEV_CLIENT_ID = 'Developer'
+const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
 const isDevelopment = process.env.NODE_ENV === 'development'
+
+const defaultSessionCookieTtl = defaultSessionCookieTtlMs()
+const oneWeekMs = 604800000
+const DEFAULT_DEV_CLIENT_ID = 'Developer'
 
 convict.addFormats(convictFormatWithValidator)
 
@@ -200,9 +205,9 @@ export const config = convict({
     },
     cookie: {
       ttl: {
-        doc: 'Session cookie ttl',
+        doc: 'Session cookie ttl. Real B2C (MOCK_AUTH off) uses 30s so CSOC re-runs /signin-oidc regularly; mock auth keeps 4 hours for stable local and journey tests. Override with SESSION_COOKIE_TTL.',
         format: Number,
-        default: fourHoursMs,
+        default: defaultSessionCookieTtl,
         env: 'SESSION_COOKIE_TTL'
       },
       password: {

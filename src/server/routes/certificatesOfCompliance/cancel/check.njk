@@ -40,7 +40,7 @@
         ]
       }) }}
 
-      <form method="post" action="{{ localeUrl(routePrefix ~ '/' ~ organisationId ~ '/' ~ documentType ~ '/' ~ id ~ '/cancel' ~ (queryString | default(''))) }}" novalidate>
+      <form method="post" action="{{ cancelActionUrl }}" novalidate>
         {{ appCsrfField(CSRFToken) }}
         <input type="hidden" name="cancel-reason" value="{{ reason }}">
 

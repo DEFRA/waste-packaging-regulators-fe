@@ -3,6 +3,7 @@ import {
   certificatesOfComplianceCancelReasonPostController,
   certificatesOfComplianceCancelCheckGetController,
   certificatesOfComplianceCancelEmailPreviewGetController,
+  certificatesOfComplianceCancelGetController,
   certificatesOfComplianceCancelPostController
 } from './controller.js'
 
@@ -37,6 +38,13 @@ export const certificatesOfComplianceCancel = {
           path: '/{organisationId}/{documentType}/{id}/cancel/email-preview',
           options: {
             ...certificatesOfComplianceCancelEmailPreviewGetController
+          }
+        },
+        {
+          method: 'GET',
+          path: '/{organisationId}/{documentType}/{id}/cancel',
+          options: {
+            ...certificatesOfComplianceCancelGetController
           }
         },
         {
