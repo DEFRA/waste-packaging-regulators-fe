@@ -4,27 +4,16 @@ import { fileURLToPath } from 'node:url'
 
 import convictFormatWithValidator from 'convict-format-with-validator'
 
+import {
+  defaultSessionCookieTtlMs,
+  fourHoursMs
+} from './default-session-cookie-ttl.js'
+
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const tenSecondsMs = 10000
-const fourHoursMs = 14400000
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
 const isDevelopment = process.env.NODE_ENV === 'development'
-
-function defaultSessionCookieTtlMs() {
-  const mockAuthEnv = process.env.MOCK_AUTH
-  const usesMockAuth =
-    mockAuthEnv === 'true' ||
-    mockAuthEnv === '1' ||
-    (mockAuthEnv !== 'false' && !isProduction)
-
-  if (usesMockAuth) {
-    return fourHoursMs
-  }
-
-  return tenSecondsMs
-}
 
 const defaultSessionCookieTtl = defaultSessionCookieTtlMs()
 const oneWeekMs = 604800000
