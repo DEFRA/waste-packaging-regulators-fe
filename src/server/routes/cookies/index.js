@@ -5,8 +5,7 @@ export const cookies = {
     name: 'cookies',
     register(server) {
       const options = {
-        auth: false,
-        plugins: { crumb: false }
+        auth: false
       }
 
       server.route([
