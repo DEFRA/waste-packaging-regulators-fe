@@ -14,6 +14,7 @@
 {% from "heading/macro.njk" import appHeading %}
 {% from "defra-internal-header/macro.njk" import defraInternalHeader %}
 {% from "defra-internal-footer/macro.njk" import defraInternalFooter %}
+{% from "csrf-field/macro.njk" import appCsrfField %}
 
 {% block headIcons %}
   <link rel="icon" sizes="any" href="{{ assetPath }}/images/govuk-crest.svg" type="image/svg+xml">
@@ -125,6 +126,7 @@
   {% if not hideCookieBanner %}
     {% if not hasCookiePolicy and not cookiePreferenceSet %}
       <form action="{{ localeUrl('/cookies/banner') }}" method="post" novalidate>
+        {{ appCsrfField(CSRFToken, "cookie-banner-csrf-crumb") }}
         {{ govukCookieBanner({
           ariaLabel: t(locale, "common.cookieBanner.ariaLabel", { serviceName: serviceName }),
           messages: [
@@ -159,6 +161,7 @@
         <p class="govuk-body">{{ t(locale, preferenceKey, { cookiesUrl: localeUrl("/cookies") }) | safe }}</p>
       {% endset %}
       <form action="{{ localeUrl('/cookies/hide-banner') }}" method="post" novalidate>
+        {{ appCsrfField(CSRFToken, "cookie-hide-banner-csrf-crumb") }}
         {{ govukCookieBanner({
           ariaLabel: t(locale, "common.cookieBanner.ariaLabel", { serviceName: serviceName }),
           messages: [
