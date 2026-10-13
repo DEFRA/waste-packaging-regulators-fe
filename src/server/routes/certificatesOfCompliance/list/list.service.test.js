@@ -2510,6 +2510,17 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(item.organisationReferenceNumber).toBe('100001')
       })
 
+      test('prefers schemeOperatorName over name for compliance scheme rows', () => {
+        const item = mapUnsubmittedToItem({
+          organisationId: 'cs-1',
+          name: 'Fallback Name',
+          schemeOperatorName: 'Operator Trading Name',
+          referenceNumber: '200001'
+        })
+
+        expect(item.organisationName).toBe('Operator Trading Name')
+      })
+
       // The endpoint only returns organisations whose reference number resolved,
       // so this is a guard against ever rendering 'undefined' in the ID column —
       // not a fallback the contract is expected to exercise.

@@ -57,6 +57,10 @@ export function toUnsubmittedOrganisation(record) {
     registrationType: record.registrationType,
     businessCountry: record.businessCountry ?? MOCK_BUSINESS_COUNTRY,
     name: unsubmittedOrganisationName(record),
+    schemeOperatorName:
+      record.registrationType === COMPLIANCE_SCHEME
+        ? (record.schemeOperatorName ?? null)
+        : null,
     referenceNumber: record.organisationReferenceNumber,
     ...metricsFor(record.obligations)
   }
