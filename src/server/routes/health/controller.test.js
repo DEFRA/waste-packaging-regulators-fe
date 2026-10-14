@@ -77,7 +77,8 @@ describe('healthAllController handler (non-mock mode)', () => {
     const checks = {
       'waste-obligations': { ok: true },
       'waste-organisations': { ok: true },
-      'account-token': { ok: true }
+      'account-token': { ok: true },
+      'govuk-notify': { ok: true }
     }
     vi.mocked(runHealthChecks).mockResolvedValue({
       message: 'success',
@@ -94,7 +95,8 @@ describe('healthAllController handler (non-mock mode)', () => {
     const checks = {
       'waste-obligations': { ok: false, error: 'Connection refused' },
       'waste-organisations': { ok: true },
-      'account-token': { ok: true }
+      'account-token': { ok: true },
+      'govuk-notify': { ok: true }
     }
     vi.mocked(runHealthChecks).mockResolvedValue({
       message: 'degraded',
