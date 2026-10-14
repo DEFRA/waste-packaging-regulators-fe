@@ -1,5 +1,9 @@
 import { createServer } from '#server/server.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import {
+  csrfTokenCookieFromResponse,
+  crumbTokenFromCookie
+} from '#test-helpers/cookies.js'
 
 describe('#cookiesController', () => {
   let server
@@ -13,6 +17,36 @@ describe('#cookiesController', () => {
     await server.stop({ timeout: 0 })
   })
 
+  const getCrumb = async (url = '/cookies') => {
+    const response = await server.inject({
+      method: 'GET',
+      url
+    })
+    const cookie = csrfTokenCookieFromResponse(response)
+    const token = crumbTokenFromCookie(cookie)
+    return { cookie, token }
+  }
+
+  const postWithCrumb = async ({ url, payload = {}, headers = {} }) => {
+    const { cookie, token } = await getCrumb()
+    const mergedCookie = headers.cookie
+      ? `${cookie}; ${headers.cookie}`
+      : cookie
+
+    return server.inject({
+      method: 'POST',
+      url,
+      headers: {
+        ...headers,
+        cookie: mergedCookie
+      },
+      payload: {
+        CSRFToken: token,
+        ...payload
+      }
+    })
+  }
+
   describe('GET /cookies', () => {
     test('Should provide expected response', async () => {
       const { result, statusCode } = await server.inject({
@@ -20,9 +54,21 @@ describe('#cookiesController', () => {
         url: '/cookies'
       })
 
-      console.log('GET RESULT:', result)
       expect(result).toEqual(expect.stringContaining('Cookies |'))
       expect(result).toEqual(expect.stringContaining('Save cookie settings'))
+      expect(result).toContain('name="CSRFToken"')
+      expect(result).toContain('id="csrf-crumb"')
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('Should include CSRF token in cookie banner forms on GET', async () => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/cookies'
+      })
+
+      expect(result).toContain('id="cookie-banner-csrf-crumb"')
+      expect(result).toContain('name="CSRFToken"')
       expect(statusCode).toBe(statusCodes.ok)
     })
 
@@ -75,9 +121,20 @@ describe('#cookiesController', () => {
   })
 
   describe('POST /cookies', () => {
-    test('Should redirect and set cookie when analytics is yes', async () => {
-      const { statusCode, headers } = await server.inject({
+    test('Should reject request without CSRF token with 403 Forbidden', async () => {
+      const { statusCode } = await server.inject({
         method: 'POST',
+        url: '/cookies',
+        payload: {
+          analytics: 'yes'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+    })
+
+    test('Should redirect and set cookie when analytics is yes', async () => {
+      const { statusCode, headers } = await postWithCrumb({
         url: '/cookies',
         payload: {
           analytics: 'yes'
@@ -93,8 +150,7 @@ describe('#cookiesController', () => {
     })
 
     test('Should redirect and set cookie when analytics is no', async () => {
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
+      const { statusCode, headers } = await postWithCrumb({
         url: '/cookies',
         payload: {
           analytics: 'no'
@@ -110,8 +166,7 @@ describe('#cookiesController', () => {
     })
 
     test('Should redirect but not change cookie on invalid input', async () => {
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
+      const { statusCode, headers } = await postWithCrumb({
         url: '/cookies',
         payload: {
           analytics: 'maybe'
@@ -133,8 +188,7 @@ describe('#cookiesController', () => {
     })
 
     test('Should preserve lang query parameter on redirect', async () => {
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
+      const { statusCode, headers } = await postWithCrumb({
         url: '/cookies?lang=cy',
         payload: {
           analytics: 'yes'
@@ -147,9 +201,20 @@ describe('#cookiesController', () => {
   })
 
   describe('POST /cookies/banner', () => {
-    test('Should redirect to referrer with cookie_preference=set and set cookie when analytics is yes', async () => {
-      const { statusCode, headers } = await server.inject({
+    test('Should reject request without CSRF token with 403 Forbidden', async () => {
+      const { statusCode } = await server.inject({
         method: 'POST',
+        url: '/cookies/banner',
+        payload: {
+          analytics: 'yes'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+    })
+
+    test('Should redirect to referrer with cookie_preference=set and set cookie when analytics is yes', async () => {
+      const { statusCode, headers } = await postWithCrumb({
         url: '/cookies/banner',
         headers: {
           referer: '/some-page'
@@ -168,8 +233,7 @@ describe('#cookiesController', () => {
     })
 
     test('Should redirect to referrer with cookie_preference=set and set cookie when analytics is no', async () => {
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
+      const { statusCode, headers } = await postWithCrumb({
         url: '/cookies/banner',
         headers: {
           referer: '/another-page'
@@ -188,8 +252,7 @@ describe('#cookiesController', () => {
     })
 
     test('Should redirect to fallback if referer is missing', async () => {
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
+      const { statusCode, headers } = await postWithCrumb({
         url: '/cookies/banner',
         payload: {
           analytics: 'yes'
@@ -201,8 +264,7 @@ describe('#cookiesController', () => {
     })
 
     test('Should preserve lang query parameter on redirect', async () => {
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
+      const { statusCode, headers } = await postWithCrumb({
         url: '/cookies/banner?lang=cy',
         headers: {
           referer: '/some-page'
@@ -217,8 +279,7 @@ describe('#cookiesController', () => {
     })
 
     test('Should handle invalid referer gracefully', async () => {
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
+      const { statusCode, headers } = await postWithCrumb({
         url: '/cookies/banner',
         headers: { referer: 'http://[' }, // Invalid URL
         payload: {
@@ -232,9 +293,20 @@ describe('#cookiesController', () => {
   })
 
   describe('POST /cookies/hide-banner', () => {
-    test('Should strip cookie_preference query parameter from referrer and redirect', async () => {
-      const { statusCode, headers } = await server.inject({
+    test('Should reject request without CSRF token with 403 Forbidden', async () => {
+      const { statusCode } = await server.inject({
         method: 'POST',
+        url: '/cookies/hide-banner',
+        payload: {
+          'cookies[hide]': 'hide'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+    })
+
+    test('Should strip cookie_preference query parameter from referrer and redirect', async () => {
+      const { statusCode, headers } = await postWithCrumb({
         url: '/cookies/hide-banner',
         headers: {
           referer: '/some-page?cookie_preference=set'
@@ -246,8 +318,7 @@ describe('#cookiesController', () => {
     })
 
     test('Should maintain other query parameters from referrer and redirect', async () => {
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
+      const { statusCode, headers } = await postWithCrumb({
         url: '/cookies/hide-banner',
         headers: {
           referer: '/some-page?cookie_preference=set&other_param=1'
@@ -259,8 +330,7 @@ describe('#cookiesController', () => {
     })
 
     test('Should redirect to fallback if referer is missing', async () => {
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
+      const { statusCode, headers } = await postWithCrumb({
         url: '/cookies/hide-banner'
       })
 
@@ -269,8 +339,7 @@ describe('#cookiesController', () => {
     })
 
     test('Should preserve lang query parameter on redirect', async () => {
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
+      const { statusCode, headers } = await postWithCrumb({
         url: '/cookies/hide-banner?lang=cy',
         headers: {
           referer: '/some-page?cookie_preference=set'
@@ -282,8 +351,7 @@ describe('#cookiesController', () => {
     })
 
     test('Should handle invalid referer gracefully', async () => {
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
+      const { statusCode, headers } = await postWithCrumb({
         url: '/cookies/hide-banner',
         headers: { referer: 'http://[' } // Invalid URL
       })
