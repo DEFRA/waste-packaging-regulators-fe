@@ -26,10 +26,16 @@ vi.mock('#services/waste-organisations-api.service.js', () => ({
   createWasteOrganisationsApiService: vi.fn()
 }))
 
+vi.mock('#services/govuk-notify.service.js', () => ({
+  previewCancellationTemplate: vi.fn()
+}))
+
 import { runHealthChecks } from './health.service.js'
 import { getServiceOAuthAccessToken } from '#services/apiBaseClient/oauth-token.js'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
+import { previewCancellationTemplate } from '#services/govuk-notify.service.js'
+import { cancellationEmailTemplateIds } from '#server/routes/certificatesOfCompliance/cancel/cancellation-email-templates.js'
 
 describe('runHealthChecks', () => {
   let obligationsService
@@ -45,6 +51,10 @@ describe('runHealthChecks', () => {
     createWasteObligationsApiService.mockReturnValue(obligationsService)
     createWasteOrganisationsApiService.mockReturnValue(organisationsService)
     getServiceOAuthAccessToken.mockResolvedValue('test-token')
+    previewCancellationTemplate.mockResolvedValue({
+      subject: 'Preview subject',
+      body: '<p>Preview body</p>'
+    })
   })
 
   it('returns success when all checks pass', async () => {
@@ -54,6 +64,7 @@ describe('runHealthChecks', () => {
     expect(result.checks['waste-obligations']).toEqual({ ok: true })
     expect(result.checks['waste-organisations']).toEqual({ ok: true })
     expect(result.checks['account-token']).toEqual({ ok: true })
+    expect(result.checks['govuk-notify']).toEqual({ ok: true })
   })
 
   it('calls waste obligations with pageSize 1 and a 5s timeout', async () => {
@@ -89,6 +100,18 @@ describe('runHealthChecks', () => {
     })
   })
 
+  it('calls previewCancellationTemplate with expected templateId and personalisation', async () => {
+    await runHealthChecks()
+
+    expect(previewCancellationTemplate).toHaveBeenCalledWith(
+      cancellationEmailTemplateIds.producerRequested.en,
+      expect.objectContaining({
+        firstName: 'Health',
+        lastName: 'Check'
+      })
+    )
+  })
+
   it('returns degraded and records the error when waste obligations fails', async () => {
     obligationsService.listComplianceDeclarations.mockRejectedValue(
       new Error('Connection refused')
@@ -103,6 +126,7 @@ describe('runHealthChecks', () => {
     })
     expect(result.checks['waste-organisations']).toEqual({ ok: true })
     expect(result.checks['account-token']).toEqual({ ok: true })
+    expect(result.checks['govuk-notify']).toEqual({ ok: true })
   })
 
   it('returns degraded and records the error when waste organisations fails', async () => {
@@ -119,6 +143,7 @@ describe('runHealthChecks', () => {
     })
     expect(result.checks['waste-obligations']).toEqual({ ok: true })
     expect(result.checks['account-token']).toEqual({ ok: true })
+    expect(result.checks['govuk-notify']).toEqual({ ok: true })
   })
 
   it('returns degraded and records the error when the account token check fails', async () => {
@@ -135,6 +160,24 @@ describe('runHealthChecks', () => {
     })
     expect(result.checks['waste-obligations']).toEqual({ ok: true })
     expect(result.checks['waste-organisations']).toEqual({ ok: true })
+    expect(result.checks['govuk-notify']).toEqual({ ok: true })
+  })
+
+  it('returns degraded and records the error when govuk notify fails', async () => {
+    previewCancellationTemplate.mockRejectedValue(
+      new Error('GOV.UK Notify API key is not configured')
+    )
+
+    const result = await runHealthChecks()
+
+    expect(result.message).toBe('degraded')
+    expect(result.checks['govuk-notify']).toEqual({
+      ok: false,
+      error: 'GOV.UK Notify API key is not configured'
+    })
+    expect(result.checks['waste-obligations']).toEqual({ ok: true })
+    expect(result.checks['waste-organisations']).toEqual({ ok: true })
+    expect(result.checks['account-token']).toEqual({ ok: true })
   })
 
   it('returns degraded when all checks fail', async () => {
@@ -145,6 +188,7 @@ describe('runHealthChecks', () => {
       new Error('timeout')
     )
     getServiceOAuthAccessToken.mockRejectedValue(new Error('auth error'))
+    previewCancellationTemplate.mockRejectedValue(new Error('notify error'))
 
     const result = await runHealthChecks()
 
@@ -152,7 +196,7 @@ describe('runHealthChecks', () => {
     expect(Object.values(result.checks).every((c) => !c.ok)).toBe(true)
   })
 
-  it('runs all checks in parallel (all three are called even when one fails)', async () => {
+  it('runs all checks in parallel (all four are called even when one fails)', async () => {
     obligationsService.listComplianceDeclarations.mockRejectedValue(
       new Error('down')
     )
@@ -161,5 +205,6 @@ describe('runHealthChecks', () => {
 
     expect(organisationsService.listComplianceOrganisations).toHaveBeenCalled()
     expect(getServiceOAuthAccessToken).toHaveBeenCalled()
+    expect(previewCancellationTemplate).toHaveBeenCalled()
   })
 })
