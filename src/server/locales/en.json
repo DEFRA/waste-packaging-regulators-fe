@@ -226,7 +226,8 @@
       "relevantYearCaption": "{{complianceYear}} relevant year",
       "search": {
         "label": "Search by organisation name or ID",
-        "error": "Enter an organisation name or ID"
+        "error": "Enter an organisation name or ID",
+        "errorMinLength": "Enter at least 3 characters"
       },
       "tabs": {
         "pending": "Pending ({{count}})",
