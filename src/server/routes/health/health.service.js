@@ -27,11 +27,10 @@ async function checkWasteObligationsApi() {
 }
 
 async function checkWasteOrganisationsApi() {
-  const service = createWasteOrganisationsApiService()
-  await service.listComplianceOrganisations({
-    registrationYears: ['2020'],
-    registrationType: 'DirectProducer'
+  const service = createWasteOrganisationsApiService({
+    requestTimeoutMs: HEALTH_CHECK_TIMEOUT_MS
   })
+  await service.listComplianceOrganisations({})
 }
 
 async function checkAccountApiToken() {
