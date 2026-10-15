@@ -65,7 +65,7 @@ export function mapUnsubmittedToItem(row) {
     // The endpoint only returns organisations whose reference number resolved,
     // so this is defensive: it keeps the column from ever rendering 'undefined'.
     organisationReferenceNumber: row.referenceNumber ?? NO_DATA,
-    organisationName: row.name,
+    organisationName: row.schemeOperatorName ?? row.name,
     recyclingObligationsMet: row.recyclingObligationsMet ?? null,
     regulation43Met: null,
     obligationCoveragePercentage: row.obligationCoveragePercentage ?? null,

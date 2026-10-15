@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 
 import { COMPLIANCE_SCHEME, DIRECT_PRODUCER } from '#mocks/identities.js'
 import { mockObligationsAllMet } from './obligation-data.js'
-import { UNKNOWN_ORGANISATION } from '#server/routes/certificatesOfCompliance/common/constants.js'
 import {
   unsubmittedOrganisationName,
   toUnsubmittedOrganisation
@@ -28,14 +27,14 @@ describe('unsubmittedOrganisationName', () => {
     ).toBe('Operator Co')
   })
 
-  test('returns unknown organisation when compliance scheme operator name is blank', () => {
+  test('falls back to organisationName when compliance scheme operator name is blank', () => {
     expect(
       unsubmittedOrganisationName({
         registrationType: COMPLIANCE_SCHEME,
         schemeOperatorName: null,
-        complianceSchemeName: 'Scheme Ltd'
+        organisationName: 'Scheme Ltd'
       })
-    ).toBe(UNKNOWN_ORGANISATION)
+    ).toBe('Scheme Ltd')
   })
 })
 
