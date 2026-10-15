@@ -78,15 +78,15 @@ describe('runHealthChecks', () => {
     })
   })
 
-  it('calls waste organisations with the expected filters', async () => {
+  it('calls waste organisations with default params and a 5s timeout', async () => {
     await runHealthChecks()
 
+    expect(createWasteOrganisationsApiService).toHaveBeenCalledWith({
+      requestTimeoutMs: 5000
+    })
     expect(
       organisationsService.listComplianceOrganisations
-    ).toHaveBeenCalledWith({
-      registrationYears: ['2020'],
-      registrationType: 'DirectProducer'
-    })
+    ).toHaveBeenCalledWith({})
   })
 
   it('calls getServiceOAuthAccessToken with account API config', async () => {
