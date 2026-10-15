@@ -4,16 +4,17 @@ import { createWasteObligationsApiService } from '#services/waste-obligations-ap
 import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
 import { previewCancellationTemplate } from '#services/govuk-notify.service.js'
 import { cancellationEmailTemplateIds } from '#server/routes/certificatesOfCompliance/cancel/cancellation-email-templates.js'
+import { buildCancellationNotificationParameters } from '#server/routes/certificatesOfCompliance/actions/cancellation-notification-parameters.js'
 
 const HEALTH_CHECK_TIMEOUT_MS = 5000
 
 const HEALTH_CHECK_NOTIFY_PERSONALISATION = {
+  ...buildCancellationNotificationParameters({
+    registrationType: 'DirectProducer',
+    environmentalRegulator: 'EA'
+  }),
   year: 2027,
-  regulator: 'Environment Agency',
   regulatorEmail: 'packagingproducers@environment-agency.gov.uk',
-  certOrStatement: 'certificate',
-  certOrStatement_cy: 'tystysgrif',
-  regulator_cy: 'Asiantaeth yr Amgylchedd',
   firstName: 'Health',
   lastName: 'Check'
 }
