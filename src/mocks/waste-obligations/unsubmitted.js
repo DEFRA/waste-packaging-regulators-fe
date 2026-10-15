@@ -6,7 +6,6 @@ import {
   MOCK_BUSINESS_COUNTRY,
   COMPLIANCE_SCHEME
 } from '#mocks/identities.js'
-import { UNKNOWN_ORGANISATION } from '#server/routes/certificatesOfCompliance/common/constants.js'
 // The real backend materialises these two metrics from the same calculation the
 // detail page runs, so the mock derives them with the very same helpers rather
 // than restating the arithmetic. Crossing into the app layer from a mock is
@@ -39,14 +38,15 @@ function isBlank(value) {
 
 // Deliberately NOT declaration.js's listOrganisationName: submitted tabs show the
 // scheme operator from the declaration snapshot, but the unsubmitted endpoint
-// materialises waste-organisations tradingName for compliance schemes.
+// materialises schemeOperatorName for compliance schemes, falling back to
+// organisationName when that field is blank.
 export function unsubmittedOrganisationName(record) {
   if (record.registrationType !== COMPLIANCE_SCHEME) {
     return record.organisationName
   }
 
   return isBlank(record.schemeOperatorName)
-    ? UNKNOWN_ORGANISATION
+    ? record.organisationName
     : record.schemeOperatorName
 }
 
