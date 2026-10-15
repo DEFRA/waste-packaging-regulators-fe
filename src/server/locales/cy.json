@@ -220,7 +220,8 @@
       "relevantYearCaption": "{{complianceYear}} y flwyddyn berthnasol",
       "search": {
         "label": "Chwilio yn ôl enw neu ID sefydliad",
-        "error": "Rhowch enw neu ID sefydliad"
+        "error": "Rhowch enw neu ID sefydliad",
+        "errorMinLength": "Rhowch o leiaf 3 nod"
       },
       "tabs": {
         "pending": "Yn aros ({{count}})",

@@ -5,7 +5,7 @@ import { load } from 'cheerio'
 import { vi } from 'vitest'
 import * as listService from './list.service.js'
 import * as searchService from './search.service.js'
-import { getDefaultSortColumn } from './controller.js'
+import { getDefaultSortColumn, parseSearchTerm } from './controller.js'
 import { setupRegulatorsApp } from '#test-helpers/msw/harness.js'
 import {
   obligationPresets,
@@ -650,6 +650,115 @@ describe('#certificatesOfComplianceController', () => {
       const { result } = await inject('/certificates-of-compliance?search=')
 
       expect(result).toEqual(expect.stringContaining('pending submissions'))
+    })
+
+    test.each(['a', 'ab', '%20a%20', '%20ab%20'])(
+      'Should show a minimum length error summary when search term "%s" has fewer than 3 characters',
+      async (value) => {
+        const { statusCode, result } = await inject(
+          `/certificates-of-compliance?search=${value}`
+        )
+        const $ = load(result)
+        const expectedValue = decodeURIComponent(value).trim()
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect($('.govuk-error-summary__title').text()).toContain(
+          'There is a problem'
+        )
+        expect($('.govuk-error-summary a').text()).toContain(
+          'Enter at least 3 characters'
+        )
+        expect($('.govuk-error-summary a').attr('href')).toBe('#search')
+        expect($('#search-error').text()).toContain(
+          'Enter at least 3 characters'
+        )
+        expect($('input#search').attr('value')).toBe(expectedValue)
+        expect($('title').text()).toContain('Error:')
+        expect($('#search-results')).toHaveLength(0)
+        expect(result).toEqual(expect.stringContaining('pending submissions'))
+      }
+    )
+
+    test('Should show the Welsh minimum length error when search has fewer than 3 characters in Welsh', async () => {
+      const { statusCode, result } = await inject(
+        '/certificates-of-compliance?lang=cy&search=ab'
+      )
+      const $ = load(result)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect($('.govuk-error-summary a').text()).toContain(
+        'Rhowch o leiaf 3 nod'
+      )
+      expect($('#search-error').text()).toContain('Rhowch o leiaf 3 nod')
+      expect($('input#search').attr('value')).toBe('ab')
+    })
+
+    describe('parseSearchTerm', () => {
+      test('returns empty term and null errors when rawSearch is undefined', () => {
+        expect(parseSearchTerm(undefined)).toEqual({
+          searchTerm: '',
+          errors: null
+        })
+      })
+
+      test('returns error when rawSearch is empty or whitespace', () => {
+        expect(parseSearchTerm('')).toEqual({
+          searchTerm: '',
+          errors: {
+            summary: [
+              { text: 'Enter an organisation name or ID', href: '#search' }
+            ],
+            search: { text: 'Enter an organisation name or ID' }
+          }
+        })
+        expect(parseSearchTerm('   ')).toEqual({
+          searchTerm: '',
+          errors: {
+            summary: [
+              { text: 'Enter an organisation name or ID', href: '#search' }
+            ],
+            search: { text: 'Enter an organisation name or ID' }
+          }
+        })
+      })
+
+      test('returns minLength error and retains searchTerm when fewer than 3 characters', () => {
+        expect(parseSearchTerm('ab')).toEqual({
+          searchTerm: 'ab',
+          errors: {
+            summary: [{ text: 'Enter at least 3 characters', href: '#search' }],
+            search: { text: 'Enter at least 3 characters' }
+          }
+        })
+        expect(parseSearchTerm('  a  ')).toEqual({
+          searchTerm: 'a',
+          errors: {
+            summary: [{ text: 'Enter at least 3 characters', href: '#search' }],
+            search: { text: 'Enter at least 3 characters' }
+          }
+        })
+      })
+
+      test('returns Welsh minLength error when locale is cy', () => {
+        expect(parseSearchTerm('ab', 'cy')).toEqual({
+          searchTerm: 'ab',
+          errors: {
+            summary: [{ text: 'Rhowch o leiaf 3 nod', href: '#search' }],
+            search: { text: 'Rhowch o leiaf 3 nod' }
+          }
+        })
+      })
+
+      test('returns trimmed searchTerm and null errors when 3 or more characters', () => {
+        expect(parseSearchTerm('abc')).toEqual({
+          searchTerm: 'abc',
+          errors: null
+        })
+        expect(parseSearchTerm('  Acme Corp  ')).toEqual({
+          searchTerm: 'Acme Corp',
+          errors: null
+        })
+      })
     })
   })
 

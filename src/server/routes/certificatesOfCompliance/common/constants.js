@@ -27,6 +27,7 @@ export const DOWNLOAD_PAGE_CONCURRENCY = 5
 
 export const PAGE_SIZE = 20
 export const DECLARATIONS_BATCH_SIZE = 100
+export const SEARCH_TERM_MIN_LENGTH = 3
 export const SEARCH_TERM_MAX_LENGTH = 100
 export const CANCELLED_STATUS = 'Cancelled'
 

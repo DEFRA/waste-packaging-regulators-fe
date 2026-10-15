@@ -14,6 +14,7 @@ import {
   withForwardedPrefix
 } from '#server/common/helpers/proxy/forwarded-prefix.js'
 import {
+  SEARCH_TERM_MIN_LENGTH,
   SEARCH_TERM_MAX_LENGTH,
   COMPLIANCE_SCHEMES,
   DIRECT_PRODUCERS
@@ -34,17 +35,31 @@ export const parseSearchTerm = (rawSearch, locale = 'en') => {
   }
 
   const searchTerm = rawSearch.trim().slice(0, SEARCH_TERM_MAX_LENGTH)
-  const searchError = translate(
-    locale,
-    'certificatesOfCompliance.list.search.error'
-  )
 
   if (searchTerm === '') {
+    const searchError = translate(
+      locale,
+      'certificatesOfCompliance.list.search.error'
+    )
     return {
       searchTerm: '',
       errors: {
         summary: [{ text: searchError, href: '#search' }],
         search: { text: searchError }
+      }
+    }
+  }
+
+  if (searchTerm.length < SEARCH_TERM_MIN_LENGTH) {
+    const minLengthError = translate(
+      locale,
+      'certificatesOfCompliance.list.search.errorMinLength'
+    )
+    return {
+      searchTerm,
+      errors: {
+        summary: [{ text: minLengthError, href: '#search' }],
+        search: { text: minLengthError }
       }
     }
   }
@@ -212,7 +227,7 @@ export const certificatesOfComplianceController = {
         sortDirection,
         { traceId, locale, routePrefix, country }
       ),
-      searchTerm
+      searchTerm && !errors
         ? getComplianceSearchResults(type, searchTerm, traceId, country)
         : null
     ]).catch((error) => {
