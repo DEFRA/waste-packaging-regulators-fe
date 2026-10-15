@@ -107,7 +107,8 @@ describe('runHealthChecks', () => {
       cancellationEmailTemplateIds.producerRequested.en,
       expect.objectContaining({
         firstName: 'Health',
-        lastName: 'Check'
+        lastName: 'Check',
+        certOrStatementBullet: expect.any(String)
       })
     )
   })
