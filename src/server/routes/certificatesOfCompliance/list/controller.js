@@ -13,6 +13,8 @@ import {
   getProxyPrefix,
   withForwardedPrefix
 } from '#server/common/helpers/proxy/forwarded-prefix.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { ApiError } from '#services/apiBaseClient/api-error.js'
 import {
   SEARCH_TERM_MIN_LENGTH,
   SEARCH_TERM_MAX_LENGTH,
@@ -218,7 +220,27 @@ export const certificatesOfComplianceController = {
       )
     }
 
-    const [viewModel, search] = await Promise.all([
+    const searchPromise =
+      searchTerm && !errors
+        ? getComplianceSearchResults(type, searchTerm, traceId, country).catch(
+            (error) => {
+              if (
+                error instanceof ApiError &&
+                error.status === statusCodes.forbidden
+              ) {
+                request.logger.warn(
+                  { err: error, searchTerm },
+                  'Search query returned 403 Forbidden'
+                )
+                return { items: [], total: 0, truncated: false }
+              }
+              handleApiError(request, error)
+              throw error
+            }
+          )
+        : null
+
+    const [viewModel, searchResult] = await Promise.all([
       getCertificatesOfComplianceViewModel(
         type,
         submissionStatus,
@@ -226,21 +248,19 @@ export const certificatesOfComplianceController = {
         sortColumn,
         sortDirection,
         { traceId, locale, routePrefix, country }
-      ),
-      searchTerm && !errors
-        ? getComplianceSearchResults(type, searchTerm, traceId, country)
-        : null
-    ]).catch((error) => {
-      handleApiError(request, error)
-      throw error
-    })
+      ).catch((error) => {
+        handleApiError(request, error)
+        throw error
+      }),
+      searchPromise
+    ])
 
     const i18n = cocPageI18n(locale, 'list')
 
     return h
       .view(
         'certificatesOfCompliance/list/index',
-        buildListViewData(viewModel, search, {
+        buildListViewData(viewModel, searchResult, {
           locale,
           i18n,
           searchTerm,
