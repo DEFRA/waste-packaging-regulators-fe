@@ -1359,16 +1359,23 @@ describe('#certificatesOfComplianceController', () => {
 
       // The term is user input rendered beside literal markup, so it has to be
       // escaped rather than interpolated into the translated sentence.
-      test('Should escape a search term containing special characters', async () => {
-        const term = 'Acme & Sons'
-        const { result } = await searchFor(term)
-        const $ = load(result)
+      test.each([
+        ['Acme & Sons', 'Acme &amp; Sons'],
+        ['<img src=x onerror=alert(1)>', '&lt;img src=x onerror=alert(1)&gt;']
+      ])(
+        'Should escape a search term containing special characters: %s',
+        async (term, expectedEscaped) => {
+          const { result } = await searchFor(term)
+          const $ = load(result)
 
-        expect(result).not.toContain('Acme & Sons')
-        expect(result).toContain('Acme &amp; Sons')
-        expect($('#search-results strong').first().text()).toBe(term)
-        expect($('#search-results script')).toHaveLength(0)
-      })
+          expect(result).not.toContain(term)
+          expect(result).toContain(expectedEscaped)
+          expect($('#search-results strong').first().text()).toBe(term)
+          expect($('#search-results script')).toHaveLength(0)
+          expect($('#search-results img')).toHaveLength(0)
+        }
+      )
+
       test('Should return 0 results as normal when search API returns 403 Forbidden', async () => {
         const apiError = new ApiError({
           message: 'Forbidden',
