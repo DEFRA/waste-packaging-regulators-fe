@@ -5,6 +5,7 @@ import { load } from 'cheerio'
 import { vi } from 'vitest'
 import * as listService from './list.service.js'
 import * as searchService from './search.service.js'
+import { ApiError } from '#services/apiBaseClient/api-error.js'
 import { getDefaultSortColumn, parseSearchTerm } from './controller.js'
 import { setupRegulatorsApp } from '#test-helpers/msw/harness.js'
 import {
@@ -749,6 +750,21 @@ describe('#certificatesOfComplianceController', () => {
         })
       })
 
+      test('does not reject search terms containing HTML, script tags, or special characters', () => {
+        expect(parseSearchTerm('<script>alert(1);</script>')).toEqual({
+          searchTerm: '<script>alert(1);</script>',
+          errors: null
+        })
+        expect(parseSearchTerm('<img src=x onerror=alert(1)>')).toEqual({
+          searchTerm: '<img src=x onerror=alert(1)>',
+          errors: null
+        })
+        expect(parseSearchTerm('javascript:alert(1)')).toEqual({
+          searchTerm: 'javascript:alert(1)',
+          errors: null
+        })
+      })
+
       test('returns trimmed searchTerm and null errors when 3 or more characters', () => {
         expect(parseSearchTerm('abc')).toEqual({
           searchTerm: 'abc',
@@ -1343,15 +1359,141 @@ describe('#certificatesOfComplianceController', () => {
 
       // The term is user input rendered beside literal markup, so it has to be
       // escaped rather than interpolated into the translated sentence.
-      test('Should escape a search term containing HTML', async () => {
-        const term = '<img src=x onerror=alert(1)>'
-        const { result } = await searchFor(term)
+      test.each([
+        ['Acme & Sons', 'Acme &amp; Sons'],
+        ['<img src=x onerror=alert(1)>', '&lt;img src=x onerror=alert(1)&gt;']
+      ])(
+        'Should escape a search term containing special characters: %s',
+        async (term, expectedEscaped) => {
+          const { result } = await searchFor(term)
+          const $ = load(result)
+
+          expect(result).not.toContain(term)
+          expect(result).toContain(expectedEscaped)
+          expect($('#search-results strong').first().text()).toBe(term)
+          expect($('#search-results script')).toHaveLength(0)
+          expect($('#search-results img')).toHaveLength(0)
+        }
+      )
+
+      test('Should return 0 results as normal when search API returns 403 Forbidden', async () => {
+        const apiError = new ApiError({
+          message: 'Forbidden',
+          status: 403
+        })
+        vi.spyOn(
+          searchService,
+          'getComplianceSearchResults'
+        ).mockRejectedValueOnce(apiError)
+
+        const { result, statusCode } = await searchFor(
+          '<script>alert(1);</script>'
+        )
         const $ = load(result)
 
-        expect(result).not.toContain('<img src=x')
-        expect(result).toContain('&lt;img src=x')
-        expect($('#search-results strong').first().text()).toBe(term)
-        expect($('#search-results script')).toHaveLength(0)
+        expect(statusCode).toBe(200)
+        expect($('.govuk-error-summary')).toHaveLength(0)
+        expect($('#search-error')).toHaveLength(0)
+        expect($('#search').val()).toBe('<script>alert(1);</script>')
+        expect($('#search-results')).toHaveLength(1)
+        expect($('#search-results').text()).toContain('0 results for')
+        expect($('#search-results').text()).toContain(
+          'Check the spelling, or search for part of the organisation name or ID'
+        )
+      })
+
+      test('Should return 0 results as normal in Welsh when search API returns 403 Forbidden and locale is cy', async () => {
+        const apiError = new ApiError({
+          message: 'Forbidden',
+          status: 403
+        })
+        vi.spyOn(
+          searchService,
+          'getComplianceSearchResults'
+        ).mockRejectedValueOnce(apiError)
+
+        const { result, statusCode } = await inject(
+          '/certificates-of-compliance?type=direct-producers&lang=cy&search=' +
+            encodeURIComponent('<script>alert(1);</script>')
+        )
+        const $ = load(result)
+
+        expect(statusCode).toBe(200)
+        expect($('.govuk-error-summary')).toHaveLength(0)
+        expect($('#search-error')).toHaveLength(0)
+        expect($('#search').val()).toBe('<script>alert(1);</script>')
+        expect($('#search-results')).toHaveLength(1)
+        expect($('#search-results').text()).toContain('0 canlyniadau ar gyfer')
+        expect($('#search-results').text()).toContain(
+          'Gwiriwch y sillafu, neu chwiliwch am ran o enw neu ID y sefydliad'
+        )
+      })
+
+      test('Should propagate 500 when search API fails with a non-403 ApiError', async () => {
+        const apiError = new ApiError({
+          message: 'Internal server error',
+          status: statusCodes.internalServerError
+        })
+        vi.spyOn(
+          searchService,
+          'getComplianceSearchResults'
+        ).mockRejectedValueOnce(apiError)
+
+        const { statusCode } = await searchFor('ValidTerm')
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
+      })
+
+      test('Should propagate 503 Service Unavailable when search API fails with unavailable ApiError', async () => {
+        const apiError = new ApiError({
+          message: 'Service unavailable',
+          status: statusCodes.serviceUnavailable
+        })
+        vi.spyOn(
+          searchService,
+          'getComplianceSearchResults'
+        ).mockRejectedValueOnce(apiError)
+
+        const { statusCode } = await searchFor('ValidTerm')
+
+        expect(statusCode).toBe(statusCodes.serviceUnavailable)
+      })
+
+      test('Should propagate 500 when search API fails with a generic non-ApiError', async () => {
+        vi.spyOn(
+          searchService,
+          'getComplianceSearchResults'
+        ).mockRejectedValueOnce(new Error('Connection failure'))
+
+        const { statusCode } = await searchFor('ValidTerm')
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
+      })
+
+      test('Should propagate error when view model service fails with ApiError', async () => {
+        const apiError = new ApiError({
+          message: 'Failed to load view model',
+          status: statusCodes.internalServerError
+        })
+        vi.spyOn(
+          listService,
+          'getCertificatesOfComplianceViewModel'
+        ).mockRejectedValueOnce(apiError)
+
+        const { statusCode } = await inject('/certificates-of-compliance')
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
+      })
+
+      test('Should propagate error when view model service throws generic error', async () => {
+        vi.spyOn(
+          listService,
+          'getCertificatesOfComplianceViewModel'
+        ).mockRejectedValueOnce(new Error('Unexpected view model failure'))
+
+        const { statusCode } = await inject('/certificates-of-compliance')
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
       })
     })
 
@@ -1599,6 +1741,26 @@ describe('#certificatesOfComplianceController', () => {
         'DateSubmitted',
         'desc',
         expect.objectContaining({ country: null })
+      )
+    })
+
+    test('passes null country to search when session user has unmapped nationId', async () => {
+      vi.spyOn(getSessionUserModule, 'getSessionUser').mockReturnValue({
+        nationId: 99
+      })
+      const searchSpy = vi
+        .spyOn(searchService, 'getComplianceSearchResults')
+        .mockResolvedValue({ items: [], total: 0, truncated: false })
+
+      await inject(
+        '/certificates-of-compliance?type=direct-producers&tab=pending&search=Acme'
+      )
+
+      expect(searchSpy).toHaveBeenCalledWith(
+        'direct-producers',
+        'Acme',
+        undefined,
+        null
       )
     })
   })
