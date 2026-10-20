@@ -35,7 +35,6 @@ export default defineConfig({
     manifest: true,
     rolldownOptions: {
       input: {
-        htmlAssets: 'src/client/assets.html',
         application: 'src/client/javascripts/application.js',
         applicationCss: 'src/client/stylesheets/application.scss'
       }
