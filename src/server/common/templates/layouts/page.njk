@@ -2,6 +2,7 @@
 {% extends "govuk/template.njk" %}
 
 {% set htmlLang = locale %}
+{% set themeColor = "#00A33B" %}
 
 {# Import GOVUK components globally #}
 {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
@@ -17,10 +18,9 @@
 {% from "csrf-field/macro.njk" import appCsrfField %}
 
 {% block headIcons %}
-  <link rel="icon" sizes="any" href="{{ assetPath }}/images/govuk-crest.svg" type="image/svg+xml">
-  <link rel="mask-icon" href="{{ assetPath }}/images/govuk-crest.svg" color="{{ themeColor | default('#00a33b') }}">
-  <link rel="apple-touch-icon" href="{{ publicPath }}/images/gov-crest.png">
-  <link rel="manifest" href="{{ publicPath }}/manifest.json">
+  <link rel="icon" sizes="48x48" href="{{ assetPath }}/images/favicon.ico?v=1">
+  <link rel="icon" sizes="any" href="{{ assetPath }}/images/favicon.svg?v=1" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ assetPath }}/images/apple-touch-icon.png?v=1">
 {% endblock %}
 
 {% block head %}
