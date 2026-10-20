@@ -16,7 +16,14 @@ const srcAssets = path.join(
 const dest = path.join(dirname, 'src', 'client', 'static', 'assets')
 
 try {
-  fs.cpSync(srcAssets, dest, { recursive: true })
+  fs.cpSync(srcAssets, dest, {
+    recursive: true,
+    force: false,
+    errorOnExist: false,
+    filter: (src) =>
+      !src.includes(path.join('assets', 'images')) &&
+      !src.endsWith('manifest.json')
+  })
 } catch (e) {
   console.warn('Failed to copy GOV.UK assets:', e)
 }
@@ -39,7 +46,7 @@ export default defineConfig({
     preprocessorOptions: {
       scss: {
         api: 'modern-compiler',
-        importers: [new NodePackageImporter()],
+        importers: [new NodePackageImporter(dirname)],
         loadPaths: [
           '.',
           'node_modules',
