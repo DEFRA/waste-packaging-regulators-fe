@@ -1,0 +1,15 @@
+{% extends 'layouts/page.njk' %}
+{% from "error/partials/help-desk-link.njk" import helpDeskLink %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+      <p class="govuk-body">{{ message }}</p>
+      <p class="govuk-body">
+        <a class="govuk-link" href="{{ tryAgainUrl }}">{{ tryAgainText }}</a>
+      </p>
+      <p class="govuk-body">{{ t(locale, 'errors.contactHelpDeskPrefix') }} {{ helpDeskLink(helpDeskEmail) }} {{ t(locale, 'errors.helpDeskEmailText') }}</p>
+    </div>
+  </div>
+{% endblock %}

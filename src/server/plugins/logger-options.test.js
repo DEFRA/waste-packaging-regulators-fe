@@ -28,6 +28,15 @@ describe('loggerOptions', () => {
       expect(loggerOptions.redact.remove).toBe(true)
     })
 
+    it.each([
+      'req.query.code',
+      'req.query.state',
+      'req.query.id_token',
+      'req.query.access_token'
+    ])('always redacts %s from the sign-in callback', (path) => {
+      expect(loggerOptions.redact.paths).toContain(path)
+    })
+
     it('has a valid log level', () => {
       const validLevels = [
         'fatal',

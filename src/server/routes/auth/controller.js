@@ -7,19 +7,31 @@ import {
   resolvePostLogoutAbsoluteUri
 } from '#server/auth/azure-ad-b2c.js'
 import { isRegulator } from '#server/auth/regulator-access.js'
+import {
+  b2cErrorDetails,
+  classifySigninFailure
+} from '#server/auth/signin-callback-failure.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { renderErrorPage } from '#server/common/helpers/errors.js'
+import {
+  getDeniedSessionUser,
+  getSessionUser
+} from '#server/common/helpers/get-session-user.js'
 import { createAccountApiService } from '#services/account-api.service.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import {
   clearAuthLocale,
+  localeUrl,
   redirectWithLocale
 } from '#server/common/helpers/i18n/locale-url.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
+import { withForwardedPrefix } from '#server/common/helpers/proxy/forwarded-prefix.js'
 
 const MAX_LOGOUT_REDIRECTS = 10
 const DEFAULT_SESSION_COOKIE_NAME = 'session'
 const DEFAULT_COOKIE_PATHS = ['/', '/certificates-of-compliance', '/dashboard']
 const SIGNED_OUT_PATH = '/signed-out'
+const SIGN_IN_FAILED_PATH = '/sign-in-failed'
 
 function isRedirectStatus(status) {
   return (
@@ -169,35 +181,99 @@ function buildSignOutRedirect(h, azure, request) {
   return h.redirect(buildB2cLogoutUrl(prefix, postLogoutUri))
 }
 
+function redirectToReturnTo(request, h) {
+  const returnTo = request.yar.get('returnTo') || '/'
+  request.yar.clear('returnTo')
+  const response = redirectWithLocale(h, request, returnTo)
+  clearAuthLocale(request)
+  return response
+}
+
+/**
+ * `/signin-oidc` runs Bell in `try` mode, so a callback Bell cannot complete —
+ * cancelled at B2C, a stale or replayed `state`, an expired state cookie, a
+ * failed code-for-token exchange — reaches this handler as `request.auth.error`.
+ * Reloading the callback URL is one of these: Bell spent its state cookie the
+ * first time.
+ *
+ * The person is redirected to the sign-in-failed page (Post/Redirect/Get), so
+ * the code and state leave the address bar and reloading that page does not
+ * replay the callback. Nothing here sends them back into sign-in by itself,
+ * so a failure that repeats on every attempt cannot loop; they retry from the
+ * page. `returnTo` and `authLocale` are kept so that retry lands where they
+ * were going, in their language.
+ */
+function handleFailedSignin(request, h) {
+  const reason = classifySigninFailure(request)
+  request.logger.warn(
+    { signIn: { reason, ...b2cErrorDetails(request) } },
+    `Sign-in callback failed: ${reason}`
+  )
+
+  if (getSessionUser(request)) {
+    return redirectToReturnTo(request, h)
+  }
+  // Someone refused at sign-in reloading that page: show it again. Rendered
+  // rather than a Boom, so the warning above is the only log line for it.
+  if (getDeniedSessionUser(request)) {
+    return renderErrorPage(h, statusCodes.forbidden)
+  }
+  return redirectWithLocale(h, request, SIGN_IN_FAILED_PATH)
+}
+
+export const signInFailedController = {
+  handler(request, h) {
+    const locale = getLocale(request)
+    return h.view('auth/sign-in-failed', {
+      pageTitle: translate(locale, 'auth.signInFailed.pageTitle'),
+      heading: translate(locale, 'auth.signInFailed.heading'),
+      message: translate(locale, 'auth.signInFailed.message'),
+      tryAgainText: translate(locale, 'auth.signInFailed.tryAgain'),
+      tryAgainUrl: localeUrl(
+        withForwardedPrefix(request, '/signin-oidc'),
+        locale
+      )
+    })
+  }
+}
+
 export const signinOidcController = {
   async handler(request, h) {
-    if (request.auth?.credentials) {
-      const apiAccount = createAccountApiService()
-      const user = await apiAccount.getAccountDetailsById(
-        request.auth.credentials.profile.oid
-      )
-      if (!isRegulator(user)) {
-        request.yar.clear('returnTo')
-        clearAuthLocale(request)
-        // Still signed in at B2C, so the 403 page must offer "Sign out":
-        // "Sign in" would only sign the same account straight back in. Only
-        // the display name is kept, and it grants no access.
-        request.yar.set('deniedUser', {
-          name: [user?.firstName, user?.lastName].filter(Boolean).join(' ')
-        })
-        return Boom.forbidden('User does not hold a regulator service role')
-      }
-      user.id = request.auth.credentials.profile.oid
-      user.email = request.auth.credentials.profile.email
-      user.name = `${user.firstName} ${user.lastName}`
-      request.yar.clear('deniedUser')
-      request.yar.set('user', user)
+    if (!request.auth?.isAuthenticated) {
+      return handleFailedSignin(request, h)
     }
-    const returnTo = request.yar.get('returnTo') || '/'
-    request.yar.clear('returnTo')
-    const response = redirectWithLocale(h, request, returnTo)
-    clearAuthLocale(request)
-    return response
+
+    // OpenID Connect requires an id_token in this token response, and the
+    // profile is read from it. Without one, B2C or our configuration is at
+    // fault, not the person, so this is a 500 rather than a sign-in to retry.
+    const profile = request.auth.credentials.profile
+    if (!profile?.oid) {
+      return Boom.internal('B2C sign-in returned no id_token with an oid claim')
+    }
+
+    const apiAccount = createAccountApiService()
+    const user = await apiAccount.getAccountDetailsById(profile.oid)
+    if (!isRegulator(user)) {
+      request.yar.clear('returnTo')
+      clearAuthLocale(request)
+      // A refused sign-in leaves the service signed in as nobody, not as
+      // whoever this browser signed in as before.
+      request.yar.clear('user')
+      // Still signed in at B2C, so the 403 page must offer "Sign out":
+      // "Sign in" would only sign the same account straight back in. Only
+      // the display name is kept, and it grants no access.
+      request.yar.set('deniedUser', {
+        name: [user?.firstName, user?.lastName].filter(Boolean).join(' ')
+      })
+      return Boom.forbidden('User does not hold a regulator service role')
+    }
+    user.id = profile.oid
+    user.email = profile.email
+    user.name = `${user.firstName} ${user.lastName}`
+    request.yar.clear('deniedUser')
+    request.yar.set('user', user)
+
+    return redirectToReturnTo(request, h)
   }
 }
 export const signOutController = {
