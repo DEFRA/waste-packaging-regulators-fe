@@ -103,4 +103,29 @@ describe('#buildRegulatorContext', () => {
     expect(result).not.toContain('undefined')
     expect(result).toContain('Sign out')
   })
+
+  test('Should offer sign out to someone refused at sign-in', () => {
+    const request = mockRequest({
+      yar: {
+        id: '123',
+        get: (key) => (key === 'deniedUser' ? { name: 'Percy Producer' } : null)
+      }
+    })
+    const result = buildRegulatorContext(request, 'en')
+    expect(result).toContain('Percy Producer &nbsp;|&nbsp;')
+    expect(result).toContain('href="/logout"')
+    expect(result).not.toContain('href="/signin-oidc"')
+  })
+
+  test('Should offer sign out to someone refused at sign-in with no name', () => {
+    const request = mockRequest({
+      yar: {
+        id: '123',
+        get: (key) => (key === 'deniedUser' ? { name: '' } : null)
+      }
+    })
+    const result = buildRegulatorContext(request, 'en')
+    expect(result).not.toContain('&nbsp;|&nbsp;')
+    expect(result).toContain('Sign out')
+  })
 })
