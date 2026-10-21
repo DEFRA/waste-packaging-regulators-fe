@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { signinOidcController, signOutController } from './controller.js'
+import {
+  signinOidcController,
+  signInFailedController,
+  signOutController
+} from './controller.js'
 
 const {
   mockGetAccountDetailsById,
@@ -50,12 +54,14 @@ const credentials = {
   }
 }
 
-function makeYar({ returnTo = null, authLocale = null } = {}) {
-  const store = {
-    ...(returnTo ? { returnTo } : {}),
-    ...(authLocale ? { authLocale } : {})
-  }
+const signedIn = { isAuthenticated: true, credentials }
+
+function makeYar(initial = {}) {
+  const store = Object.fromEntries(
+    Object.entries(initial).filter(([, value]) => value)
+  )
   return {
+    id: 'session-id',
     get: vi.fn((key) => store[key] ?? null),
     set: vi.fn((key, val) => {
       store[key] = val
@@ -70,8 +76,13 @@ function makeYar({ returnTo = null, authLocale = null } = {}) {
 function makeH() {
   return {
     redirect: vi.fn((url) => `redirect:${url}`),
+    view: vi.fn(() => ({ code: vi.fn((status) => ({ status })) })),
     unstate: vi.fn()
   }
+}
+
+function makeLogger() {
+  return { warn: vi.fn() }
 }
 
 describe('signinOidcController', () => {
@@ -82,7 +93,7 @@ describe('signinOidcController', () => {
 
     it('calls getAccountDetailsById with the oid from credentials profile', async () => {
       await signinOidcController.handler(
-        { auth: { credentials }, yar: makeYar() },
+        { auth: signedIn, yar: makeYar() },
         makeH()
       )
 
@@ -91,10 +102,7 @@ describe('signinOidcController', () => {
 
     it('stores the user in yar with id from credentials profile oid', async () => {
       const yar = makeYar()
-      await signinOidcController.handler(
-        { auth: { credentials }, yar },
-        makeH()
-      )
+      await signinOidcController.handler({ auth: signedIn, yar }, makeH())
 
       const stored = yar.set.mock.calls.find(([key]) => key === 'user')?.[1]
       expect(stored?.id).toBe('user-oid-123')
@@ -102,10 +110,7 @@ describe('signinOidcController', () => {
 
     it('stores the user in yar with email from credentials profile', async () => {
       const yar = makeYar()
-      await signinOidcController.handler(
-        { auth: { credentials }, yar },
-        makeH()
-      )
+      await signinOidcController.handler({ auth: signedIn, yar }, makeH())
 
       const stored = yar.set.mock.calls.find(([key]) => key === 'user')?.[1]
       expect(stored?.email).toBe('jane@example.com')
@@ -113,10 +118,7 @@ describe('signinOidcController', () => {
 
     it('stores the user in yar with name derived from firstName and lastName', async () => {
       const yar = makeYar()
-      await signinOidcController.handler(
-        { auth: { credentials }, yar },
-        makeH()
-      )
+      await signinOidcController.handler({ auth: signedIn, yar }, makeH())
 
       const stored = yar.set.mock.calls.find(([key]) => key === 'user')?.[1]
       expect(stored?.name).toBe('Jane Smith')
@@ -124,10 +126,7 @@ describe('signinOidcController', () => {
 
     it('stores the full account details alongside id, email, and name', async () => {
       const yar = makeYar()
-      await signinOidcController.handler(
-        { auth: { credentials }, yar },
-        makeH()
-      )
+      await signinOidcController.handler({ auth: signedIn, yar }, makeH())
 
       const stored = yar.set.mock.calls.find(([key]) => key === 'user')?.[1]
       expect(stored).toMatchObject(mockAccountDetails)
@@ -135,10 +134,7 @@ describe('signinOidcController', () => {
 
     it('redirects to / when no returnTo is set', async () => {
       const h = makeH()
-      await signinOidcController.handler(
-        { auth: { credentials }, yar: makeYar() },
-        h
-      )
+      await signinOidcController.handler({ auth: signedIn, yar: makeYar() }, h)
 
       expect(h.redirect).toHaveBeenCalledWith('/')
     })
@@ -147,7 +143,7 @@ describe('signinOidcController', () => {
       const h = makeH()
       await signinOidcController.handler(
         {
-          auth: { credentials },
+          auth: signedIn,
           yar: makeYar({ returnTo: '/certificates-of-compliance?tab=pending' })
         },
         h
@@ -160,10 +156,7 @@ describe('signinOidcController', () => {
 
     it('clears returnTo from the session after redirecting', async () => {
       const yar = makeYar({ returnTo: '/some-path' })
-      await signinOidcController.handler(
-        { auth: { credentials }, yar },
-        makeH()
-      )
+      await signinOidcController.handler({ auth: signedIn, yar }, makeH())
 
       expect(yar.clear).toHaveBeenCalledWith('returnTo')
     })
@@ -172,7 +165,7 @@ describe('signinOidcController', () => {
       const h = makeH()
       await signinOidcController.handler(
         {
-          auth: { credentials },
+          auth: signedIn,
           query: {},
           headers: { 'accept-language': 'en-GB' },
           yar: makeYar({
@@ -192,7 +185,7 @@ describe('signinOidcController', () => {
       const yar = makeYar({ authLocale: 'cy' })
       await signinOidcController.handler(
         {
-          auth: { credentials },
+          auth: signedIn,
           query: {},
           headers: {},
           yar
@@ -215,7 +208,7 @@ describe('signinOidcController', () => {
     it('responds with 403 forbidden for a non-regulator account', async () => {
       mockGetAccountDetailsById.mockResolvedValue(nonRegulatorAccount)
       const result = await signinOidcController.handler(
-        { auth: { credentials }, yar: makeYar() },
+        { auth: signedIn, yar: makeYar() },
         makeH()
       )
 
@@ -226,7 +219,7 @@ describe('signinOidcController', () => {
     it('responds with 403 forbidden when the account lookup returns no details', async () => {
       mockGetAccountDetailsById.mockResolvedValue({})
       const result = await signinOidcController.handler(
-        { auth: { credentials }, yar: makeYar() },
+        { auth: signedIn, yar: makeYar() },
         makeH()
       )
 
@@ -236,21 +229,24 @@ describe('signinOidcController', () => {
     it('does not store a user in the session for a non-regulator', async () => {
       mockGetAccountDetailsById.mockResolvedValue(nonRegulatorAccount)
       const yar = makeYar()
-      await signinOidcController.handler(
-        { auth: { credentials }, yar },
-        makeH()
-      )
+      await signinOidcController.handler({ auth: signedIn, yar }, makeH())
 
       expect(yar.set).not.toHaveBeenCalledWith('user', expect.anything())
+    })
+
+    it('clears a user left in the session by an earlier sign-in', async () => {
+      mockGetAccountDetailsById.mockResolvedValue(nonRegulatorAccount)
+      const yar = makeYar({ user: { name: 'Jane Smith' } })
+      await signinOidcController.handler({ auth: signedIn, yar }, makeH())
+
+      expect(yar.get('user')).toBeNull()
+      expect(yar.get('deniedUser')).toEqual({ name: 'Percy Producer' })
     })
 
     it('does not redirect a non-regulator into the service', async () => {
       mockGetAccountDetailsById.mockResolvedValue(nonRegulatorAccount)
       const h = makeH()
-      await signinOidcController.handler(
-        { auth: { credentials }, yar: makeYar() },
-        h
-      )
+      await signinOidcController.handler({ auth: signedIn, yar: makeYar() }, h)
 
       expect(h.redirect).not.toHaveBeenCalled()
     })
@@ -258,10 +254,7 @@ describe('signinOidcController', () => {
     it('records the refused person by display name, so the 403 page can offer sign out', async () => {
       mockGetAccountDetailsById.mockResolvedValue(nonRegulatorAccount)
       const yar = makeYar()
-      await signinOidcController.handler(
-        { auth: { credentials }, yar },
-        makeH()
-      )
+      await signinOidcController.handler({ auth: signedIn, yar }, makeH())
 
       expect(yar.set).toHaveBeenCalledWith('deniedUser', {
         name: 'Percy Producer'
@@ -271,10 +264,7 @@ describe('signinOidcController', () => {
     it('records an empty display name when the account lookup returns no details', async () => {
       mockGetAccountDetailsById.mockResolvedValue({})
       const yar = makeYar()
-      await signinOidcController.handler(
-        { auth: { credentials }, yar },
-        makeH()
-      )
+      await signinOidcController.handler({ auth: signedIn, yar }, makeH())
 
       expect(yar.set).toHaveBeenCalledWith('deniedUser', { name: '' })
     })
@@ -284,19 +274,196 @@ describe('signinOidcController', () => {
     it('clears deniedUser once a regulator signs in', async () => {
       mockGetAccountDetailsById.mockResolvedValue({ ...mockAccountDetails })
       const yar = makeYar()
-      await signinOidcController.handler(
-        { auth: { credentials }, yar },
-        makeH()
-      )
+      await signinOidcController.handler({ auth: signedIn, yar }, makeH())
 
       expect(yar.clear).toHaveBeenCalledWith('deniedUser')
     })
   })
 
-  describe('without credentials', () => {
-    it('does not call the account API', async () => {
+  describe('when B2C signs someone in without an id_token', () => {
+    it.each([
+      ['there is no profile', { isAuthenticated: true, credentials: {} }],
+      [
+        'the profile has no oid claim',
+        {
+          isAuthenticated: true,
+          credentials: { profile: { email: 'jane@example.com' } }
+        }
+      ]
+    ])('answers with an explicit 500 when %s', async (_case, auth) => {
+      const yar = makeYar()
+      const result = await signinOidcController.handler({ auth, yar }, makeH())
+
+      expect(result.isBoom).toBe(true)
+      expect(result.output.statusCode).toBe(500)
+      expect(result.message).toBe(
+        'B2C sign-in returned no id_token with an oid claim'
+      )
+      expect(mockGetAccountDetailsById).not.toHaveBeenCalled()
+      expect(yar.set).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('when the sign-in callback fails', () => {
+    // What Bell hands the handler in `try` mode: not authenticated, an error
+    // naming the cause, and partial credentials that carry no profile.
+    function failedRequest({
+      message,
+      data,
+      query = {},
+      yar = makeYar(),
+      logger = makeLogger()
+    } = {}) {
+      const error = message ? new Error(message) : undefined
+      if (error && data) {
+        error.data = data
+      }
+      return {
+        auth: {
+          isAuthenticated: false,
+          credentials: { provider: 'azure-ad-b2c', query: {} },
+          error
+        },
+        query,
+        headers: {},
+        yar,
+        logger
+      }
+    }
+
+    const cancelledDescription =
+      'AADB2C90091: The user has cancelled entering self-asserted information.\r\nCorrelation ID: 1234'
+
+    it.each([
+      [
+        'B2C returns access_denied',
+        {
+          message: `App rejected: ${cancelledDescription}`,
+          query: {
+            error: 'access_denied',
+            error_description: cancelledDescription
+          }
+        },
+        'access_denied'
+      ],
+      [
+        'the state does not match',
+        {
+          message: 'Incorrect azure-ad-b2c state parameter',
+          query: { code: 'auth-code', state: 'stale-state' }
+        },
+        'state_mismatch'
+      ],
+      [
+        'the state cookie is missing or expired',
+        {
+          message: 'Missing azure-ad-b2c request token cookie',
+          query: { code: 'auth-code', state: 'some-state', refresh: '1' }
+        },
+        'missing_state_cookie'
+      ],
+      [
+        'the code-for-token exchange fails',
+        {
+          message: 'Failed obtaining azure-ad-b2c access token',
+          query: { code: 'auth-code', state: 'some-state' }
+        },
+        'token_exchange_failed'
+      ]
+    ])(
+      'redirects to the sign-in-failed page and logs a warning when %s',
+      async (_case, options, reason) => {
+        const logger = makeLogger()
+        const result = await signinOidcController.handler(
+          failedRequest({ ...options, logger }),
+          makeH()
+        )
+
+        expect(result).toBe('redirect:/sign-in-failed')
+        expect(logger.warn).toHaveBeenCalledWith(
+          { signIn: expect.objectContaining({ reason }) },
+          `Sign-in callback failed: ${reason}`
+        )
+      }
+    )
+
+    it.each([
+      ['a failure it does not recognise', 'Something else went wrong'],
+      ['no error from Bell at all', undefined]
+    ])('logs reason unknown for %s', async (_case, message) => {
+      const logger = makeLogger()
       await signinOidcController.handler(
-        { auth: null, yar: makeYar() },
+        failedRequest({ message, logger }),
+        makeH()
+      )
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        { signIn: { reason: 'unknown' } },
+        'Sign-in callback failed: unknown'
+      )
+    })
+
+    it("logs B2C's error and AADB2C code but not its free-text description", async () => {
+      const logger = makeLogger()
+      await signinOidcController.handler(
+        failedRequest({
+          message: `App rejected: ${cancelledDescription}`,
+          query: {
+            error: 'access_denied',
+            error_description: cancelledDescription
+          },
+          logger
+        }),
+        makeH()
+      )
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        {
+          signIn: {
+            reason: 'access_denied',
+            b2cError: 'access_denied',
+            b2cErrorCode: 'AADB2C90091'
+          }
+        },
+        'Sign-in callback failed: access_denied'
+      )
+    })
+
+    it('leaves out a B2C error value that is not an OAuth error code', async () => {
+      const logger = makeLogger()
+      await signinOidcController.handler(
+        failedRequest({
+          message: 'Something else went wrong',
+          query: { error: '<script>alert(1)</script>' },
+          logger
+        }),
+        makeH()
+      )
+
+      expect(logger.warn.mock.calls[0][0].signIn).not.toHaveProperty('b2cError')
+    })
+
+    it('keeps the auth code, state and token payload out of the log', async () => {
+      const logger = makeLogger()
+      await signinOidcController.handler(
+        failedRequest({
+          message: 'Failed obtaining azure-ad-b2c access token',
+          data: {
+            access_token: 'secret-access-token',
+            id_token: 'secret-id-token'
+          },
+          query: { code: 'secret-auth-code', state: 'secret-state' },
+          logger
+        }),
+        makeH()
+      )
+
+      expect(JSON.stringify(logger.warn.mock.calls)).not.toContain('secret-')
+    })
+
+    it('does not call the account API, even though Bell passes partial credentials', async () => {
+      await signinOidcController.handler(
+        failedRequest({ message: 'Incorrect azure-ad-b2c state parameter' }),
         makeH()
       )
 
@@ -305,27 +472,160 @@ describe('signinOidcController', () => {
 
     it('does not set user in the session', async () => {
       const yar = makeYar()
-      await signinOidcController.handler({ auth: null, yar }, makeH())
+      await signinOidcController.handler(
+        failedRequest({
+          message: 'Incorrect azure-ad-b2c state parameter',
+          yar
+        }),
+        makeH()
+      )
 
       expect(yar.set).not.toHaveBeenCalledWith('user', expect.anything())
     })
 
-    it('still redirects to / when there are no credentials', async () => {
-      const h = makeH()
-      await signinOidcController.handler({ auth: null, yar: makeYar() }, h)
-
-      expect(h.redirect).toHaveBeenCalledWith('/')
-    })
-
-    it('still redirects to returnTo when one is set and there are no credentials', async () => {
+    // returnTo is a protected page, which would send them straight back to
+    // /signin-oidc: a loop.
+    it('does not send the person back into the service or into sign-in by itself', async () => {
       const h = makeH()
       await signinOidcController.handler(
-        { auth: null, yar: makeYar({ returnTo: '/dashboard' }) },
+        failedRequest({
+          message: 'Missing azure-ad-b2c request token cookie',
+          yar: makeYar({ returnTo: '/certificates-of-compliance' })
+        }),
         h
       )
 
-      expect(h.redirect).toHaveBeenCalledWith('/dashboard')
+      expect(h.redirect).toHaveBeenCalledTimes(1)
+      expect(h.redirect).toHaveBeenCalledWith('/sign-in-failed')
     })
+
+    it('keeps returnTo and authLocale so a retry lands where the person was going', async () => {
+      const yar = makeYar({
+        returnTo: '/certificates-of-compliance',
+        authLocale: 'cy'
+      })
+      const result = await signinOidcController.handler(
+        failedRequest({
+          message: 'Incorrect azure-ad-b2c state parameter',
+          yar
+        }),
+        makeH()
+      )
+
+      expect(result).toBe('redirect:/sign-in-failed?lang=cy')
+      expect(yar.clear).not.toHaveBeenCalledWith('returnTo')
+      expect(yar.clear).not.toHaveBeenCalledWith('authLocale')
+    })
+
+    it('redirects to the sign-in-failed page behind the proxy prefix', async () => {
+      const result = await signinOidcController.handler(
+        {
+          ...failedRequest({
+            message: 'Incorrect azure-ad-b2c state parameter'
+          }),
+          headers: { 'x-forwarded-prefix': '/certificates-of-compliance' }
+        },
+        makeH()
+      )
+
+      expect(result).toBe('redirect:/certificates-of-compliance/sign-in-failed')
+    })
+
+    it('sends someone already signed in on to returnTo when a callback is replayed', async () => {
+      const yar = makeYar({
+        user: { name: 'Jane Smith' },
+        returnTo: '/certificates-of-compliance'
+      })
+      const h = makeH()
+      await signinOidcController.handler(
+        failedRequest({
+          message: 'Missing azure-ad-b2c request token cookie',
+          yar
+        }),
+        h
+      )
+
+      expect(h.redirect).toHaveBeenCalledWith('/certificates-of-compliance')
+    })
+
+    it('shows a refused person the 403 again when they reload its callback', async () => {
+      const h = makeH()
+      const result = await signinOidcController.handler(
+        failedRequest({
+          message: 'Missing azure-ad-b2c request token cookie',
+          yar: makeYar({ deniedUser: { name: 'Percy Producer' } })
+        }),
+        h
+      )
+
+      expect(h.view).toHaveBeenCalledWith(
+        'error/access-denied',
+        expect.anything()
+      )
+      expect(result).toEqual({ status: 403 })
+    })
+
+    it('logs a refused person reloading its callback once, as a warning with the reason', async () => {
+      const logger = makeLogger()
+      const result = await signinOidcController.handler(
+        failedRequest({
+          message: 'Missing azure-ad-b2c request token cookie',
+          yar: makeYar({ deniedUser: { name: 'Percy Producer' } }),
+          logger
+        }),
+        makeH()
+      )
+
+      // Not a Boom, so boom-error-logger does not log it a second time.
+      expect(result.isBoom).toBeUndefined()
+      expect(logger.warn).toHaveBeenCalledTimes(1)
+      expect(logger.warn).toHaveBeenCalledWith(
+        { signIn: { reason: 'missing_state_cookie' } },
+        'Sign-in callback failed: missing_state_cookie'
+      )
+    })
+  })
+})
+
+describe('signInFailedController', () => {
+  function render(request = {}) {
+    const h = makeH()
+    signInFailedController.handler(
+      { query: {}, headers: {}, yar: makeYar(), ...request },
+      h
+    )
+    return h.view.mock.calls[0]
+  }
+
+  it('renders the sign-in-failed page with a link to try again', () => {
+    const [view, context] = render()
+
+    expect(view).toBe('auth/sign-in-failed')
+    expect(context).toEqual({
+      pageTitle: 'Sorry, there was a problem signing you in',
+      heading: 'Sorry, there was a problem signing you in',
+      message:
+        'This can happen if you cancelled signing in, or if the sign-in page was open for too long.',
+      tryAgainText: 'Try signing in again',
+      tryAgainUrl: '/signin-oidc'
+    })
+  })
+
+  it('keeps Welsh on the try-again link, with English text until it is translated', () => {
+    const [, context] = render({ query: { lang: 'cy' } })
+
+    expect(context).toMatchObject({
+      heading: 'Sorry, there was a problem signing you in',
+      tryAgainUrl: '/signin-oidc?lang=cy'
+    })
+  })
+
+  it('links the retry to /signin-oidc behind the proxy prefix', () => {
+    const [, context] = render({
+      headers: { 'x-forwarded-prefix': '/certificates-of-compliance' }
+    })
+
+    expect(context.tryAgainUrl).toBe('/certificates-of-compliance/signin-oidc')
   })
 })
 
