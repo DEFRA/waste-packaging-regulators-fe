@@ -45,6 +45,26 @@ describe('regulator permission gate at sign-in', () => {
     )
   })
 
+  it('offers a refused user sign out, not sign in', async () => {
+    respondWithAccountUser({
+      firstName: 'Percy',
+      lastName: 'Producer',
+      serviceRole: 'Basic User',
+      serviceRoleId: 3,
+      organisations: []
+    })
+
+    const response = await app.server.inject({
+      method: 'GET',
+      url: '/signin-oidc'
+    })
+
+    expect(response.statusCode).toBe(statusCodes.forbidden)
+    expect(response.payload).toContain('Percy Producer')
+    expect(response.payload).toContain('href="/logout"')
+    expect(response.payload).not.toContain('href="/signin-oidc"')
+  })
+
   it('denies sign-in for a valid login with no account', async () => {
     respondWithAccountUser(null)
 

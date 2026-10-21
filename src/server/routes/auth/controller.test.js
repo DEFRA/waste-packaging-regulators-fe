@@ -254,6 +254,43 @@ describe('signinOidcController', () => {
 
       expect(h.redirect).not.toHaveBeenCalled()
     })
+
+    it('records the refused person by display name, so the 403 page can offer sign out', async () => {
+      mockGetAccountDetailsById.mockResolvedValue(nonRegulatorAccount)
+      const yar = makeYar()
+      await signinOidcController.handler(
+        { auth: { credentials }, yar },
+        makeH()
+      )
+
+      expect(yar.set).toHaveBeenCalledWith('deniedUser', {
+        name: 'Percy Producer'
+      })
+    })
+
+    it('records an empty display name when the account lookup returns no details', async () => {
+      mockGetAccountDetailsById.mockResolvedValue({})
+      const yar = makeYar()
+      await signinOidcController.handler(
+        { auth: { credentials }, yar },
+        makeH()
+      )
+
+      expect(yar.set).toHaveBeenCalledWith('deniedUser', { name: '' })
+    })
+  })
+
+  describe('after a refused sign-in', () => {
+    it('clears deniedUser once a regulator signs in', async () => {
+      mockGetAccountDetailsById.mockResolvedValue({ ...mockAccountDetails })
+      const yar = makeYar()
+      await signinOidcController.handler(
+        { auth: { credentials }, yar },
+        makeH()
+      )
+
+      expect(yar.clear).toHaveBeenCalledWith('deniedUser')
+    })
   })
 
   describe('without credentials', () => {
