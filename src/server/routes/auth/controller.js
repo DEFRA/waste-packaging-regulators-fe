@@ -179,11 +179,18 @@ export const signinOidcController = {
       if (!isRegulator(user)) {
         request.yar.clear('returnTo')
         clearAuthLocale(request)
+        // Still signed in at B2C, so the 403 page must offer "Sign out":
+        // "Sign in" would only sign the same account straight back in. Only
+        // the display name is kept, and it grants no access.
+        request.yar.set('deniedUser', {
+          name: [user?.firstName, user?.lastName].filter(Boolean).join(' ')
+        })
         return Boom.forbidden('User does not hold a regulator service role')
       }
       user.id = request.auth.credentials.profile.oid
       user.email = request.auth.credentials.profile.email
       user.name = `${user.firstName} ${user.lastName}`
+      request.yar.clear('deniedUser')
       request.yar.set('user', user)
     }
     const returnTo = request.yar.get('returnTo') || '/'

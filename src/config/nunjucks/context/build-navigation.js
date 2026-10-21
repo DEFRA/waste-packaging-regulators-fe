@@ -1,4 +1,7 @@
-import { getSessionUser } from '#server/common/helpers/get-session-user.js'
+import {
+  getDeniedSessionUser,
+  getSessionUser
+} from '#server/common/helpers/get-session-user.js'
 import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
 import { withForwardedPrefix } from '#server/common/helpers/proxy/forwarded-prefix.js'
@@ -23,7 +26,9 @@ export function buildNavigation() {
 }
 
 export function buildRegulatorContext(request, locale = 'en') {
-  const user = getSessionUser(request)
+  // Someone refused at sign-in is still signed in at B2C, so they get
+  // "Sign out" too.
+  const user = getSessionUser(request) ?? getDeniedSessionUser(request)
   const accountDetails = request.app?.accountDetails
 
   if (user) {
