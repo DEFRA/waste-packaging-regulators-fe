@@ -61,7 +61,7 @@ export function b2cErrorDetails(request) {
   const description = request.query?.error_description
   const code =
     typeof description === 'string'
-      ? description.match(B2C_ERROR_CODE_PATTERN)?.[0]
+      ? B2C_ERROR_CODE_PATTERN.exec(description)?.[0]
       : undefined
   if (code) {
     details.b2cErrorCode = code
