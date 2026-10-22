@@ -6,6 +6,7 @@ import {
   certificatesOfComplianceCancelGetController,
   certificatesOfComplianceCancelPostController
 } from './controller.js'
+import { SESSION_USER_STRATEGY } from '#server/auth/session-user.js'
 
 export const certificatesOfComplianceCancel = {
   plugin: {
@@ -16,6 +17,7 @@ export const certificatesOfComplianceCancel = {
           method: 'GET',
           path: '/{organisationId}/{documentType}/{id}/cancel/reason',
           options: {
+            auth: SESSION_USER_STRATEGY,
             ...certificatesOfComplianceCancelReasonGetController
           }
         },
@@ -23,6 +25,7 @@ export const certificatesOfComplianceCancel = {
           method: 'POST',
           path: '/{organisationId}/{documentType}/{id}/cancel/reason',
           options: {
+            auth: SESSION_USER_STRATEGY,
             ...certificatesOfComplianceCancelReasonPostController
           }
         },
@@ -30,6 +33,7 @@ export const certificatesOfComplianceCancel = {
           method: 'GET',
           path: '/{organisationId}/{documentType}/{id}/cancel/check',
           options: {
+            auth: SESSION_USER_STRATEGY,
             ...certificatesOfComplianceCancelCheckGetController
           }
         },
@@ -37,6 +41,7 @@ export const certificatesOfComplianceCancel = {
           method: 'GET',
           path: '/{organisationId}/{documentType}/{id}/cancel/email-preview',
           options: {
+            auth: SESSION_USER_STRATEGY,
             ...certificatesOfComplianceCancelEmailPreviewGetController
           }
         },
@@ -44,6 +49,7 @@ export const certificatesOfComplianceCancel = {
           method: 'GET',
           path: '/{organisationId}/{documentType}/{id}/cancel',
           options: {
+            auth: SESSION_USER_STRATEGY,
             ...certificatesOfComplianceCancelGetController
           }
         },
@@ -51,6 +57,7 @@ export const certificatesOfComplianceCancel = {
           method: 'POST',
           path: '/{organisationId}/{documentType}/{id}/cancel',
           options: {
+            auth: SESSION_USER_STRATEGY,
             ...certificatesOfComplianceCancelPostController
           }
         }

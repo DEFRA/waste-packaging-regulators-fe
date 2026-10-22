@@ -7,7 +7,6 @@ import {
   readAndClearCertificateActionBannerFlags
 } from '../actions/session.service.js'
 import { getCertificateOfComplianceDetailViewModel } from './detail.service.js'
-import { redirectToSignIn } from './actions-controller.js'
 
 function parseObligationYearQuery(value) {
   if (value == null || value === '') {
@@ -20,10 +19,6 @@ function parseObligationYearQuery(value) {
 
 export const certificatesOfComplianceDetailController = {
   async handler(request, h) {
-    if (!request.yar.get('user')) {
-      return redirectToSignIn(request, h)
-    }
-
     const { organisationId, id } = request.params
     const traceId = request.headers[config.get('tracing.header')]
     const { type, tab, obligationYear: queryObligationYear } = request.query

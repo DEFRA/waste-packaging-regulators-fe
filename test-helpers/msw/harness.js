@@ -104,7 +104,14 @@ export function setupRegulatorsApp() {
   // Like server.inject but strips the route prefix from the URL first.
   // Use this for raw requests that must bypass CSRF (e.g. no-token tests).
   const rawInject = (options) =>
-    state.server.inject({ ...options, url: stripPrefix(options.url) })
+    state.server.inject({
+      ...options,
+      url: stripPrefix(options.url),
+      headers: prefixHeaders(options.url, {
+        ...(state.authCookie ? { cookie: state.authCookie } : {}),
+        ...options.headers
+      })
+    })
 
   // A fresh signed-in session + crumb, for a test that needs a session distinct
   // from the shared one.
@@ -117,11 +124,12 @@ export function setupRegulatorsApp() {
   }
 
   // A crumb cookie minted without signing in — a browser that still holds a
-  // form's crumb after its session has lapsed.
+  // form's crumb after its session has lapsed. Taken from a public page: the
+  // certificate pages redirect to sign-in during auth, before crumb runs.
   const anonCrumb = async () => {
     const response = await state.server.inject({
       method: 'GET',
-      url: '/'
+      url: '/cookies'
     })
     return csrfTokenCookieFromResponse(response)
   }

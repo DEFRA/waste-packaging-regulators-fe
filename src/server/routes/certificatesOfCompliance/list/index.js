@@ -1,4 +1,5 @@
 import { certificatesOfComplianceController } from './controller.js'
+import { SESSION_USER_STRATEGY } from '#server/auth/session-user.js'
 
 export const certificatesOfComplianceList = {
   plugin: {
@@ -9,7 +10,7 @@ export const certificatesOfComplianceList = {
           method: 'GET',
           path: '/',
           options: {
-            auth: false,
+            auth: SESSION_USER_STRATEGY,
             ...certificatesOfComplianceController
           }
         }

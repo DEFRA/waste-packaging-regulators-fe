@@ -2,6 +2,7 @@ import {
   certificatesOfComplianceAcceptGetController,
   certificatesOfComplianceAcceptPostController
 } from './controller.js'
+import { SESSION_USER_STRATEGY } from '#server/auth/session-user.js'
 
 export const certificatesOfComplianceAccept = {
   plugin: {
@@ -12,7 +13,7 @@ export const certificatesOfComplianceAccept = {
           method: 'GET',
           path: '/{organisationId}/{documentType}/{id}/accept',
           options: {
-            auth: false,
+            auth: SESSION_USER_STRATEGY,
             ...certificatesOfComplianceAcceptGetController
           }
         },
@@ -20,7 +21,7 @@ export const certificatesOfComplianceAccept = {
           method: 'POST',
           path: '/{organisationId}/{documentType}/{id}/accept',
           options: {
-            auth: false,
+            auth: SESSION_USER_STRATEGY,
             ...certificatesOfComplianceAcceptPostController
           }
         }

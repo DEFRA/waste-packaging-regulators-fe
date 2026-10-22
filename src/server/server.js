@@ -12,6 +12,7 @@ import { nunjucksConfig } from '#config/nunjucks/nunjucks.js'
 import { setupProxy } from './common/helpers/proxy/setup-proxy.js'
 import { applyForwardedPrefixToCookiePath } from './common/helpers/proxy/forwarded-prefix.js'
 import { bellRedirectLocation } from './auth/azure-ad-b2c.js'
+import { registerSessionUserStrategy } from './auth/session-user.js'
 import { requestTracing } from './plugins/request-tracing.js'
 import { requestLogger } from './plugins/request-logger.js'
 import { boomErrorLogger } from './plugins/boom-error-logger.js'
@@ -194,6 +195,7 @@ export async function createServer() {
   ])
 
   registerAuthStrategy(server)
+  registerSessionUserStrategy(server)
 
   await server.register([
     router // Register all the controllers/routes defined in src/server/plugins/router.js
