@@ -2,17 +2,9 @@ import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
-import {
-  bindLocaleUrl,
-  persistAuthLocale,
-  redirectWithLocale
-} from '#server/common/helpers/i18n/locale-url.js'
+import { bindLocaleUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
-import {
-  getForwardedPrefix,
-  getProxyPrefix,
-  withForwardedPrefix
-} from '#server/common/helpers/proxy/forwarded-prefix.js'
+import { getForwardedPrefix } from '#server/common/helpers/proxy/forwarded-prefix.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { ApiError } from '#services/apiBaseClient/api-error.js'
 import {
@@ -134,16 +126,6 @@ export function resolveSortForSubmissionStatus(
   }
 }
 
-function redirectUnauthenticated(request, h, locale) {
-  persistAuthLocale(request, locale)
-  const localPath = request.url.pathname + request.url.search
-  request.yar.set('returnTo', withForwardedPrefix(request, localPath))
-  const signinUrl = getProxyPrefix(request)
-    ? withForwardedPrefix(request, '/signin-oidc')
-    : '/signin-oidc'
-  return redirectWithLocale(h, request, signinUrl)
-}
-
 function validateListParams(type, submissionStatus) {
   if (![DIRECT_PRODUCERS, COMPLIANCE_SCHEMES].includes(type)) {
     throw Boom.badRequest(`Invalid organisation type: ${type}`)
@@ -189,10 +171,6 @@ function buildListViewData(
 export const certificatesOfComplianceController = {
   async handler(request, h) {
     const locale = getLocale(request)
-
-    if (!request.yar.get('user')) {
-      return redirectUnauthenticated(request, h, locale)
-    }
 
     const {
       type = DIRECT_PRODUCERS,

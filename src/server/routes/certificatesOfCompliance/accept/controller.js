@@ -12,7 +12,6 @@ import {
 import { canApproveComplianceDeclaration } from '../actions/status.js'
 import { getBaseQueryString } from '../common/query.js'
 import { getCertificateOfComplianceDetailViewModel } from '../detail/detail.service.js'
-import { redirectToSignIn } from '../detail/actions-controller.js'
 import { cocPageI18n, translateCoc } from '../common/locale-strings.js'
 
 const TRACING_HEADER = 'tracing.header'
@@ -131,10 +130,6 @@ async function approveDeclaration(request, h, locale) {
 
 export const certificatesOfComplianceAcceptGetController = {
   async handler(request, h) {
-    if (!request.yar.get('user')) {
-      return redirectToSignIn(request, h)
-    }
-
     const locale = getLocale(request)
     const { organisationId, id, documentType } = request.params
     const traceId = getTraceIdFromRequest(request)
@@ -156,10 +151,6 @@ export const certificatesOfComplianceAcceptGetController = {
 
 export const certificatesOfComplianceAcceptPostController = {
   async handler(request, h) {
-    if (!request.yar.get('user')) {
-      return redirectToSignIn(request, h)
-    }
-
     const locale = getLocale(request)
     const choice = request.payload?.['confirm-accept']
     const { organisationId, id, documentType } = request.params

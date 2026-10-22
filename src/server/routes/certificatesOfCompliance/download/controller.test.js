@@ -23,6 +23,15 @@ describe('#certificatesOfComplianceDownloadController', () => {
     )
   })
 
+  test('keeps Welsh on the sign-in redirect', async () => {
+    const response = await app.get(`${DOWNLOAD_URL}&lang=cy`, null)
+
+    expect(response.statusCode).toBe(302)
+    expect(response.headers.location).toBe(
+      '/certificates-of-compliance/signin-oidc?lang=cy'
+    )
+  })
+
   test('passes session regulator country to the download service', async () => {
     vi.spyOn(downloadService, 'getComplianceDownload').mockResolvedValue({
       filename: 'test.csv',

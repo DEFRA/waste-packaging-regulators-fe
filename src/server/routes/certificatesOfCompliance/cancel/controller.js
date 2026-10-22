@@ -10,7 +10,6 @@ import {
 } from '../actions/session.service.js'
 import { canCancelComplianceDeclaration } from '../actions/status.js'
 import { getCertificateOfComplianceDetailViewModel } from '../detail/detail.service.js'
-import { redirectToSignIn } from '../detail/actions-controller.js'
 import { cocPageI18n, translateCoc } from '../common/locale-strings.js'
 import {
   buildCancelReasonItems,
@@ -252,10 +251,6 @@ async function renderCancellationEmailPreview(
 
 export const certificatesOfComplianceCancelReasonGetController = {
   async handler(request, h) {
-    if (!request.yar.get('user')) {
-      return redirectToSignIn(request, h)
-    }
-
     const locale = getLocale(request)
     const { organisationId, id, documentType } = request.params
     const { response } = await guardCancelAllowed(request, h, {
@@ -277,10 +272,6 @@ export const certificatesOfComplianceCancelReasonGetController = {
 
 export const certificatesOfComplianceCancelReasonPostController = {
   async handler(request, h) {
-    if (!request.yar.get('user')) {
-      return redirectToSignIn(request, h)
-    }
-
     const locale = getLocale(request)
     const { organisationId, id, documentType } = request.params
     const reason = request.payload?.['cancel-reason']
@@ -300,10 +291,6 @@ export const certificatesOfComplianceCancelReasonPostController = {
 }
 
 async function guardCancelWithReason(request, h) {
-  if (!request.yar.get('user')) {
-    return { earlyResponse: redirectToSignIn(request, h) }
-  }
-
   const locale = getLocale(request)
   const { organisationId, id, documentType } = request.params
   const { response } = await guardCancelAllowed(request, h, {
@@ -450,10 +437,6 @@ export const certificatesOfComplianceCancelGetController = {
 
 export const certificatesOfComplianceCancelPostController = {
   async handler(request, h) {
-    if (!request.yar.get('user')) {
-      return redirectToSignIn(request, h)
-    }
-
     const locale = getLocale(request)
     const { organisationId, id, documentType } = request.params
     const detail = detailPath(request, organisationId, id, documentType, locale)
