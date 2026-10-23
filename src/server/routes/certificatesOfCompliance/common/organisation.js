@@ -29,7 +29,7 @@ export function formatOrganisationName(organisation, year) {
         return organisation.name
 
       case wasteOrganisationsRegistrationType.COMPLIANCE_SCHEME:
-        return organisation.tradingName
+        return organisation.name
 
       default:
         return organisation.name
