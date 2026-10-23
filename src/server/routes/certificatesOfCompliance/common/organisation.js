@@ -1,7 +1,6 @@
 import {
   UNKNOWN_ORGANISATION,
-  wasteOrganisationsRegistrationStatus,
-  wasteOrganisationsRegistrationType
+  wasteOrganisationsRegistrationStatus
 } from './constants.js'
 import { isComplianceSchemeRegistrationType } from './display.js'
 
@@ -23,20 +22,7 @@ export function formatOrganisationName(organisation, year) {
     return ''
   }
 
-  const result = (() => {
-    switch (registration.type) {
-      case wasteOrganisationsRegistrationType.LARGE_PRODUCER:
-        return organisation.name
-
-      case wasteOrganisationsRegistrationType.COMPLIANCE_SCHEME:
-        return organisation.name
-
-      default:
-        return organisation.name
-    }
-  })()
-
-  return result ?? organisation.name ?? ''
+  return organisation.name ?? ''
 }
 
 export function mapOrganisationName(organisation) {
