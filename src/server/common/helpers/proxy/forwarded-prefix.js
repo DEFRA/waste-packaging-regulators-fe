@@ -34,14 +34,14 @@ import { config } from '#config/config.js'
 
 const CERTIFICATES_OF_COMPLIANCE_PREFIX = '/certificates-of-compliance'
 
-export function isCertificatesOfCompliancePath(path) {
+function isCertificatesOfCompliancePath(path) {
   return (
     path === CERTIFICATES_OF_COMPLIANCE_PREFIX ||
     path.startsWith(`${CERTIFICATES_OF_COMPLIANCE_PREFIX}/`)
   )
 }
 
-export function stripCertificatesOfCompliancePrefix(pathOrUrl) {
+function stripCertificatesOfCompliancePrefix(pathOrUrl) {
   if (
     typeof pathOrUrl !== 'string' ||
     !pathOrUrl.startsWith(CERTIFICATES_OF_COMPLIANCE_PREFIX)
@@ -59,6 +59,28 @@ export function stripCertificatesOfCompliancePrefix(pathOrUrl) {
   }
 
   return pathOrUrl
+}
+
+/**
+ * Hapi `onRequest` extension that normalises direct access requests that arrive
+ * carrying the external path prefix (e.g. in local development or journey tests).
+ * Strips the prefix from the request URL before routing occurs and records the
+ * inferred prefix on `request.app` so downstream helpers can generate prefixed URLs.
+ *
+ * @param {import('@hapi/hapi').Request} request
+ * @param {import('@hapi/hapi').ResponseToolkit} h
+ * @returns {symbol}
+ */
+export function rewriteDirectPrefix(request, h) {
+  if (isCertificatesOfCompliancePath(request.path)) {
+    request.app.inferredPrefix = CERTIFICATES_OF_COMPLIANCE_PREFIX
+    request.setUrl(
+      stripCertificatesOfCompliancePrefix(
+        request.url.pathname + request.url.search
+      )
+    )
+  }
+  return h.continue
 }
 
 /**
@@ -86,7 +108,7 @@ export function getForwardedPrefix(request) {
   // in front. Infer the prefix from the request path so URL generation stays
   // correct whether tests run against the app directly or through the proxy.
   if (isCertificatesOfCompliancePath(request?.path ?? '')) {
-    return '/certificates-of-compliance'
+    return CERTIFICATES_OF_COMPLIANCE_PREFIX
   }
 
   return ''
@@ -96,8 +118,8 @@ export function getForwardedPrefix(request) {
  * Returns the prefix from the X-Forwarded-Prefix header only, with no path
  * inference fallback. Use this when the prefix must only be applied for
  * requests that genuinely passed through the reverse proxy — for example,
- * auth redirect URLs that are only reachable via the proxied path and have no
- * alias under the prefix when the app is accessed directly.
+ * cookie scoping, response redirect rewrites, and external asset paths
+ * where proxy-specific URL rewriting is not desired on direct access.
  *
  * @param {import('@hapi/hapi').Request} request
  * @returns {string}
@@ -200,8 +222,8 @@ export function withForwardedPrefix(request, pathOrUrl) {
     return pathOrUrl
   }
 
-  // Idempotency: path already carries the prefix (direct-access scenario where
-  // the full prefixed path is the request path). Return unchanged to avoid a
+  // Idempotency: path already carries the prefix (e.g. composed helpers such
+  // as redirectToSignIn → redirectWithLocale). Return unchanged to avoid a
   // double-prefix such as /certificates-of-compliance/certificates-of-compliance.
   if (alreadyHasPrefix(pathOrUrl, prefix)) {
     return pathOrUrl

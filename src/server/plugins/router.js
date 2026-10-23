@@ -9,10 +9,7 @@ import { certificatesOfComplianceDownload } from '../routes/certificatesOfCompli
 import { certificatesOfComplianceDetail } from '../routes/certificatesOfCompliance/detail/index.js'
 import { certificatesOfComplianceAccept } from '../routes/certificatesOfCompliance/accept/index.js'
 import { certificatesOfComplianceCancel } from '../routes/certificatesOfCompliance/cancel/index.js'
-import {
-  isCertificatesOfCompliancePath,
-  stripCertificatesOfCompliancePrefix
-} from '../common/helpers/proxy/forwarded-prefix.js'
+import { rewriteDirectPrefix } from '../common/helpers/proxy/forwarded-prefix.js'
 import { errorExamples } from '../routes/error/examples/index.js'
 import { cookies } from '../routes/cookies/index.js'
 
@@ -20,15 +17,7 @@ export const router = {
   plugin: {
     name: 'router',
     async register(server) {
-      server.ext('onRequest', (request, h) => {
-        const { path } = request
-        if (isCertificatesOfCompliancePath(path)) {
-          request.app.inferredPrefix = '/certificates-of-compliance'
-          const rawUrl = request.url.pathname + request.url.search
-          request.setUrl(stripCertificatesOfCompliancePrefix(rawUrl))
-        }
-        return h.continue
-      })
+      server.ext('onRequest', rewriteDirectPrefix)
 
       await server.register([inert])
 

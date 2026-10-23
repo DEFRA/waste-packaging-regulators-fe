@@ -9,6 +9,7 @@ import { certificatesOfComplianceDownload } from '../routes/certificatesOfCompli
 import { certificatesOfComplianceDetail } from '../routes/certificatesOfCompliance/detail/index.js'
 import { certificatesOfComplianceAccept } from '../routes/certificatesOfCompliance/accept/index.js'
 import { certificatesOfComplianceCancel } from '../routes/certificatesOfCompliance/cancel/index.js'
+import { rewriteDirectPrefix } from '../common/helpers/proxy/forwarded-prefix.js'
 import { errorExamples } from '../routes/error/examples/index.js'
 import { serveStaticFiles } from './serve-static-files.js'
 import { router } from './router.js'
@@ -92,82 +93,11 @@ describe('router plugin', () => {
   })
 
   describe('onRequest prefix rewrite', () => {
-    it('registers an onRequest extension hook', async () => {
+    it('registers the rewriteDirectPrefix onRequest extension hook', async () => {
       configSpy = spyConfig({ isTest: true })
       const server = makeServer()
       await router.plugin.register(server)
-      expect(server.ext).toHaveBeenCalledWith('onRequest', expect.any(Function))
-    })
-
-    it('rewrites /certificates-of-compliance to / and sets request.app.inferredPrefix', async () => {
-      configSpy = spyConfig({ isTest: true })
-      const server = makeServer()
-      await router.plugin.register(server)
-      const onRequestHook = server.ext.mock.calls.find(
-        ([event]) => event === 'onRequest'
-      )[1]
-
-      const request = {
-        path: '/certificates-of-compliance',
-        url: {
-          pathname: '/certificates-of-compliance',
-          search: '?type=direct-producers'
-        },
-        app: {},
-        setUrl: vi.fn()
-      }
-      const h = { continue: Symbol('continue') }
-
-      const result = onRequestHook(request, h)
-      expect(result).toBe(h.continue)
-      expect(request.app.inferredPrefix).toBe('/certificates-of-compliance')
-      expect(request.setUrl).toHaveBeenCalledWith('/?type=direct-producers')
-    })
-
-    it('rewrites nested /certificates-of-compliance paths', async () => {
-      configSpy = spyConfig({ isTest: true })
-      const server = makeServer()
-      await router.plugin.register(server)
-      const onRequestHook = server.ext.mock.calls.find(
-        ([event]) => event === 'onRequest'
-      )[1]
-
-      const request = {
-        path: '/certificates-of-compliance/org-1/certificate/decl-1',
-        url: {
-          pathname: '/certificates-of-compliance/org-1/certificate/decl-1',
-          search: ''
-        },
-        app: {},
-        setUrl: vi.fn()
-      }
-      const h = { continue: Symbol('continue') }
-
-      onRequestHook(request, h)
-      expect(request.app.inferredPrefix).toBe('/certificates-of-compliance')
-      expect(request.setUrl).toHaveBeenCalledWith('/org-1/certificate/decl-1')
-    })
-
-    it('leaves non-prefixed paths unchanged', async () => {
-      configSpy = spyConfig({ isTest: true })
-      const server = makeServer()
-      await router.plugin.register(server)
-      const onRequestHook = server.ext.mock.calls.find(
-        ([event]) => event === 'onRequest'
-      )[1]
-
-      const request = {
-        path: '/health',
-        url: { pathname: '/health', search: '' },
-        app: {},
-        setUrl: vi.fn()
-      }
-      const h = { continue: Symbol('continue') }
-
-      const result = onRequestHook(request, h)
-      expect(result).toBe(h.continue)
-      expect(request.app.inferredPrefix).toBeUndefined()
-      expect(request.setUrl).not.toHaveBeenCalled()
+      expect(server.ext).toHaveBeenCalledWith('onRequest', rewriteDirectPrefix)
     })
   })
 

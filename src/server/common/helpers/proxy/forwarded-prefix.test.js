@@ -1,10 +1,10 @@
+import { vi } from 'vitest'
 import {
   applyForwardedPrefixToCookiePath,
   getExternalPublicPath,
   getForwardedPrefix,
   getProxyPrefix,
-  isCertificatesOfCompliancePath,
-  stripCertificatesOfCompliancePrefix,
+  rewriteDirectPrefix,
   withForwardedPrefix
 } from './forwarded-prefix.js'
 
@@ -17,66 +17,91 @@ function createRequest(prefix, path = '/', app = {}) {
 }
 
 describe('forwarded prefix helpers', () => {
-  describe('isCertificatesOfCompliancePath', () => {
-    test('matches exact /certificates-of-compliance path', () => {
-      expect(
-        isCertificatesOfCompliancePath('/certificates-of-compliance')
-      ).toBe(true)
+  describe('rewriteDirectPrefix', () => {
+    test('rewrites /certificates-of-compliance to / and sets request.app.inferredPrefix', () => {
+      const request = {
+        path: '/certificates-of-compliance',
+        url: {
+          pathname: '/certificates-of-compliance',
+          search: '?type=direct-producers'
+        },
+        app: {},
+        setUrl: vi.fn()
+      }
+      const h = { continue: Symbol('continue') }
+
+      const result = rewriteDirectPrefix(request, h)
+
+      expect(result).toBe(h.continue)
+      expect(request.app.inferredPrefix).toBe('/certificates-of-compliance')
+      expect(request.setUrl).toHaveBeenCalledWith('/?type=direct-producers')
     })
 
-    test('matches nested /certificates-of-compliance paths', () => {
-      expect(
-        isCertificatesOfCompliancePath('/certificates-of-compliance/org-1')
-      ).toBe(true)
+    test('rewrites exact /certificates-of-compliance with trailing slash', () => {
+      const request = {
+        path: '/certificates-of-compliance/',
+        url: { pathname: '/certificates-of-compliance/', search: '' },
+        app: {},
+        setUrl: vi.fn()
+      }
+      const h = { continue: Symbol('continue') }
+
+      const result = rewriteDirectPrefix(request, h)
+
+      expect(result).toBe(h.continue)
+      expect(request.app.inferredPrefix).toBe('/certificates-of-compliance')
+      expect(request.setUrl).toHaveBeenCalledWith('/')
     })
 
-    test('does not match unrelated paths or prefixed prefixes', () => {
-      expect(
-        isCertificatesOfCompliancePath('/certificates-of-compliance-other')
-      ).toBe(false)
-      expect(isCertificatesOfCompliancePath('/health')).toBe(false)
-      expect(isCertificatesOfCompliancePath('/')).toBe(false)
-    })
-  })
+    test('rewrites nested /certificates-of-compliance paths', () => {
+      const request = {
+        path: '/certificates-of-compliance/org-1/certificate/decl-1',
+        url: {
+          pathname: '/certificates-of-compliance/org-1/certificate/decl-1',
+          search: ''
+        },
+        app: {},
+        setUrl: vi.fn()
+      }
+      const h = { continue: Symbol('continue') }
 
-  describe('stripCertificatesOfCompliancePrefix', () => {
-    test('strips exact prefix to root slash', () => {
-      expect(
-        stripCertificatesOfCompliancePrefix('/certificates-of-compliance')
-      ).toBe('/')
-      expect(
-        stripCertificatesOfCompliancePrefix('/certificates-of-compliance/')
-      ).toBe('/')
-    })
+      const result = rewriteDirectPrefix(request, h)
 
-    test('strips prefix preserving query parameters and hash', () => {
-      expect(
-        stripCertificatesOfCompliancePrefix(
-          '/certificates-of-compliance?tab=pending'
-        )
-      ).toBe('/?tab=pending')
-      expect(
-        stripCertificatesOfCompliancePrefix(
-          '/certificates-of-compliance#section'
-        )
-      ).toBe('/#section')
+      expect(result).toBe(h.continue)
+      expect(request.app.inferredPrefix).toBe('/certificates-of-compliance')
+      expect(request.setUrl).toHaveBeenCalledWith('/org-1/certificate/decl-1')
     })
 
-    test('strips prefix from nested routes', () => {
-      expect(
-        stripCertificatesOfCompliancePrefix(
-          '/certificates-of-compliance/org-1/certificate/decl-1'
-        )
-      ).toBe('/org-1/certificate/decl-1')
+    test('leaves non-prefixed paths unchanged', () => {
+      const request = {
+        path: '/health',
+        url: { pathname: '/health', search: '' },
+        app: {},
+        setUrl: vi.fn()
+      }
+      const h = { continue: Symbol('continue') }
+
+      const result = rewriteDirectPrefix(request, h)
+
+      expect(result).toBe(h.continue)
+      expect(request.app.inferredPrefix).toBeUndefined()
+      expect(request.setUrl).not.toHaveBeenCalled()
     })
 
-    test('returns non-prefixed or non-string paths unchanged', () => {
-      expect(
-        stripCertificatesOfCompliancePrefix('/certificates-of-compliance-fake')
-      ).toBe('/certificates-of-compliance-fake')
-      expect(stripCertificatesOfCompliancePrefix('/health')).toBe('/health')
-      expect(stripCertificatesOfCompliancePrefix(null)).toBe(null)
-      expect(stripCertificatesOfCompliancePrefix(123)).toBe(123)
+    test('does not rewrite unrelated paths that start with the prefix string', () => {
+      const request = {
+        path: '/certificates-of-compliance-other',
+        url: { pathname: '/certificates-of-compliance-other', search: '' },
+        app: {},
+        setUrl: vi.fn()
+      }
+      const h = { continue: Symbol('continue') }
+
+      const result = rewriteDirectPrefix(request, h)
+
+      expect(result).toBe(h.continue)
+      expect(request.app.inferredPrefix).toBeUndefined()
+      expect(request.setUrl).not.toHaveBeenCalled()
     })
   })
 
