@@ -32,11 +32,33 @@ function hasForwardedPrefixHeader(request) {
 
 import { config } from '#config/config.js'
 
-function isCertificatesOfCompliancePath(path) {
+const CERTIFICATES_OF_COMPLIANCE_PREFIX = '/certificates-of-compliance'
+
+export function isCertificatesOfCompliancePath(path) {
   return (
-    path === '/certificates-of-compliance' ||
-    path.startsWith('/certificates-of-compliance/')
+    path === CERTIFICATES_OF_COMPLIANCE_PREFIX ||
+    path.startsWith(`${CERTIFICATES_OF_COMPLIANCE_PREFIX}/`)
   )
+}
+
+export function stripCertificatesOfCompliancePrefix(pathOrUrl) {
+  if (
+    typeof pathOrUrl !== 'string' ||
+    !pathOrUrl.startsWith(CERTIFICATES_OF_COMPLIANCE_PREFIX)
+  ) {
+    return pathOrUrl
+  }
+
+  const rest = pathOrUrl.slice(CERTIFICATES_OF_COMPLIANCE_PREFIX.length)
+  if (rest === '' || rest.startsWith('?') || rest.startsWith('#')) {
+    return `/${rest}`
+  }
+
+  if (rest.startsWith('/')) {
+    return rest
+  }
+
+  return pathOrUrl
 }
 
 /**
@@ -54,6 +76,10 @@ function isCertificatesOfCompliancePath(path) {
 export function getForwardedPrefix(request) {
   if (hasForwardedPrefixHeader(request)) {
     return validatePrefix(request.headers['x-forwarded-prefix'])
+  }
+
+  if (request?.app?.inferredPrefix) {
+    return request.app.inferredPrefix
   }
 
   // No proxy header — the app is being accessed directly without a YARP proxy

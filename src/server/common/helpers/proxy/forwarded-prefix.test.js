@@ -3,17 +3,83 @@ import {
   getExternalPublicPath,
   getForwardedPrefix,
   getProxyPrefix,
+  isCertificatesOfCompliancePath,
+  stripCertificatesOfCompliancePrefix,
   withForwardedPrefix
 } from './forwarded-prefix.js'
 
-function createRequest(prefix, path = '/') {
+function createRequest(prefix, path = '/', app = {}) {
   return {
     path,
-    headers: prefix === undefined ? {} : { 'x-forwarded-prefix': prefix }
+    headers: prefix === undefined ? {} : { 'x-forwarded-prefix': prefix },
+    app
   }
 }
 
 describe('forwarded prefix helpers', () => {
+  describe('isCertificatesOfCompliancePath', () => {
+    test('matches exact /certificates-of-compliance path', () => {
+      expect(
+        isCertificatesOfCompliancePath('/certificates-of-compliance')
+      ).toBe(true)
+    })
+
+    test('matches nested /certificates-of-compliance paths', () => {
+      expect(
+        isCertificatesOfCompliancePath('/certificates-of-compliance/org-1')
+      ).toBe(true)
+    })
+
+    test('does not match unrelated paths or prefixed prefixes', () => {
+      expect(
+        isCertificatesOfCompliancePath('/certificates-of-compliance-other')
+      ).toBe(false)
+      expect(isCertificatesOfCompliancePath('/health')).toBe(false)
+      expect(isCertificatesOfCompliancePath('/')).toBe(false)
+    })
+  })
+
+  describe('stripCertificatesOfCompliancePrefix', () => {
+    test('strips exact prefix to root slash', () => {
+      expect(
+        stripCertificatesOfCompliancePrefix('/certificates-of-compliance')
+      ).toBe('/')
+      expect(
+        stripCertificatesOfCompliancePrefix('/certificates-of-compliance/')
+      ).toBe('/')
+    })
+
+    test('strips prefix preserving query parameters and hash', () => {
+      expect(
+        stripCertificatesOfCompliancePrefix(
+          '/certificates-of-compliance?tab=pending'
+        )
+      ).toBe('/?tab=pending')
+      expect(
+        stripCertificatesOfCompliancePrefix(
+          '/certificates-of-compliance#section'
+        )
+      ).toBe('/#section')
+    })
+
+    test('strips prefix from nested routes', () => {
+      expect(
+        stripCertificatesOfCompliancePrefix(
+          '/certificates-of-compliance/org-1/certificate/decl-1'
+        )
+      ).toBe('/org-1/certificate/decl-1')
+    })
+
+    test('returns non-prefixed or non-string paths unchanged', () => {
+      expect(
+        stripCertificatesOfCompliancePrefix('/certificates-of-compliance-fake')
+      ).toBe('/certificates-of-compliance-fake')
+      expect(stripCertificatesOfCompliancePrefix('/health')).toBe('/health')
+      expect(stripCertificatesOfCompliancePrefix(null)).toBe(null)
+      expect(stripCertificatesOfCompliancePrefix(123)).toBe(123)
+    })
+  })
+
   describe('getForwardedPrefix', () => {
     test('returns a valid proxy prefix without trailing slashes', () => {
       expect(
@@ -32,6 +98,13 @@ describe('forwarded prefix helpers', () => {
       '/certificates-of-compliance, /another-path'
     ])('ignores an invalid forwarded prefix: %s', (prefix) => {
       expect(getForwardedPrefix(createRequest(prefix))).toBe('')
+    })
+
+    test('returns prefix when request.app.inferredPrefix is set', () => {
+      const request = createRequest(undefined, '/', {
+        inferredPrefix: '/certificates-of-compliance'
+      })
+      expect(getForwardedPrefix(request)).toBe('/certificates-of-compliance')
     })
 
     test('infers prefix from a request path nested under /certificates-of-compliance', () => {
