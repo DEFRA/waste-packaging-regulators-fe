@@ -42,23 +42,8 @@ function isCertificatesOfCompliancePath(path) {
 }
 
 function stripCertificatesOfCompliancePrefix(pathOrUrl) {
-  if (
-    typeof pathOrUrl !== 'string' ||
-    !pathOrUrl.startsWith(CERTIFICATES_OF_COMPLIANCE_PREFIX)
-  ) {
-    return pathOrUrl
-  }
-
   const rest = pathOrUrl.slice(CERTIFICATES_OF_COMPLIANCE_PREFIX.length)
-  if (rest === '' || rest.startsWith('?') || rest.startsWith('#')) {
-    return `/${rest}`
-  }
-
-  if (rest.startsWith('/')) {
-    return rest
-  }
-
-  return pathOrUrl
+  return rest.startsWith('/') ? rest : `/${rest}`
 }
 
 /**

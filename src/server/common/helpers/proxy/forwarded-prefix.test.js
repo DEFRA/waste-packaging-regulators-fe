@@ -151,6 +151,10 @@ describe('forwarded prefix helpers', () => {
     test('returns empty string for an unrecognised path when no header is present', () => {
       expect(getForwardedPrefix(createRequest(undefined, '/home'))).toBe('')
     })
+
+    test('returns empty string when request has no path', () => {
+      expect(getForwardedPrefix({})).toBe('')
+    })
   })
 
   describe('getExternalPublicPath', () => {
