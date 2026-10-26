@@ -9,6 +9,7 @@ import { certificatesOfComplianceDownload } from '../routes/certificatesOfCompli
 import { certificatesOfComplianceDetail } from '../routes/certificatesOfCompliance/detail/index.js'
 import { certificatesOfComplianceAccept } from '../routes/certificatesOfCompliance/accept/index.js'
 import { certificatesOfComplianceCancel } from '../routes/certificatesOfCompliance/cancel/index.js'
+import { rewriteDirectPrefix } from '../common/helpers/proxy/forwarded-prefix.js'
 import { errorExamples } from '../routes/error/examples/index.js'
 import { serveStaticFiles } from './serve-static-files.js'
 import { router } from './router.js'
@@ -20,7 +21,7 @@ vi.mock('vite', () => ({ createServer: mockViteCreateServer }))
 vi.mock('@defra/hapi-connect', () => ({ default: mockHapiConnect }))
 
 function makeServer() {
-  return { register: vi.fn() }
+  return { register: vi.fn(), ext: vi.fn() }
 }
 
 /**
@@ -71,7 +72,7 @@ describe('router plugin', () => {
     expect(server.register).toHaveBeenCalledWith([auth])
   })
 
-  it('registers certificate route plugins', async () => {
+  it('registers certificate route plugins exactly once', async () => {
     configSpy = spyConfig({ isTest: true })
     const server = makeServer()
     await router.plugin.register(server)
@@ -82,6 +83,22 @@ describe('router plugin', () => {
       certificatesOfComplianceAccept,
       certificatesOfComplianceCancel
     ])
+
+    const directRegistrations = server.register.mock.calls.filter(
+      ([arg]) =>
+        Array.isArray(arg) &&
+        arg.some((p) => p?.plugin?.name?.endsWith(':direct'))
+    )
+    expect(directRegistrations).toHaveLength(0)
+  })
+
+  describe('onRequest prefix rewrite', () => {
+    it('registers the rewriteDirectPrefix onRequest extension hook', async () => {
+      configSpy = spyConfig({ isTest: true })
+      const server = makeServer()
+      await router.plugin.register(server)
+      expect(server.ext).toHaveBeenCalledWith('onRequest', rewriteDirectPrefix)
+    })
   })
 
   describe('error examples', () => {

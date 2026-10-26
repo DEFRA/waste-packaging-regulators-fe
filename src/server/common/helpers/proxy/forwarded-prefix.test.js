@@ -1,19 +1,110 @@
+import { vi } from 'vitest'
 import {
   applyForwardedPrefixToCookiePath,
   getExternalPublicPath,
   getForwardedPrefix,
   getProxyPrefix,
+  rewriteDirectPrefix,
   withForwardedPrefix
 } from './forwarded-prefix.js'
 
-function createRequest(prefix, path = '/') {
+function createRequest(prefix, path = '/', app = {}) {
   return {
     path,
-    headers: prefix === undefined ? {} : { 'x-forwarded-prefix': prefix }
+    headers: prefix === undefined ? {} : { 'x-forwarded-prefix': prefix },
+    app
   }
 }
 
 describe('forwarded prefix helpers', () => {
+  describe('rewriteDirectPrefix', () => {
+    test('rewrites /certificates-of-compliance to / and sets request.app.inferredPrefix', () => {
+      const request = {
+        path: '/certificates-of-compliance',
+        url: {
+          pathname: '/certificates-of-compliance',
+          search: '?type=direct-producers'
+        },
+        app: {},
+        setUrl: vi.fn()
+      }
+      const h = { continue: Symbol('continue') }
+
+      const result = rewriteDirectPrefix(request, h)
+
+      expect(result).toBe(h.continue)
+      expect(request.app.inferredPrefix).toBe('/certificates-of-compliance')
+      expect(request.setUrl).toHaveBeenCalledWith('/?type=direct-producers')
+    })
+
+    test('rewrites exact /certificates-of-compliance with trailing slash', () => {
+      const request = {
+        path: '/certificates-of-compliance/',
+        url: { pathname: '/certificates-of-compliance/', search: '' },
+        app: {},
+        setUrl: vi.fn()
+      }
+      const h = { continue: Symbol('continue') }
+
+      const result = rewriteDirectPrefix(request, h)
+
+      expect(result).toBe(h.continue)
+      expect(request.app.inferredPrefix).toBe('/certificates-of-compliance')
+      expect(request.setUrl).toHaveBeenCalledWith('/')
+    })
+
+    test('rewrites nested /certificates-of-compliance paths', () => {
+      const request = {
+        path: '/certificates-of-compliance/org-1/certificate/decl-1',
+        url: {
+          pathname: '/certificates-of-compliance/org-1/certificate/decl-1',
+          search: ''
+        },
+        app: {},
+        setUrl: vi.fn()
+      }
+      const h = { continue: Symbol('continue') }
+
+      const result = rewriteDirectPrefix(request, h)
+
+      expect(result).toBe(h.continue)
+      expect(request.app.inferredPrefix).toBe('/certificates-of-compliance')
+      expect(request.setUrl).toHaveBeenCalledWith('/org-1/certificate/decl-1')
+    })
+
+    test('leaves non-prefixed paths unchanged', () => {
+      const request = {
+        path: '/health',
+        url: { pathname: '/health', search: '' },
+        app: {},
+        setUrl: vi.fn()
+      }
+      const h = { continue: Symbol('continue') }
+
+      const result = rewriteDirectPrefix(request, h)
+
+      expect(result).toBe(h.continue)
+      expect(request.app.inferredPrefix).toBeUndefined()
+      expect(request.setUrl).not.toHaveBeenCalled()
+    })
+
+    test('does not rewrite unrelated paths that start with the prefix string', () => {
+      const request = {
+        path: '/certificates-of-compliance-other',
+        url: { pathname: '/certificates-of-compliance-other', search: '' },
+        app: {},
+        setUrl: vi.fn()
+      }
+      const h = { continue: Symbol('continue') }
+
+      const result = rewriteDirectPrefix(request, h)
+
+      expect(result).toBe(h.continue)
+      expect(request.app.inferredPrefix).toBeUndefined()
+      expect(request.setUrl).not.toHaveBeenCalled()
+    })
+  })
+
   describe('getForwardedPrefix', () => {
     test('returns a valid proxy prefix without trailing slashes', () => {
       expect(
@@ -34,6 +125,13 @@ describe('forwarded prefix helpers', () => {
       expect(getForwardedPrefix(createRequest(prefix))).toBe('')
     })
 
+    test('returns prefix when request.app.inferredPrefix is set', () => {
+      const request = createRequest(undefined, '/', {
+        inferredPrefix: '/certificates-of-compliance'
+      })
+      expect(getForwardedPrefix(request)).toBe('/certificates-of-compliance')
+    })
+
     test('infers prefix from a request path nested under /certificates-of-compliance', () => {
       expect(
         getForwardedPrefix(
@@ -52,6 +150,10 @@ describe('forwarded prefix helpers', () => {
 
     test('returns empty string for an unrecognised path when no header is present', () => {
       expect(getForwardedPrefix(createRequest(undefined, '/home'))).toBe('')
+    })
+
+    test('returns empty string when request has no path', () => {
+      expect(getForwardedPrefix({})).toBe('')
     })
   })
 

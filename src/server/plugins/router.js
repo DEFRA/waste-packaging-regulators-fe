@@ -9,6 +9,7 @@ import { certificatesOfComplianceDownload } from '../routes/certificatesOfCompli
 import { certificatesOfComplianceDetail } from '../routes/certificatesOfCompliance/detail/index.js'
 import { certificatesOfComplianceAccept } from '../routes/certificatesOfCompliance/accept/index.js'
 import { certificatesOfComplianceCancel } from '../routes/certificatesOfCompliance/cancel/index.js'
+import { rewriteDirectPrefix } from '../common/helpers/proxy/forwarded-prefix.js'
 import { errorExamples } from '../routes/error/examples/index.js'
 import { cookies } from '../routes/cookies/index.js'
 
@@ -16,6 +17,8 @@ export const router = {
   plugin: {
     name: 'router',
     async register(server) {
+      server.ext('onRequest', rewriteDirectPrefix)
+
       await server.register([inert])
 
       // Health-check route. Used by platform to check if service is running, do not remove!
@@ -35,20 +38,9 @@ export const router = {
         certificatesOfComplianceCancel
       ]
 
-      // Routes at / — matched when running behind the YARP proxy, which strips
-      // the /certificates-of-compliance prefix before forwarding the request.
+      // Routes at / — matched both behind YARP proxy (which strips the prefix)
+      // and on direct access (rewritten at onRequest above).
       await server.register(cocPlugins)
-
-      // Same routes at /certificates-of-compliance — matched when the app is
-      // accessed directly without a proxy (e.g. journey-test docker compose).
-      // Hapi requires a unique plugin name per registration, so a suffix is
-      // added to each name to avoid the "already registered" error.
-      await server.register(
-        cocPlugins.map(({ plugin }) => ({
-          plugin: { ...plugin, name: `${plugin.name}:direct` }
-        })),
-        { routes: { prefix: '/certificates-of-compliance' } }
-      )
 
       // Error page previews for design and QA — only enabled when mock data is active
       if (config.get('useMockApi')) {
