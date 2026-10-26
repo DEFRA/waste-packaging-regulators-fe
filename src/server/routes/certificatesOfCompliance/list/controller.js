@@ -1,6 +1,5 @@
 import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
-import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import { bindLocaleUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { translate } from '#server/common/helpers/i18n/translate.js'
@@ -212,7 +211,6 @@ export const certificatesOfComplianceController = {
                 )
                 return { items: [], total: 0, truncated: false }
               }
-              handleApiError(request, error)
               throw error
             }
           )
@@ -226,10 +224,7 @@ export const certificatesOfComplianceController = {
         sortColumn,
         sortDirection,
         { traceId, locale, routePrefix, country }
-      ).catch((error) => {
-        handleApiError(request, error)
-        throw error
-      }),
+      ),
       searchPromise
     ])
 

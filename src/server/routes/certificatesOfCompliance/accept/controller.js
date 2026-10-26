@@ -1,5 +1,4 @@
 import { config } from '#config/config.js'
-import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { getForwardedPrefix } from '#server/common/helpers/proxy/forwarded-prefix.js'
@@ -110,16 +109,12 @@ async function approveDeclaration(request, h, locale) {
     )
   }
 
-  try {
-    await approveComplianceDeclaration(
-      organisationId,
-      id,
-      request.yar.get('user'),
-      traceId
-    )
-  } catch (error) {
-    handleApiError(request, error)
-  }
+  await approveComplianceDeclaration(
+    organisationId,
+    id,
+    request.yar.get('user'),
+    traceId
+  )
 
   request.yar.set(certificateActionSessionKeys.justApproved, declarationKey)
 

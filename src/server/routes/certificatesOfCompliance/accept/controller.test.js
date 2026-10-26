@@ -1,5 +1,8 @@
+import { vi } from 'vitest'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { setupRegulatorsApp } from '#test-helpers/msw/harness.js'
+import * as approveService from '../actions/approve.service.js'
+import { ApiError } from '#services/apiBaseClient/api-error.js'
 
 // The declarations this controller acts on are declared inline, so the org
 // wording each assertion checks traces back to this input.
@@ -32,6 +35,10 @@ describe('#certificatesOfComplianceAcceptController', () => {
     DP_ITEM = itemOf(scenario.byName('Halvern Producers Ltd'))
     CS_ITEM = itemOf(scenario.byName('Marisco Compliance Operators'))
     ACCEPTED_ITEM = itemOf(scenario.byName('Ashvale Producers Ltd'))
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   describe('GET', () => {
@@ -214,6 +221,48 @@ describe('#certificatesOfComplianceAcceptController', () => {
       )
       expect(detailResponse.payload).toContain('Statement accepted')
       expect(detailResponse.payload).toContain('Statement has been accepted.')
+    })
+
+    it('surfaces service unavailable when approveComplianceDeclaration fails with an unavailable ApiError', async () => {
+      vi.spyOn(
+        approveService,
+        'approveComplianceDeclaration'
+      ).mockRejectedValueOnce(
+        new ApiError({
+          status: statusCodes.serviceUnavailable,
+          message: 'Accept unavailable'
+        })
+      )
+
+      const cookie = await app.signIn()
+      const response = await app.post(
+        acceptUrlFor(DP_ITEM),
+        'confirm-accept=yes',
+        cookie
+      )
+
+      expect(response.statusCode).toBe(statusCodes.serviceUnavailable)
+    })
+
+    it('surfaces internal server error when approveComplianceDeclaration fails with a 500 ApiError', async () => {
+      vi.spyOn(
+        approveService,
+        'approveComplianceDeclaration'
+      ).mockRejectedValueOnce(
+        new ApiError({
+          status: statusCodes.internalServerError,
+          message: 'Accept broke'
+        })
+      )
+
+      const cookie = await app.signIn()
+      const response = await app.post(
+        acceptUrlFor(DP_ITEM),
+        'confirm-accept=yes',
+        cookie
+      )
+
+      expect(response.statusCode).toBe(statusCodes.internalServerError)
     })
   })
 })

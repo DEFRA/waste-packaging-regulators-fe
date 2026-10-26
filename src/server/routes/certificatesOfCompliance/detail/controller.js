@@ -1,5 +1,4 @@
 import { config } from '#config/config.js'
-import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import { getForwardedPrefix } from '#server/common/helpers/proxy/forwarded-prefix.js'
 import {
@@ -43,10 +42,7 @@ export const certificatesOfComplianceDetailController = {
         type,
         tab
       }
-    ).catch((error) => {
-      handleApiError(request, error)
-      throw error
-    })
+    )
 
     return h
       .view('certificatesOfCompliance/detail/index', viewModel)

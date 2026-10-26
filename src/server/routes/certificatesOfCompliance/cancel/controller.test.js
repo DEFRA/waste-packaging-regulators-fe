@@ -1,4 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { ApiError } from '#services/apiBaseClient/api-error.js'
 
 vi.mock('#services/govuk-notify.service.js', async (importOriginal) => {
   const { createCancellationEmailNotifyModuleMock } =
@@ -546,6 +547,42 @@ describe('certificates of compliance — cancel', () => {
       expect(cancelComplianceDeclaration.mock.calls[0][3]).toBe(
         'Compliance scheme requested to cancel'
       )
+    })
+
+    it('surfaces service unavailable when cancelComplianceDeclaration fails with an unavailable ApiError', async () => {
+      cancelComplianceDeclaration.mockRejectedValueOnce(
+        new ApiError({
+          status: statusCodes.serviceUnavailable,
+          message: 'Cancel unavailable'
+        })
+      )
+
+      const cookie = await app.signIn()
+      const response = await app.post(
+        actionUrlFor(DP_ITEM),
+        'cancel-reason=producer-request',
+        cookie
+      )
+
+      expect(response.statusCode).toBe(statusCodes.serviceUnavailable)
+    })
+
+    it('surfaces internal server error when cancelComplianceDeclaration fails with a 500 ApiError', async () => {
+      cancelComplianceDeclaration.mockRejectedValueOnce(
+        new ApiError({
+          status: statusCodes.internalServerError,
+          message: 'Cancel broke'
+        })
+      )
+
+      const cookie = await app.signIn()
+      const response = await app.post(
+        actionUrlFor(DP_ITEM),
+        'cancel-reason=producer-request',
+        cookie
+      )
+
+      expect(response.statusCode).toBe(statusCodes.internalServerError)
     })
   })
 })
