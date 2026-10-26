@@ -30,6 +30,49 @@ export function userFacingStatus(upstreamStatus) {
     : statusCodes.internalServerError
 }
 
+/**
+ * Recursively inspects an error (including nested `.data` and `.cause` properties)
+ * to locate an underlying `ApiError`, or returns `null` if none is found.
+ *
+ * @param {unknown} err
+ * @param {Set<object>} [seen]
+ * @returns {ApiError|null}
+ */
+export function findApiError(err, seen = new Set()) {
+  if (!err || typeof err !== 'object' || seen.has(err)) {
+    return null
+  }
+  if (err instanceof ApiError) {
+    return err
+  }
+  seen.add(err)
+  return findApiError(err.data, seen) ?? findApiError(err.cause, seen)
+}
+
+/**
+ * Hapi `onPreResponse` lifecycle hook that detects unhandled `ApiError` instances
+ * and converts them into Boom errors mapped to user-facing HTTP status codes.
+ *
+ * @param {import('@hapi/hapi').Request} request
+ * @param {import('@hapi/hapi').ResponseToolkit} h
+ * @returns {import('@hapi/hapi').Lifecycle.ReturnValue}
+ */
+export function handleApiErrorPreResponse(request, h) {
+  const { response } = request
+
+  const apiError = findApiError(response)
+  if (apiError) {
+    Boom.boomify(response, { statusCode: userFacingStatus(apiError.status) })
+  }
+
+  return h.continue
+}
+
+/**
+ * @deprecated Upstream errors are now automatically classified in the Hapi
+ * `onPreResponse` lifecycle extension (`handleApiErrorPreResponse`). Handlers
+ * should let `ApiError` propagate directly without manual wrapping.
+ */
 export function handleApiError(request, error) {
   if (error instanceof ApiError) {
     request.logger.error(error)

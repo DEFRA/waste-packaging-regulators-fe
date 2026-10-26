@@ -760,4 +760,23 @@ describe('#certificatesOfComplianceDetailController', () => {
     )
     vi.restoreAllMocks()
   })
+
+  it('should render a service unavailable page when the obligations API returns 503', async () => {
+    vi.spyOn(
+      detailService,
+      'getCertificateOfComplianceDetailViewModel'
+    ).mockRejectedValueOnce(
+      ApiError.from({
+        message: 'waste-obligations API request failed with status 503',
+        status: statusCodes.serviceUnavailable,
+        serviceName: 'waste-obligations'
+      })
+    )
+
+    const response = await app.get(pendingDp.detailPath)
+
+    expect(response.statusCode).toBe(statusCodes.serviceUnavailable)
+    expect(response.payload).toContain('Sorry, the service is unavailable')
+    vi.restoreAllMocks()
+  })
 })

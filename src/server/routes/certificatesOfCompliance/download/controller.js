@@ -1,5 +1,4 @@
 import { config } from '#config/config.js'
-import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getSessionUser } from '#server/common/helpers/get-session-user.js'
 import { getRegulatorCountryCode } from '#server/common/helpers/regulator-country-code.js'
 import { getComplianceDownload } from './download.service.js'
@@ -45,10 +44,7 @@ export const certificatesOfComplianceDownloadController = {
       submissionStatus,
       traceId,
       country
-    ).catch((error) => {
-      handleApiError(request, error)
-      throw error
-    })
+    )
 
     return h
       .response(csv)

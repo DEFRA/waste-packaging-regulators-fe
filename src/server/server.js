@@ -8,6 +8,7 @@ import { router } from './plugins/router.js'
 import { config } from '#config/config.js'
 import { pulse } from './plugins/pulse.js'
 import { catchAll } from './common/helpers/errors.js'
+import { handleApiErrorPreResponse } from './common/helpers/handle-api-error.js'
 import { nunjucksConfig } from '#config/nunjucks/nunjucks.js'
 import { setupProxy } from './common/helpers/proxy/setup-proxy.js'
 import { applyForwardedPrefixToCookiePath } from './common/helpers/proxy/forwarded-prefix.js'
@@ -200,6 +201,14 @@ export async function createServer() {
   await server.register([
     router // Register all the controllers/routes defined in src/server/plugins/router.js
   ])
+
+  server.ext({
+    type: 'onPreResponse',
+    method: handleApiErrorPreResponse,
+    options: {
+      before: 'boom-error-logger'
+    }
+  })
 
   server.ext({
     type: 'onPreResponse',

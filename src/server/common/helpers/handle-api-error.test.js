@@ -1,6 +1,11 @@
 import { vi } from 'vitest'
 
-import { handleApiError, userFacingStatus } from './handle-api-error.js'
+import {
+  findApiError,
+  handleApiError,
+  handleApiErrorPreResponse,
+  userFacingStatus
+} from './handle-api-error.js'
 import { ApiError } from '#services/apiBaseClient/api-error.js'
 import { statusCodes } from '../constants/status-codes.js'
 
@@ -124,5 +129,98 @@ describe('#handleApiError', () => {
     expect(thrown).toBe(error)
     expect(thrown.isBoom).toBeUndefined()
     expect(request.logger.error).not.toHaveBeenCalled()
+  })
+})
+
+describe('#findApiError', () => {
+  test('Should return the error directly when it is an ApiError', () => {
+    const error = apiError(statusCodes.notFound)
+    expect(findApiError(error)).toBe(error)
+  })
+
+  test('Should find an ApiError on error.data', () => {
+    const inner = apiError(statusCodes.notFound)
+    const outer = { data: inner }
+    expect(findApiError(outer)).toBe(inner)
+  })
+
+  test('Should find an ApiError on error.cause', () => {
+    const inner = apiError(statusCodes.notFound)
+    const outer = new Error('wrapper', { cause: inner })
+    expect(findApiError(outer)).toBe(inner)
+  })
+
+  test('Should find an ApiError deeply nested across cause and data chains', () => {
+    const deepest = apiError(statusCodes.notFound)
+    const middle = { cause: deepest }
+    const outer = new Error('outer', { cause: middle })
+    expect(findApiError(outer)).toBe(deepest)
+  })
+
+  test('Should safely return null on circular error references without an ApiError', () => {
+    const circular = new Error('circular')
+    circular.cause = circular
+    expect(findApiError(circular)).toBeNull()
+  })
+
+  test('Should return null for non-ApiError values', () => {
+    expect(findApiError(new Error('regular error'))).toBeNull()
+    expect(findApiError(null)).toBeNull()
+    expect(findApiError(undefined)).toBeNull()
+    expect(findApiError({})).toBeNull()
+  })
+})
+
+describe('#handleApiErrorPreResponse', () => {
+  const mockH = { continue: Symbol('continue') }
+
+  test('Should intercept ApiError, convert to Boom with userFacingStatus, and continue', () => {
+    const request = mockRequest()
+    const error = apiError(statusCodes.notFound)
+    request.response = error
+
+    const result = handleApiErrorPreResponse(request, mockH)
+
+    expect(result).toBe(mockH.continue)
+    expect(request.response.isBoom).toBe(true)
+    expect(request.response.output.statusCode).toBe(
+      statusCodes.serviceUnavailable
+    )
+  })
+
+  test('Should intercept Boom error with ApiError cause and update status code', () => {
+    const request = mockRequest()
+    const inner = apiError(statusCodes.forbidden)
+    const outer = new Error('wrapped', { cause: inner })
+    request.response = outer
+
+    const result = handleApiErrorPreResponse(request, mockH)
+
+    expect(result).toBe(mockH.continue)
+    expect(request.response.isBoom).toBe(true)
+    expect(request.response.output.statusCode).toBe(
+      statusCodes.internalServerError
+    )
+  })
+
+  test('Should ignore non-ApiError Boom errors and continue', () => {
+    const request = mockRequest()
+    const regularError = new Error('standard boom error')
+    regularError.isBoom = true
+    regularError.output = { statusCode: statusCodes.badRequest }
+    request.response = regularError
+
+    const result = handleApiErrorPreResponse(request, mockH)
+
+    expect(result).toBe(mockH.continue)
+    expect(request.response.output.statusCode).toBe(statusCodes.badRequest)
+  })
+
+  test('Should safely continue when response is not an error', () => {
+    const request = { response: { ok: true } }
+
+    const result = handleApiErrorPreResponse(request, mockH)
+
+    expect(result).toBe(mockH.continue)
   })
 })

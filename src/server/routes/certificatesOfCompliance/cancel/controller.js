@@ -1,4 +1,3 @@
-import { handleApiError } from '#server/common/helpers/handle-api-error.js'
 import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import { localeUrl } from '#server/common/helpers/i18n/locale-url.js'
 import { getForwardedPrefix } from '#server/common/helpers/proxy/forwarded-prefix.js'
@@ -400,16 +399,12 @@ export const certificatesOfComplianceCancelEmailPreviewGetController = {
 
     const { locale, organisationId, id, reason } = ctx
 
-    try {
-      return await renderCancellationEmailPreview(request, h, {
-        organisationId,
-        id,
-        reason,
-        locale
-      })
-    } catch (error) {
-      return handleApiError(request, error)
-    }
+    return await renderCancellationEmailPreview(request, h, {
+      organisationId,
+      id,
+      reason,
+      locale
+    })
   }
 }
 
@@ -466,18 +461,14 @@ export const certificatesOfComplianceCancelPostController = {
       await fetchCancelViewModel(organisationId, id, request, locale)
     const apiReasonLabel = getCancelReasonLabel(registrationType, reason, 'en')
 
-    try {
-      await cancelComplianceDeclaration(
-        organisationId,
-        id,
-        request.yar.get('user'),
-        apiReasonLabel,
-        request.getTraceId(),
-        { registrationType, environmentalRegulator, businessCountry }
-      )
-    } catch (error) {
-      handleApiError(request, error)
-    }
+    await cancelComplianceDeclaration(
+      organisationId,
+      id,
+      request.yar.get('user'),
+      apiReasonLabel,
+      request.getTraceId(),
+      { registrationType, environmentalRegulator, businessCountry }
+    )
 
     request.yar.set(certificateActionSessionKeys.justCancelled, declarationKey)
 
