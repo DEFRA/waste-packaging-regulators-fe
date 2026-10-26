@@ -240,12 +240,12 @@ describe('organisation and audit detail mapping', () => {
     })
   })
 
-  test('mapWasteOrganisationToDetailFields uses the compliance scheme trading name from waste-organisations', () => {
+  test('mapWasteOrganisationToDetailFields uses the organisation name from waste-organisations for compliance schemes', () => {
     expect(
       mapWasteOrganisationToDetailFields(
         {
-          name: 'Valpak Compliance Scheme',
-          tradingName: 'Scheme Operator Co',
+          name: 'Scheme Operator Co',
+          tradingName: 'CS_123ABC',
           companiesHouseNumber: 'CS_GENERATED_0923795',
           registrations: [
             {

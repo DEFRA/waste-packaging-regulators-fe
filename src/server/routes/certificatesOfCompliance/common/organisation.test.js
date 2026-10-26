@@ -27,32 +27,12 @@ describe('formatOrganisationName', () => {
     ).toBe('Direct Producer Ltd')
   })
 
-  test('returns trading name for compliance scheme', () => {
+  test('returns organisation name for compliance scheme', () => {
     expect(
       formatOrganisationName(
         {
           name: 'Scheme Parent Ltd',
-          tradingName: 'Scheme Trading Name',
-          registrations: [
-            {
-              type: wasteOrganisationsRegistrationType.COMPLIANCE_SCHEME,
-              status: wasteOrganisationsRegistrationStatus.REGISTERED,
-              registrationYear: 2026,
-              updated: '2026-05-18T11:20:00Z'
-            }
-          ]
-        },
-        2026
-      )
-    ).toBe('Scheme Trading Name')
-  })
-
-  test('falls back to organisation name when compliance scheme trading name is null', () => {
-    expect(
-      formatOrganisationName(
-        {
-          name: 'Scheme Parent Ltd',
-          tradingName: null,
+          tradingName: 'CS_123ABC',
           registrations: [
             {
               type: wasteOrganisationsRegistrationType.COMPLIANCE_SCHEME,
@@ -90,8 +70,7 @@ describe('formatOrganisationName', () => {
     expect(
       formatOrganisationName(
         {
-          name: 'Older Name Ltd',
-          tradingName: 'Latest Trading Name',
+          name: 'Scheme Parent Ltd',
           registrations: [
             {
               type: wasteOrganisationsRegistrationType.COMPLIANCE_SCHEME,
@@ -109,7 +88,7 @@ describe('formatOrganisationName', () => {
         },
         2026
       )
-    ).toBe('Latest Trading Name')
+    ).toBe('Scheme Parent Ltd')
   })
 
   test('uses the year registration when none are marked registered', () => {

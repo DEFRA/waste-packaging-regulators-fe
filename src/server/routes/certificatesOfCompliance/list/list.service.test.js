@@ -1923,7 +1923,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           expect(vm.companyName).toBe('Unknown organisation')
         })
 
-        test('maps compliance scheme organisation name from waste-organisations tradingName', async () => {
+        test('maps compliance scheme organisation name from waste-organisations name field', async () => {
           createWasteObligationsApiService.mockReturnValue({
             listOrganisationComplianceDeclarations: vi
               .fn()
@@ -1935,8 +1935,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
           createWasteOrganisationsApiService.mockReturnValue({
             getOrganisation: vi.fn().mockResolvedValue({
               id: 'org-cs',
-              name: 'Valpak Compliance Scheme',
-              tradingName: 'Scheme Operator Co',
+              name: 'Scheme Operator Co',
+              tradingName: 'CS_123ABC',
               registrations: complianceSchemeRegistrations,
               referenceNumber: '183551'
             })
@@ -2008,8 +2008,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
             createWasteOrganisationsApiService.mockReturnValue({
               getOrganisation: vi.fn().mockResolvedValue({
                 id: 'org-cs',
-                name: 'Valpak Compliance Scheme',
-                tradingName: 'Scheme Operator Co',
+                name: 'Scheme Operator Co',
+                tradingName: 'CS_123ABC',
                 registrations: complianceSchemeRegistrations,
                 companiesHouseNumber: 'CHN-CS-1'
               })
