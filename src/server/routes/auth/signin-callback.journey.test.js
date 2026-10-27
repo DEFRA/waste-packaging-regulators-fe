@@ -111,7 +111,10 @@ describe('/signin-oidc with the real Bell strategy', () => {
     const page = await get(response.headers.location)
     expect(page.statusCode).toBe(statusCodes.ok)
     expect(page.payload).toContain(SIGN_IN_FAILED)
-    expect(page.payload).toContain('href="/signin-oidc"')
+    expect(page.payload).toContain(
+      'Try to <a class="govuk-link" href="/signin-oidc">sign in again</a>.'
+    )
+    expect(page.payload).toContain('eprcustomerservice@defra.gov.uk')
     expect(page.payload).toContain('if you need help')
   }
 

@@ -604,9 +604,9 @@ describe('signInFailedController', () => {
     expect(context).toEqual({
       pageTitle: 'Sorry, there was a problem signing you in',
       heading: 'Sorry, there was a problem signing you in',
-      message:
-        'This can happen if you cancelled signing in, or if the sign-in page was open for too long.',
-      tryAgainText: 'Try signing in again',
+      tryAgainPrefix: 'Try to',
+      tryAgainLinkText: 'sign in again',
+      tryAgainSuffix: '.',
       tryAgainUrl: '/signin-oidc'
     })
   })
