@@ -227,8 +227,9 @@ export const signInFailedController = {
     return h.view('auth/sign-in-failed', {
       pageTitle: translate(locale, 'auth.signInFailed.pageTitle'),
       heading: translate(locale, 'auth.signInFailed.heading'),
-      message: translate(locale, 'auth.signInFailed.message'),
-      tryAgainText: translate(locale, 'auth.signInFailed.tryAgain'),
+      tryAgainPrefix: translate(locale, 'auth.signInFailed.tryAgainPrefix'),
+      tryAgainLinkText: translate(locale, 'auth.signInFailed.tryAgainLinkText'),
+      tryAgainSuffix: translate(locale, 'auth.signInFailed.tryAgainSuffix'),
       tryAgainUrl: localeUrl(
         withForwardedPrefix(request, '/signin-oidc'),
         locale
