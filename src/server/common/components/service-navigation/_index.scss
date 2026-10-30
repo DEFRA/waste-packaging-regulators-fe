@@ -18,7 +18,7 @@
 
     // Service name and sign-in/out share one row; the width container is the
     // flex row they both sit in.
-    >.govuk-width-container {
+    > .govuk-width-container {
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
@@ -33,7 +33,7 @@
     }
 
     // Sign-in/out in the end slot — always on the right of the green band.
-    >.govuk-width-container>.defra-internal-service-navigation__context {
+    > .govuk-width-container > .defra-internal-service-navigation__context {
       @include govuk-font($size: 16);
       flex: 0 0 auto;
       margin: 0 0 0 auto;
@@ -63,7 +63,7 @@
     border-top: 1px solid govuk-colour("black", $variant: "tint-80");
     width: 100%;
 
-    >.govuk-width-container {
+    > .govuk-width-container {
       display: flex;
       justify-content: flex-end;
     }
@@ -111,7 +111,11 @@
 }
 
 @media #{govuk-from-breakpoint(tablet)} {
-  .defra-internal-service-header .govuk-service-navigation>.govuk-width-container>.defra-internal-service-navigation__context {
+  .defra-internal-service-header
+    .govuk-service-navigation
+    > .govuk-width-container
+    > .defra-internal-service-navigation__context {
     padding: govuk-spacing(3) 0;
   }
 }
+

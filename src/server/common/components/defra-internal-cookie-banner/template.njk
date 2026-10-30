@@ -1,0 +1,66 @@
+{% from "govuk/components/cookie-banner/macro.njk" import govukCookieBanner %}
+{% from "csrf-field/macro.njk" import appCsrfField %}
+{% set locale = params.locale | default('en') %}
+{% set bannerActionUrl = params.bannerActionUrl | default('/cookies/banner') %}
+{% set hideBannerActionUrl = params.hideBannerActionUrl | default('/cookies/hide-banner') %}
+{% set cookiesUrl = params.cookiesUrl | default('/cookies') %}
+{% if not params.hideCookieBanner %}
+  {% if not params.hasCookiePolicy and not params.cookiePreferenceSet %}
+    <form action="{{ bannerActionUrl }}" method="post" novalidate>
+      {{ appCsrfField(params.CSRFToken, "cookie-banner-csrf-crumb") }}
+      {{ govukCookieBanner({
+        ariaLabel: t(locale, "common.cookieBanner.ariaLabel", { serviceName: params.serviceName }),
+        messages: [
+          {
+            headingText: t(locale, "common.cookieBanner.heading", { serviceName: params.serviceName }),
+            html: t(locale, "common.cookieBanner.essentialHtml"),
+            actions: [
+              {
+                text: t(locale, "common.cookieBanner.acceptAnalytics"),
+                type: "submit",
+                name: "analytics",
+                value: "yes"
+              },
+              {
+                text: t(locale, "common.cookieBanner.rejectAnalytics"),
+                type: "submit",
+                name: "analytics",
+                value: "no"
+              },
+              {
+                text: t(locale, "common.cookieBanner.viewCookies"),
+                href: cookiesUrl
+              }
+            ]
+          }
+        ]
+      }) }}
+    </form>
+  {% elif params.cookiePreferenceSet %}
+    {% set preferenceKey = "common.cookieBanner.preferenceAccepted" if params.allowGoogleAnalytics else "common.cookieBanner.preferenceRejected" %}
+    {% set acceptHtml %}
+      <p class="govuk-body">{{ t(locale, preferenceKey, { cookiesUrl: cookiesUrl }) | safe }}</p>
+    {% endset %}
+    <form action="{{ hideBannerActionUrl }}" method="post" novalidate>
+      {{ appCsrfField(params.CSRFToken, "cookie-hide-banner-csrf-crumb") }}
+      {{ govukCookieBanner({
+        ariaLabel: t(locale, "common.cookieBanner.ariaLabel", { serviceName: params.serviceName }),
+        messages: [
+          {
+            html: acceptHtml,
+            role: "alert",
+            actions: [
+              {
+                text: t(locale, "common.cookieBanner.hideMessage"),
+                type: "submit",
+                name: "cookies[hide]",
+                value: "hide"
+              }
+            ]
+          }
+        ]
+      }) }}
+    </form>
+  {% endif %}
+{% endif %}
+

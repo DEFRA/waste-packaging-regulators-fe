@@ -25,7 +25,7 @@
     @include govuk-link-style-no-visited-state;
     @include govuk-link-style-no-underline;
   }
-  //
+
   // Written out in full rather than as `&__logo-link` on purpose. Nested like
   // this it compiles to `.defra-internal-header .defra-internal-header__logo-link`
   // (0,3,0 with the pseudo-class), which outranks the `a` rule above (0,2,1);
@@ -128,3 +128,4 @@
     }
   }
 }
+

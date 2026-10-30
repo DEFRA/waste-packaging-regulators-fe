@@ -1,0 +1,37 @@
+{% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+{% set locale = params.locale | default('en') %}
+<div class="defra-internal-service-header">
+  {% set regulatorEnd %}
+    {{ params.regulatorContext | safe }}
+  {% endset %}
+  {{ govukServiceNavigation({
+    serviceName: params.serviceName,
+    serviceUrl: params.serviceUrl,
+    navigationId: params.navigationId | default("service-navigation"),
+    navigation: params.navigation,
+    slots: { end: regulatorEnd }
+  }) }}
+  <div class="defra-internal-language-bar">
+    <div class="govuk-width-container">
+      <nav class="language-toggle-nav" aria-label="{{ t(locale, 'common.languageSwitcher.label') }}">
+        <ul class="language-toggle">
+          <li class="language-toggle__option">
+            {% if locale == 'cy' %}
+              <a class="govuk-link govuk-link--no-visited-state" href="{{ params.languageSwitcher.en }}" lang="en">{{ t(locale, "common.languageSwitcher.english") }}</a>
+            {% else %}
+              <span class="language-toggle__active" lang="en">{{ t(locale, "common.languageSwitcher.english") }}</span>
+            {% endif %}
+          </li>
+          <li class="language-toggle__option">
+            {% if locale == 'cy' %}
+              <span class="language-toggle__active" lang="cy">{{ t(locale, "common.languageSwitcher.welsh") }}</span>
+            {% else %}
+              <a class="govuk-link govuk-link--no-visited-state" href="{{ params.languageSwitcher.cy }}" lang="cy">{{ t(locale, "common.languageSwitcher.welsh") }}</a>
+            {% endif %}
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+

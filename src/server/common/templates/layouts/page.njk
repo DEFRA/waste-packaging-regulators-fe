@@ -1,20 +1,20 @@
+{% set htmlLang = locale %}
+{% set themeColor = "#00A33B" %}
 {% set bodyClasses = "defra-internal" %}
 {% extends "govuk/template.njk" %}
 
-{% set htmlLang = locale %}
-{% set themeColor = "#00A33B" %}
-
 {# Import GOVUK components globally #}
 {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
-{% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
-{% from "govuk/components/cookie-banner/macro.njk" import govukCookieBanner %}
 {% from "govuk/components/skip-link/macro.njk" import govukSkipLink %}
 {% from "govuk/components/back-link/macro.njk" import govukBackLink %}
 
 {# Import custom components globally #}
 {% from "heading/macro.njk" import appHeading %}
 {% from "defra-internal-header/macro.njk" import defraInternalHeader %}
+{% from "defra-internal-service-header/macro.njk" import defraInternalServiceHeader %}
+{% from "defra-internal-cookie-banner/macro.njk" import defraInternalCookieBanner %}
 {% from "defra-internal-footer/macro.njk" import defraInternalFooter %}
+{% from "google-analytics/macro.njk" import appGoogleAnalytics %}
 {% from "csrf-field/macro.njk" import appCsrfField %}
 
 {% block headIcons %}
@@ -24,48 +24,13 @@
 {% endblock %}
 
 {% block head %}
-  {% if ga4 and gtm %}
-    <!-- Google tag (gtag.js) -->
-    <script nonce="{{ cspNonce }}">
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag('consent', 'default', {
-        'ad_user_data': 'denied',
-        'ad_personalization': 'denied',
-        'ad_storage': 'denied',
-        'analytics_storage': 'denied'
-      });
-      {% if allowGoogleAnalytics %}
-        gtag('consent', 'update', {
-          'analytics_storage': 'granted'
-        });
-      {% endif %}
-    </script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id={{ ga4 }}" nonce="{{ cspNonce }}"></script>
-    <script nonce="{{ cspNonce }}">
-      gtag('js', new Date());
-      gtag('config', '{{ ga4 }}');
-    </script>
-    <!-- Google Tag Manager -->
-    <script nonce="{{ cspNonce }}">
-      (function (w, d, s, l, i) {
-        w[l] = w[l] || [];
-        w[l].push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
-        var f = d.getElementsByTagName(s)[0],
-          j = d.createElement(s),
-          dl = l != 'dataLayer'
-            ? '&l=' + l
-            : '';
-        j.async = true;
-        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
-        j.setAttribute('nonce', '{{ cspNonce }}');
-        f.parentNode.insertBefore(j, f);
-      })(window, document, 'script', 'dataLayer','{{ gtm }}');
-    </script>
-    <!-- End Google Tag Manager -->
-  {% endif %}
+  {{ appGoogleAnalytics({
+    ga4: ga4,
+    gtm: gtm,
+    useGoogleAnalytics: useGoogleAnalytics,
+    allowGoogleAnalytics: allowGoogleAnalytics,
+    cspNonce: cspNonce
+  }) }}
   <link href="{{ getAssetPath('src/client/stylesheets/application.scss') }}" rel="stylesheet">
 {% endblock %}
 
@@ -75,113 +40,37 @@
     organisationName: t(locale, "common.organisationName") | safe,
     navigation: accountNavigation
   }) }}
-  <div class="defra-internal-service-header">
-    {% set regulatorEnd %}
-      {{ regulatorContext | safe }}
-    {% endset %}
-    {{ govukServiceNavigation({
-      serviceName: serviceName,
-      serviceUrl: serviceUrl,
-      navigationId: "service-navigation",
-      navigation: navigation,
-      slots: { end: regulatorEnd }
-    }) }}
-    <div class="defra-internal-language-bar">
-      <div class="govuk-width-container">
-        <nav class="language-toggle-nav" aria-label="{{ t(locale, 'common.languageSwitcher.label') }}">
-          <ul class="language-toggle">
-            <li class="language-toggle__option">
-              {% if locale == 'cy' %}
-                <a class="govuk-link govuk-link--no-visited-state" href="{{ languageSwitcher.en }}" lang="en">{{ t(locale, "common.languageSwitcher.english") }}</a>
-              {% else %}
-                <span class="language-toggle__active" lang="en">{{ t(locale, "common.languageSwitcher.english") }}</span>
-              {% endif %}
-            </li>
-            <li class="language-toggle__option">
-              {% if locale == 'cy' %}
-                <span class="language-toggle__active" lang="cy">{{ t(locale, "common.languageSwitcher.welsh") }}</span>
-              {% else %}
-                <a class="govuk-link govuk-link--no-visited-state" href="{{ languageSwitcher.cy }}" lang="cy">{{ t(locale, "common.languageSwitcher.welsh") }}</a>
-              {% endif %}
-            </li>
-          </ul>
-        </nav>
-      </div>
-    </div>
-  </div>
+  {{ defraInternalServiceHeader({
+    serviceName: serviceName,
+    serviceUrl: serviceUrl,
+    navigationId: "service-navigation",
+    navigation: navigation,
+    regulatorContext: regulatorContext,
+    locale: locale,
+    languageSwitcher: languageSwitcher
+  }) }}
 {% endblock %}
 
 {% block bodyStart %}
-  {% if allowGoogleAnalytics and ga4 and gtm %}
-    <!-- Google Tag Manager (noscript) -->
-    <noscript>
-      <iframe
-        src="https://www.googletagmanager.com/ns.html?id={{ gtm }}"
-        height="0"
-        width="0"
-        style="display:none;visibility:hidden"></iframe>
-    </noscript>
-    <!-- End Google Tag Manager (noscript) -->
-  {% endif %}
-  {% if not hideCookieBanner %}
-    {% if not hasCookiePolicy and not cookiePreferenceSet %}
-      <form action="{{ localeUrl('/cookies/banner') }}" method="post" novalidate>
-        {{ appCsrfField(CSRFToken, "cookie-banner-csrf-crumb") }}
-        {{ govukCookieBanner({
-          ariaLabel: t(locale, "common.cookieBanner.ariaLabel", { serviceName: serviceName }),
-          messages: [
-            {
-              headingText: t(locale, "common.cookieBanner.heading", { serviceName: serviceName }),
-              html: t(locale, "common.cookieBanner.essentialHtml"),
-              actions: [
-                {
-                  text: t(locale, "common.cookieBanner.acceptAnalytics"),
-                  type: "submit",
-                  name: "analytics",
-                  value: "yes"
-                },
-                {
-                  text: t(locale, "common.cookieBanner.rejectAnalytics"),
-                  type: "submit",
-                  name: "analytics",
-                  value: "no"
-                },
-                {
-                  text: t(locale, "common.cookieBanner.viewCookies"),
-                  href: localeUrl("/cookies")
-                }
-              ]
-            }
-          ]
-        }) }}
-      </form>
-    {% elif cookiePreferenceSet %}
-      {% set preferenceKey = "common.cookieBanner.preferenceAccepted" if allowGoogleAnalytics else "common.cookieBanner.preferenceRejected" %}
-      {% set acceptHtml %}
-        <p class="govuk-body">{{ t(locale, preferenceKey, { cookiesUrl: localeUrl("/cookies") }) | safe }}</p>
-      {% endset %}
-      <form action="{{ localeUrl('/cookies/hide-banner') }}" method="post" novalidate>
-        {{ appCsrfField(CSRFToken, "cookie-hide-banner-csrf-crumb") }}
-        {{ govukCookieBanner({
-          ariaLabel: t(locale, "common.cookieBanner.ariaLabel", { serviceName: serviceName }),
-          messages: [
-            {
-              html: acceptHtml,
-              role: "alert",
-              actions: [
-                {
-                  text: t(locale, "common.cookieBanner.hideMessage"),
-                  type: "submit",
-                  name: "cookies[hide]",
-                  value: "hide"
-                }
-              ]
-            }
-          ]
-        }) }}
-      </form>
-    {% endif %}
-  {% endif %}
+  {{ appGoogleAnalytics({
+    ga4: ga4,
+    gtm: gtm,
+    useGoogleAnalytics: useGoogleAnalytics,
+    allowGoogleAnalytics: allowGoogleAnalytics,
+    noscript: true
+  }) }}
+  {{ defraInternalCookieBanner({
+    hideCookieBanner: hideCookieBanner,
+    hasCookiePolicy: hasCookiePolicy,
+    cookiePreferenceSet: cookiePreferenceSet,
+    allowGoogleAnalytics: allowGoogleAnalytics,
+    CSRFToken: CSRFToken,
+    locale: locale,
+    serviceName: serviceName,
+    bannerActionUrl: localeUrl('/cookies/banner'),
+    hideBannerActionUrl: localeUrl('/cookies/hide-banner'),
+    cookiesUrl: localeUrl('/cookies')
+  }) }}
   {{ govukSkipLink({
     text: t(locale, "common.skipLink"),
     href: "#main-content"
@@ -240,3 +129,4 @@
 {% block bodyEnd %}
   <script type="module" src="{{ getAssetPath('src/client/javascripts/application.js') }}"></script>
 {% endblock %}
+

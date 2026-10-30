@@ -1,0 +1,57 @@
+{% if params.ga4 and params.gtm and (params.useGoogleAnalytics | default(true)) %}
+  {% if params.noscript %}
+    {% if params.allowGoogleAnalytics %}
+      <!-- Google Tag Manager (noscript) -->
+      <noscript>
+        <iframe
+          src="https://www.googletagmanager.com/ns.html?id={{ params.gtm }}"
+          height="0"
+          width="0"
+          style="display:none;visibility:hidden"></iframe>
+      </noscript>
+      <!-- End Google Tag Manager (noscript) -->
+    {% endif %}
+  {% else %}
+    <!-- Google tag (gtag.js) -->
+    <script nonce="{{ params.cspNonce }}">
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('consent', 'default', {
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'ad_storage': 'denied',
+        'analytics_storage': 'denied'
+      });
+      {% if params.allowGoogleAnalytics %}
+        gtag('consent', 'update', {
+          'analytics_storage': 'granted'
+        });
+      {% endif %}
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ params.ga4 }}" nonce="{{ params.cspNonce }}"></script>
+    <script nonce="{{ params.cspNonce }}">
+      gtag('js', new Date());
+      gtag('config', '{{ params.ga4 }}');
+    </script>
+    <!-- Google Tag Manager -->
+    <script nonce="{{ params.cspNonce }}">
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != 'dataLayer'
+            ? '&l=' + l
+            : '';
+        j.async = true;
+        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+        j.setAttribute('nonce', '{{ params.cspNonce }}');
+        f.parentNode.insertBefore(j, f);
+      })(window, document, 'script', 'dataLayer','{{ params.gtm }}');
+    </script>
+    <!-- End Google Tag Manager -->
+  {% endif %}
+{% endif %}
+
