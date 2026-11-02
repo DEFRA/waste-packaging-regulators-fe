@@ -4,7 +4,6 @@ describe('Google Analytics Component', () => {
   const baseParams = {
     ga4: 'G-TEST1234',
     gtm: 'GTM-TEST5678',
-    useGoogleAnalytics: true,
     allowGoogleAnalytics: false,
     cspNonce: 'test-nonce-123'
   }
@@ -26,22 +25,6 @@ describe('Google Analytics Component', () => {
       })
 
       expect($('script')).toHaveLength(0)
-    })
-
-    test('Should not render anything when useGoogleAnalytics is false', () => {
-      const $ = renderComponent('google-analytics', {
-        ...baseParams,
-        useGoogleAnalytics: false
-      })
-
-      expect($('script')).toHaveLength(0)
-    })
-
-    test('Should render GA4 and GTM scripts when useGoogleAnalytics is omitted (defaults to true)', () => {
-      const { useGoogleAnalytics, ...paramsWithoutFlag } = baseParams
-      const $ = renderComponent('google-analytics', paramsWithoutFlag)
-
-      expect($('script')).toHaveLength(4)
     })
 
     test('Should render GA4 and GTM scripts with default denied consent when allowGoogleAnalytics is false', () => {
@@ -82,7 +65,7 @@ describe('Google Analytics Component', () => {
   })
 
   describe('Noscript iframe (noscript: true)', () => {
-    test('Should render noscript iframe when allowGoogleAnalytics, ga4, gtm, and useGoogleAnalytics are truthy', () => {
+    test('Should render noscript iframe when allowGoogleAnalytics, ga4, and gtm are truthy', () => {
       const $ = renderComponent('google-analytics', {
         ...baseParams,
         allowGoogleAnalytics: true,
@@ -101,17 +84,6 @@ describe('Google Analytics Component', () => {
       const $ = renderComponent('google-analytics', {
         ...baseParams,
         allowGoogleAnalytics: false,
-        noscript: true
-      })
-
-      expect($('noscript')).toHaveLength(0)
-    })
-
-    test('Should not render noscript when useGoogleAnalytics is false', () => {
-      const $ = renderComponent('google-analytics', {
-        ...baseParams,
-        allowGoogleAnalytics: true,
-        useGoogleAnalytics: false,
         noscript: true
       })
 
