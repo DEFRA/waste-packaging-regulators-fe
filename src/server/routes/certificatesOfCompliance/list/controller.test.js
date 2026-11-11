@@ -843,7 +843,7 @@ describe('#certificatesOfComplianceController', () => {
 
       expect(result).toEqual(
         expect.stringContaining(
-          '<strong class="govuk-tag govuk-tag--teal">Accepted</strong>'
+          '<strong class="govuk-tag govuk-tag--green">Accepted</strong>'
         )
       )
     })
