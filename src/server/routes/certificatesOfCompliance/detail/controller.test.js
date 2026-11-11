@@ -449,9 +449,11 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(response.payload).toContain('Pending')
     })
 
-    it('renders a teal Accepted tag for an accepted declaration', async () => {
+    it('renders a green Accepted tag for an accepted declaration', async () => {
       const response = await app.get(acceptedDp.detailPath)
-      expect(response.payload).toContain('govuk-tag--teal')
+      expect(response.payload).toContain(
+        '<strong class="govuk-tag govuk-tag--green">Accepted</strong>'
+      )
       expect(response.payload).toContain('Accepted')
     })
 
@@ -554,12 +556,14 @@ describe('#certificatesOfComplianceDetailController', () => {
       expect(response.payload).toContain('Date actioned')
     })
 
-    it('renders an Accepted-only page with the teal tag, regulator name, and Not applicable reason', async () => {
+    it('renders an Accepted-only page with the green tag, regulator name, and Not applicable reason', async () => {
       const response = await app.get(acceptedOnly.detailPath)
       const { currentYear } = loadDetailPage(response.payload)
 
       expect(response.payload).toContain('15 April 2026 at 11:20')
-      expect(response.payload).toContain('govuk-tag govuk-tag--teal')
+      expect(response.payload).toContain(
+        '<strong class="govuk-tag govuk-tag--green">Accepted</strong>'
+      )
       expect(currentYear.rows).toHaveLength(1)
       expect(currentYear.rows[0].by).toBe('James Walker')
       expect(currentYear.rows[0].reason).toBe(NOT_APPLICABLE)
