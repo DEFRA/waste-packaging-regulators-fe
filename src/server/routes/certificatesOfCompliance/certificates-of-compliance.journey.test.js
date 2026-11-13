@@ -747,8 +747,7 @@ describe('certificates of compliance — journey', () => {
     beforeEach(() => {
       scenario = app.given([
         {
-          // The heading shows the trading name, not the scheme registered name,
-          // and the nominated contact is the Approved Person, not the Basic User.
+          // Nominated contact is the Approved Person, not the Basic User.
           name: 'FuturePack Operators',
           schemeName: 'FuturePack Compliance Scheme',
           type: 'compliance-scheme',
@@ -778,22 +777,22 @@ describe('certificates of compliance — journey', () => {
       ])
     })
 
-    it('headings show the trading name, not the scheme registered name', async () => {
+    it('headings show the compliance scheme name', async () => {
       const org = scenario.byName('FuturePack Operators')
       const payload = (await app.get(org.detailPath)).payload
       const { heading } = loadDetailPage(payload)
 
-      expect(heading).toBe('FuturePack Operators')
+      expect(heading).toBe('FuturePack Compliance Scheme')
     })
 
-    it('not-submitted list shows the trading name, not the scheme registered name', async () => {
+    it('not-submitted list shows the compliance scheme name', async () => {
       const response = await app.get(
         '/certificates-of-compliance?type=compliance-schemes&tab=not-submitted'
       )
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).toContain('FuturePack Operators')
-      expect(response.payload).not.toContain('FuturePack Compliance Scheme')
+      expect(response.payload).toContain('FuturePack Compliance Scheme')
+      expect(response.payload).not.toContain('FuturePack Operators')
     })
 
     it('list row and detail heading show the same name', async () => {
@@ -853,6 +852,8 @@ describe('certificates of compliance — journey', () => {
       scenario = app.given([
         {
           name: 'EcoPack Group',
+          schemeName: 'EcoPack Compliance Ltd',
+          operatorName: 'EcoPack Group',
           type: 'compliance-scheme',
           status: 'pending',
           regulation43: false
@@ -880,7 +881,7 @@ describe('certificates of compliance — journey', () => {
 
       expect(regulation43.present).toBe(true)
       expect(regulation43.text).toBe(
-        'EcoPack Group declared they have not complied with all other requirements in regulation 43.'
+        'EcoPack Compliance Ltd declared they have not complied with all other requirements in regulation 43.'
       )
     })
 

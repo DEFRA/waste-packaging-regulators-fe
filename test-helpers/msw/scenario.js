@@ -244,8 +244,8 @@ function buildOrganisation(spec, index) {
 
   const wasteOrganisation = {
     id: organisationId,
-    name: isComplianceScheme ? operatorName : displayName,
-    tradingName: isComplianceScheme ? schemeName : null,
+    name: isComplianceScheme ? schemeName : displayName,
+    tradingName: isComplianceScheme ? operatorName : null,
     businessCountry: 'GB-ENG',
     companiesHouseNumber,
     address: {
@@ -266,7 +266,7 @@ function buildOrganisation(spec, index) {
 
   const account = {
     externalId: organisationId,
-    name: isComplianceScheme ? operatorName : displayName,
+    name: isComplianceScheme ? schemeName : displayName,
     referenceNumber: reference,
     companiesHouseNumber: isComplianceScheme ? companiesHouseNumber : null,
     isComplianceScheme,
