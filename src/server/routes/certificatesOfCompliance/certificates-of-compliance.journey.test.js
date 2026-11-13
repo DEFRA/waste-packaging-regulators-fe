@@ -853,7 +853,6 @@ describe('certificates of compliance — journey', () => {
         {
           name: 'EcoPack Group',
           schemeName: 'EcoPack Compliance Ltd',
-          operatorName: 'EcoPack Group',
           type: 'compliance-scheme',
           status: 'pending',
           regulation43: false

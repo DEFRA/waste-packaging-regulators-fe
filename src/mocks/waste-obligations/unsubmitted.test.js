@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import { COMPLIANCE_SCHEME, DIRECT_PRODUCER } from '#mocks/identities.js'
 import { mockObligationsAllMet } from './obligation-data.js'
+import { listOrganisationName } from './declaration.js'
 import {
   unsubmittedOrganisationName,
   toUnsubmittedOrganisation
@@ -35,6 +36,30 @@ describe('unsubmittedOrganisationName', () => {
         organisationName: 'Scheme Ltd'
       })
     ).toBe('Scheme Ltd')
+  })
+
+  test('returns null when compliance scheme name fields are blank', () => {
+    expect(
+      unsubmittedOrganisationName({
+        registrationType: COMPLIANCE_SCHEME,
+        complianceSchemeName: null,
+        organisationName: null,
+        schemeOperatorName: 'Operator Co'
+      })
+    ).toBeNull()
+  })
+
+  test('matches listOrganisationName for compliance schemes', () => {
+    const record = {
+      registrationType: COMPLIANCE_SCHEME,
+      complianceSchemeName: '   ',
+      organisationName: 'Scheme Ltd',
+      schemeOperatorName: 'Operator Co'
+    }
+    expect(unsubmittedOrganisationName(record)).toBe(
+      listOrganisationName(record)
+    )
+    expect(listOrganisationName(record)).toBe('Scheme Ltd')
   })
 })
 

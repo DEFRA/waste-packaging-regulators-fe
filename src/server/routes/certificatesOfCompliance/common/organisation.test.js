@@ -154,6 +154,17 @@ describe('mapOrganisationName', () => {
     ).toBe('Scheme Ltd')
   })
 
+  test('skips blank compliance scheme name and uses organisation name', () => {
+    expect(
+      mapOrganisationName({
+        registrationType: 'ComplianceScheme',
+        complianceSchemeName: '   ',
+        schemeOperatorName: 'Operator Co',
+        name: 'Scheme Ltd'
+      })
+    ).toBe('Scheme Ltd')
+  })
+
   test('returns unknown organisation when only scheme operator name is set', () => {
     expect(
       mapOrganisationName({

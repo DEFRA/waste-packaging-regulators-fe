@@ -13,14 +13,32 @@ export function isSubmittedRecord(record) {
   return record.declarationId != null
 }
 
+function isBlank(value) {
+  return value == null || String(value).trim() === ''
+}
+
+function firstNonBlankName(...candidates) {
+  for (const value of candidates) {
+    if (!isBlank(value)) {
+      return value
+    }
+  }
+  return null
+}
+
+// complianceSchemeName then organisationName; not schemeOperatorName for display.
+export function complianceSchemeDisplayName(record) {
+  return firstNonBlankName(record.complianceSchemeName, record.organisationName)
+}
+
 // The organisation name a submitted declaration list/search row displays: the
 // compliance scheme name for compliance schemes, the organisation name for direct
-// producers. The not-submitted endpoint uses unsubmittedOrganisationName instead.
+// producers. Unsubmitted rows use the same rule via unsubmittedOrganisationName.
 export function listOrganisationName(record) {
   if (record.registrationType === COMPLIANCE_SCHEME) {
-    return record.complianceSchemeName ?? record.organisationName ?? null
+    return complianceSchemeDisplayName(record)
   }
-  return record.organisationName
+  return record.organisationName ?? null
 }
 
 // The declaration shape returned by both GET /compliance-declarations (list rows)

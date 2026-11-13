@@ -92,7 +92,6 @@ describe('#certificatesOfComplianceDetailController', () => {
       {
         name: 'EcoPack Group',
         schemeName: 'EcoPack Compliance Ltd',
-        operatorName: 'EcoPack Group',
         type: 'compliance-scheme',
         companiesHouseNumber: 'CS_GENERATED_0923795',
         status: 'pending',

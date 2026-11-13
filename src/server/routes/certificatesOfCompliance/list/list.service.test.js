@@ -2521,6 +2521,17 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(item.organisationName).toBe('Scheme Display Name')
       })
 
+      test('uses unknown organisation when the endpoint row name is missing', () => {
+        const item = mapUnsubmittedToItem({
+          organisationId: 'cs-1',
+          name: null,
+          schemeOperatorName: 'Operator Trading Name',
+          referenceNumber: '200001'
+        })
+
+        expect(item.organisationName).toBe('Unknown organisation')
+      })
+
       // The endpoint only returns organisations whose reference number resolved,
       // so this is a guard against ever rendering 'undefined' in the ID column —
       // not a fallback the contract is expected to exercise.
