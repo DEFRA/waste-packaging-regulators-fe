@@ -132,30 +132,44 @@ describe('formatOrganisationName', () => {
 })
 
 describe('mapOrganisationName', () => {
-  test('returns scheme operator name for compliance schemes', () => {
+  test('returns compliance scheme name for compliance schemes', () => {
     expect(
       mapOrganisationName({
         registrationType: 'ComplianceScheme',
+        complianceSchemeName: 'Scheme Ltd',
         schemeOperatorName: 'Operator Co',
-        name: 'Scheme Ltd'
+        name: 'Other Name'
       })
-    ).toBe('Operator Co')
+    ).toBe('Scheme Ltd')
   })
 
   test('falls back to organisation name for compliance schemes', () => {
     expect(
       mapOrganisationName({
         registrationType: 'ComplianceScheme',
-        schemeOperatorName: null,
+        complianceSchemeName: null,
+        schemeOperatorName: 'Operator Co',
         name: 'Scheme Ltd'
       })
     ).toBe('Scheme Ltd')
+  })
+
+  test('falls back to scheme operator name when scheme name fields are blank', () => {
+    expect(
+      mapOrganisationName({
+        registrationType: 'ComplianceScheme',
+        complianceSchemeName: null,
+        schemeOperatorName: 'Operator Co',
+        name: null
+      })
+    ).toBe('Operator Co')
   })
 
   test('returns unknown organisation when compliance scheme name fields are blank', () => {
     expect(
       mapOrganisationName({
         registrationType: 'ComplianceScheme',
+        complianceSchemeName: null,
         schemeOperatorName: null,
         name: null
       })
