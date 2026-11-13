@@ -17,17 +17,17 @@ describe('unsubmittedOrganisationName', () => {
     ).toBe('Producer Ltd')
   })
 
-  test('returns scheme operator name for compliance schemes', () => {
+  test('returns compliance scheme name for compliance schemes', () => {
     expect(
       unsubmittedOrganisationName({
         registrationType: COMPLIANCE_SCHEME,
         schemeOperatorName: 'Operator Co',
         complianceSchemeName: 'Scheme Ltd'
       })
-    ).toBe('Operator Co')
+    ).toBe('Scheme Ltd')
   })
 
-  test('falls back to organisationName when compliance scheme operator name is blank', () => {
+  test('falls back to organisationName when compliance scheme name is blank', () => {
     expect(
       unsubmittedOrganisationName({
         registrationType: COMPLIANCE_SCHEME,
@@ -39,11 +39,12 @@ describe('unsubmittedOrganisationName', () => {
 })
 
 describe('toUnsubmittedOrganisation', () => {
-  test('materialises trading name and reference number on the row', () => {
+  test('materialises scheme name and reference number on the row', () => {
     expect(
       toUnsubmittedOrganisation({
         organisationId: 'org-cs',
         registrationType: COMPLIANCE_SCHEME,
+        complianceSchemeName: 'Scheme Co',
         schemeOperatorName: 'Operator Co',
         organisationReferenceNumber: '110987',
         obligations: []
@@ -51,7 +52,7 @@ describe('toUnsubmittedOrganisation', () => {
     ).toEqual(
       expect.objectContaining({
         organisationId: 'org-cs',
-        name: 'Operator Co',
+        name: 'Scheme Co',
         referenceNumber: '110987',
         recyclingObligationsMet: null,
         obligationCoveragePercentage: null

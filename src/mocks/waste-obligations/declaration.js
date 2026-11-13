@@ -14,12 +14,17 @@ export function isSubmittedRecord(record) {
 }
 
 // The organisation name a submitted declaration list/search row displays: the
-// scheme operator for compliance schemes, the organisation name for direct
+// compliance scheme name for compliance schemes, the organisation name for direct
 // producers. The not-submitted endpoint uses unsubmittedOrganisationName instead.
 export function listOrganisationName(record) {
-  return record.registrationType === COMPLIANCE_SCHEME
-    ? record.schemeOperatorName
-    : record.organisationName
+  if (record.registrationType === COMPLIANCE_SCHEME) {
+    return (
+      record.complianceSchemeName ??
+      record.organisationName ??
+      record.schemeOperatorName
+    )
+  }
+  return record.organisationName
 }
 
 // The declaration shape returned by both GET /compliance-declarations (list rows)

@@ -36,18 +36,19 @@ function isBlank(value) {
   return value == null || String(value).trim() === ''
 }
 
-// Deliberately NOT declaration.js's listOrganisationName: submitted tabs show the
-// scheme operator from the declaration snapshot, but the unsubmitted endpoint
-// materialises schemeOperatorName for compliance schemes, falling back to
-// organisationName when that field is blank.
+// Materialises the same compliance-scheme display name as listOrganisationName.
 export function unsubmittedOrganisationName(record) {
   if (record.registrationType !== COMPLIANCE_SCHEME) {
     return record.organisationName
   }
 
-  return isBlank(record.schemeOperatorName)
-    ? record.organisationName
-    : record.schemeOperatorName
+  if (!isBlank(record.complianceSchemeName)) {
+    return record.complianceSchemeName
+  }
+  if (!isBlank(record.organisationName)) {
+    return record.organisationName
+  }
+  return isBlank(record.schemeOperatorName) ? null : record.schemeOperatorName
 }
 
 export function toUnsubmittedOrganisation(record) {
