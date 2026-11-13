@@ -648,7 +648,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.items[0].organisationName).toBe('Test Org')
       })
 
-      test('falls back to schemeOperatorName when name is null for compliance schemes', async () => {
+      test('uses complianceSchemeName for compliance schemes', async () => {
         setupPendingTab([
           makeDeclaration({
             organisation: {
@@ -664,17 +664,17 @@ describe('getCertificatesOfComplianceViewModel', () => {
           'pending',
           1
         )
-        expect(vm.items[0].organisationName).toBe('Operator Name')
+        expect(vm.items[0].organisationName).toBe('Scheme Name')
       })
 
-      test('falls back to "Unknown organisation" when all name fields are null for compliance schemes', async () => {
+      test('uses unknown organisation when only schemeOperatorName is set for compliance schemes', async () => {
         setupPendingTab([
           makeDeclaration({
             organisation: {
               name: null,
               registrationType: 'ComplianceScheme',
-              complianceSchemeName: 'Scheme Name',
-              schemeOperatorName: null
+              complianceSchemeName: null,
+              schemeOperatorName: 'Operator Name'
             }
           })
         ])
@@ -907,7 +907,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.companyName).toBe(mockDetailData.organisation.name)
       })
 
-      test('falls back to schemeOperatorName when organisation.name is null', async () => {
+      test('uses complianceSchemeName for compliance scheme detail when organisation.name is null', async () => {
         mockObligationsApi.getComplianceDeclarationOrNull.mockResolvedValue({
           ...mockDetailData,
           organisation: {
@@ -924,7 +924,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           'decl-1'
         )
 
-        expect(vm.companyName).toBe('Operator Co')
+        expect(vm.companyName).toBe('Scheme Co')
       })
 
       test('falls back to "Unknown organisation" when all name fields are null', async () => {
@@ -2357,7 +2357,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
 
         expect(vm.regulation43Statement).toBe(
-          'EcoPack Group declared they have not complied with all other requirements in regulation 43.'
+          'EcoPack Compliance Ltd declared they have not complied with all other requirements in regulation 43.'
         )
       })
 
@@ -2510,15 +2510,26 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(item.organisationReferenceNumber).toBe('100001')
       })
 
-      test('prefers schemeOperatorName over name for compliance scheme rows', () => {
+      test('uses materialised name from the unsubmitted endpoint row', () => {
         const item = mapUnsubmittedToItem({
           organisationId: 'cs-1',
-          name: 'Fallback Name',
+          name: 'Scheme Display Name',
           schemeOperatorName: 'Operator Trading Name',
           referenceNumber: '200001'
         })
 
-        expect(item.organisationName).toBe('Operator Trading Name')
+        expect(item.organisationName).toBe('Scheme Display Name')
+      })
+
+      test('uses unknown organisation when the endpoint row name is missing', () => {
+        const item = mapUnsubmittedToItem({
+          organisationId: 'cs-1',
+          name: null,
+          schemeOperatorName: 'Operator Trading Name',
+          referenceNumber: '200001'
+        })
+
+        expect(item.organisationName).toBe('Unknown organisation')
       })
 
       // The endpoint only returns organisations whose reference number resolved,

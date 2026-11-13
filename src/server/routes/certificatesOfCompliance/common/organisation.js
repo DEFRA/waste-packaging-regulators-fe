@@ -25,11 +25,19 @@ export function formatOrganisationName(organisation, year) {
   return organisation.name ?? ''
 }
 
+function nonBlankName(...candidates) {
+  for (const value of candidates) {
+    if (value != null && String(value).trim() !== '') {
+      return value
+    }
+  }
+  return null
+}
+
 export function mapOrganisationName(organisation) {
   if (isComplianceSchemeRegistrationType(organisation.registrationType)) {
     return (
-      organisation.schemeOperatorName ??
-      organisation.name ??
+      nonBlankName(organisation.complianceSchemeName, organisation.name) ??
       UNKNOWN_ORGANISATION
     )
   }

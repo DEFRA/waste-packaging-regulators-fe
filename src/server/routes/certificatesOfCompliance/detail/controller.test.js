@@ -91,6 +91,7 @@ describe('#certificatesOfComplianceDetailController', () => {
       },
       {
         name: 'EcoPack Group',
+        schemeName: 'EcoPack Compliance Ltd',
         type: 'compliance-scheme',
         companiesHouseNumber: 'CS_GENERATED_0923795',
         status: 'pending',
@@ -329,7 +330,7 @@ describe('#certificatesOfComplianceDetailController', () => {
   it('should render the not complied Regulation 43 statement for a not compliant compliance scheme', async () => {
     const response = await app.get(pendingCs.detailPath)
     expect(response.payload).toContain(
-      'EcoPack Group declared they have not complied with all other requirements in regulation 43.'
+      'EcoPack Compliance Ltd declared they have not complied with all other requirements in regulation 43.'
     )
   })
 

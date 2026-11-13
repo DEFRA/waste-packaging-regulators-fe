@@ -22,7 +22,7 @@ export function recordSearchText(record) {
   return [
     listOrganisationName(record),
     record.organisationReferenceNumber,
-    record.complianceSchemeName,
+    record.schemeOperatorName,
     record.organisationName
   ]
     .filter(Boolean)

@@ -194,7 +194,7 @@ describe('#getComplianceSearchResults', () => {
       )
     })
 
-    test('Should use the scheme operator name for compliance schemes', async () => {
+    test('Should use the compliance scheme name for compliance schemes', async () => {
       listComplianceDeclarations.mockResolvedValue({
         complianceDeclarations: [
           buildDeclaration({
@@ -202,6 +202,7 @@ describe('#getComplianceSearchResults', () => {
               id: 'org-2',
               registrationType: 'ComplianceScheme',
               name: null,
+              complianceSchemeName: 'Scheme Co',
               schemeOperatorName: 'Operator Co',
               referenceNumber: '530001'
             }
@@ -212,10 +213,10 @@ describe('#getComplianceSearchResults', () => {
 
       const { items } = await getComplianceSearchResults(
         'compliance-schemes',
-        'operator'
+        'scheme'
       )
 
-      expect(items[0].organisationName).toBe('Operator Co')
+      expect(items[0].organisationName).toBe('Scheme Co')
       expect(items[0].organisationReferenceNumber).toBe('530001')
     })
 

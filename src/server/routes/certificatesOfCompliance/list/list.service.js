@@ -12,6 +12,7 @@ import {
   PAGE_SIZE,
   DECLARATIONS_BATCH_SIZE,
   NO_DATA,
+  UNKNOWN_ORGANISATION,
   COMPLIANCE_YEAR,
   DOWNLOAD_PAGE_CONCURRENCY,
   UNSUBMITTED_SORT_FIELD_BY_COLUMN,
@@ -65,7 +66,7 @@ export function mapUnsubmittedToItem(row) {
     // The endpoint only returns organisations whose reference number resolved,
     // so this is defensive: it keeps the column from ever rendering 'undefined'.
     organisationReferenceNumber: row.referenceNumber ?? NO_DATA,
-    organisationName: row.schemeOperatorName ?? row.name,
+    organisationName: row.name ?? UNKNOWN_ORGANISATION,
     recyclingObligationsMet: row.recyclingObligationsMet ?? null,
     regulation43Met: null,
     obligationCoveragePercentage: row.obligationCoveragePercentage ?? null,
