@@ -154,7 +154,7 @@ describe('mapOrganisationName', () => {
     ).toBe('Scheme Ltd')
   })
 
-  test('falls back to scheme operator name when scheme name fields are blank', () => {
+  test('returns unknown organisation when only scheme operator name is set', () => {
     expect(
       mapOrganisationName({
         registrationType: 'ComplianceScheme',
@@ -162,7 +162,7 @@ describe('mapOrganisationName', () => {
         schemeOperatorName: 'Operator Co',
         name: null
       })
-    ).toBe('Operator Co')
+    ).toBe(UNKNOWN_ORGANISATION)
   })
 
   test('returns unknown organisation when compliance scheme name fields are blank', () => {

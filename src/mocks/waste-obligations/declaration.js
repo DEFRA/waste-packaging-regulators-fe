@@ -18,11 +18,7 @@ export function isSubmittedRecord(record) {
 // producers. The not-submitted endpoint uses unsubmittedOrganisationName instead.
 export function listOrganisationName(record) {
   if (record.registrationType === COMPLIANCE_SCHEME) {
-    return (
-      record.complianceSchemeName ??
-      record.organisationName ??
-      record.schemeOperatorName
-    )
+    return record.complianceSchemeName ?? record.organisationName ?? null
   }
   return record.organisationName
 }

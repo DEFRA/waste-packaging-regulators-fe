@@ -48,7 +48,7 @@ export function unsubmittedOrganisationName(record) {
   if (!isBlank(record.organisationName)) {
     return record.organisationName
   }
-  return isBlank(record.schemeOperatorName) ? null : record.schemeOperatorName
+  return null
 }
 
 export function toUnsubmittedOrganisation(record) {

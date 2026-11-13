@@ -37,11 +37,8 @@ function nonBlankName(...candidates) {
 export function mapOrganisationName(organisation) {
   if (isComplianceSchemeRegistrationType(organisation.registrationType)) {
     return (
-      nonBlankName(
-        organisation.complianceSchemeName,
-        organisation.name,
-        organisation.schemeOperatorName
-      ) ?? UNKNOWN_ORGANISATION
+      nonBlankName(organisation.complianceSchemeName, organisation.name) ??
+      UNKNOWN_ORGANISATION
     )
   }
   return organisation.name ?? UNKNOWN_ORGANISATION

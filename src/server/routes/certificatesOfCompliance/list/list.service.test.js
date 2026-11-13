@@ -667,7 +667,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
         expect(vm.items[0].organisationName).toBe('Scheme Name')
       })
 
-      test('falls back to schemeOperatorName when scheme name fields are null for compliance schemes', async () => {
+      test('uses unknown organisation when only schemeOperatorName is set for compliance schemes', async () => {
         setupPendingTab([
           makeDeclaration({
             organisation: {
@@ -683,7 +683,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
           'pending',
           1
         )
-        expect(vm.items[0].organisationName).toBe('Operator Name')
+        expect(vm.items[0].organisationName).toBe('Unknown organisation')
       })
 
       test('falls back to "Unknown organisation" when all name fields are null', async () => {
