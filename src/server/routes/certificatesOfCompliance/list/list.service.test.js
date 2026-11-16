@@ -42,6 +42,7 @@ import { toDeclaration } from '#mocks/backends.js'
 import {
   PAGE_SIZE,
   DECLARATIONS_BATCH_SIZE,
+  DOWNLOAD_PAGE_CONCURRENCY,
   COMPLIANCE_YEAR,
   NO_DATA,
   NOT_APPLICABLE,
@@ -597,6 +598,31 @@ describe('getCertificatesOfComplianceViewModel', () => {
 
         expect(api.listComplianceDeclarations).toHaveBeenCalledTimes(2)
         expect(declarations).toHaveLength(150)
+      })
+
+      test('keeps at most DOWNLOAD_PAGE_CONCURRENCY later pages in flight', async () => {
+        let inFlight = 0
+        let maxInFlight = 0
+        const api = {
+          listComplianceDeclarations: vi.fn(async ({ page }) => {
+            if (page > 1) {
+              inFlight += 1
+              maxInFlight = Math.max(maxInFlight, inFlight)
+              await new Promise((resolve) => setImmediate(resolve))
+              inFlight -= 1
+            }
+            return {
+              total: DECLARATIONS_BATCH_SIZE * 20,
+              complianceDeclarations: [{ organisation: { id: `p${page}` } }]
+            }
+          })
+        }
+
+        const declarations = await fetchAllDeclarations(api, {}, undefined)
+
+        expect(api.listComplianceDeclarations).toHaveBeenCalledTimes(20)
+        expect(declarations).toHaveLength(20)
+        expect(maxInFlight).toBe(DOWNLOAD_PAGE_CONCURRENCY)
       })
 
       test('makes a single call when one page covers the total', async () => {

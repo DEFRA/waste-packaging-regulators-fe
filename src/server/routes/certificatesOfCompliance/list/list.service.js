@@ -18,7 +18,7 @@ import {
   UNSUBMITTED_DEFAULT_SORT
 } from '../common/constants.js'
 import { mapOrganisationName } from '../common/organisation.js'
-import { calculateObligationCoveragePercentage } from '../common/display.js'
+import { declarationCoveragePercentage } from '../common/display.js'
 import pMap from 'p-map'
 
 export function mapDeclarationToItem(declaration) {
@@ -27,8 +27,7 @@ export function mapDeclarationToItem(declaration) {
     organisation,
     obligationStatus,
     isRegulation43Compliant,
-    created,
-    obligationCoveragePercentage
+    created
   } = declaration
   return {
     id,
@@ -37,15 +36,7 @@ export function mapDeclarationToItem(declaration) {
     organisationName: mapOrganisationName(organisation),
     recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
     regulation43Met: isRegulation43Compliant,
-    // Whole number from the obligations API — display as-is (no frontend rounding).
-    // The search endpoint does not return one, but it does embed the obligations,
-    // so fall back to the same calculation the not-submitted tab uses rather than
-    // leaving the column blank.
-    obligationCoveragePercentage:
-      obligationCoveragePercentage ??
-      (declaration.obligations?.length
-        ? calculateObligationCoveragePercentage(declaration.obligations)
-        : null),
+    obligationCoveragePercentage: declarationCoveragePercentage(declaration),
     dateSubmitted: created
   }
 }
@@ -89,6 +80,9 @@ export function resolveUnsubmittedSort(sortColumn, sortDirection) {
   return field === 'Name' ? primarySort : `${primarySort},Name[asc]`
 }
 
+// Every declaration matching `params`, for the download, drained page by
+// page. Pages after the first are bounded the same way, and for the same
+// reasons, as fetchAllUnsubmittedOrganisations below.
 export async function fetchAllDeclarations(api, params, traceId) {
   const first = await api.listComplianceDeclarations(
     { ...params, page: 1, pageSize: DECLARATIONS_BATCH_SIZE },
@@ -100,13 +94,14 @@ export async function fetchAllDeclarations(api, params, traceId) {
     return first.complianceDeclarations
   }
 
-  const remaining = await Promise.all(
-    Array.from({ length: totalPages - 1 }, (_, i) =>
+  const remaining = await pMap(
+    Array.from({ length: totalPages - 1 }, (_, i) => i + 2),
+    (page) =>
       api.listComplianceDeclarations(
-        { ...params, page: i + 2, pageSize: DECLARATIONS_BATCH_SIZE },
+        { ...params, page, pageSize: DECLARATIONS_BATCH_SIZE },
         traceId
-      )
-    )
+      ),
+    { concurrency: DOWNLOAD_PAGE_CONCURRENCY }
   )
 
   return [

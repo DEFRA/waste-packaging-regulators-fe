@@ -41,6 +41,22 @@ export function buildRegulation43Statement(
   )
 }
 
+// A declaration's percentage met: the whole number the obligations API serves,
+// shown as-is (no frontend rounding). The search endpoint does not return one,
+// but it does embed the obligations, so fall back to the same calculation the
+// not-submitted tab uses rather than leaving the value blank.
+export function declarationCoveragePercentage({
+  obligationCoveragePercentage,
+  obligations
+}) {
+  if (obligationCoveragePercentage != null) {
+    return obligationCoveragePercentage
+  }
+  return obligations?.length
+    ? calculateObligationCoveragePercentage(obligations)
+    : null
+}
+
 export function calculateObligationCoveragePercentage(obligations = []) {
   const totalAccepted = obligations.reduce(
     (sum, o) => sum + (o.tonnages?.accepted ?? 0),
