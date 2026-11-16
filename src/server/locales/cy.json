@@ -238,7 +238,6 @@
         "accepted": "Dim cyflwyniadau wedi’u derbyn eto. Bydd cyflwyniadau rydych chi’n eu derbyn yn cael eu rhestru yma.",
         "notSubmitted": "Does dim cyflwyniadau yn weddill"
       },
-      "downloadLink": "Lawrlwytho’r rhestr (CSV)",
       "searchResults": {
         "caption": "Canlyniadau chwilio",
         "resultSingular": "{{count}} canlyniad ar gyfer \"{{searchTerm}}\".",

@@ -251,7 +251,7 @@
         "accepted": "No accepted submissions yet. Submissions you accept will be listed here.",
         "notSubmitted": "There are no outstanding submissions"
       },
-      "downloadLink": "Download list (CSV)",
+      "downloadReport": "Download report (Excel)",
       "searchResults": {
         "caption": "Search results",
         "resultSingular": "{{count}} result for \"{{searchTerm}}\".",

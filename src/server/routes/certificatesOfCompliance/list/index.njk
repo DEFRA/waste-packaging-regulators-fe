@@ -70,6 +70,12 @@
   {% endif %}
 
   {% include "certificatesOfCompliance/partials/producer-subnavigation.njk" %}
+  {{ govukButton({
+    text: i18n.t('downloadReport'),
+    href: localeUrl(routePrefix ~ '/download?organisation_type=' ~ organisationType),
+    classes: "govuk-button--secondary",
+    attributes: { "data-testid": "download-report" }
+  }) }}
   <div class="govuk-tabs">
     <ul class="govuk-tabs__list">
       <li class="govuk-tabs__list-item{% if activeTab == 'pending' %} govuk-tabs__list-item--selected{% endif %}">

@@ -80,7 +80,7 @@ export function resolveUnsubmittedSort(sortColumn, sortDirection) {
   return field === 'Name' ? primarySort : `${primarySort},Name[asc]`
 }
 
-// Every declaration matching `params`, for the download, drained page by
+// Every declaration matching `params`, for the Excel report, drained page by
 // page. Pages after the first are bounded the same way, and for the same
 // reasons, as fetchAllUnsubmittedOrganisations below.
 export async function fetchAllDeclarations(api, params, traceId) {
@@ -110,14 +110,14 @@ export async function fetchAllDeclarations(api, params, traceId) {
   ]
 }
 
-// Every unsubmitted row for the year, for the CSV export. The endpoint caps a
+// Every unsubmitted row for the year, for the Excel report. The endpoint caps a
 // page at 100, so the whole population is drained page by page.
 //
 // Pages after the first are bounded rather than fired at once: at 100 rows a
 // page a large population would otherwise open hundreds of simultaneous
 // requests, which is the same failure mode as the per-organisation fan-out this
 // change removes, one level up. p-map's default stopOnError is kept so a failed
-// page fails the export outright rather than writing a short CSV that looks
+// page fails the report outright rather than writing a short file that looks
 // complete.
 export async function fetchAllUnsubmittedOrganisations(api, params, traceId) {
   const first = await api.listUnsubmittedComplianceDeclarations(

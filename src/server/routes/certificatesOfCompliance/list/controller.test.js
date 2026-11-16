@@ -1568,8 +1568,9 @@ describe('#certificatesOfComplianceController', () => {
 
         expect(result).toContain(emptyTabMessages[tab])
         expect($('table')).toHaveLength(0)
-        // Scenario 6: the download stays available on an empty tab (header-only CSV).
-        expect(result).toContain('Download list (CSV)')
+        // The report covers every organisation, so its button stays on an empty tab.
+        expect(result).toContain('Download report (Excel)')
+        expect(result).not.toContain('Download list (CSV)')
         expect(result).toContain('<strong>0</strong>')
       }
     )

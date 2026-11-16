@@ -574,8 +574,8 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
     })
 
-    // Still the pending/accepted CSV's page drain; the not-submitted tab no
-    // longer reaches it.
+    // The Excel report's page drain for declarations; the not-submitted tab
+    // does not reach it.
     describe('fetchAllDeclarations — multi-page', () => {
       test('fetches every page when the total exceeds the batch size', async () => {
         const api = {
@@ -2660,7 +2660,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
 
       // A null metric means the backend holds no successful calculation for that
-      // organisation yet. It must not be coerced to 0, which the template and CSV
+      // organisation yet. It must not be coerced to 0, which the template and report
       // would render as a genuine "0% of obligations met".
       test('keeps a null percentage null rather than coercing it to 0', async () => {
         const items = await notSubmittedItems([
