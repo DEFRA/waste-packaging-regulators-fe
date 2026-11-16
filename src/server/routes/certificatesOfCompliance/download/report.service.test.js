@@ -207,6 +207,55 @@ describe('#getComplianceReport', () => {
     ])
   })
 
+  test('reads the data again once when a result set changes mid-read', async () => {
+    const pending = Array.from({ length: 150 }, (_, i) =>
+      declaration(`d${i}`, `org-${i}`, `Scheme ${i}`, 'Submitted')
+    )
+    const serve = pagedDeclarations({ 'Submitted,Accepted': pending })
+    let changed = false
+    obligationsApi.listComplianceDeclarations = vi.fn(async (params) => {
+      const response = await serve(params)
+      // The first read sees a total that moves between page 1 and page 2.
+      if (
+        !changed &&
+        params.status === 'Submitted,Accepted' &&
+        params.page === 2
+      ) {
+        changed = true
+        return { ...response, total: response.total - 1 }
+      }
+      return response
+    })
+
+    const { buffer } = await getComplianceReport(
+      'compliance-schemes',
+      undefined,
+      'GB-ENG',
+      NOW
+    )
+    const { rows } = await loadReport(buffer)
+
+    expect(changed).toBe(true)
+    expect(rows).toHaveLength(150)
+  })
+
+  test('fails the download when the data changes again on the second read', async () => {
+    const pending = Array.from({ length: 150 }, (_, i) =>
+      declaration(`d${i}`, `org-${i}`, `Scheme ${i}`, 'Submitted')
+    )
+    const serve = pagedDeclarations({ 'Submitted,Accepted': pending })
+    obligationsApi.listComplianceDeclarations = vi.fn(async (params) => {
+      const response = await serve(params)
+      return params.status === 'Submitted,Accepted' && params.page === 2
+        ? { ...response, total: response.total - 1 }
+        : response
+    })
+
+    await expect(
+      getComplianceReport('compliance-schemes', undefined, 'GB-ENG', NOW)
+    ).rejects.toThrow('total changed')
+  })
+
   test('fails the report rather than writing a partial file when a page fails', async () => {
     obligationsApi.listComplianceDeclarations = vi
       .fn()

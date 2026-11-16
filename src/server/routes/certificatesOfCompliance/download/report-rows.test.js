@@ -257,6 +257,25 @@ describe('#report-rows', () => {
       ).toBe(2535)
     })
 
+    test('rounds away floating-point noise to the thousandths', () => {
+      expect(
+        totalObligatedTonnes(
+          [0.001, 1.001, 0.998, 0.1, 0.9].map((obligated) => ({
+            tonnages: { obligated }
+          }))
+        )
+      ).toBe(3)
+    })
+
+    test('keeps real decimals', () => {
+      expect(
+        totalObligatedTonnes([
+          { tonnages: { obligated: 215.5 } },
+          { tonnages: { obligated: 870.125 } }
+        ])
+      ).toBe(1085.625)
+    })
+
     test.each([[null], [[]]])('is blank for %p', (obligations) => {
       expect(totalObligatedTonnes(obligations)).toBeNull()
     })

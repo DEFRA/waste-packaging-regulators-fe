@@ -7,10 +7,12 @@ import {
   COMPLIANCE_YEAR,
   UNSUBMITTED_DEFAULT_SORT
 } from '../common/constants.js'
+import { createLogger } from '#server/common/helpers/logging/logger.js'
 import {
   fetchAllDeclarations,
-  fetchAllUnsubmittedOrganisations
-} from '../list/list.service.js'
+  fetchAllUnsubmittedOrganisations,
+  ResultSetChangedError
+} from './report-pages.js'
 import { groupCancellationsByOrganisation } from './cancellations.js'
 import { buildReportRows } from './report-rows.js'
 import { buildReportWorkbook } from './report-workbook.js'
@@ -37,10 +39,10 @@ export async function fetchReportData({
 }) {
   const base = { obligationYear: COMPLIANCE_YEAR, registrationType, country }
 
-  // Each result set is read in a stable order so rows do not shift between
-  // pages, and get skipped or repeated, if a declaration changes while the
-  // pages are being read. Declarations are ordered by submission date, which
-  // never changes once submitted, so a new submission lands on the last page.
+  // Each result set is read in a stable order. Declarations are ordered by
+  // submission date, which never changes once submitted, so a new submission
+  // lands on the last page. A row that leaves a set mid-read still shifts the
+  // rows after it, which the page drains detect from a changed `total`.
   const [declarations, cancelledDeclarations, unsubmittedOrganisations] =
     await Promise.all([
       fetchAllDeclarations(
@@ -67,6 +69,25 @@ export async function fetchReportData({
   return { declarations, cancelledDeclarations, unsubmittedOrganisations }
 }
 
+const logger = createLogger()
+
+// A result set that changes while it is being read may have lost a row, so the
+// whole read is repeated once. A second change fails the download rather than
+// writing a file that may be missing an organisation.
+async function fetchReportDataWithRetry(args) {
+  try {
+    return await fetchReportData(args)
+  } catch (error) {
+    if (!(error instanceof ResultSetChangedError)) {
+      throw error
+    }
+    logger.warn(
+      `Report data changed while it was read; reading again: ${error.message}`
+    )
+    return fetchReportData(args)
+  }
+}
+
 export async function getComplianceReport(
   organisationType,
   traceId,
@@ -77,7 +98,7 @@ export async function getComplianceReport(
   const registrationType = registrationTypeByOrganisationType[organisationType]
 
   const { declarations, cancelledDeclarations, unsubmittedOrganisations } =
-    await fetchReportData({
+    await fetchReportDataWithRetry({
       obligationsApi,
       registrationType,
       country,

@@ -32,7 +32,6 @@ import { createWasteOrganisationsApiService } from '#services/waste-organisation
 import { createAccountApiService } from '#services/account-api.service.js'
 import {
   getCertificatesOfComplianceViewModel,
-  fetchAllDeclarations,
   mapUnsubmittedToItem,
   resolveUnsubmittedSort
 } from './list.service.js'
@@ -42,7 +41,6 @@ import { toDeclaration } from '#mocks/backends.js'
 import {
   PAGE_SIZE,
   DECLARATIONS_BATCH_SIZE,
-  DOWNLOAD_PAGE_CONCURRENCY,
   COMPLIANCE_YEAR,
   NO_DATA,
   NOT_APPLICABLE,
@@ -571,72 +569,6 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
         expect(vm.items).toEqual([])
         expect(vm.pagination.totalPages).toBe(1)
-      })
-    })
-
-    // The Excel report's page drain for declarations; the not-submitted tab
-    // does not reach it.
-    describe('fetchAllDeclarations — multi-page', () => {
-      test('fetches every page when the total exceeds the batch size', async () => {
-        const api = {
-          listComplianceDeclarations: vi.fn(({ page }) =>
-            Promise.resolve({
-              total: 150,
-              complianceDeclarations: Array.from(
-                { length: page === 1 ? DECLARATIONS_BATCH_SIZE : 50 },
-                (_, i) => ({ organisation: { id: `decl-${page}-${i}` } })
-              )
-            })
-          )
-        }
-
-        const declarations = await fetchAllDeclarations(
-          api,
-          { status: 'Submitted' },
-          'trace-1'
-        )
-
-        expect(api.listComplianceDeclarations).toHaveBeenCalledTimes(2)
-        expect(declarations).toHaveLength(150)
-      })
-
-      test('keeps at most DOWNLOAD_PAGE_CONCURRENCY later pages in flight', async () => {
-        let inFlight = 0
-        let maxInFlight = 0
-        const api = {
-          listComplianceDeclarations: vi.fn(async ({ page }) => {
-            if (page > 1) {
-              inFlight += 1
-              maxInFlight = Math.max(maxInFlight, inFlight)
-              await new Promise((resolve) => setImmediate(resolve))
-              inFlight -= 1
-            }
-            return {
-              total: DECLARATIONS_BATCH_SIZE * 20,
-              complianceDeclarations: [{ organisation: { id: `p${page}` } }]
-            }
-          })
-        }
-
-        const declarations = await fetchAllDeclarations(api, {}, undefined)
-
-        expect(api.listComplianceDeclarations).toHaveBeenCalledTimes(20)
-        expect(declarations).toHaveLength(20)
-        expect(maxInFlight).toBe(DOWNLOAD_PAGE_CONCURRENCY)
-      })
-
-      test('makes a single call when one page covers the total', async () => {
-        const api = {
-          listComplianceDeclarations: vi.fn().mockResolvedValue({
-            total: 3,
-            complianceDeclarations: [{}, {}, {}]
-          })
-        }
-
-        const declarations = await fetchAllDeclarations(api, {}, undefined)
-
-        expect(api.listComplianceDeclarations).toHaveBeenCalledTimes(1)
-        expect(declarations).toHaveLength(3)
       })
     })
 

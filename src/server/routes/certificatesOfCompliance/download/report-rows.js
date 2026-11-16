@@ -73,15 +73,18 @@ function regulation43Text(isRegulation43Compliant) {
 }
 
 // Total obligation across all materials. Glass is reported as remaining glass
-// and remelt, so summing every material does not count glass twice.
+// and remelt, so summing every material does not count glass twice. The sum is
+// rounded to the thousandths the tonnages carry, so floating-point noise
+// (2.9999999999999996) neither shows nor breaks an "equals" filter.
 export function totalObligatedTonnes(obligations) {
   if (!obligations?.length) {
     return null
   }
-  return obligations.reduce(
-    (total, obligation) => total + (obligation.tonnages?.obligated ?? 0),
+  const total = obligations.reduce(
+    (sum, obligation) => sum + (obligation.tonnages?.obligated ?? 0),
     0
   )
+  return Math.round(total * 1000) / 1000
 }
 
 function cancellationCount(cancellationsByOrganisation, organisationId) {
