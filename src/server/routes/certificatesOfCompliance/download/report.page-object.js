@@ -8,9 +8,7 @@ function cellValues(row, columnCount) {
   })
 }
 
-// Reads a downloaded report back into plain values for assertions: the
-// heading, the ordered column headings, each data row keyed by heading, and
-// the worksheet itself for cell-level checks (types, number formats, filters).
+// Reads a report back into plain values for test assertions.
 export async function loadReport(buffer) {
   const workbook = new ExcelJS.Workbook()
   await workbook.xlsx.load(buffer)

@@ -1,22 +1,18 @@
 import ExcelJS from 'exceljs'
 
 export const REPORT_DATE_FORMAT = 'd mmmm yyyy'
-// Percentage met is stored as the whole number the API serves (100, not 1), so
-// it sorts and filters as shown; the format only adds the % sign.
+// Shows a % sign without changing the stored number (100, not 1).
 export const PERCENTAGE_FORMAT = '0"%"'
 
 export const WHOLE_TONNES_FORMAT = '#,##0'
 export const DECIMAL_TONNES_FORMAT = '#,##0.###'
 
-// Excel keeps the decimal point of '#,##0.###' even when no decimals follow, so
-// a whole tonnage would read "4,050." — whole numbers get a format without one.
+// '#,##0.###' would show whole numbers with a trailing dot ("4,050.").
 function tonnesFormat(value) {
   return Number.isInteger(value) ? WHOLE_TONNES_FORMAT : DECIMAL_TONNES_FORMAT
 }
 
-// Report columns in order. Regulation 43 only applies to compliance schemes, so
-// it is left out of the direct producer report, which moves every later column
-// one to the left (Cancellations is J for direct producers, K for schemes).
+// Regulation 43 is for compliance schemes only.
 const REPORT_COLUMNS = [
   { key: 'organisationName', header: 'Organisation name', width: 40 },
   { key: 'organisationReference', header: 'Organisation ID', width: 16 },
@@ -62,9 +58,8 @@ export function reportColumns(isComplianceScheme) {
   )
 }
 
-// Rows above the column headings. The column headings row, its filters, the
-// frozen pane and the first data row are all placed from this, never from a
-// fixed row number, so rows can be added above the headings.
+// Rows above the column headings. Everything below is placed from this, so rows
+// can be added above the headings.
 export const REPORT_TITLE_ROWS = 1
 
 function writeHeading(worksheet, heading) {

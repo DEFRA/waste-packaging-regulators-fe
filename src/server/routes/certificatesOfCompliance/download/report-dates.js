@@ -1,6 +1,4 @@
-// Regulators work on UK time, so the day in the heading, the date in the file
-// name and the calendar date of every date cell are all read in Europe/London,
-// whatever time zone the server runs in.
+// Report dates are read in UK time, whatever the server's time zone.
 export const REPORT_TIME_ZONE = 'Europe/London'
 
 const calendarDateFormat = new Intl.DateTimeFormat('en-GB', {
@@ -21,10 +19,7 @@ export function londonCalendarParts(date) {
   return { year, month, day }
 }
 
-// The London calendar date of an instant, as a Date at UTC midnight. Excel date
-// cells carry no time zone and exceljs writes a Date by its UTC value, so this
-// keeps a submission made at 23:30 UTC during British Summer Time on the day
-// the regulator saw it.
+// The London date at UTC midnight, because exceljs writes dates in UTC.
 export function toLondonCalendarDate(value) {
   if (value == null || value === '') {
     return null

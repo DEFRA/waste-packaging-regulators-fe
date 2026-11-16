@@ -20,9 +20,7 @@ const reportStatusByDeclarationStatus = {
   [statusBySubmissionStatus.accepted]: REPORT_STATUS.accepted
 }
 
-// The report names a compliance scheme by its scheme name, never the scheme
-// operator, for every status. Not submitted rows already carry the scheme name
-// in `name`.
+// Compliance schemes are named by scheme name, not operator, for every status.
 export function reportOrganisationName(organisation) {
   if (isComplianceSchemeRegistrationType(organisation.registrationType)) {
     return (
@@ -34,9 +32,7 @@ export function reportOrganisationName(organisation) {
   return organisation.name ?? UNKNOWN_ORGANISATION
 }
 
-// Organisation IDs are written as numbers so they sort numerically. A
-// reference that is not a plain whole number (letters, or a leading zero that a
-// number would drop) stays as text rather than being altered.
+// Kept as text when a number would change it (letters or a leading zero).
 const PLAIN_WHOLE_NUMBER = /^[1-9]\d{0,14}$/
 
 export function reportReferenceNumber(referenceNumber) {
@@ -65,17 +61,13 @@ function declarationRecyclingObligations(obligationStatus) {
   return metOrNotMet(null)
 }
 
-// A submitted declaration is only ever Compliant or Not compliant; the column
-// is left blank only for organisations that have not submitted. The contract
-// types the flag as a boolean, so a missing value is not treated as compliant.
+// A missing flag counts as Not compliant.
 function regulation43Text(isRegulation43Compliant) {
   return isRegulation43Compliant === true ? 'Compliant' : 'Not compliant'
 }
 
-// Total obligation across all materials. Glass is reported as remaining glass
-// and remelt, so summing every material does not count glass twice. The sum is
-// rounded to the thousandths the tonnages carry, so floating-point noise
-// (2.9999999999999996) neither shows nor breaks an "equals" filter.
+// Glass comes as remaining glass and remelt, so summing every material counts it
+// once. Rounding removes floating-point noise such as 2.9999999999999996.
 export function totalObligatedTonnes(obligations) {
   if (!obligations?.length) {
     return null
@@ -123,8 +115,7 @@ export function declarationToReportRow(
   }
 }
 
-// Total obligation is blank for Not submitted rows: the unsubmitted endpoint
-// does not return it.
+// The unsubmitted endpoint does not return a total obligation yet.
 export function unsubmittedToReportRow(
   row,
   cancellationsByOrganisation = new Map()
@@ -148,9 +139,7 @@ export function unsubmittedToReportRow(
   }
 }
 
-// One declaration per organisation. The backend allows a single Submitted or
-// Accepted declaration per organisation and year; should two ever come back,
-// the most recently created one is the organisation's current position.
+// If an organisation ever has two current declarations, the newest wins.
 function currentDeclarationPerOrganisation(declarations) {
   const byOrganisation = new Map()
   for (const declaration of declarations) {
@@ -179,9 +168,8 @@ function byOrganisationName(a, b) {
   )
 }
 
-// Every organisation once, under its current status, sorted A to Z by name.
-// An organisation with a Submitted or Accepted declaration is never in the
-// unsubmitted set; one that is anyway keeps its declaration row.
+// Every organisation once, sorted A to Z. A declaration row wins over an
+// unsubmitted row for the same organisation.
 export function buildReportRows({
   declarations = [],
   unsubmittedOrganisations = [],

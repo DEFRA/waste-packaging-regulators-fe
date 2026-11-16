@@ -1,8 +1,6 @@
 import { auditAction, findAuditEntryByAction } from '../detail/audit.js'
 
-// When a declaration was cancelled: the timestamp of its Cancelled audit entry.
-// Cancelled is a final status, so a declaration has at most one. `updated` is
-// the fallback for a declaration with no audit trail.
+// Falls back to `updated` when there is no Cancelled audit entry.
 export function cancelledAt(declaration) {
   const entry = findAuditEntryByAction(declaration.audit, auditAction.cancelled)
   return entry?.timestamp ?? declaration.updated ?? null
@@ -13,9 +11,7 @@ function cancelledTime(declaration) {
   return Number.isNaN(time) ? Number.MAX_SAFE_INTEGER : time
 }
 
-// Groups cancelled declarations by organisation, each group ordered oldest
-// cancellation first by the full timestamp. The count on a report row and any
-// per-cancellation detail are read from the same groups, so they always agree.
+// Cancelled declarations grouped by organisation, oldest first.
 export function groupCancellationsByOrganisation(declarations = []) {
   const groups = new Map()
 

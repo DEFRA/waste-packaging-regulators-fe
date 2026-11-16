@@ -28,9 +28,8 @@ const DECLARATIONS_REPORT_SORT = {
   sortDirection: 'asc'
 }
 
-// Every organisation of one producer type for the compliance year, whatever
-// search, tab, page or sort the list page has applied. The three result sets
-// are fetched in parallel and drained page by page.
+// Every organisation of one producer type, ignoring the list page's search,
+// tab, page and sort.
 export async function fetchReportData({
   obligationsApi,
   registrationType,
@@ -39,10 +38,7 @@ export async function fetchReportData({
 }) {
   const base = { obligationYear: COMPLIANCE_YEAR, registrationType, country }
 
-  // Each result set is read in a stable order. Declarations are ordered by
-  // submission date, which never changes once submitted, so a new submission
-  // lands on the last page. A row that leaves a set mid-read still shifts the
-  // rows after it, which the page drains detect from a changed `total`.
+  // Sorted by submission date so new submissions land on the last page.
   const [declarations, cancelledDeclarations, unsubmittedOrganisations] =
     await Promise.all([
       fetchAllDeclarations(
@@ -71,9 +67,7 @@ export async function fetchReportData({
 
 const logger = createLogger()
 
-// A result set that changes while it is being read may have lost a row, so the
-// whole read is repeated once. A second change fails the download rather than
-// writing a file that may be missing an organisation.
+// Reads once more if the data changed mid-read; a second change fails the download.
 async function fetchReportDataWithRetry(args) {
   try {
     return await fetchReportData(args)

@@ -4,11 +4,7 @@ import {
   DOWNLOAD_PAGE_CONCURRENCY
 } from '../common/constants.js'
 
-// Thrown when a result set's `total` changes while its pages are being read.
-// Rows that leave the set (an organisation submits, a declaration is cancelled)
-// shift every later row up a page, so a row on a page boundary may have been
-// skipped. A change that adds and removes the same number of rows keeps the
-// total and goes unnoticed; that window is accepted.
+// Thrown when a result set's total changes between pages: a row may have been skipped.
 export class ResultSetChangedError extends Error {
   constructor(message) {
     super(message)
@@ -25,9 +21,7 @@ function assertSameTotal(first, pages, endpoint) {
   }
 }
 
-// Every declaration matching `params`, for the Excel report, drained page by
-// page. Pages after the first are bounded the same way, and for the same
-// reasons, as fetchAllUnsubmittedOrganisations below.
+// Every page of matching declarations, at most DOWNLOAD_PAGE_CONCURRENCY at a time.
 export async function fetchAllDeclarations(api, params, traceId) {
   const first = await api.listComplianceDeclarations(
     { ...params, page: 1, pageSize: DECLARATIONS_BATCH_SIZE },
@@ -56,15 +50,8 @@ export async function fetchAllDeclarations(api, params, traceId) {
   ]
 }
 
-// Every unsubmitted row for the year, for the Excel report. The endpoint caps a
-// page at 100, so the whole population is drained page by page.
-//
-// Pages after the first are bounded rather than fired at once: at 100 rows a
-// page a large population would otherwise open hundreds of simultaneous
-// requests, which is the same failure mode as the per-organisation fan-out this
-// change removes, one level up. p-map's default stopOnError is kept so a failed
-// page fails the report outright rather than writing a short file that looks
-// complete.
+// Every page of unsubmitted organisations, at most DOWNLOAD_PAGE_CONCURRENCY at
+// a time. A failed page fails the whole report rather than leaving it short.
 export async function fetchAllUnsubmittedOrganisations(api, params, traceId) {
   const first = await api.listUnsubmittedComplianceDeclarations(
     { ...params, page: 1, pageSize: DECLARATIONS_BATCH_SIZE },

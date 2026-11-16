@@ -41,10 +41,8 @@ export function buildRegulation43Statement(
   )
 }
 
-// A declaration's percentage met: the whole number the obligations API serves,
-// shown as-is (no frontend rounding). The search endpoint does not return one,
-// but it does embed the obligations, so fall back to the same calculation the
-// not-submitted tab uses rather than leaving the value blank.
+// The API's percentage, or calculated from the obligations when it is missing
+// (the search endpoint does not return it).
 export function declarationCoveragePercentage({
   obligationCoveragePercentage,
   obligations
