@@ -1,5 +1,4 @@
 import {
-  NO_DATA,
   UNKNOWN_ORGANISATION,
   statusBySubmissionStatus
 } from '../common/constants.js'
@@ -50,7 +49,7 @@ export function reportReferenceNumber(referenceNumber) {
 
 function metOrNotMet(met) {
   if (met == null) {
-    return NO_DATA
+    return null
   }
   return met ? 'Met' : 'Not met'
 }
@@ -63,7 +62,7 @@ function declarationRecyclingObligations(obligationStatus) {
   if (status === 'notmet') {
     return metOrNotMet(false)
   }
-  return NO_DATA
+  return metOrNotMet(null)
 }
 
 // A submitted declaration is only ever Compliant or Not compliant; the column

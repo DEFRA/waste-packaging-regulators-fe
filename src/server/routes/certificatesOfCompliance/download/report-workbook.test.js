@@ -1,5 +1,6 @@
 import {
   DECIMAL_TONNES_FORMAT,
+  PERCENTAGE_FORMAT,
   REPORT_DATE_FORMAT,
   WHOLE_TONNES_FORMAT,
   REPORT_TITLE_ROWS,
@@ -58,7 +59,7 @@ const notSubmittedRow = {
   organisationReference: 'SCN0002',
   status: 'Not submitted',
   regulation43: null,
-  recyclingObligations: 'No data',
+  recyclingObligations: null,
   percentageMet: null,
   totalObligationTonnes: null,
   dateSubmitted: null,
@@ -135,6 +136,7 @@ describe('#report-workbook', () => {
     expect(accepted['Date accepted']).toEqual(new Date('2027-01-02T00:00:00Z'))
 
     const dataRow = headingsRowNumber + 1
+    expect(worksheet.getCell(`F${dataRow}`).numFmt).toBe(PERCENTAGE_FORMAT)
     expect(worksheet.getCell(`H${dataRow}`).numFmt).toBe(REPORT_DATE_FORMAT)
     expect(worksheet.getCell(`I${dataRow}`).numFmt).toBe(REPORT_DATE_FORMAT)
   })
@@ -164,7 +166,7 @@ describe('#report-workbook', () => {
       'Organisation ID': 'SCN0002',
       Status: 'Not submitted',
       'Regulation 43': null,
-      'Recycling obligations': 'No data',
+      'Recycling obligations': null,
       'Percentage met': null,
       'Total obligation (tonnes)': null,
       'Date submitted': null,

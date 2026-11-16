@@ -1,6 +1,10 @@
 import ExcelJS from 'exceljs'
 
 export const REPORT_DATE_FORMAT = 'd mmmm yyyy'
+// Percentage met is stored as the whole number the API serves (100, not 1), so
+// it sorts and filters as shown; the format only adds the % sign.
+export const PERCENTAGE_FORMAT = '0"%"'
+
 export const WHOLE_TONNES_FORMAT = '#,##0'
 export const DECIMAL_TONNES_FORMAT = '#,##0.###'
 
@@ -24,7 +28,12 @@ const REPORT_COLUMNS = [
     complianceSchemesOnly: true
   },
   { key: 'recyclingObligations', header: 'Recycling obligations', width: 22 },
-  { key: 'percentageMet', header: 'Percentage met', width: 16 },
+  {
+    key: 'percentageMet',
+    header: 'Percentage met',
+    width: 16,
+    numFmt: PERCENTAGE_FORMAT
+  },
   {
     key: 'totalObligationTonnes',
     header: 'Total obligation (tonnes)',

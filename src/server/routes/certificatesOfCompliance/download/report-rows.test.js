@@ -142,7 +142,8 @@ describe('#report-rows', () => {
     test.each([
       ['Met', 'Met'],
       ['NotMet', 'Not met'],
-      [null, 'No data']
+      ['NoDataYet', null],
+      [null, null]
     ])('maps obligation status %p to %p', (value, expected) => {
       expect(
         declarationToReportRow(declaration({ obligationStatus: value }))
@@ -209,7 +210,7 @@ describe('#report-rows', () => {
       expect(row.organisationName).toBe('Example Compliance Scheme')
     })
 
-    test('shows No data for recycling obligations and leaves percentage met blank when there is no data', () => {
+    test('leaves recycling obligations and percentage met blank when there is no data', () => {
       const row = unsubmittedToReportRow(
         unsubmitted({
           recyclingObligationsMet: null,
@@ -217,7 +218,7 @@ describe('#report-rows', () => {
         })
       )
 
-      expect(row.recyclingObligations).toBe('No data')
+      expect(row.recyclingObligations).toBeNull()
       expect(row.percentageMet).toBeNull()
     })
 
