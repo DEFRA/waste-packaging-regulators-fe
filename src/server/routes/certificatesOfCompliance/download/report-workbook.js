@@ -2,16 +2,10 @@ import ExcelJS from 'exceljs'
 import { reportLabels } from './report-labels.js'
 
 export const REPORT_DATE_FORMAT = 'd mmmm yyyy'
-// Shows a % sign without changing the stored number (100, not 1).
-export const PERCENTAGE_FORMAT = '0"%"'
+// Excel puts dates on the right; the prototype has them on the left.
+export const REPORT_DATE_ALIGNMENT = { horizontal: 'left' }
 
-export const WHOLE_TONNES_FORMAT = '#,##0'
-export const DECIMAL_TONNES_FORMAT = '#,##0.###'
-
-// '#,##0.###' would show whole numbers with a trailing dot ("4,050.").
-function tonnesFormat(value) {
-  return Number.isInteger(value) ? WHOLE_TONNES_FORMAT : DECIMAL_TONNES_FORMAT
-}
+// Numbers keep Excel's General format, as in the prototype: 100 and 4050.
 
 // Regulation 43 is for compliance schemes only.
 const REPORT_COLUMNS = [
@@ -24,25 +18,19 @@ const REPORT_COLUMNS = [
     complianceSchemesOnly: true
   },
   { key: 'recyclingObligations', width: 22 },
-  {
-    key: 'percentageMet',
-    width: 16,
-    numFmt: PERCENTAGE_FORMAT
-  },
-  {
-    key: 'totalObligationTonnes',
-    width: 24,
-    numFmt: tonnesFormat
-  },
+  { key: 'percentageMet', width: 16 },
+  { key: 'totalObligationTonnes', width: 24 },
   {
     key: 'dateSubmitted',
     width: 18,
-    numFmt: REPORT_DATE_FORMAT
+    numFmt: REPORT_DATE_FORMAT,
+    alignment: REPORT_DATE_ALIGNMENT
   },
   {
     key: 'dateAccepted',
     width: 18,
-    numFmt: REPORT_DATE_FORMAT
+    numFmt: REPORT_DATE_FORMAT,
+    alignment: REPORT_DATE_ALIGNMENT
   },
   { key: 'acceptedBy', width: 28 },
   { key: 'cancellations', width: 16 }
@@ -97,7 +85,17 @@ function writeHeading(worksheet, heading) {
 export const HEADING_FILL = {
   type: 'pattern',
   pattern: 'solid',
-  fgColor: { argb: 'FFDEDDDC' }
+  fgColor: { argb: 'FFF3F2F1' }
+}
+
+const THIN_GREY_LINE = { style: 'thin', color: { argb: 'FFBFBFBF' } }
+
+// Every heading and data cell is boxed in, as in the prototype.
+export const CELL_BORDER = {
+  top: THIN_GREY_LINE,
+  left: THIN_GREY_LINE,
+  bottom: THIN_GREY_LINE,
+  right: THIN_GREY_LINE
 }
 
 function writeColumnHeadings(worksheet, columns, rowNumber) {
@@ -107,6 +105,7 @@ function writeColumnHeadings(worksheet, columns, rowNumber) {
     cell.value = column.header
     cell.font = { bold: true }
     cell.fill = HEADING_FILL
+    cell.border = CELL_BORDER
   })
 }
 
@@ -114,17 +113,19 @@ function writeDataRows(worksheet, columns, rows, firstRowNumber) {
   rows.forEach((reportRow, rowIndex) => {
     const row = worksheet.getRow(firstRowNumber + rowIndex)
     columns.forEach((column, columnIndex) => {
+      // Blank cells are boxed in too, so the table has no gaps.
+      const cell = row.getCell(columnIndex + 1)
+      cell.border = CELL_BORDER
       const value = reportRow[column.key]
       if (value == null) {
         return
       }
-      const cell = row.getCell(columnIndex + 1)
       cell.value = value
       if (column.numFmt) {
-        cell.numFmt =
-          typeof column.numFmt === 'function'
-            ? column.numFmt(value)
-            : column.numFmt
+        cell.numFmt = column.numFmt
+      }
+      if (column.alignment) {
+        cell.alignment = column.alignment
       }
     })
   })

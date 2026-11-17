@@ -1,9 +1,8 @@
 import {
-  DECIMAL_TONNES_FORMAT,
+  CELL_BORDER,
   HEADING_FILL,
-  PERCENTAGE_FORMAT,
+  REPORT_DATE_ALIGNMENT,
   REPORT_DATE_FORMAT,
-  WHOLE_TONNES_FORMAT,
   safeSheetName,
   REPORT_TITLE_ROWS,
   buildReportWorkbook,
@@ -112,6 +111,24 @@ describe('#report-workbook', () => {
     )
   })
 
+  test('boxes in every heading and data cell, blank ones included, but not the report heading', async () => {
+    const { worksheet, headingsRowNumber } = await build(true)
+    const notSubmittedRowNumber = headingsRowNumber + 2
+
+    expect(worksheet.getCell(`A${headingsRowNumber}`).border).toEqual(
+      CELL_BORDER
+    )
+    expect(worksheet.getCell(`K${headingsRowNumber + 1}`).border).toEqual(
+      CELL_BORDER
+    )
+    // Not submitted: Date submitted (H) is blank.
+    expect(worksheet.getCell(`H${notSubmittedRowNumber}`).value).toBeNull()
+    expect(worksheet.getCell(`H${notSubmittedRowNumber}`).border).toEqual(
+      CELL_BORDER
+    )
+    expect(worksheet.getCell('A1').border).not.toEqual(CELL_BORDER)
+  })
+
   test('filters on the column headings row across every column and freezes the panes above the data', async () => {
     const { worksheet, headingsRowNumber } = await build(true)
 
@@ -153,24 +170,27 @@ describe('#report-workbook', () => {
     expect(accepted['Date accepted']).toEqual(new Date('2027-01-02T00:00:00Z'))
 
     const dataRow = headingsRowNumber + 1
-    expect(worksheet.getCell(`F${dataRow}`).numFmt).toBe(PERCENTAGE_FORMAT)
-    expect(worksheet.getCell(`H${dataRow}`).numFmt).toBe(REPORT_DATE_FORMAT)
-    expect(worksheet.getCell(`I${dataRow}`).numFmt).toBe(REPORT_DATE_FORMAT)
+    for (const column of ['H', 'I']) {
+      const cell = worksheet.getCell(`${column}${dataRow}`)
+      expect(cell.numFmt).toBe(REPORT_DATE_FORMAT)
+      expect(cell.alignment).toEqual(REPORT_DATE_ALIGNMENT)
+    }
   })
 
-  test.each([
-    [4050, WHOLE_TONNES_FORMAT],
-    [4050.25, DECIMAL_TONNES_FORMAT]
-  ])(
-    'formats a total obligation of %p tonnes without a trailing decimal point',
-    async (totalObligationTonnes, numFmt) => {
+  test.each([[4050], [4050.25]])(
+    'shows percentage met and a total obligation of %p tonnes in the General format, with no % sign or thousands separator',
+    async (totalObligationTonnes) => {
       const { worksheet, headingsRowNumber } = await build(true, [
         { ...acceptedRow, totalObligationTonnes }
       ])
-      const cell = worksheet.getCell(`G${headingsRowNumber + 1}`)
+      const dataRow = headingsRowNumber + 1
+      const percentage = worksheet.getCell(`F${dataRow}`)
+      const total = worksheet.getCell(`G${dataRow}`)
 
-      expect(cell.value).toBe(totalObligationTonnes)
-      expect(cell.numFmt).toBe(numFmt)
+      expect(percentage.value).toBe(100)
+      expect(percentage.numFmt).toBeUndefined()
+      expect(total.value).toBe(totalObligationTonnes)
+      expect(total.numFmt).toBeUndefined()
     }
   )
 
