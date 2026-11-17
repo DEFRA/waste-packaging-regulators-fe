@@ -187,6 +187,9 @@ describe('#report-workbook', () => {
     ['Adroddiad', 'Adroddiad'],
     ['[Draft] Report: 2026/27?', 'Draft Report 202627'],
     ["'Quoted'", 'Quoted'],
+    [" ' Mixed ends ' ", 'Mixed ends'],
+    ["Inner 'quotes' stay", "Inner 'quotes' stay"],
+    ["' '", 'Report'],
     [
       'A name that is far longer than Excel allows',
       'A name that is far longer than'

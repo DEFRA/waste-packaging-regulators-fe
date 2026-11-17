@@ -59,11 +59,28 @@ const MAX_SHEET_NAME_LENGTH = 31
 // Excel rejects \ / ? * [ ] : in sheet names, a leading or trailing apostrophe,
 // and names over 31 characters.
 export function safeSheetName(name) {
-  const cleaned = String(name ?? '')
-    .replaceAll(/[\\/?*[\]:]/g, '')
-    .slice(0, MAX_SHEET_NAME_LENGTH)
-    .replaceAll(/^['\s]+|['\s]+$/g, '')
+  const cleaned = trimApostrophesAndSpaces(
+    String(name ?? '')
+      .replaceAll(/[\\/?*[\]:]/g, '')
+      .slice(0, MAX_SHEET_NAME_LENGTH)
+  )
   return cleaned || 'Report'
+}
+
+function isApostropheOrSpace(character) {
+  return character === "'" || character.trim() === ''
+}
+
+function trimApostrophesAndSpaces(text) {
+  let start = 0
+  let end = text.length
+  while (start < end && isApostropheOrSpace(text[start])) {
+    start++
+  }
+  while (end > start && isApostropheOrSpace(text[end - 1])) {
+    end--
+  }
+  return text.slice(start, end)
 }
 
 // Rows above the column headings. Everything below is placed from this, so rows
