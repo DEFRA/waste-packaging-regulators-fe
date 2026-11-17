@@ -1,6 +1,7 @@
 {% extends 'layouts/page.njk' %}
 
 {% from "search/macro.njk" import appSearch %}
+{% from "producer-subnavigation/macro.njk" import appProducerSubnavigation %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
 {% block content %}
@@ -37,7 +38,22 @@
     {% include "certificatesOfCompliance/partials/search-results.njk" %}
   {% endif %}
 
-  {% include "certificatesOfCompliance/partials/producer-subnavigation.njk" %}
+  {{ appProducerSubnavigation({
+    ariaLabel: t(locale, 'certificatesOfCompliance.common.producerTypeNav.ariaLabel'),
+    items: [
+      {
+        text: t(locale, 'certificatesOfCompliance.common.producerTypeNav.directProducers'),
+        href: localeUrl((routePrefix or '/') ~ '?type=direct-producers&tab=' ~ activeTab),
+        current: organisationType == 'direct-producers'
+      },
+      {
+        text: t(locale, 'certificatesOfCompliance.common.producerTypeNav.complianceSchemes'),
+        href: localeUrl((routePrefix or '/') ~ '?type=compliance-schemes&tab=' ~ activeTab),
+        current: organisationType == 'compliance-schemes'
+      }
+    ]
+  }) }}
+
   <div class="govuk-tabs">
     <ul class="govuk-tabs__list">
       <li class="govuk-tabs__list-item{% if activeTab == 'pending' %} govuk-tabs__list-item--selected{% endif %}">

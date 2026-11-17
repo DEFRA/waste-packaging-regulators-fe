@@ -1,0 +1,11 @@
+{% set ariaLabel = params.ariaLabel | default('Sub navigation') %}
+{% set items = params.items | default([]) %}
+<nav class="moj-sub-navigation govuk-!-margin-bottom-5 govuk-!-margin-top-6" aria-label="{{ ariaLabel }}">
+  <ul class="moj-sub-navigation__list">
+    {% for item in items %}
+      <li class="moj-sub-navigation__item">
+        <a class="moj-sub-navigation__link"{% if item.current %} aria-current="page"{% endif %} href="{{ item.href }}">{{ item.text }}</a>
+      </li>
+    {% endfor %}
+  </ul>
+</nav>
