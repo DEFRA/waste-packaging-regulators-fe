@@ -30,6 +30,16 @@ describe('#cancellations', () => {
     ).toBe('2026-11-21T08:00:00Z')
   })
 
+  test('cancelledAt falls back to updated when the Cancelled timestamp cannot be read', () => {
+    expect(
+      cancelledAt({
+        updated: '2026-11-21T08:00:00Z',
+        organisation: {},
+        audit: [{ action: 'Cancelled', timestamp: 'not a date' }]
+      })
+    ).toBe('2026-11-21T08:00:00Z')
+  })
+
   test('groups by organisation, oldest cancellation first by full timestamp', () => {
     const groups = groupCancellationsByOrganisation([
       cancelled('late', 'org-1', '2026-11-20T15:00:00Z'),

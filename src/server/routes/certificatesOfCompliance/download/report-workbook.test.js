@@ -133,7 +133,7 @@ describe('#report-workbook', () => {
     ])
   })
 
-  test('shades every column heading light grey, and nothing else', async () => {
+  test('shades the organisation column headings light grey, but not the report heading or the data', async () => {
     const { worksheet, headingsRowNumber } = await build(true)
 
     for (const column of ['A', 'D', 'K']) {
@@ -420,13 +420,48 @@ describe('#report-workbook', () => {
       )
     })
 
-    test('stores the cancellation dates as left-aligned dates', async () => {
+    test('builds three blocks for three cancellations, oldest first, and leaves the unused blocks blank', async () => {
+      const oldest = {
+        ...olderCancellation,
+        dateCancelled: new Date('2026-10-01T00:00:00Z')
+      }
+      const { worksheet, rows } = await build(false, [
+        {
+          ...acceptedRow,
+          cancellationHistory: [oldest, olderCancellation, newerCancellation]
+        },
+        { ...notSubmittedRow, cancellationHistory: [olderCancellation] }
+      ])
+
+      expect(worksheet.model.merges).toEqual(['K1:O1', 'P1:T1', 'U1:Y1'])
+      expect(worksheet.getCell('U1').value).toBe('Cancellation 3')
+      expect(worksheet.autoFilter).toBe('A2:Y2')
+      expect(
+        [1, 2, 3].map(
+          (number) => rows[0][`Cancellation ${number}: Date cancelled`]
+        )
+      ).toEqual([
+        new Date('2026-10-01T00:00:00Z'),
+        new Date('2026-11-10T00:00:00Z'),
+        new Date('2027-01-08T00:00:00Z')
+      ])
+      expect(rows[1]).toMatchObject({
+        ...blankCancellationBlock(2),
+        ...blankCancellationBlock(3)
+      })
+    })
+
+    test('stores the cancellation dates as left-aligned dates in every block', async () => {
       const { worksheet, headingsRowNumber } = await build(false, [
-        { ...acceptedRow, cancellationHistory: [olderCancellation] }
+        {
+          ...acceptedRow,
+          cancellationHistory: [olderCancellation, newerCancellation]
+        }
       ])
       const dataRow = headingsRowNumber + 1
 
-      for (const column of ['K', 'L']) {
+      // Date submitted and Date cancelled of Cancellation 1 (K, L) and 2 (P, Q).
+      for (const column of ['K', 'L', 'P', 'Q']) {
         const cell = worksheet.getCell(`${column}${dataRow}`)
         expect(cell.value).toBeInstanceOf(Date)
         expect(cell.numFmt).toBe(REPORT_DATE_FORMAT)
