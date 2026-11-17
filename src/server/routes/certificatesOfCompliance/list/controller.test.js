@@ -591,9 +591,9 @@ describe('#certificatesOfComplianceController', () => {
       expect($('.govuk-error-summary')).toHaveLength(0)
     })
 
-    test('Should carry the current type and tab as hidden inputs', async () => {
+    test('Should carry the current type, tab, and sort as hidden inputs', async () => {
       const { result } = await inject(
-        '/certificates-of-compliance?type=compliance-schemes&tab=accepted'
+        '/certificates-of-compliance?type=compliance-schemes&tab=accepted&sort=OrganisationName[asc]'
       )
       const $ = load(result)
       const form = $('form[action="/certificates-of-compliance"]')
@@ -602,6 +602,19 @@ describe('#certificatesOfComplianceController', () => {
         'compliance-schemes'
       )
       expect(form.find('input[name="tab"]').attr('value')).toBe('accepted')
+      expect(form.find('input[name="sort"]').attr('value')).toBe(
+        'OrganisationName[asc]'
+      )
+      expect(form.find('input[name="lang"]')).toHaveLength(0)
+    })
+
+    test('Should carry lang=cy as a hidden input in Welsh mode', async () => {
+      const { result } = await inject('/certificates-of-compliance?lang=cy')
+      const $ = load(result)
+      const form = $('search form')
+
+      expect(form.attr('action')).toBe('/certificates-of-compliance?lang=cy')
+      expect(form.find('input[name="lang"]').attr('value')).toBe('cy')
     })
 
     test('Should retain the entered term in the search input', async () => {
