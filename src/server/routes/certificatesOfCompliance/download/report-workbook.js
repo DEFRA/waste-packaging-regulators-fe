@@ -93,12 +93,20 @@ function writeHeading(worksheet, heading) {
   cell.font = { bold: true, size: 14 }
 }
 
+// Light grey behind the column headings, as in the prototype.
+export const HEADING_FILL = {
+  type: 'pattern',
+  pattern: 'solid',
+  fgColor: { argb: 'FFDEDDDC' }
+}
+
 function writeColumnHeadings(worksheet, columns, rowNumber) {
   const row = worksheet.getRow(rowNumber)
   columns.forEach((column, index) => {
     const cell = row.getCell(index + 1)
     cell.value = column.header
     cell.font = { bold: true }
+    cell.fill = HEADING_FILL
   })
 }
 

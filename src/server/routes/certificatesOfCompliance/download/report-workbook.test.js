@@ -1,5 +1,6 @@
 import {
   DECIMAL_TONNES_FORMAT,
+  HEADING_FILL,
   PERCENTAGE_FORMAT,
   REPORT_DATE_FORMAT,
   WHOLE_TONNES_FORMAT,
@@ -94,6 +95,21 @@ describe('#report-workbook', () => {
     expect(report.heading).toBe(HEADING)
     expect(report.headingsRowNumber).toBe(REPORT_TITLE_ROWS + 1)
     expect(report.headers).toEqual(DIRECT_PRODUCER_HEADERS)
+  })
+
+  test('shades every column heading light grey, and nothing else', async () => {
+    const { worksheet, headingsRowNumber } = await build(true)
+
+    for (const column of ['A', 'D', 'K']) {
+      expect(worksheet.getCell(`${column}${headingsRowNumber}`).fill).toEqual(
+        HEADING_FILL
+      )
+    }
+    // exceljs reads an unfilled cell back as { pattern: 'none' }.
+    expect(worksheet.getCell('A1').fill).not.toEqual(HEADING_FILL)
+    expect(worksheet.getCell(`A${headingsRowNumber + 1}`).fill).not.toEqual(
+      HEADING_FILL
+    )
   })
 
   test('filters on the column headings row across every column and freezes the panes above the data', async () => {
