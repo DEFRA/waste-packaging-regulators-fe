@@ -8,16 +8,11 @@ import {
 } from '../common/display.js'
 import { findAcceptedAuditEntry } from '../detail/audit.js'
 import { toLondonCalendarDate } from './report-dates.js'
+import { reportLabels } from './report-labels.js'
 
-export const REPORT_STATUS = {
-  pending: 'Pending',
-  accepted: 'Accepted',
-  notSubmitted: 'Not submitted'
-}
-
-const reportStatusByDeclarationStatus = {
-  [statusBySubmissionStatus.pending]: REPORT_STATUS.pending,
-  [statusBySubmissionStatus.accepted]: REPORT_STATUS.accepted
+const statusKeyByDeclarationStatus = {
+  [statusBySubmissionStatus.pending]: 'pending',
+  [statusBySubmissionStatus.accepted]: 'accepted'
 }
 
 // Compliance schemes are named by scheme name, not operator, for every status.
@@ -43,27 +38,31 @@ export function reportReferenceNumber(referenceNumber) {
   return PLAIN_WHOLE_NUMBER.test(text) ? Number(text) : text
 }
 
-function metOrNotMet(met) {
+function metOrNotMet(met, labels) {
   if (met == null) {
     return null
   }
-  return met ? 'Met' : 'Not met'
+  return met
+    ? labels.recyclingObligations.met
+    : labels.recyclingObligations.notMet
 }
 
-function declarationRecyclingObligations(obligationStatus) {
+function declarationRecyclingObligations(obligationStatus, labels) {
   const status = obligationStatus?.toLowerCase()
   if (status === 'met') {
-    return metOrNotMet(true)
+    return metOrNotMet(true, labels)
   }
   if (status === 'notmet') {
-    return metOrNotMet(false)
+    return metOrNotMet(false, labels)
   }
-  return metOrNotMet(null)
+  return null
 }
 
 // A missing flag counts as Not compliant.
-function regulation43Text(isRegulation43Compliant) {
-  return isRegulation43Compliant === true ? 'Compliant' : 'Not compliant'
+function regulation43Text(isRegulation43Compliant, labels) {
+  return isRegulation43Compliant === true
+    ? labels.regulation43.compliant
+    : labels.regulation43.notCompliant
 }
 
 // Glass comes as remaining glass and remelt, so summing every material counts it
@@ -85,12 +84,12 @@ function cancellationCount(cancellationsByOrganisation, organisationId) {
 
 export function declarationToReportRow(
   declaration,
-  cancellationsByOrganisation = new Map()
+  cancellationsByOrganisation = new Map(),
+  labels = reportLabels()
 ) {
   const { organisation } = declaration
-  const status = reportStatusByDeclarationStatus[declaration.status]
   const accepted =
-    status === REPORT_STATUS.accepted
+    declaration.status === statusBySubmissionStatus.accepted
       ? findAcceptedAuditEntry(declaration.audit)
       : null
 
@@ -98,10 +97,11 @@ export function declarationToReportRow(
     organisationId: organisation.id,
     organisationName: reportOrganisationName(organisation),
     organisationReference: reportReferenceNumber(organisation.referenceNumber),
-    status,
-    regulation43: regulation43Text(declaration.isRegulation43Compliant),
+    status: labels.status[statusKeyByDeclarationStatus[declaration.status]],
+    regulation43: regulation43Text(declaration.isRegulation43Compliant, labels),
     recyclingObligations: declarationRecyclingObligations(
-      declaration.obligationStatus
+      declaration.obligationStatus,
+      labels
     ),
     percentageMet: declarationCoveragePercentage(declaration),
     totalObligationTonnes: totalObligatedTonnes(declaration.obligations),
@@ -118,15 +118,16 @@ export function declarationToReportRow(
 // The unsubmitted endpoint does not return a total obligation yet.
 export function unsubmittedToReportRow(
   row,
-  cancellationsByOrganisation = new Map()
+  cancellationsByOrganisation = new Map(),
+  labels = reportLabels()
 ) {
   return {
     organisationId: row.organisationId,
     organisationName: row.name ?? UNKNOWN_ORGANISATION,
     organisationReference: reportReferenceNumber(row.referenceNumber),
-    status: REPORT_STATUS.notSubmitted,
+    status: labels.status.notSubmitted,
     regulation43: null,
-    recyclingObligations: metOrNotMet(row.recyclingObligationsMet),
+    recyclingObligations: metOrNotMet(row.recyclingObligationsMet, labels),
     percentageMet: row.obligationCoveragePercentage ?? null,
     totalObligationTonnes: null,
     dateSubmitted: null,
@@ -173,18 +174,21 @@ function byOrganisationName(a, b) {
 export function buildReportRows({
   declarations = [],
   unsubmittedOrganisations = [],
-  cancellationsByOrganisation = new Map()
+  cancellationsByOrganisation = new Map(),
+  labels = reportLabels()
 }) {
   const declarationRows = currentDeclarationPerOrganisation(declarations).map(
     (declaration) =>
-      declarationToReportRow(declaration, cancellationsByOrganisation)
+      declarationToReportRow(declaration, cancellationsByOrganisation, labels)
   )
   const declaredOrganisationIds = new Set(
     declarationRows.map((row) => row.organisationId)
   )
   const unsubmittedRows = unsubmittedOrganisations
     .filter((row) => !declaredOrganisationIds.has(row.organisationId))
-    .map((row) => unsubmittedToReportRow(row, cancellationsByOrganisation))
+    .map((row) =>
+      unsubmittedToReportRow(row, cancellationsByOrganisation, labels)
+    )
 
   return [...declarationRows, ...unsubmittedRows].sort(byOrganisationName)
 }

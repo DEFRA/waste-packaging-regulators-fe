@@ -353,6 +353,39 @@
       "legend": "Are you sure you want to accept this {{docTypeLower}} for {{companyName}}?",
       "error": "Select yes or no"
     },
+    "report": {
+      "sheetName": "Report",
+      "heading": {
+        "certificates": "All certificate of compliance submissions, {{day}}",
+        "statements": "All statement of compliance submissions, {{day}}"
+      },
+      "columns": {
+        "organisationName": "Organisation name",
+        "organisationReference": "Organisation ID",
+        "status": "Status",
+        "regulation43": "Regulation 43",
+        "recyclingObligations": "Recycling obligations",
+        "percentageMet": "Percentage met",
+        "totalObligationTonnes": "Total obligation (tonnes)",
+        "dateSubmitted": "Date submitted",
+        "dateAccepted": "Date accepted",
+        "acceptedBy": "Accepted by",
+        "cancellations": "Cancellations"
+      },
+      "status": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "notSubmitted": "Not submitted"
+      },
+      "recyclingObligations": {
+        "met": "Met",
+        "notMet": "Not met"
+      },
+      "regulation43": {
+        "compliant": "Compliant",
+        "notCompliant": "Not compliant"
+      }
+    },
     "cancel": {
       "reason": {
         "pageTitle": "{{titleVerb}}{{docTypeLower}} — {{companyName}}",

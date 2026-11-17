@@ -3,6 +3,7 @@ import {
   PERCENTAGE_FORMAT,
   REPORT_DATE_FORMAT,
   WHOLE_TONNES_FORMAT,
+  safeSheetName,
   REPORT_TITLE_ROWS,
   buildReportWorkbook,
   reportColumns
@@ -174,6 +175,26 @@ describe('#report-workbook', () => {
       'Accepted by': null,
       Cancellations: 0
     })
+  })
+
+  test('names the worksheet Report', async () => {
+    const { worksheet } = await build(false)
+
+    expect(worksheet.name).toBe('Report')
+  })
+
+  test.each([
+    ['Adroddiad', 'Adroddiad'],
+    ['[Draft] Report: 2026/27?', 'Draft Report 202627'],
+    ["'Quoted'", 'Quoted'],
+    [
+      'A name that is far longer than Excel allows',
+      'A name that is far longer than'
+    ],
+    ['[]:*?/\\', 'Report'],
+    [undefined, 'Report']
+  ])('makes the sheet name %p safe for Excel as %p', (name, expected) => {
+    expect(safeSheetName(name)).toBe(expected)
   })
 
   test('writes the heading and column headings with no data rows', async () => {

@@ -1,4 +1,5 @@
 import ExcelJS from 'exceljs'
+import { reportLabels } from './report-labels.js'
 
 export const REPORT_DATE_FORMAT = 'd mmmm yyyy'
 // Shows a % sign without changing the stored number (100, not 1).
@@ -14,48 +15,55 @@ function tonnesFormat(value) {
 
 // Regulation 43 is for compliance schemes only.
 const REPORT_COLUMNS = [
-  { key: 'organisationName', header: 'Organisation name', width: 40 },
-  { key: 'organisationReference', header: 'Organisation ID', width: 16 },
-  { key: 'status', header: 'Status', width: 16 },
+  { key: 'organisationName', width: 40 },
+  { key: 'organisationReference', width: 16 },
+  { key: 'status', width: 16 },
   {
     key: 'regulation43',
-    header: 'Regulation 43',
     width: 16,
     complianceSchemesOnly: true
   },
-  { key: 'recyclingObligations', header: 'Recycling obligations', width: 22 },
+  { key: 'recyclingObligations', width: 22 },
   {
     key: 'percentageMet',
-    header: 'Percentage met',
     width: 16,
     numFmt: PERCENTAGE_FORMAT
   },
   {
     key: 'totalObligationTonnes',
-    header: 'Total obligation (tonnes)',
     width: 24,
     numFmt: tonnesFormat
   },
   {
     key: 'dateSubmitted',
-    header: 'Date submitted',
     width: 18,
     numFmt: REPORT_DATE_FORMAT
   },
   {
     key: 'dateAccepted',
-    header: 'Date accepted',
     width: 18,
     numFmt: REPORT_DATE_FORMAT
   },
-  { key: 'acceptedBy', header: 'Accepted by', width: 28 },
-  { key: 'cancellations', header: 'Cancellations', width: 16 }
+  { key: 'acceptedBy', width: 28 },
+  { key: 'cancellations', width: 16 }
 ]
 
-export function reportColumns(isComplianceScheme) {
+export function reportColumns(isComplianceScheme, labels = reportLabels()) {
   return REPORT_COLUMNS.filter(
     (column) => isComplianceScheme || !column.complianceSchemesOnly
-  )
+  ).map((column) => ({ ...column, header: labels.columns[column.key] }))
+}
+
+const MAX_SHEET_NAME_LENGTH = 31
+
+// Excel rejects \ / ? * [ ] : in sheet names, a leading or trailing apostrophe,
+// and names over 31 characters.
+export function safeSheetName(name) {
+  const cleaned = String(name ?? '')
+    .replaceAll(/[\\/?*[\]:]/g, '')
+    .slice(0, MAX_SHEET_NAME_LENGTH)
+    .replaceAll(/^['\s]+|['\s]+$/g, '')
+  return cleaned || 'Report'
 }
 
 // Rows above the column headings. Everything below is placed from this, so rows
@@ -100,13 +108,14 @@ function writeDataRows(worksheet, columns, rows, firstRowNumber) {
 export async function buildReportWorkbook({
   heading,
   rows,
-  isComplianceScheme
+  isComplianceScheme,
+  labels = reportLabels()
 }) {
-  const columns = reportColumns(isComplianceScheme)
+  const columns = reportColumns(isComplianceScheme, labels)
   const headingsRowNumber = REPORT_TITLE_ROWS + 1
 
   const workbook = new ExcelJS.Workbook()
-  const worksheet = workbook.addWorksheet('Report', {
+  const worksheet = workbook.addWorksheet(safeSheetName(labels.sheetName), {
     views: [{ state: 'frozen', ySplit: headingsRowNumber }]
   })
 

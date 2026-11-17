@@ -1,6 +1,7 @@
 import {
   buildPageViewModel,
   clearLocaleCacheForTests,
+  hasOwnLocaleKey,
   pageI18n,
   seedLocaleDictionaryForTests,
   translate,
@@ -86,5 +87,24 @@ describe('translate', () => {
       pageTitle: 'Home',
       heading: 'Home'
     })
+  })
+})
+
+describe('hasOwnLocaleKey', () => {
+  beforeEach(() => {
+    clearLocaleCacheForTests()
+  })
+
+  test('finds a key in the locale itself', () => {
+    expect(hasOwnLocaleKey('en', 'common.serviceName')).toBe(true)
+  })
+
+  test('does not fall back to English', () => {
+    expect(hasOwnLocaleKey('cy', 'common.agency.1')).toBe(false)
+  })
+
+  test('treats a blank value as missing', () => {
+    seedLocaleDictionaryForTests('cy', { common: { serviceName: '  ' } })
+    expect(hasOwnLocaleKey('cy', 'common.serviceName')).toBe(false)
   })
 })

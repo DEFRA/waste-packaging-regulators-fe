@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { getSessionUser } from '#server/common/helpers/get-session-user.js'
 import { getRegulatorCountryCode } from '#server/common/helpers/regulator-country-code.js'
+import { getLocale } from '#server/common/helpers/i18n/get-locale.js'
 import { getComplianceReport } from './report.service.js'
 import Boom from '@hapi/boom'
 
@@ -33,7 +34,8 @@ export const certificatesOfComplianceDownloadController = {
     const { filename, buffer } = await getComplianceReport(
       organisationType,
       traceId,
-      country
+      country,
+      getLocale(request)
     )
 
     return h

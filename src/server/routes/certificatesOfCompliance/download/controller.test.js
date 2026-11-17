@@ -75,7 +75,22 @@ describe('#certificatesOfComplianceDownloadController', () => {
     expect(reportService.getComplianceReport).toHaveBeenCalledWith(
       'direct-producers',
       undefined,
-      'GB-ENG'
+      'GB-ENG',
+      'en'
+    )
+  })
+
+  test('passes the page language to the report service', async () => {
+    stubReport()
+
+    const cookie = await app.signIn()
+    await app.get(`${DOWNLOAD_URL}&lang=cy`, cookie)
+
+    expect(reportService.getComplianceReport).toHaveBeenCalledWith(
+      'direct-producers',
+      undefined,
+      'GB-ENG',
+      'cy'
     )
   })
 
@@ -100,7 +115,8 @@ describe('#certificatesOfComplianceDownloadController', () => {
       expect(reportService.getComplianceReport).toHaveBeenCalledWith(
         'compliance-schemes',
         undefined,
-        expectedCountry
+        expectedCountry,
+        'en'
       )
     }
   )

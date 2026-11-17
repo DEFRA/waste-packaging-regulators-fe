@@ -84,7 +84,13 @@ describe('#getComplianceReport', () => {
   })
 
   test('scopes every call to the compliance year, producer type and regulator country', async () => {
-    await getComplianceReport('compliance-schemes', 'trace-1', 'GB-SCT', NOW)
+    await getComplianceReport(
+      'compliance-schemes',
+      'trace-1',
+      'GB-SCT',
+      'en',
+      NOW
+    )
 
     const declarationCalls =
       obligationsApi.listComplianceDeclarations.mock.calls
@@ -151,6 +157,7 @@ describe('#getComplianceReport', () => {
       'compliance-schemes',
       undefined,
       'GB-ENG',
+      'en',
       NOW
     )
     const { rows } = await loadReport(buffer)
@@ -186,6 +193,7 @@ describe('#getComplianceReport', () => {
       'compliance-schemes',
       undefined,
       'GB-ENG',
+      'en',
       NOW
     )
     const { heading, rows } = await loadReport(buffer)
@@ -231,6 +239,7 @@ describe('#getComplianceReport', () => {
       'compliance-schemes',
       undefined,
       'GB-ENG',
+      'en',
       NOW
     )
     const { rows } = await loadReport(buffer)
@@ -252,7 +261,7 @@ describe('#getComplianceReport', () => {
     })
 
     await expect(
-      getComplianceReport('compliance-schemes', undefined, 'GB-ENG', NOW)
+      getComplianceReport('compliance-schemes', undefined, 'GB-ENG', 'en', NOW)
     ).rejects.toThrow('total changed')
   })
 
@@ -262,7 +271,7 @@ describe('#getComplianceReport', () => {
       .mockRejectedValue(new Error('backend down'))
 
     await expect(
-      getComplianceReport('direct-producers', undefined, 'GB-ENG', NOW)
+      getComplianceReport('direct-producers', undefined, 'GB-ENG', 'en', NOW)
     ).rejects.toThrow('backend down')
   })
 })

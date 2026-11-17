@@ -1,5 +1,4 @@
 import {
-  REPORT_STATUS,
   buildReportRows,
   declarationToReportRow,
   reportReferenceNumber,
@@ -92,7 +91,7 @@ describe('#report-rows', () => {
         organisationId: 'org-1',
         organisationName: 'ABC Limited',
         organisationReference: 100234,
-        status: REPORT_STATUS.pending,
+        status: 'Pending',
         regulation43: 'Not compliant',
         recyclingObligations: 'Met',
         percentageMet: 100,
@@ -107,7 +106,7 @@ describe('#report-rows', () => {
     test('reads the date accepted and accepted by from the Accepted audit entry', () => {
       const row = declarationToReportRow(accepted())
 
-      expect(row.status).toBe(REPORT_STATUS.accepted)
+      expect(row.status).toBe('Accepted')
       expect(row.dateAccepted).toEqual(new Date('2027-01-02T00:00:00Z'))
       expect(row.acceptedBy).toBe('John Doe')
     })
@@ -186,7 +185,7 @@ describe('#report-rows', () => {
         organisationId: 'org-9',
         organisationName: 'XYZ Packaging Limited',
         organisationReference: 100512,
-        status: REPORT_STATUS.notSubmitted,
+        status: 'Not submitted',
         regulation43: null,
         recyclingObligations: 'Not met',
         percentageMet: 62,
@@ -332,7 +331,7 @@ describe('#report-rows', () => {
       })
 
       expect(rows).toHaveLength(1)
-      expect(rows[0].status).toBe(REPORT_STATUS.pending)
+      expect(rows[0].status).toBe('Pending')
     })
 
     test('drops a not submitted row for an organisation that has a declaration', () => {
@@ -342,7 +341,7 @@ describe('#report-rows', () => {
       })
 
       expect(rows).toHaveLength(1)
-      expect(rows[0].status).toBe(REPORT_STATUS.pending)
+      expect(rows[0].status).toBe('Pending')
     })
 
     test('attaches cancellations to both declaration and not submitted rows', () => {

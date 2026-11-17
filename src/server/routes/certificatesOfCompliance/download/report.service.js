@@ -17,6 +17,7 @@ import { groupCancellationsByOrganisation } from './cancellations.js'
 import { buildReportRows } from './report-rows.js'
 import { buildReportWorkbook } from './report-workbook.js'
 import { buildReportFilename, buildReportHeading } from './report-naming.js'
+import { reportLabels } from './report-labels.js'
 
 const CURRENT_DECLARATION_STATUSES = [
   statusBySubmissionStatus.pending,
@@ -86,8 +87,10 @@ export async function getComplianceReport(
   organisationType,
   traceId,
   country = null,
+  locale = 'en',
   now = new Date()
 ) {
+  const labels = reportLabels(locale)
   const obligationsApi = createWasteObligationsApiService()
   const registrationType = registrationTypeByOrganisationType[organisationType]
 
@@ -104,13 +107,15 @@ export async function getComplianceReport(
     unsubmittedOrganisations,
     cancellationsByOrganisation: groupCancellationsByOrganisation(
       cancelledDeclarations
-    )
+    ),
+    labels
   })
 
   const buffer = await buildReportWorkbook({
-    heading: buildReportHeading(organisationType, now),
+    heading: buildReportHeading(organisationType, now, labels),
     rows,
-    isComplianceScheme: organisationType === COMPLIANCE_SCHEMES
+    isComplianceScheme: organisationType === COMPLIANCE_SCHEMES,
+    labels
   })
 
   return { filename: buildReportFilename(organisationType, now), buffer }

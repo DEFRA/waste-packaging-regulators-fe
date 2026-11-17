@@ -1534,6 +1534,18 @@ describe('certificates of compliance — journey', () => {
         ['Charlie Scheme', 'Not submitted', null]
       ])
     })
+
+    it('keeps the report in English for a Welsh user until the report strings are translated', async () => {
+      app.given([{ name: 'Alpha Producers Ltd', status: 'pending' }])
+
+      const response = await app.get(`${reportUrl('direct-producers')}&lang=cy`)
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      const { heading, headers, rows } = await loadReport(response.rawPayload)
+      expect(heading).toMatch(/^All certificate of compliance submissions, /)
+      expect(headers).toEqual(DIRECT_PRODUCER_HEADERS)
+      expect(rows[0].Status).toBe('Pending')
+    })
   })
 
   describe('mock statefulness — list must not change after accept or cancel', () => {

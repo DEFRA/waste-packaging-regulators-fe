@@ -4,19 +4,7 @@ import {
   londonCalendarParts,
   partsOf
 } from './report-dates.js'
-
-const headingDayFormat = new Intl.DateTimeFormat('en-GB', {
-  timeZone: REPORT_TIME_ZONE,
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long'
-})
-
-function documentNounSingular(organisationType) {
-  return organisationType === COMPLIANCE_SCHEMES
-    ? 'statement of compliance'
-    : 'certificate of compliance'
-}
+import { reportLabels } from './report-labels.js'
 
 function documentNounPlural(organisationType) {
   return organisationType === COMPLIANCE_SCHEMES ? 'statements' : 'certificates'
@@ -29,7 +17,21 @@ export function buildReportFilename(organisationType, now) {
 }
 
 // e.g. All certificate of compliance submissions, Monday 19 October
-export function buildReportHeading(organisationType, now) {
-  const { weekday, day, month } = partsOf(headingDayFormat, now)
-  return `All ${documentNounSingular(organisationType)} submissions, ${weekday} ${day} ${month}`
+export function buildReportHeading(
+  organisationType,
+  now,
+  labels = reportLabels()
+) {
+  const dayFormat = new Intl.DateTimeFormat(labels.bcp47, {
+    timeZone: REPORT_TIME_ZONE,
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  })
+  const { weekday, day, month } = partsOf(dayFormat, now)
+  const heading =
+    organisationType === COMPLIANCE_SCHEMES
+      ? labels.heading.statements
+      : labels.heading.certificates
+  return heading(`${weekday} ${day} ${month}`)
 }
