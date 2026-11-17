@@ -1340,6 +1340,22 @@ describe('certificates of compliance — journey', () => {
       'Cancellations'
     ]
 
+    const CANCELLATION_HEADERS = [
+      'Date submitted',
+      'Date cancelled',
+      'Cancelled by',
+      'Reason',
+      'Status when cancelled'
+    ]
+
+    const blankCancellationBlock = (number) =>
+      Object.fromEntries(
+        CANCELLATION_HEADERS.map((header) => [
+          `Cancellation ${number}: ${header}`,
+          null
+        ])
+      )
+
     describe.each(['direct-producers', 'compliance-schemes'])(
       'on the %s list page',
       (organisationType) => {
@@ -1418,9 +1434,21 @@ describe('certificates of compliance — journey', () => {
           name: 'Bravo Producers Ltd',
           status: 'not-submitted',
           reference: '100002',
+          // The order of the blocks is unit tested: this mock already returns
+          // cancellations oldest first.
           history: [
-            { status: 'cancelled', date: '2026-11-01' },
-            { status: 'cancelled', date: '2026-11-15' }
+            {
+              status: 'cancelled',
+              date: '2026-11-15',
+              by: 'Cara Regulator',
+              reason: 'Producer requested to cancel'
+            },
+            {
+              status: 'cancelled',
+              date: '2026-11-01',
+              by: 'Ben Regulator',
+              reason: 'Recycling obligations changed'
+            }
           ]
         },
         {
@@ -1445,7 +1473,12 @@ describe('certificates of compliance — journey', () => {
       expect(heading).toMatch(
         /^All certificate of compliance submissions, [A-Z][a-z]+day \d{1,2} [A-Z][a-z]+$/
       )
-      expect(headers).toEqual(DIRECT_PRODUCER_HEADERS)
+      // Bravo's 2 cancellations set the number of blocks.
+      expect(headers).toEqual([
+        ...DIRECT_PRODUCER_HEADERS,
+        ...CANCELLATION_HEADERS,
+        ...CANCELLATION_HEADERS
+      ])
       expect(rows).toEqual([
         {
           'Organisation name': 'Alpha Producers Ltd',
@@ -1458,7 +1491,9 @@ describe('certificates of compliance — journey', () => {
           'Date submitted': new Date('2027-01-10T00:00:00Z'),
           'Date accepted': new Date('2027-01-20T00:00:00Z'),
           'Accepted by': 'Ann Regulator',
-          Cancellations: 0
+          Cancellations: 0,
+          ...blankCancellationBlock(1),
+          ...blankCancellationBlock(2)
         },
         expect.objectContaining({
           'Organisation name': 'Bravo Producers Ltd',
@@ -1468,7 +1503,16 @@ describe('certificates of compliance — journey', () => {
           'Date submitted': null,
           'Date accepted': null,
           'Accepted by': null,
-          Cancellations: 2
+          Cancellations: 2,
+          'Cancellation 1: Date submitted': new Date('2026-11-01T00:00:00Z'),
+          'Cancellation 1: Date cancelled': new Date('2026-11-01T00:00:00Z'),
+          'Cancellation 1: Cancelled by': 'Ben Regulator',
+          'Cancellation 1: Reason': 'Recycling obligations changed',
+          'Cancellation 1: Status when cancelled': 'Pending',
+          'Cancellation 2: Date cancelled': new Date('2026-11-15T00:00:00Z'),
+          'Cancellation 2: Cancelled by': 'Cara Regulator',
+          'Cancellation 2: Reason': 'Producer requested to cancel',
+          'Cancellation 2: Status when cancelled': 'Pending'
         }),
         expect.objectContaining({
           'Organisation name': 'Charlie Producers Ltd',
@@ -1481,7 +1525,9 @@ describe('certificates of compliance — journey', () => {
           'Date submitted': new Date('2027-01-15T00:00:00Z'),
           'Date accepted': null,
           'Accepted by': null,
-          Cancellations: 1
+          Cancellations: 1,
+          'Cancellation 1: Date cancelled': new Date('2026-12-01T00:00:00Z'),
+          ...blankCancellationBlock(2)
         })
       ])
     })
@@ -1521,7 +1567,8 @@ describe('certificates of compliance — journey', () => {
 
       expect(heading).toMatch(/^All statement of compliance submissions, /)
       expect(headers[3]).toBe('Regulation 43')
-      expect(headers.at(-1)).toBe('Cancellations')
+      expect(headers[10]).toBe('Cancellations')
+      expect(headers.slice(11)).toEqual(CANCELLATION_HEADERS)
       expect(
         rows.map((row) => [
           row['Organisation name'],
@@ -1543,7 +1590,10 @@ describe('certificates of compliance — journey', () => {
       expect(response.statusCode).toBe(statusCodes.ok)
       const { heading, headers, rows } = await loadReport(response.rawPayload)
       expect(heading).toMatch(/^All certificate of compliance submissions, /)
-      expect(headers).toEqual(DIRECT_PRODUCER_HEADERS)
+      expect(headers).toEqual([
+        ...DIRECT_PRODUCER_HEADERS,
+        ...CANCELLATION_HEADERS
+      ])
       expect(rows[0].Status).toBe('Pending')
     })
   })

@@ -372,6 +372,16 @@
         "acceptedBy": "Accepted by",
         "cancellations": "Cancellations"
       },
+      "cancellation": {
+        "heading": "Cancellation {{number}}",
+        "columns": {
+          "dateSubmitted": "Date submitted",
+          "dateCancelled": "Date cancelled",
+          "cancelledBy": "Cancelled by",
+          "reason": "Reason",
+          "statusWhenCancelled": "Status when cancelled"
+        }
+      },
       "status": {
         "pending": "Pending",
         "accepted": "Accepted",

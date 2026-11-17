@@ -6,7 +6,13 @@ import {
   declarationCoveragePercentage,
   isComplianceSchemeRegistrationType
 } from '../common/display.js'
-import { findAcceptedAuditEntry } from '../detail/audit.js'
+import { displayStoredCancelReason } from '../cancel/reasons.js'
+import {
+  auditAction,
+  findAcceptedAuditEntry,
+  findAuditEntryByAction
+} from '../detail/audit.js'
+import { cancelledAt } from './cancellations.js'
 import { toLondonCalendarDate } from './report-dates.js'
 import { reportLabels } from './report-labels.js'
 
@@ -78,8 +84,50 @@ export function totalObligatedTonnes(obligations) {
   return Math.round(total * 1000) / 1000
 }
 
-function cancellationCount(cancellationsByOrganisation, organisationId) {
-  return cancellationsByOrganisation.get(organisationId)?.length ?? 0
+// An Accepted audit entry means it was accepted before it was cancelled. With
+// neither entry the status is unknown, so it is left blank.
+function statusWhenCancelled(audit, cancelled, labels) {
+  if (findAcceptedAuditEntry(audit)) {
+    return labels.status.accepted
+  }
+  return cancelled ? labels.status.pending : null
+}
+
+export function cancellationToReportEntry(
+  declaration,
+  labels = reportLabels()
+) {
+  const cancelled = findAuditEntryByAction(
+    declaration.audit,
+    auditAction.cancelled
+  )
+  return {
+    dateSubmitted: toLondonCalendarDate(declaration.created),
+    dateCancelled: toLondonCalendarDate(cancelledAt(declaration)),
+    cancelledBy: cancelled?.user?.name ?? null,
+    reason: displayStoredCancelReason(
+      cancelled?.reason,
+      declaration.organisation?.registrationType,
+      labels.locale
+    ),
+    statusWhenCancelled: statusWhenCancelled(
+      declaration.audit,
+      cancelled,
+      labels
+    )
+  }
+}
+
+// Oldest first: groupCancellationsByOrganisation sorts each group.
+function cancellationFields(
+  cancellationsByOrganisation,
+  organisationId,
+  labels
+) {
+  const cancellationHistory = (
+    cancellationsByOrganisation.get(organisationId) ?? []
+  ).map((declaration) => cancellationToReportEntry(declaration, labels))
+  return { cancellations: cancellationHistory.length, cancellationHistory }
 }
 
 export function declarationToReportRow(
@@ -108,10 +156,7 @@ export function declarationToReportRow(
     dateSubmitted: toLondonCalendarDate(declaration.created),
     dateAccepted: toLondonCalendarDate(accepted?.timestamp),
     acceptedBy: accepted?.user?.name ?? null,
-    cancellations: cancellationCount(
-      cancellationsByOrganisation,
-      organisation.id
-    )
+    ...cancellationFields(cancellationsByOrganisation, organisation.id, labels)
   }
 }
 
@@ -133,9 +178,10 @@ export function unsubmittedToReportRow(
     dateSubmitted: null,
     dateAccepted: null,
     acceptedBy: null,
-    cancellations: cancellationCount(
+    ...cancellationFields(
       cancellationsByOrganisation,
-      row.organisationId
+      row.organisationId,
+      labels
     )
   }
 }

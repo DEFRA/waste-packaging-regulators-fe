@@ -1,4 +1,5 @@
 import {
+  CANCELLATION_HEADING_FILL,
   CELL_BORDER,
   HEADING_FILL,
   REPORT_DATE_ALIGNMENT,
@@ -6,6 +7,7 @@ import {
   safeSheetName,
   REPORT_TITLE_ROWS,
   buildReportWorkbook,
+  cancellationBlockCount,
   reportColumns
 } from './report-workbook.js'
 import { loadReport } from './report.page-object.js'
@@ -38,6 +40,38 @@ const COMPLIANCE_SCHEME_HEADERS = [
   'Accepted by',
   'Cancellations'
 ]
+
+const CANCELLATION_HEADERS = [
+  'Date submitted',
+  'Date cancelled',
+  'Cancelled by',
+  'Reason',
+  'Status when cancelled'
+]
+
+const blankCancellationBlock = (number) =>
+  Object.fromEntries(
+    CANCELLATION_HEADERS.map((header) => [
+      `Cancellation ${number}: ${header}`,
+      null
+    ])
+  )
+
+const olderCancellation = {
+  dateSubmitted: new Date('2026-10-31T00:00:00Z'),
+  dateCancelled: new Date('2026-11-10T00:00:00Z'),
+  cancelledBy: 'Test User',
+  reason: 'Not signed by correct person',
+  statusWhenCancelled: 'Pending'
+}
+
+const newerCancellation = {
+  dateSubmitted: new Date('2026-12-17T00:00:00Z'),
+  dateCancelled: new Date('2027-01-08T00:00:00Z'),
+  cancelledBy: 'Another User',
+  reason: 'Recycling obligations changed',
+  statusWhenCancelled: 'Accepted'
+}
 
 const acceptedRow = {
   organisationId: 'org-1',
@@ -93,7 +127,10 @@ describe('#report-workbook', () => {
 
     expect(report.heading).toBe(HEADING)
     expect(report.headingsRowNumber).toBe(REPORT_TITLE_ROWS + 1)
-    expect(report.headers).toEqual(DIRECT_PRODUCER_HEADERS)
+    expect(report.headers).toEqual([
+      ...DIRECT_PRODUCER_HEADERS,
+      ...CANCELLATION_HEADERS
+    ])
   })
 
   test('shades every column heading light grey, and nothing else', async () => {
@@ -133,7 +170,7 @@ describe('#report-workbook', () => {
     const { worksheet, headingsRowNumber } = await build(true)
 
     expect(worksheet.autoFilter).toBe(
-      `A${headingsRowNumber}:K${headingsRowNumber}`
+      `A${headingsRowNumber}:P${headingsRowNumber}`
     )
     expect(worksheet.views[0]).toMatchObject({
       state: 'frozen',
@@ -209,7 +246,8 @@ describe('#report-workbook', () => {
       'Date submitted': null,
       'Date accepted': null,
       'Accepted by': null,
-      Cancellations: 0
+      Cancellations: 0,
+      ...blankCancellationBlock(1)
     })
   })
 
@@ -240,7 +278,169 @@ describe('#report-workbook', () => {
     const report = await build(false, [])
 
     expect(report.heading).toBe(HEADING)
-    expect(report.headers).toEqual(DIRECT_PRODUCER_HEADERS)
+    expect(report.headers).toEqual([
+      ...DIRECT_PRODUCER_HEADERS,
+      ...CANCELLATION_HEADERS
+    ])
     expect(report.rows).toEqual([])
+  })
+
+  describe('cancellation blocks', () => {
+    test.each([
+      [[], 1],
+      [[{ cancellationHistory: [] }], 1],
+      [[{ cancellationHistory: [olderCancellation] }], 1],
+      [
+        [
+          { cancellationHistory: [olderCancellation] },
+          {
+            cancellationHistory: [
+              olderCancellation,
+              newerCancellation,
+              newerCancellation
+            ]
+          },
+          {}
+        ],
+        3
+      ]
+    ])('cancellationBlockCount(%j) is %p', (rows, count) => {
+      expect(cancellationBlockCount(rows)).toBe(count)
+    })
+
+    test.each([
+      [false, 'K'],
+      [true, 'L']
+    ])(
+      'starts in the column after Cancellations (compliance schemes: %p)',
+      async (isComplianceScheme, column) => {
+        const { worksheet, headingsRowNumber } = await build(isComplianceScheme)
+
+        expect(worksheet.getCell(`${column}${headingsRowNumber}`).value).toBe(
+          'Date submitted'
+        )
+        expect(
+          worksheet.getCell(`${column}${headingsRowNumber - 1}`).value
+        ).toBe('Cancellation 1')
+      }
+    )
+
+    test('puts the report heading and a merged, bold, centred Cancellation N heading over each block in the first row', async () => {
+      const { worksheet, headingsRowNumber } = await build(false, [
+        {
+          ...acceptedRow,
+          cancellationHistory: [olderCancellation, newerCancellation]
+        }
+      ])
+
+      expect(headingsRowNumber).toBe(2)
+      expect(worksheet.model.merges).toEqual(['K1:O1', 'P1:T1'])
+      expect(worksheet.getCell('A1').value).toBe(HEADING)
+      expect(worksheet.getCell('K1').value).toBe('Cancellation 1')
+      expect(worksheet.getCell('P1').value).toBe('Cancellation 2')
+      expect(worksheet.getCell('K1').font).toMatchObject({ bold: true })
+      expect(worksheet.getCell('K1').alignment).toMatchObject({
+        horizontal: 'center'
+      })
+    })
+
+    test('shades the cancellation headings darker grey and boxes them in, leaving the report heading row plain', async () => {
+      const { worksheet } = await build(false)
+
+      for (const address of ['K1', 'O1', 'K2', 'O2']) {
+        expect(worksheet.getCell(address).fill).toEqual(
+          CANCELLATION_HEADING_FILL
+        )
+        expect(worksheet.getCell(address).border).toEqual(CELL_BORDER)
+      }
+      expect(worksheet.getCell('J2').fill).toEqual(HEADING_FILL)
+      for (const address of ['A1', 'J1']) {
+        expect(worksheet.getCell(address).fill).not.toEqual(
+          CANCELLATION_HEADING_FILL
+        )
+        expect(worksheet.getCell(address).border).not.toEqual(CELL_BORDER)
+      }
+    })
+
+    test('filters every cancellation column and freezes the panes below the column headings', async () => {
+      const { worksheet, headingsRowNumber } = await build(true, [
+        {
+          ...acceptedRow,
+          cancellationHistory: [olderCancellation, newerCancellation]
+        }
+      ])
+
+      expect(worksheet.autoFilter).toBe(`A2:U2`)
+      expect(worksheet.views[0].ySplit).toBe(headingsRowNumber)
+    })
+
+    test('fills one block per cancellation, oldest first, and leaves the unused blocks blank', async () => {
+      const { rows } = await build(false, [
+        {
+          ...acceptedRow,
+          cancellationHistory: [olderCancellation, newerCancellation]
+        },
+        { ...notSubmittedRow, cancellationHistory: [olderCancellation] },
+        {
+          ...acceptedRow,
+          organisationName: 'No cancellations Ltd',
+          cancellationHistory: []
+        }
+      ])
+
+      expect(rows[0]).toMatchObject({
+        'Cancellation 1: Date submitted': new Date('2026-10-31T00:00:00Z'),
+        'Cancellation 1: Date cancelled': new Date('2026-11-10T00:00:00Z'),
+        'Cancellation 1: Cancelled by': 'Test User',
+        'Cancellation 1: Reason': 'Not signed by correct person',
+        'Cancellation 1: Status when cancelled': 'Pending',
+        'Cancellation 2: Date submitted': new Date('2026-12-17T00:00:00Z'),
+        'Cancellation 2: Date cancelled': new Date('2027-01-08T00:00:00Z'),
+        'Cancellation 2: Cancelled by': 'Another User',
+        'Cancellation 2: Reason': 'Recycling obligations changed',
+        'Cancellation 2: Status when cancelled': 'Accepted'
+      })
+      expect(rows[1]).toMatchObject({
+        'Cancellation 1: Cancelled by': 'Test User',
+        ...blankCancellationBlock(2)
+      })
+      expect(rows[2]).toMatchObject({
+        ...blankCancellationBlock(1),
+        ...blankCancellationBlock(2)
+      })
+    })
+
+    test('shows one blank Cancellation 1 block when nobody has cancelled', async () => {
+      const { worksheet, rows } = await build(false)
+
+      expect(worksheet.model.merges).toEqual(['K1:O1'])
+      expect(worksheet.getCell('K1').value).toBe('Cancellation 1')
+      rows.forEach((row) =>
+        expect(row).toMatchObject(blankCancellationBlock(1))
+      )
+    })
+
+    test('stores the cancellation dates as left-aligned dates', async () => {
+      const { worksheet, headingsRowNumber } = await build(false, [
+        { ...acceptedRow, cancellationHistory: [olderCancellation] }
+      ])
+      const dataRow = headingsRowNumber + 1
+
+      for (const column of ['K', 'L']) {
+        const cell = worksheet.getCell(`${column}${dataRow}`)
+        expect(cell.value).toBeInstanceOf(Date)
+        expect(cell.numFmt).toBe(REPORT_DATE_FORMAT)
+        expect(cell.alignment).toEqual(REPORT_DATE_ALIGNMENT)
+      }
+    })
+
+    test('boxes in blank cancellation cells too', async () => {
+      const { worksheet, headingsRowNumber } = await build(false)
+
+      expect(worksheet.getCell(`O${headingsRowNumber + 1}`).value).toBeNull()
+      expect(worksheet.getCell(`O${headingsRowNumber + 1}`).border).toEqual(
+        CELL_BORDER
+      )
+    })
   })
 })

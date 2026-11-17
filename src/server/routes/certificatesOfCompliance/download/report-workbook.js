@@ -42,6 +42,53 @@ export function reportColumns(isComplianceScheme, labels = reportLabels()) {
   ).map((column) => ({ ...column, header: labels.columns[column.key] }))
 }
 
+// Darker grey behind the cancellation headings, as in the prototype.
+export const CANCELLATION_HEADING_FILL = {
+  type: 'pattern',
+  pattern: 'solid',
+  fgColor: { argb: 'FFDEDDDC' }
+}
+
+// Each cancellation gets a block of these columns, after Cancellations.
+const CANCELLATION_COLUMNS = [
+  {
+    key: 'dateSubmitted',
+    width: 18,
+    numFmt: REPORT_DATE_FORMAT,
+    alignment: REPORT_DATE_ALIGNMENT
+  },
+  {
+    key: 'dateCancelled',
+    width: 18,
+    numFmt: REPORT_DATE_FORMAT,
+    alignment: REPORT_DATE_ALIGNMENT
+  },
+  { key: 'cancelledBy', width: 28 },
+  { key: 'reason', width: 40 },
+  { key: 'statusWhenCancelled', width: 22 }
+]
+
+// As many blocks as the most cancelled organisation has cancellations, and at
+// least one.
+export function cancellationBlockCount(rows) {
+  return rows.reduce(
+    (count, row) => Math.max(count, row.cancellationHistory?.length ?? 0),
+    1
+  )
+}
+
+export function cancellationBlocks(blockCount, labels = reportLabels()) {
+  return Array.from({ length: blockCount }, (_, index) => ({
+    heading: labels.cancellation.heading(index + 1),
+    columns: CANCELLATION_COLUMNS.map((column) => ({
+      ...column,
+      header: labels.cancellation.columns[column.key],
+      headingFill: CANCELLATION_HEADING_FILL,
+      value: (row) => row.cancellationHistory?.[index]?.[column.key]
+    }))
+  }))
+}
+
 const MAX_SHEET_NAME_LENGTH = 31
 
 // Excel rejects \ / ? * [ ] : in sheet names, a leading or trailing apostrophe,
@@ -71,9 +118,11 @@ function trimApostrophesAndSpaces(text) {
   return text.slice(start, end)
 }
 
-// Rows above the column headings. Everything below is placed from this, so rows
-// can be added above the headings.
+// Rows above the column headings. The report heading and the Cancellation N
+// headings share this row, so the headings take two rows in all. Everything
+// below is placed from this.
 export const REPORT_TITLE_ROWS = 1
+const CANCELLATION_HEADINGS_ROW = REPORT_TITLE_ROWS
 
 function writeHeading(worksheet, heading) {
   const cell = worksheet.getCell(1, 1)
@@ -98,13 +147,35 @@ export const CELL_BORDER = {
   right: THIN_GREY_LINE
 }
 
+// Every cell under the merge is boxed in, so the border goes all the way round.
+function writeCancellationHeadings(worksheet, blocks, firstColumnNumber) {
+  blocks.forEach((block, index) => {
+    const left = firstColumnNumber + index * CANCELLATION_COLUMNS.length
+    const right = left + CANCELLATION_COLUMNS.length - 1
+    worksheet.mergeCells(
+      CANCELLATION_HEADINGS_ROW,
+      left,
+      CANCELLATION_HEADINGS_ROW,
+      right
+    )
+    for (let column = left; column <= right; column++) {
+      const cell = worksheet.getCell(CANCELLATION_HEADINGS_ROW, column)
+      cell.font = { bold: true }
+      cell.alignment = { horizontal: 'center' }
+      cell.fill = CANCELLATION_HEADING_FILL
+      cell.border = CELL_BORDER
+    }
+    worksheet.getCell(CANCELLATION_HEADINGS_ROW, left).value = block.heading
+  })
+}
+
 function writeColumnHeadings(worksheet, columns, rowNumber) {
   const row = worksheet.getRow(rowNumber)
   columns.forEach((column, index) => {
     const cell = row.getCell(index + 1)
     cell.value = column.header
     cell.font = { bold: true }
-    cell.fill = HEADING_FILL
+    cell.fill = column.headingFill ?? HEADING_FILL
     cell.border = CELL_BORDER
   })
 }
@@ -116,7 +187,9 @@ function writeDataRows(worksheet, columns, rows, firstRowNumber) {
       // Blank cells are boxed in too, so the table has no gaps.
       const cell = row.getCell(columnIndex + 1)
       cell.border = CELL_BORDER
-      const value = reportRow[column.key]
+      const value = column.value
+        ? column.value(reportRow)
+        : reportRow[column.key]
       if (value == null) {
         return
       }
@@ -137,7 +210,12 @@ export async function buildReportWorkbook({
   isComplianceScheme,
   labels = reportLabels()
 }) {
-  const columns = reportColumns(isComplianceScheme, labels)
+  const organisationColumns = reportColumns(isComplianceScheme, labels)
+  const blocks = cancellationBlocks(cancellationBlockCount(rows), labels)
+  const columns = [
+    ...organisationColumns,
+    ...blocks.flatMap((block) => block.columns)
+  ]
   const headingsRowNumber = REPORT_TITLE_ROWS + 1
 
   const workbook = new ExcelJS.Workbook()
@@ -150,6 +228,7 @@ export async function buildReportWorkbook({
   })
 
   writeHeading(worksheet, heading)
+  writeCancellationHeadings(worksheet, blocks, organisationColumns.length + 1)
   writeColumnHeadings(worksheet, columns, headingsRowNumber)
   writeDataRows(worksheet, columns, rows, headingsRowNumber + 1)
 
