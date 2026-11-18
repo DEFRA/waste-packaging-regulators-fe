@@ -1,7 +1,10 @@
-@forward 'pkg:@ministryofjustice/frontend/moj/all' with (
-  $moj-assets-path: '../../../assets/',
+@forward "pkg:@ministryofjustice/frontend/moj/base" with (
+  $moj-assets-path: "../../../assets/",
   $moj-font-family: "arial"
 );
+@use "node_modules/govuk-frontend/dist/govuk/settings/warnings";
 
 // Output the GOV.UK Frontend CSS styles
 @forward "pkg:govuk-frontend";
+
+warnings.$govuk-suppressed-warnings: ("govuk-text-colour");
