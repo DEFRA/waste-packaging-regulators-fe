@@ -1,7 +1,7 @@
 # The mock API layer
 
-`src/mocks/` is a dev-only mock of the three backends this frontend talks to —
-**waste-obligations**, **waste-organisations** and the **Account** API — built on
+`src/mocks/` is a dev-only mock of the backends this frontend talks to —
+**waste-obligations**, **waste-organisations**, the **Account** API and **case-management** — built on
 [Mock Service Worker](https://mswjs.io/). It exists so the app can run, and be
 tested, end-to-end without any live services.
 
