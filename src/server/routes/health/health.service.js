@@ -2,11 +2,19 @@ import { config } from '#config/config.js'
 import { getServiceOAuthAccessToken } from '#services/apiBaseClient/oauth-token.js'
 import { createWasteObligationsApiService } from '#services/waste-obligations-api.service.js'
 import { createWasteOrganisationsApiService } from '#services/waste-organisations-api.service.js'
+import { createCaseManagementApiService } from '#services/case-management-api.service.js'
 import { previewCancellationTemplate } from '#services/govuk-notify.service.js'
 import { cancellationEmailTemplateIds } from '#server/routes/certificatesOfCompliance/cancel/cancellation-email-templates.js'
 import { buildCancellationNotificationParameters } from '#server/routes/certificatesOfCompliance/actions/cancellation-notification-parameters.js'
 
 const HEALTH_CHECK_TIMEOUT_MS = 5000
+
+const HEALTH_CHECK_CASE_MANAGEMENT_USER = {
+  id: '00000000-0000-4000-8000-00000000f001',
+  name: 'Health Check',
+  email: 'health-check@regulator.example',
+  nationId: 1
+}
 
 const HEALTH_CHECK_NOTIFY_PERSONALISATION = {
   ...buildCancellationNotificationParameters({
@@ -49,20 +57,30 @@ async function checkGovukNotify() {
   )
 }
 
+async function checkCaseManagementApi() {
+  const service = createCaseManagementApiService({
+    sessionUser: HEALTH_CHECK_CASE_MANAGEMENT_USER,
+    requestTimeoutMs: HEALTH_CHECK_TIMEOUT_MS
+  })
+  await service.listCases({ caseType: 'CSoC', pageSize: 1 })
+}
+
 export async function runHealthChecks() {
-  const [obligations, organisations, accountToken, notify] =
+  const [obligations, organisations, accountToken, notify, caseManagement] =
     await Promise.allSettled([
       checkWasteObligationsApi(),
       checkWasteOrganisationsApi(),
       checkAccountApiToken(),
-      checkGovukNotify()
+      checkGovukNotify(),
+      checkCaseManagementApi()
     ])
 
   const checks = {
     'waste-obligations': toCheckResult(obligations),
     'waste-organisations': toCheckResult(organisations),
     'account-token': toCheckResult(accountToken),
-    'govuk-notify': toCheckResult(notify)
+    'govuk-notify': toCheckResult(notify),
+    'case-management': toCheckResult(caseManagement)
   }
 
   const allOk = Object.values(checks).every((c) => c.ok)
