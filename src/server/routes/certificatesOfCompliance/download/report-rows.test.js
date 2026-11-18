@@ -299,11 +299,11 @@ describe('#report-rows', () => {
       expect(entry.dateCancelled).toEqual(new Date('2026-08-01T00:00:00Z'))
     })
 
-    test('falls back to the updated date and leaves the rest blank without a Cancelled audit entry', () => {
+    test('leaves the cancellation details blank without a Cancelled audit entry', () => {
       expect(
         cancellationToReportEntry(cancelledSubmission({ cancelled: null }))
       ).toMatchObject({
-        dateCancelled: new Date('2026-11-12T00:00:00Z'),
+        dateCancelled: null,
         cancelledBy: null,
         reason: null,
         statusWhenCancelled: null
