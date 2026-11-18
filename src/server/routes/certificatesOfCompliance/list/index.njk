@@ -2,6 +2,7 @@
 
 {% from "search/macro.njk" import appSearch %}
 {% from "producer-subnavigation/macro.njk" import appProducerSubnavigation %}
+{% from "tabs-list/macro.njk" import appTabsList %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
 {% block content %}
@@ -55,23 +56,25 @@
   }) }}
 
   <div class="govuk-tabs">
-    <ul class="govuk-tabs__list">
-      <li class="govuk-tabs__list-item{% if activeTab == 'pending' %} govuk-tabs__list-item--selected{% endif %}">
-        <a class="govuk-tabs__tab" href="{{ localeUrl('?type=' ~ organisationType ~ '&tab=pending&clearSort=true') }}" {% if activeTab == 'pending' %} aria-current="page" {% endif %}>
-          {{ tabLabels.pending }}
-        </a>
-      </li>
-      <li class="govuk-tabs__list-item{% if activeTab == 'accepted' %} govuk-tabs__list-item--selected{% endif %}">
-        <a class="govuk-tabs__tab" href="{{ localeUrl('?type=' ~ organisationType ~ '&tab=accepted&clearSort=true') }}" {% if activeTab == 'accepted' %} aria-current="page" {% endif %}>
-          {{ tabLabels.accepted }}
-        </a>
-      </li>
-      <li class="govuk-tabs__list-item{% if activeTab == 'not-submitted' %} govuk-tabs__list-item--selected{% endif %}">
-        <a class="govuk-tabs__tab" href="{{ localeUrl('?type=' ~ organisationType ~ '&tab=not-submitted&clearSort=true') }}" {% if activeTab == 'not-submitted' %} aria-current="page" {% endif %}>
-          {{ tabLabels.notSubmitted }}
-        </a>
-      </li>
-    </ul>
+    {{ appTabsList({
+      items: [
+        {
+          text: tabLabels.pending,
+          href: localeUrl('?type=' ~ organisationType ~ '&tab=pending&clearSort=true'),
+          current: activeTab == 'pending'
+        },
+        {
+          text: tabLabels.accepted,
+          href: localeUrl('?type=' ~ organisationType ~ '&tab=accepted&clearSort=true'),
+          current: activeTab == 'accepted'
+        },
+        {
+          text: tabLabels.notSubmitted,
+          href: localeUrl('?type=' ~ organisationType ~ '&tab=not-submitted&clearSort=true'),
+          current: activeTab == 'not-submitted'
+        }
+      ]
+    }) }}
     {% if activeTab == 'pending' %}
       {% set tabCount = totalPending %}
       {% set tabSummaryText = i18n.t('tabSummary.pending') %}

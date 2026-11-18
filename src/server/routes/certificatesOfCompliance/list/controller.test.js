@@ -183,6 +183,28 @@ describe('#certificatesOfComplianceController', () => {
         )
       )
     })
+
+    test.each([
+      ['pending', 'Pending'],
+      ['accepted', 'Accepted'],
+      ['not-submitted', 'Not submitted']
+    ])(
+      'Should mark only the %s tab as selected and current',
+      async (tab, expectedLabelPrefix) => {
+        const { result } = await inject(
+          `/certificates-of-compliance?tab=${tab}`
+        )
+        const $ = load(result)
+
+        const selectedItems = $('.govuk-tabs__list-item--selected')
+        expect(selectedItems).toHaveLength(1)
+        expect(selectedItems.text().trim()).toContain(expectedLabelPrefix)
+
+        const currentTabs = $('.govuk-tabs__tab[aria-current="page"]')
+        expect(currentTabs).toHaveLength(1)
+        expect(currentTabs.text()).toContain(expectedLabelPrefix)
+      }
+    )
   })
 
   describe('Tab content', () => {
