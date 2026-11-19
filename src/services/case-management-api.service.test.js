@@ -66,6 +66,26 @@ describe('CaseManagementApiService', () => {
       expect.any(Object)
     )
   })
+
+  test('listCases sends each producerType filter', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(mockOkResponse({ items: [], totalCount: 0 }))
+    const service = new CaseManagementApiService({
+      baseUrl: 'http://localhost:8085',
+      authMode: 'none',
+      fetchImpl
+    })
+
+    await service.listCases({
+      producerType: ['DIRECT_PRODUCER', 'COMPLIANCE_SCHEME']
+    })
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:8085/cases?producerType=DIRECT_PRODUCER&producerType=COMPLIANCE_SCHEME',
+      expect.any(Object)
+    )
+  })
 })
 
 describe('createCaseManagementApiService', () => {

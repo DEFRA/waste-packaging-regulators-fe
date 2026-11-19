@@ -13,6 +13,8 @@ export function caseManagementHandlers(store) {
         const url = new URL(request.url)
         const caseTypes = url.searchParams.getAll('caseType')
         const unassigned = url.searchParams.get('unassigned') === 'true'
+        const isTerminal = url.searchParams.get('isTerminal')
+        const producerTypes = url.searchParams.getAll('producerType')
         const page = Number.parseInt(url.searchParams.get('page') ?? '1', 10)
         const pageSize = Number.parseInt(
           url.searchParams.get('pageSize') ?? '20',
@@ -24,6 +26,8 @@ export function caseManagementHandlers(store) {
           nation: nation || null,
           caseTypes,
           unassignedOnly: unassigned,
+          isTerminal: isTerminal == null ? null : isTerminal === 'true',
+          producerTypes,
           page,
           pageSize
         })

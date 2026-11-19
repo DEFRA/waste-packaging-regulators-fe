@@ -38,6 +38,7 @@ export class CaseManagementApiService extends BaseApiService {
       assigneeId,
       unassigned,
       orgId,
+      producerType,
       search,
       page,
       pageSize,
@@ -61,6 +62,7 @@ export class CaseManagementApiService extends BaseApiService {
     if (orgId != null) {
       params.set('orgId', orgId)
     }
+    appendQueryValues(params, 'producerType', producerType)
     if (search) {
       params.set('search', search)
     }
