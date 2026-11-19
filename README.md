@@ -168,6 +168,8 @@ The Case Management service runs separately ([`waste-regulator-case-management`]
 - **`npm run dev`** — MSW serves Case Management from fixtures (no CM process required).
 - **`npm run dev:local-case-management`** — sets `MOCK_API=false` and calls a real API at `http://localhost:8085`. Start Mongo and the Case Management API first (see that repo's README). Optional overrides: copy `.env.example` to `.env`.
 
+The case list is served at `/cases` only when `CASE_MANAGEMENT_ENABLED=true`.
+
 Deployed dev environments also need `CASE_MANAGEMENT_API_SHARED_SECRET` and `CASE_MANAGEMENT_API_X_API_KEY` so the BFF can sign requests and pass the ephemeral API gateway.
 
 ### Country-specific mock data
