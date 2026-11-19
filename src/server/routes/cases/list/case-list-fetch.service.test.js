@@ -7,8 +7,7 @@ vi.mock('#services/case-management-api.service.js', () => ({
 import { createCaseManagementApiService } from '#services/case-management-api.service.js'
 import {
   fetchUnassignedCsocCases,
-  mapCaseListItemToRow,
-  filterDirectProducerCases
+  mapCaseListItemToRow
 } from './case-list-fetch.service.js'
 
 describe('mapCaseListItemToRow', () => {
@@ -35,19 +34,8 @@ describe('mapCaseListItemToRow', () => {
   })
 })
 
-describe('filterDirectProducerCases', () => {
-  test('keeps only DIRECT_PRODUCER rows', () => {
-    const filtered = filterDirectProducerCases([
-      { producerType: 'DIRECT_PRODUCER' },
-      { producerType: 'COMPLIANCE_SCHEME' },
-      { producerType: 'direct_producer' }
-    ])
-    expect(filtered).toHaveLength(2)
-  })
-})
-
 describe('fetchUnassignedCsocCases', () => {
-  test('calls listCases with CSoC unassigned and maps direct producers', async () => {
+  test('asks for open unassigned direct producer CSoC cases and keeps the total', async () => {
     const listCases = vi.fn().mockResolvedValue({
       items: [
         {
@@ -57,17 +45,9 @@ describe('fetchUnassignedCsocCases', () => {
           submittedAt: '2026-01-01T00:00:00.000Z',
           producerType: 'DIRECT_PRODUCER',
           displayData: {}
-        },
-        {
-          id: '2',
-          orgId: 'b',
-          stateId: 'SUBMITTED',
-          submittedAt: '2026-01-01T00:00:00.000Z',
-          producerType: 'COMPLIANCE_SCHEME',
-          displayData: {}
         }
       ],
-      totalCount: 2,
+      totalCount: 244,
       page: 1,
       pageSize: 20
     })
@@ -82,13 +62,15 @@ describe('fetchUnassignedCsocCases', () => {
     expect(listCases).toHaveBeenCalledWith(
       {
         caseType: 'CSoC',
+        producerType: 'DIRECT_PRODUCER',
         unassigned: true,
+        isTerminal: false,
         page: 1,
         pageSize: 20
       },
       'trace-1'
     )
     expect(result.items).toHaveLength(1)
-    expect(result.totalCount).toBe(1)
+    expect(result.totalCount).toBe(244)
   })
 })

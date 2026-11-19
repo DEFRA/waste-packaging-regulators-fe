@@ -1,7 +1,15 @@
 export function createCaseManagementStore(records = []) {
   const cases = [...records]
 
-  function listCases({ nation, caseTypes, unassignedOnly, page, pageSize }) {
+  function listCases({
+    nation,
+    caseTypes,
+    unassignedOnly,
+    isTerminal,
+    producerTypes,
+    page,
+    pageSize
+  }) {
     const filtered = cases.filter((item) => {
       if (nation && item.nation !== nation) {
         return false
@@ -16,6 +24,12 @@ export function createCaseManagementStore(records = []) {
         return false
       }
       if (unassignedOnly && item.assignedToId) {
+        return false
+      }
+      if (isTerminal != null && item.isTerminal !== isTerminal) {
+        return false
+      }
+      if (producerTypes?.length && !producerTypes.includes(item.producerType)) {
         return false
       }
       return true

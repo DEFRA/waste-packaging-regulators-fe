@@ -1,7 +1,5 @@
 import { createCaseManagementApiService } from '#services/case-management-api.service.js'
 
-const DIRECT_PRODUCER = 'DIRECT_PRODUCER'
-
 function displayFieldValue(displayData, fieldName) {
   const field = displayData?.[fieldName]
   if (field == null) {
@@ -26,36 +24,27 @@ export function mapCaseListItemToRow(item) {
   }
 }
 
-export function filterDirectProducerCases(items) {
-  return items.filter(
-    (item) => String(item.producerType ?? '').toUpperCase() === DIRECT_PRODUCER
-  )
-}
-
 export async function fetchUnassignedCsocCases(
   sessionUser,
   traceId,
-  { page = 1, pageSize = 20, directProducersOnly = true } = {}
+  { page = 1, pageSize = 20 } = {}
 ) {
   const api = createCaseManagementApiService({ sessionUser })
   const response = await api.listCases(
     {
       caseType: 'CSoC',
+      producerType: 'DIRECT_PRODUCER',
       unassigned: true,
+      isTerminal: false,
       page,
       pageSize
     },
     traceId
   )
 
-  let items = response.items ?? []
-  if (directProducersOnly) {
-    items = filterDirectProducerCases(items)
-  }
-
   return {
-    items: items.map(mapCaseListItemToRow),
-    totalCount: directProducersOnly ? items.length : (response.totalCount ?? 0),
+    items: (response.items ?? []).map(mapCaseListItemToRow),
+    totalCount: response.totalCount ?? 0,
     page: response.page ?? page,
     pageSize: response.pageSize ?? pageSize
   }
