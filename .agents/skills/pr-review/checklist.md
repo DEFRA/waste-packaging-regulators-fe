@@ -76,9 +76,11 @@ can compare the change against it.
 
 ## 5. Internationalisation (English and Welsh)
 
+- The internationalisation is optional and highlight any missing in the result
+  as non blocking
 - Every new user-facing string is a key in **both**
   `src/server/locales/en.json` and `cy.json`. A key in `en` without a `cy`
-  counterpart is a **Should fix** at minimum. Diff the key sets if locales
+  counterpart is a **information** at minimum. Diff the key sets if locales
   changed.
 - No hard-coded English in controllers or `.njk` templates. Use the locale
   helpers (`getLocale`, `translateCoc`, `cocPageI18n`).
@@ -124,3 +126,5 @@ can compare the change against it.
 - Comments describe current behaviour, never history ("used to", "replaced").
 - Domain language in domain and mock code (`submissionStatus`, not "tab").
 - Dead code, leftover `console.log`, commented-out blocks.
+- Files should not contain more than 500 lines
+- Adhere to clean code and SOLID principles
