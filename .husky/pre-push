@@ -26,15 +26,16 @@ done
 
 [ -z "$local_sha" ] && exit 0
 
-git fetch origin main --quiet 2>/dev/null
+# husky runs hooks with `sh -e`, so any command allowed to fail needs `|| ...`
+git fetch origin main --quiet 2>/dev/null || true
 range="origin/main...$local_sha"
 
 if git diff --quiet "$range"; then
   exit 0
 fi
 
-agent=${PR_REVIEW_AGENT:-$(git config --get pr-review.agent)}
-command=${PR_REVIEW_CMD:-$(git config --get pr-review.command)}
+agent=${PR_REVIEW_AGENT:-$(git config --get pr-review.agent || true)}
+command=${PR_REVIEW_CMD:-$(git config --get pr-review.command || true)}
 
 if [ -z "$command" ] && [ -z "$agent" ]; then
   for candidate in claude codex gemini; do
@@ -72,11 +73,11 @@ prompt="Review the changes in git range $range by following the instructions in 
 echo "pre-push: reviewing $range with ${agent:-custom command} ..."
 output_file=$(mktemp)
 
-eval "$command \"\$prompt\"" </dev/null >"$output_file"
-status=$?
+status=0
+eval "$command \"\$prompt\"" </dev/null >"$output_file" || status=$?
 cat "$output_file"
 
-result=$(grep 'REVIEW_RESULT:' "$output_file" | tail -n 1)
+result=$(grep 'REVIEW_RESULT:' "$output_file" | tail -n 1) || true
 rm -f "$output_file"
 
 if [ $status -ne 0 ] || [ -z "$result" ]; then
