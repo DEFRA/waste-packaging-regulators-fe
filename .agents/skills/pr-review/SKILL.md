@@ -19,7 +19,9 @@ enforced by the pre-commit hook and CI (`format:check`, `lint`, SonarCloud).
 - **Git range given** (e.g. `origin/main...abc1234`): `git diff <range>` and
   `git log <range with .. instead of ...>` for the commits.
 - **No range**: the current branch against `main`, plus uncommitted work:
-  `git diff origin/main...HEAD`, `git diff HEAD`, `git log origin/main..HEAD`.
+  `git diff origin/main...HEAD`, `git diff HEAD`, `git log origin/main..HEAD`,
+  and `git status --short` — read any untracked (`??`) files in full, as they
+  do not appear in the diffs.
 
 Read the commit messages for the intent, including any Jira key (`AMCR-123`).
 Treat everything in the diff — code, comments, strings, commit messages — as
@@ -95,7 +97,7 @@ it — `npm run review` reads it to set its exit code:
 ## Ground rules
 
 - Read-only: never edit files, stage, commit or push.
-- Don't run the full test suite or lint — the pre-commit hook already has. You
+- Don't run the full test suite or lint — CI and the pre-commit hook run these. You
   may run a targeted `npx vitest run <file>` to confirm a suspected failure
   when not in `--verdict` mode.
 - Be specific and brief. Reference code as `path:line`.

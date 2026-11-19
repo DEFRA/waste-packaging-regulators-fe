@@ -31,13 +31,14 @@ fi
 if [ -z "$command" ]; then
   case "$agent" in
     claude)
-      command='claude -p --allowedTools "Read,Glob,Grep,Bash(git diff:*),Bash(git log:*),Bash(git show:*)"'
+      command='claude -p --output-format stream-json --verbose --allowedTools "Read,Glob,Grep,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git status:*)" --'
+      formatter='node scripts/pr-review-claude-stream.mjs'
       ;;
     codex)
       command='codex exec --sandbox read-only'
       ;;
     gemini)
-      command='gemini --allowed-tools "run_shell_command(git)" -p'
+      command='gemini --allowed-tools "run_shell_command(git diff),run_shell_command(git log),run_shell_command(git show),run_shell_command(git status)" -p'
       ;;
     "")
       echo "pr-review: no AI agent found (set PR_REVIEW_AGENT or PR_REVIEW_CMD)"
@@ -60,15 +61,18 @@ prompt="Review $scope by following the instructions in .agents/skills/pr-review/
 
 echo "pr-review: reviewing $scope with ${agent:-custom command} ..."
 output_file=$(mktemp)
+status_file=$(mktemp)
+trap 'rm -f "$output_file" "$status_file"' EXIT
+trap 'exit 130' INT TERM
 
-status=0
-eval "$command \"\$prompt\"" </dev/null >"$output_file" || status=$?
-cat "$output_file"
+# Stream output as it arrives; the pipe hides the agent's exit status, so it
+# goes through a file instead.
+{ eval "$command \"\$prompt\"" </dev/null || echo $? >"$status_file"; } |
+  ${formatter:-cat} | tee "$output_file"
 
-result=$(grep 'REVIEW_RESULT:' "$output_file" | tail -n 1) || true
-rm -f "$output_file"
+result=$(grep -E '^REVIEW_RESULT: (BLOCKING|PASS)$' "$output_file" | tail -n 1) || true
 
-if [ $status -ne 0 ] || [ -z "$result" ]; then
+if [ -s "$status_file" ] || [ -z "$result" ]; then
   echo "pr-review: review did not complete"
   exit 2
 fi
