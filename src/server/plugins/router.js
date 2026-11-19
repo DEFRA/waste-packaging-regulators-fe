@@ -12,6 +12,7 @@ import { certificatesOfComplianceCancel } from '../routes/certificatesOfComplian
 import { rewriteDirectPrefix } from '../common/helpers/proxy/forwarded-prefix.js'
 import { errorExamples } from '../routes/error/examples/index.js'
 import { cookies } from '../routes/cookies/index.js'
+import { casesList } from '../routes/cases/list/index.js'
 
 export const router = {
   plugin: {
@@ -41,6 +42,8 @@ export const router = {
       // Routes at / — matched both behind YARP proxy (which strips the prefix)
       // and on direct access (rewritten at onRequest above).
       await server.register(cocPlugins)
+
+      await server.register([casesList])
 
       // Error page previews for design and QA — only enabled when mock data is active
       if (config.get('useMockApi')) {

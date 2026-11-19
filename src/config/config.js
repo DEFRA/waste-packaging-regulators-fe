@@ -360,6 +360,14 @@ export const config = convict({
       sensitive: true
     }
   },
+  caseManagement: {
+    enabled: {
+      doc: 'Serve the case management case list at /cases',
+      format: Boolean,
+      default: false,
+      env: 'CASE_MANAGEMENT_ENABLED'
+    }
+  },
   caseManagementApi: {
     baseUrl: {
       doc: 'Case Management API base URL',
