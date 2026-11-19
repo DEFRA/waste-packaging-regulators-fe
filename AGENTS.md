@@ -187,3 +187,12 @@ it('renders Not met for a partly-met producer', async () => {
   it.
 - Config is `convict` (`src/config`); read it through `config.get(...)`, add new
   settings to the schema with sensible env-var bindings.
+
+## Skills
+
+Agent skills live in `.agents/skills/` (`.claude/skills/` symlinks to them).
+
+- **`pr-review`** (`.agents/skills/pr-review/SKILL.md`) — reviews a branch
+  against this repo's conventions using `checklist.md` beside it. When asked to
+  review changes, follow that skill. The Husky `pre-push` hook runs it through
+  the `claude` CLI and stops the push on Blocking findings.

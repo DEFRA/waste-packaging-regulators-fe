@@ -1,4 +1,4 @@
-# Claude review of the branch being pushed, using .claude/skills/pr-review.
+# Claude review of the branch being pushed, using .agents/skills/pr-review.
 # Stops the push on Blocking findings. Skip with SKIP_CLAUDE_REVIEW=1 or
 # `git push --no-verify`. Fails open if the claude CLI is missing or errors.
 
