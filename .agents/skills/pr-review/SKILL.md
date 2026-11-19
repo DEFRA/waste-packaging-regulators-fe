@@ -6,7 +6,8 @@ argument-hint: '[git-range] [--hook]'
 
 # PR review — waste-packaging-regulators-fe
 
-Arguments: `$ARGUMENTS`
+Arguments: `$ARGUMENTS` — if your tool does not fill this in, use the
+arguments given in the request that pointed you to this file.
 
 You are reviewing a change to the regulator-facing EPR packaging frontend. Find
 real defects a reviewer would block or ask to be fixed. Do not restate the diff,

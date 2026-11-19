@@ -195,4 +195,6 @@ Agent skills live in `.agents/skills/` (`.claude/skills/` symlinks to them).
 - **`pr-review`** (`.agents/skills/pr-review/SKILL.md`) — reviews a branch
   against this repo's conventions using `checklist.md` beside it. When asked to
   review changes, follow that skill. The Husky `pre-push` hook runs it through
-  the `claude` CLI and stops the push on Blocking findings.
+  whichever agent CLI is configured (`PR_REVIEW_AGENT` / `PR_REVIEW_CMD`, or
+  the first of claude, codex, gemini found) and stops the push on Blocking
+  findings.

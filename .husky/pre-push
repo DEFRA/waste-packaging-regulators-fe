@@ -1,14 +1,15 @@
-# Claude review of the branch being pushed, using .agents/skills/pr-review.
-# Stops the push on Blocking findings. Skip with SKIP_CLAUDE_REVIEW=1 or
-# `git push --no-verify`. Fails open if the claude CLI is missing or errors.
+# AI review of the branch being pushed, following .agents/skills/pr-review.
+# Stops the push on Blocking findings; fails open if no agent is available or
+# the review does not complete. Skip with SKIP_PR_REVIEW=1 or --no-verify.
+#
+# Choose the agent (env var wins over git config):
+#   PR_REVIEW_AGENT / git config pr-review.agent      claude | codex | gemini
+#   PR_REVIEW_CMD   / git config pr-review.command    any command; the prompt
+#                                                     is passed as its last argument
+# With neither set, the first of claude, codex, gemini on PATH is used.
 
-if [ "$SKIP_CLAUDE_REVIEW" = "1" ]; then
-  echo "pre-push: SKIP_CLAUDE_REVIEW=1, skipping Claude review"
-  exit 0
-fi
-
-if ! command -v claude >/dev/null 2>&1; then
-  echo "pre-push: claude CLI not found, skipping Claude review"
+if [ "$SKIP_PR_REVIEW" = "1" ]; then
+  echo "pre-push: SKIP_PR_REVIEW=1, skipping AI review"
   exit 0
 fi
 
@@ -32,12 +33,46 @@ if git diff --quiet "$range"; then
   exit 0
 fi
 
-echo "pre-push: Claude is reviewing $range ..."
+agent=${PR_REVIEW_AGENT:-$(git config --get pr-review.agent)}
+command=${PR_REVIEW_CMD:-$(git config --get pr-review.command)}
+
+if [ -z "$command" ] && [ -z "$agent" ]; then
+  for candidate in claude codex gemini; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      agent=$candidate
+      break
+    fi
+  done
+fi
+
+if [ -z "$command" ]; then
+  case "$agent" in
+    claude)
+      command='claude -p --allowedTools "Read,Glob,Grep,Bash(git diff:*),Bash(git log:*),Bash(git show:*)"'
+      ;;
+    codex)
+      command='codex exec --sandbox read-only'
+      ;;
+    gemini)
+      command='gemini --allowed-tools "run_shell_command(git)" -p'
+      ;;
+    "")
+      echo "pre-push: no AI agent found, skipping review (set PR_REVIEW_AGENT or PR_REVIEW_CMD)"
+      exit 0
+      ;;
+    *)
+      echo "pre-push: unknown PR_REVIEW_AGENT '$agent', skipping review (use PR_REVIEW_CMD for other agents)"
+      exit 0
+      ;;
+  esac
+fi
+
+prompt="Review the changes in git range $range by following the instructions in .agents/skills/pr-review/SKILL.md (and checklist.md beside it). Arguments: $range --hook. This is a non-interactive run: do not ask questions, and end your output with the REVIEW_RESULT line the skill describes."
+
+echo "pre-push: reviewing $range with ${agent:-custom command} ..."
 output_file=$(mktemp)
 
-claude -p "/pr-review $range --hook" \
-  --allowedTools "Read,Glob,Grep,Bash(git diff:*),Bash(git log:*),Bash(git show:*)" \
-  </dev/null >"$output_file"
+eval "$command \"\$prompt\"" </dev/null >"$output_file"
 status=$?
 cat "$output_file"
 
@@ -45,15 +80,15 @@ result=$(grep 'REVIEW_RESULT:' "$output_file" | tail -n 1)
 rm -f "$output_file"
 
 if [ $status -ne 0 ] || [ -z "$result" ]; then
-  echo "pre-push: Claude review did not complete, allowing push"
+  echo "pre-push: AI review did not complete, allowing push"
   exit 0
 fi
 
 case "$result" in
   *BLOCKING*)
     echo
-    echo "pre-push: Claude found Blocking issues — push stopped."
-    echo "Fix them, or push anyway with SKIP_CLAUDE_REVIEW=1 git push"
+    echo "pre-push: AI review found Blocking issues — push stopped."
+    echo "Fix them, or push anyway with SKIP_PR_REVIEW=1 git push"
     exit 1
     ;;
 esac
