@@ -1,0 +1,61 @@
+# Claude review of the branch being pushed, using .claude/skills/pr-review.
+# Stops the push on Blocking findings. Skip with SKIP_CLAUDE_REVIEW=1 or
+# `git push --no-verify`. Fails open if the claude CLI is missing or errors.
+
+if [ "$SKIP_CLAUDE_REVIEW" = "1" ]; then
+  echo "pre-push: SKIP_CLAUDE_REVIEW=1, skipping Claude review"
+  exit 0
+fi
+
+if ! command -v claude >/dev/null 2>&1; then
+  echo "pre-push: claude CLI not found, skipping Claude review"
+  exit 0
+fi
+
+zero_sha=0000000000000000000000000000000000000000
+local_sha=""
+
+# git passes "<local ref> <local sha> <remote ref> <remote sha>" per pushed ref
+while read -r _local_ref sha _remote_ref _remote_sha; do
+  if [ "$sha" != "$zero_sha" ]; then
+    local_sha=$sha
+    break
+  fi
+done
+
+[ -z "$local_sha" ] && exit 0
+
+git fetch origin main --quiet 2>/dev/null
+range="origin/main...$local_sha"
+
+if git diff --quiet "$range"; then
+  exit 0
+fi
+
+echo "pre-push: Claude is reviewing $range ..."
+output_file=$(mktemp)
+
+claude -p "/pr-review $range --hook" \
+  --allowedTools "Read,Glob,Grep,Bash(git diff:*),Bash(git log:*),Bash(git show:*)" \
+  </dev/null >"$output_file"
+status=$?
+cat "$output_file"
+
+result=$(grep 'REVIEW_RESULT:' "$output_file" | tail -n 1)
+rm -f "$output_file"
+
+if [ $status -ne 0 ] || [ -z "$result" ]; then
+  echo "pre-push: Claude review did not complete, allowing push"
+  exit 0
+fi
+
+case "$result" in
+  *BLOCKING*)
+    echo
+    echo "pre-push: Claude found Blocking issues — push stopped."
+    echo "Fix them, or push anyway with SKIP_CLAUDE_REVIEW=1 git push"
+    exit 1
+    ;;
+esac
+
+exit 0
