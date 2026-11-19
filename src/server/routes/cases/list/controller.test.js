@@ -138,7 +138,7 @@ describe('#casesList', () => {
     expect(response.payload).toContain('100010')
     expect(response.payload).toContain('15 December 2026')
     expect(response.payload).toContain('govuk-tag--blue">Pending')
-    expect(response.payload).toContain('id="select-all" disabled')
+    expect(response.payload).toContain('id="select-all" data-todo')
     expect(response.payload).not.toContain('Scheme Ltd')
     expect(response.payload).not.toContain('Concluded Producer Ltd')
     expect(response.payload).not.toContain('Welsh Producer Ltd')
