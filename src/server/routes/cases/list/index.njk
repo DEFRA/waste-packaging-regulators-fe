@@ -68,7 +68,7 @@
                 <th scope="col" class="govuk-table__header">
                   <div class="govuk-checkboxes govuk-checkboxes--small">
                     <div class="govuk-checkboxes__item">
-                      <input class="govuk-checkboxes__input" type="checkbox" id="select-all" disabled>
+                      <input class="govuk-checkboxes__input" type="checkbox" id="select-all" data-todo>
                       <label class="govuk-label govuk-checkboxes__label" for="select-all">
                         <span class="govuk-visually-hidden">{{ i18n.t('selectAll') }}</span>
                       </label>
@@ -87,7 +87,7 @@
                   <td class="govuk-table__cell">
                     <div class="govuk-checkboxes govuk-checkboxes--small">
                       <div class="govuk-checkboxes__item">
-                        <input class="govuk-checkboxes__input" type="checkbox" id="select-{{ item.caseId }}" disabled>
+                        <input class="govuk-checkboxes__input" type="checkbox" id="select-{{ item.caseId }}" data-todo>
                         <label class="govuk-label govuk-checkboxes__label" for="select-{{ item.caseId }}">
                           <span class="govuk-visually-hidden">{{ i18n.t('selectCase', { organisationName: item.organisationName }) }}</span>
                         </label>
