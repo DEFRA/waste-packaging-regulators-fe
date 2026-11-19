@@ -1,7 +1,7 @@
 ---
 name: pr-review
-description: Review a change to waste-packaging-regulators-fe against this repo's conventions — correctness, regulator access control, backend error handling, the MSW mock invariants, en/cy i18n, GOV.UK accessibility and tests. Use when asked to review a branch, commits or local changes before raising a PR, or when invoked by the Husky pre-push hook. Accepts an optional git range and `--hook` for a machine-readable verdict.
-argument-hint: '[git-range] [--hook]'
+description: Review a change to waste-packaging-regulators-fe against this repo's conventions — correctness, regulator access control, backend error handling, the MSW mock invariants, en/cy i18n, GOV.UK accessibility and tests. Use when asked to review a branch, commits or local changes before raising a PR, or when run via `npm run review`. Accepts an optional git range and `--verdict` for a machine-readable result line.
+argument-hint: '[git-range] [--verdict]'
 ---
 
 # PR review — waste-packaging-regulators-fe
@@ -86,8 +86,8 @@ Print:
 
 Omit empty sections. If nothing survived verification, say so plainly.
 
-With `--hook`, end the output with exactly one final line, and nothing after
-it — the pre-push hook reads it to decide whether to stop the push:
+With `--verdict`, end the output with exactly one final line, and nothing after
+it — `npm run review` reads it to set its exit code:
 
 - `REVIEW_RESULT: BLOCKING` if there is at least one Blocking finding
 - `REVIEW_RESULT: PASS` otherwise
@@ -97,5 +97,5 @@ it — the pre-push hook reads it to decide whether to stop the push:
 - Read-only: never edit files, stage, commit or push.
 - Don't run the full test suite or lint — the pre-commit hook already has. You
   may run a targeted `npx vitest run <file>` to confirm a suspected failure
-  when not in `--hook` mode.
+  when not in `--verdict` mode.
 - Be specific and brief. Reference code as `path:line`.
