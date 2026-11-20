@@ -197,4 +197,6 @@ Agent skills live in `.agents/skills/` (`.claude/skills/` symlinks to them).
   review changes, follow that skill. Run it by hand with `npm run review`
   (optionally `npm run review -- <git-range>`), which uses whichever agent CLI
   is configured (`PR_REVIEW_AGENT` / `PR_REVIEW_CMD`, or the first of claude,
-  codex, gemini found) and exits 1 on Blocking findings.
+  codex, gemini found) and exits 1 on Blocking findings. It also fetches the
+  Jira story for the branch (`scripts/pr-review-jira.sh`, a curl request with
+  your own `JIRA_API_TOKEN`) so the review checks the acceptance criteria.
