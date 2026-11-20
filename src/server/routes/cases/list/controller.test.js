@@ -6,6 +6,19 @@ import { caseManagementHandlers } from '#mocks/case-management/handlers.js'
 import { createCaseManagementStore } from '#mocks/case-management/store.js'
 import { getMockServer } from '#mocks/server.js'
 import { setupRegulatorsApp } from '#test-helpers/msw/harness.js'
+import { getRegulatorCaseManagementNation } from '#server/common/helpers/regulator-case-management-nation.js'
+
+vi.mock(
+  '#server/common/helpers/regulator-case-management-nation.js',
+  async (importOriginal) => {
+    const actual = await importOriginal()
+    return {
+      getRegulatorCaseManagementNation: vi.fn(
+        actual.getRegulatorCaseManagementNation
+      )
+    }
+  }
+)
 
 function givenCases(records) {
   getMockServer().use(
@@ -33,6 +46,54 @@ describe('#casesList', () => {
 
     // Assert
     expect(response.statusCode).toBe(404)
+  })
+
+  it.each([
+    ['organisation type', '/cases?type=everyone'],
+    ['tab', '/cases?tab=everything']
+  ])('is a bad request for an unknown %s', async (_, url) => {
+    // Act
+    const response = await app.get(url)
+
+    // Assert
+    expect(response.statusCode).toBe(400)
+  })
+
+  it('is forbidden when the regulator has no Case Management nation', async () => {
+    // Arrange
+    getRegulatorCaseManagementNation.mockReturnValueOnce(null)
+
+    // Act
+    const response = await app.get('/cases')
+
+    // Assert
+    expect(response.statusCode).toBe(403)
+  })
+
+  it('shows a state it has no status for as it is', async () => {
+    // Arrange
+    givenCases([
+      {
+        id: randomUUID(),
+        caseType: 'CSoC',
+        stateId: 'UNDER_REVIEW',
+        isTerminal: false,
+        submittedAt: '2026-12-15T10:30:00.000Z',
+        nation: 'ENGLAND',
+        orgId: '100010',
+        assignedToId: null,
+        producerType: 'DIRECT_PRODUCER',
+        displayData: {
+          organisationName: { value: 'Producer Ltd', type: 'string' }
+        }
+      }
+    ])
+
+    // Act
+    const response = await app.get('/cases')
+
+    // Assert
+    expect(response.payload).toContain('UNDER_REVIEW')
   })
 
   it('shows the page layout', async () => {

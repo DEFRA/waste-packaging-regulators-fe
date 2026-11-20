@@ -86,6 +86,50 @@ describe('CaseManagementApiService', () => {
       expect.any(Object)
     )
   })
+
+  test('listCases sends every other filter, sort and direction', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(mockOkResponse({ items: [], totalCount: 0 }))
+    const service = new CaseManagementApiService({
+      baseUrl: 'http://localhost:8085',
+      authMode: 'none',
+      fetchImpl
+    })
+
+    await service.listCases({
+      stateId: ['SUBMITTED', '', null],
+      isTerminal: false,
+      assigneeId: 'user-2',
+      orgId: '100010',
+      search: 'Acme',
+      sort: 'submittedAt',
+      dir: 'desc'
+    })
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:8085/cases?stateId=SUBMITTED&isTerminal=false&assigneeId=user-2&orgId=100010&search=Acme&sort=submittedAt&dir=desc',
+      expect.any(Object)
+    )
+  })
+
+  test('listCases with no filters calls GET /cases with no query string', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(mockOkResponse({ items: [], totalCount: 0 }))
+    const service = new CaseManagementApiService({
+      baseUrl: 'http://localhost:8085',
+      authMode: 'none',
+      fetchImpl
+    })
+
+    await service.listCases()
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:8085/cases',
+      expect.any(Object)
+    )
+  })
 })
 
 describe('createCaseManagementApiService', () => {
@@ -127,5 +171,29 @@ describe('createCaseManagementApiService', () => {
     })
 
     expect(service).toBeInstanceOf(CaseManagementApiService)
+  })
+
+  test('sends the CDP API key when one is configured', async () => {
+    config.set('caseManagementApi.xApiKey', 'dev-api-key')
+    try {
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValue(mockOkResponse({ items: [], totalCount: 0 }))
+      const service = createCaseManagementApiService({
+        sessionUser: eaSessionUser,
+        fetchImpl
+      })
+
+      await service.listCases()
+
+      expect(fetchImpl).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headers: expect.objectContaining({ 'x-api-key': 'dev-api-key' })
+        })
+      )
+    } finally {
+      config.set('caseManagementApi.xApiKey', null)
+    }
   })
 })
