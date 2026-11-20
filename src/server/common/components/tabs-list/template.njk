@@ -1,0 +1,8 @@
+{% set items = params.items | default([]) %}
+<ul class="govuk-tabs__list">
+  {% for item in items %}
+    <li class="govuk-tabs__list-item{% if item.current %} govuk-tabs__list-item--selected{% endif %}">
+      <a class="govuk-tabs__tab" href="{{ item.href }}"{% if item.current %} aria-current="page"{% endif %}>{{ item.text }}</a>
+    </li>
+  {% endfor %}
+</ul>
