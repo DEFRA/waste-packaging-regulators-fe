@@ -1,4 +1,4 @@
-// Assembles the three backend mocks (obligations, organisations, account) into
+// Assembles the backend mocks (obligations, organisations, account, case-management) into
 // one set and its MSW handlers. The default set is built from the canonical
 // fixtures; a per-test scenario builds its own (see test-helpers/msw/scenario.js).
 // The organisations listing depends on which organisations the obligations records
@@ -19,6 +19,9 @@ import { createOrganisationsStore } from './waste-organisations/store.js'
 import { organisationsHandlers } from './waste-organisations/handlers.js'
 import { createAccountStore } from './account-api/store.js'
 import { accountHandlers } from './account-api/handlers.js'
+import { caseManagementRecords } from './case-management/fixtures.js'
+import { createCaseManagementStore } from './case-management/store.js'
+import { caseManagementHandlers } from './case-management/handlers.js'
 
 export {
   toDeclaration,
@@ -30,26 +33,30 @@ export {
 export function createBackends({
   records = [],
   wasteOrganisations: organisations = [],
-  accountOrganisations: accounts = []
+  accountOrganisations: accounts = [],
+  caseManagementCases = []
 } = {}) {
   const obligations = createObligationsStore(records)
   const registry = createOrganisationsStore(organisations, {
     listedOrganisationIds: obligations.listedOrganisationIds
   })
   const account = createAccountStore(accounts)
-  return { obligations, organisations: registry, account }
+  const caseManagement = createCaseManagementStore(caseManagementCases)
+  return { obligations, organisations: registry, account, caseManagement }
 }
 
 export function backendHandlers(backends) {
   return [
     ...obligationsHandlers(backends.obligations),
     ...organisationsHandlers(backends.organisations),
-    ...accountHandlers(backends.account)
+    ...accountHandlers(backends.account),
+    ...caseManagementHandlers(backends.caseManagement)
   ]
 }
 
 export const defaultBackends = createBackends({
   records: complianceRecords,
   wasteOrganisations,
-  accountOrganisations
+  accountOrganisations,
+  caseManagementCases: caseManagementRecords
 })

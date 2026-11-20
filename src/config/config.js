@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 
 import convictFormatWithValidator from 'convict-format-with-validator'
 
+import { caseManagementConfig } from './case-management.js'
 import {
   defaultSessionCookieTtlMs,
   fourHoursMs
@@ -360,6 +361,7 @@ export const config = convict({
       sensitive: true
     }
   },
+  ...caseManagementConfig,
   accountApi: {
     baseUrl: {
       doc: 'Account API base URL',

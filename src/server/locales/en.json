@@ -471,5 +471,50 @@
   "errors": {
     "contactHelpDeskPrefix": "Email",
     "helpDeskEmailText": "if you need help."
+  },
+  "cases": {
+    "list": {
+      "heading": "View certificates and statements of compliance",
+      "relevantYearCaption": "{{complianceYear}} relevant year",
+      "searchLabel": "Search by organisation name or ID",
+      "producerTypeNavAriaLabel": "Producer type",
+      "directProducers": "Direct producers",
+      "complianceSchemes": "Compliance schemes",
+      "downloadReport": "Download report (Excel)",
+      "assign": "Assign",
+      "assignToMe": "Assign to me",
+      "selectAll": "Select all",
+      "selectCase": "Select {{organisationName}}",
+      "tabs": {
+        "unassigned": "Unassigned ({{count}})",
+        "assigned-to-me": "Assigned to me ({{count}})",
+        "assigned-to-team": "Assigned to team ({{count}})",
+        "completed": "Completed ({{count}})"
+      },
+      "tabSummary": {
+        "unassigned": {
+          "one": "unassigned case",
+          "other": "unassigned cases"
+        },
+        "assigned-to-me": {
+          "one": "case assigned to you",
+          "other": "cases assigned to you"
+        },
+        "assigned-to-team": {
+          "one": "case assigned to your team",
+          "other": "cases assigned to your team"
+        },
+        "completed": {
+          "one": "completed case",
+          "other": "completed cases"
+        }
+      },
+      "emptyTab": {
+        "unassigned": "There are no unassigned cases.",
+        "assigned-to-me": "There are no cases assigned to you.",
+        "assigned-to-team": "There are no cases assigned to your team.",
+        "completed": "There are no completed cases."
+      }
+    }
   }
 }
