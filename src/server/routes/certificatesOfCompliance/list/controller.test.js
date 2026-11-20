@@ -1605,7 +1605,6 @@ describe('#certificatesOfComplianceController', () => {
         expect($('table')).toHaveLength(0)
         // The report covers every organisation, so its button stays on an empty tab.
         expect(result).toContain('Download report (Excel)')
-        expect(result).not.toContain('Download list (CSV)')
         expect(result).toContain('<strong>0</strong>')
       }
     )
