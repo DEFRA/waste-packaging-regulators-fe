@@ -50,11 +50,6 @@ export function hasLocaleKey(locale, key) {
   )
 }
 
-// Like hasLocaleKey, but without the English fallback.
-export function hasOwnLocaleKey(locale, key) {
-  return getLocaleString(loadDictionary(locale), key) !== undefined
-}
-
 function interpolate(template, params) {
   return template.replaceAll(/\{\{(\w+)\}\}/g, (_match, paramName) =>
     paramName in params ? String(params[paramName]) : ''

@@ -2,7 +2,7 @@ import {
   clearLocaleCacheForTests,
   seedLocaleDictionaryForTests
 } from '#server/common/helpers/i18n/translate.js'
-import { reportLabels, reportLocale } from './report-labels.js'
+import { reportLabels } from './report-labels.js'
 import { buildReportHeading } from './report-naming.js'
 
 const NOW = new Date('2026-10-19T09:00:00Z')
@@ -59,12 +59,13 @@ describe('#report-labels', () => {
     expect(labels.regulation43.notCompliant).toBe('Not compliant')
   })
 
-  test('keeps a Welsh report in English while cy.json has no report strings', () => {
-    expect(reportLocale('cy')).toBe('en')
-    expect(reportLabels('cy').status.pending).toBe('Pending')
-    expect(
-      buildReportHeading('direct-producers', NOW, reportLabels('cy'))
-    ).toBe('All certificate of compliance submissions, Monday 19 October')
+  test('falls back to the English strings while cy.json has no report strings', () => {
+    const labels = reportLabels('cy')
+
+    expect(labels.status.pending).toBe('Pending')
+    expect(buildReportHeading('direct-producers', NOW, labels)).toBe(
+      'All certificate of compliance submissions, Dydd Llun 19 Hydref'
+    )
   })
 
   test('every English label is a real string, not a missing key', () => {
@@ -85,13 +86,11 @@ describe('#report-labels', () => {
     )
   })
 
-  test('switches to Welsh, including the day in the heading, once every report string is translated', () => {
+  test('uses Welsh for every string, including the day in the heading, once all are translated', () => {
     seedWelshReport(completeWelshReport)
 
     const labels = reportLabels('cy')
 
-    expect(reportLocale('cy')).toBe('cy')
-    expect(labels.bcp47).toBe('cy-GB')
     expect(labels.sheetName).toBe('CY Report')
     expect(labels.columns.organisationName).toBe('CY organisationName')
     expect(labels.status.pending).toBe('CY Pending')
@@ -100,23 +99,27 @@ describe('#report-labels', () => {
     )
   })
 
-  test('keeps the whole report in English while the Welsh report section is incomplete', () => {
+  test('uses each Welsh string that is translated and English for the rest', () => {
     const { status, ...withoutStatus } = completeWelshReport
     seedWelshReport({ ...withoutStatus, status: { pending: 'CY Pending' } })
 
     const labels = reportLabels('cy')
 
-    expect(reportLocale('cy')).toBe('en')
-    expect(labels.columns.organisationName).toBe('Organisation name')
-    expect(labels.status.pending).toBe('Pending')
+    expect(labels.columns.organisationName).toBe('CY organisationName')
+    expect(labels.status.pending).toBe('CY Pending')
+    expect(labels.status.accepted).toBe('Accepted')
+    expect(labels.status.notSubmitted).toBe('Not submitted')
     expect(buildReportHeading('direct-producers', NOW, labels)).toBe(
-      'All certificate of compliance submissions, Monday 19 October'
+      'CY certificates heading, Dydd Llun 19 Hydref'
     )
   })
 
   test('keeps the report in English for an empty Welsh report section', () => {
     seedWelshReport({})
 
-    expect(reportLocale('cy')).toBe('en')
+    const labels = reportLabels('cy')
+
+    expect(labels.sheetName).toBe('Report')
+    expect(labels.columns.organisationName).toBe('Organisation name')
   })
 })
