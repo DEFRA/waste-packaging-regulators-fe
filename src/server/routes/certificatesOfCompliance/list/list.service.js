@@ -10,16 +10,13 @@ import {
   registrationTypeByOrganisationType,
   statusBySubmissionStatus,
   PAGE_SIZE,
-  DECLARATIONS_BATCH_SIZE,
   NO_DATA,
   COMPLIANCE_YEAR,
-  DOWNLOAD_PAGE_CONCURRENCY,
   UNSUBMITTED_SORT_FIELD_BY_COLUMN,
   UNSUBMITTED_DEFAULT_SORT
 } from '../common/constants.js'
 import { mapOrganisationName } from '../common/organisation.js'
-import { calculateObligationCoveragePercentage } from '../common/display.js'
-import pMap from 'p-map'
+import { declarationCoveragePercentage } from '../common/display.js'
 
 export function mapDeclarationToItem(declaration) {
   const {
@@ -27,8 +24,7 @@ export function mapDeclarationToItem(declaration) {
     organisation,
     obligationStatus,
     isRegulation43Compliant,
-    created,
-    obligationCoveragePercentage
+    created
   } = declaration
   return {
     id,
@@ -37,15 +33,7 @@ export function mapDeclarationToItem(declaration) {
     organisationName: mapOrganisationName(organisation),
     recyclingObligationsMet: obligationStatus?.toLowerCase() === 'met',
     regulation43Met: isRegulation43Compliant,
-    // Whole number from the obligations API — display as-is (no frontend rounding).
-    // The search endpoint does not return one, but it does embed the obligations,
-    // so fall back to the same calculation the not-submitted tab uses rather than
-    // leaving the column blank.
-    obligationCoveragePercentage:
-      obligationCoveragePercentage ??
-      (declaration.obligations?.length
-        ? calculateObligationCoveragePercentage(declaration.obligations)
-        : null),
+    obligationCoveragePercentage: declarationCoveragePercentage(declaration),
     dateSubmitted: created
   }
 }
@@ -87,68 +75,6 @@ export function resolveUnsubmittedSort(sortColumn, sortDirection) {
 
   const primarySort = `${field}[${sortDirection}]`
   return field === 'Name' ? primarySort : `${primarySort},Name[asc]`
-}
-
-export async function fetchAllDeclarations(api, params, traceId) {
-  const first = await api.listComplianceDeclarations(
-    { ...params, page: 1, pageSize: DECLARATIONS_BATCH_SIZE },
-    traceId
-  )
-  const totalPages = Math.ceil(first.total / DECLARATIONS_BATCH_SIZE)
-
-  if (totalPages <= 1) {
-    return first.complianceDeclarations
-  }
-
-  const remaining = await Promise.all(
-    Array.from({ length: totalPages - 1 }, (_, i) =>
-      api.listComplianceDeclarations(
-        { ...params, page: i + 2, pageSize: DECLARATIONS_BATCH_SIZE },
-        traceId
-      )
-    )
-  )
-
-  return [
-    ...first.complianceDeclarations,
-    ...remaining.flatMap((r) => r.complianceDeclarations)
-  ]
-}
-
-// Every unsubmitted row for the year, for the CSV export. The endpoint caps a
-// page at 100, so the whole population is drained page by page.
-//
-// Pages after the first are bounded rather than fired at once: at 100 rows a
-// page a large population would otherwise open hundreds of simultaneous
-// requests, which is the same failure mode as the per-organisation fan-out this
-// change removes, one level up. p-map's default stopOnError is kept so a failed
-// page fails the export outright rather than writing a short CSV that looks
-// complete.
-export async function fetchAllUnsubmittedOrganisations(api, params, traceId) {
-  const first = await api.listUnsubmittedComplianceDeclarations(
-    { ...params, page: 1, pageSize: DECLARATIONS_BATCH_SIZE },
-    traceId
-  )
-  const totalPages = Math.ceil(first.total / DECLARATIONS_BATCH_SIZE)
-
-  if (totalPages <= 1) {
-    return first.unsubmittedOrganisations
-  }
-
-  const remaining = await pMap(
-    Array.from({ length: totalPages - 1 }, (_, i) => i + 2),
-    (page) =>
-      api.listUnsubmittedComplianceDeclarations(
-        { ...params, page, pageSize: DECLARATIONS_BATCH_SIZE },
-        traceId
-      ),
-    { concurrency: DOWNLOAD_PAGE_CONCURRENCY }
-  )
-
-  return [
-    ...first.unsubmittedOrganisations,
-    ...remaining.flatMap((r) => r.unsubmittedOrganisations)
-  ]
 }
 
 async function getComplianceSummary(

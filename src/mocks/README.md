@@ -17,7 +17,7 @@ This file explains the thinking, the structure, and how to work with it.
 
 - **One canonical source of truth.** Each backend describes its world once. For
   waste-obligations that is a single set of compliance records; the list, detail,
-  search and CSV surfaces are all pure _projections_ of it, so they cannot disagree
+  search and Excel report surfaces are all pure _projections_ of it, so they cannot disagree
   with each other. There is no per-surface data to keep in sync.
 
 - **Stateless, not static.** The store is a read-only projection of the fixture

@@ -83,8 +83,8 @@ import in `server.js`, so it never enters the production module graph.
 
 Two properties are load-bearing — keep them true:
 
-1. **One source of truth.** The list, detail, search, not-submitted and CSV
-   surfaces are all projections of one canonical set of compliance records. A
+1. **One source of truth.** The list, detail, search, not-submitted and Excel
+   report surfaces are all projections of one canonical set of compliance records. A
    record is described once; the surfaces cannot disagree. Do **not** hand-author
    per-surface data. The unsubmitted listing derives its set the way the real
    backend does — an organisation with no Submitted or Accepted declaration —

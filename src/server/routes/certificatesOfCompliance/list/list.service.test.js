@@ -32,7 +32,6 @@ import { createWasteOrganisationsApiService } from '#services/waste-organisation
 import { createAccountApiService } from '#services/account-api.service.js'
 import {
   getCertificatesOfComplianceViewModel,
-  fetchAllDeclarations,
   mapUnsubmittedToItem,
   resolveUnsubmittedSort
 } from './list.service.js'
@@ -570,47 +569,6 @@ describe('getCertificatesOfComplianceViewModel', () => {
         )
         expect(vm.items).toEqual([])
         expect(vm.pagination.totalPages).toBe(1)
-      })
-    })
-
-    // Still the pending/accepted CSV's page drain; the not-submitted tab no
-    // longer reaches it.
-    describe('fetchAllDeclarations — multi-page', () => {
-      test('fetches every page when the total exceeds the batch size', async () => {
-        const api = {
-          listComplianceDeclarations: vi.fn(({ page }) =>
-            Promise.resolve({
-              total: 150,
-              complianceDeclarations: Array.from(
-                { length: page === 1 ? DECLARATIONS_BATCH_SIZE : 50 },
-                (_, i) => ({ organisation: { id: `decl-${page}-${i}` } })
-              )
-            })
-          )
-        }
-
-        const declarations = await fetchAllDeclarations(
-          api,
-          { status: 'Submitted' },
-          'trace-1'
-        )
-
-        expect(api.listComplianceDeclarations).toHaveBeenCalledTimes(2)
-        expect(declarations).toHaveLength(150)
-      })
-
-      test('makes a single call when one page covers the total', async () => {
-        const api = {
-          listComplianceDeclarations: vi.fn().mockResolvedValue({
-            total: 3,
-            complianceDeclarations: [{}, {}, {}]
-          })
-        }
-
-        const declarations = await fetchAllDeclarations(api, {}, undefined)
-
-        expect(api.listComplianceDeclarations).toHaveBeenCalledTimes(1)
-        expect(declarations).toHaveLength(3)
       })
     })
 
@@ -2634,7 +2592,7 @@ describe('getCertificatesOfComplianceViewModel', () => {
       })
 
       // A null metric means the backend holds no successful calculation for that
-      // organisation yet. It must not be coerced to 0, which the template and CSV
+      // organisation yet. It must not be coerced to 0, which the template and report
       // would render as a genuine "0% of obligations met".
       test('keeps a null percentage null rather than coercing it to 0', async () => {
         const items = await notSubmittedItems([
