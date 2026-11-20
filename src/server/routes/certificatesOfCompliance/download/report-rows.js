@@ -33,7 +33,8 @@ export function reportOrganisationName(organisation) {
   return organisation.name ?? UNKNOWN_ORGANISATION
 }
 
-// Kept as text when a number would change it (letters or a leading zero).
+// Reference numbers are stored as numbers so they sort, but kept as text if
+// they have letters, a leading zero or over 15 digits.
 const PLAIN_WHOLE_NUMBER = /^[1-9]\d{0,14}$/
 
 export function reportReferenceNumber(referenceNumber) {
