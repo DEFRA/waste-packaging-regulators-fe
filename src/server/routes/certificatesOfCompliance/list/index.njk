@@ -1,6 +1,8 @@
 {% extends 'layouts/page.njk' %}
 
 {% from "search/macro.njk" import appSearch %}
+{% from "producer-subnavigation/macro.njk" import appProducerSubnavigation %}
+{% from "tabs-list/macro.njk" import appTabsList %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
@@ -38,7 +40,22 @@
     {% include "certificatesOfCompliance/partials/search-results.njk" %}
   {% endif %}
 
-  {% include "certificatesOfCompliance/partials/producer-subnavigation.njk" %}
+  {{ appProducerSubnavigation({
+    ariaLabel: t(locale, 'certificatesOfCompliance.common.producerTypeNav.ariaLabel'),
+    items: [
+      {
+        text: t(locale, 'certificatesOfCompliance.common.producerTypeNav.directProducers'),
+        href: localeUrl((routePrefix or '/') ~ '?type=direct-producers&tab=' ~ activeTab),
+        current: organisationType == 'direct-producers'
+      },
+      {
+        text: t(locale, 'certificatesOfCompliance.common.producerTypeNav.complianceSchemes'),
+        href: localeUrl((routePrefix or '/') ~ '?type=compliance-schemes&tab=' ~ activeTab),
+        current: organisationType == 'compliance-schemes'
+      }
+    ]
+  }) }}
+
   {{ govukButton({
     text: i18n.t('downloadReport'),
     href: localeUrl(routePrefix ~ '/download?organisation_type=' ~ organisationType),
@@ -46,23 +63,25 @@
     attributes: { "data-testid": "download-report" }
   }) }}
   <div class="govuk-tabs">
-    <ul class="govuk-tabs__list">
-      <li class="govuk-tabs__list-item{% if activeTab == 'pending' %} govuk-tabs__list-item--selected{% endif %}">
-        <a class="govuk-tabs__tab" href="{{ localeUrl('?type=' ~ organisationType ~ '&tab=pending&clearSort=true') }}" {% if activeTab == 'pending' %} aria-current="page" {% endif %}>
-          {{ tabLabels.pending }}
-        </a>
-      </li>
-      <li class="govuk-tabs__list-item{% if activeTab == 'accepted' %} govuk-tabs__list-item--selected{% endif %}">
-        <a class="govuk-tabs__tab" href="{{ localeUrl('?type=' ~ organisationType ~ '&tab=accepted&clearSort=true') }}" {% if activeTab == 'accepted' %} aria-current="page" {% endif %}>
-          {{ tabLabels.accepted }}
-        </a>
-      </li>
-      <li class="govuk-tabs__list-item{% if activeTab == 'not-submitted' %} govuk-tabs__list-item--selected{% endif %}">
-        <a class="govuk-tabs__tab" href="{{ localeUrl('?type=' ~ organisationType ~ '&tab=not-submitted&clearSort=true') }}" {% if activeTab == 'not-submitted' %} aria-current="page" {% endif %}>
-          {{ tabLabels.notSubmitted }}
-        </a>
-      </li>
-    </ul>
+    {{ appTabsList({
+      items: [
+        {
+          text: tabLabels.pending,
+          href: localeUrl('?type=' ~ organisationType ~ '&tab=pending&clearSort=true'),
+          current: activeTab == 'pending'
+        },
+        {
+          text: tabLabels.accepted,
+          href: localeUrl('?type=' ~ organisationType ~ '&tab=accepted&clearSort=true'),
+          current: activeTab == 'accepted'
+        },
+        {
+          text: tabLabels.notSubmitted,
+          href: localeUrl('?type=' ~ organisationType ~ '&tab=not-submitted&clearSort=true'),
+          current: activeTab == 'not-submitted'
+        }
+      ]
+    }) }}
     {% if activeTab == 'pending' %}
       {% set tabCount = totalPending %}
       {% set tabSummaryText = i18n.t('tabSummary.pending') %}

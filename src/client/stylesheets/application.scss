@@ -1,4 +1,5 @@
 @use "govuk-frontend";
+@use "pkg:@ministryofjustice/frontend/moj/all";
 @use "../../server/common/components" as *;
 
 @use "variables";
