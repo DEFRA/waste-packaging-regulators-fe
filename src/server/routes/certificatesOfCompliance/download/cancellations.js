@@ -1,11 +1,17 @@
 import { auditAction, findAuditEntryByAction } from '../detail/audit.js'
 
-// Falls back to `updated` when there is no Cancelled audit entry.
-export function cancelledAt(declaration) {
-  const entry = findAuditEntryByAction(declaration.audit, auditAction.cancelled)
-  return entry?.timestamp ?? declaration.updated ?? null
+function isReadableDate(value) {
+  return value != null && !Number.isNaN(Date.parse(value))
 }
 
+// Only the Cancelled audit entry says when a declaration was cancelled. Without
+// a readable one the date is left blank rather than guessed.
+export function cancelledAt(declaration) {
+  const entry = findAuditEntryByAction(declaration.audit, auditAction.cancelled)
+  return isReadableDate(entry?.timestamp) ? entry.timestamp : null
+}
+
+// Cancellations with no date go last.
 function cancelledTime(declaration) {
   const time = Date.parse(cancelledAt(declaration) ?? '')
   return Number.isNaN(time) ? Number.MAX_SAFE_INTEGER : time

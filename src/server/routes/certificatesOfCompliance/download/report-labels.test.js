@@ -29,6 +29,18 @@ const completeWelshReport = {
       'cancellations'
     ].map((key) => [key, `CY ${key}`])
   ),
+  cancellation: {
+    heading: 'CY Cancellation {{number}}',
+    columns: Object.fromEntries(
+      [
+        'dateSubmitted',
+        'dateCancelled',
+        'cancelledBy',
+        'reason',
+        'statusWhenCancelled'
+      ].map((key) => [key, `CY ${key}`])
+    )
+  },
   status: {
     pending: 'CY Pending',
     accepted: 'CY Accepted',
@@ -57,6 +69,10 @@ describe('#report-labels', () => {
     expect(labels.status.notSubmitted).toBe('Not submitted')
     expect(labels.recyclingObligations.notMet).toBe('Not met')
     expect(labels.regulation43.notCompliant).toBe('Not compliant')
+    expect(labels.cancellation.heading(2)).toBe('Cancellation 2')
+    expect(labels.cancellation.columns.statusWhenCancelled).toBe(
+      'Status when cancelled'
+    )
   })
 
   test('falls back to the English strings while cy.json has no report strings', () => {
@@ -75,12 +91,14 @@ describe('#report-labels', () => {
       labels.heading.certificates('day'),
       labels.heading.statements('day'),
       ...Object.values(labels.columns),
+      labels.cancellation.heading(1),
+      ...Object.values(labels.cancellation.columns),
       ...Object.values(labels.status),
       ...Object.values(labels.recyclingObligations),
       ...Object.values(labels.regulation43)
     ]
 
-    expect(values).toHaveLength(21)
+    expect(values).toHaveLength(27)
     values.forEach((value) =>
       expect(value).not.toMatch(/^certificatesOfCompliance\./)
     )
@@ -94,6 +112,8 @@ describe('#report-labels', () => {
     expect(labels.sheetName).toBe('CY Report')
     expect(labels.columns.organisationName).toBe('CY organisationName')
     expect(labels.status.pending).toBe('CY Pending')
+    expect(labels.cancellation.heading(1)).toBe('CY Cancellation 1')
+    expect(labels.cancellation.columns.reason).toBe('CY reason')
     expect(buildReportHeading('compliance-schemes', NOW, labels)).toBe(
       'CY statements heading, Dydd Llun 19 Hydref'
     )
