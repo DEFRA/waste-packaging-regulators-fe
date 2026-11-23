@@ -1434,8 +1434,6 @@ describe('certificates of compliance — journey', () => {
           name: 'Bravo Producers Ltd',
           status: 'not-submitted',
           reference: '100002',
-          // The order of the blocks is unit tested: this mock already returns
-          // cancellations oldest first.
           history: [
             {
               status: 'cancelled',
@@ -1539,7 +1537,17 @@ describe('certificates of compliance — journey', () => {
           operatorName: 'Bravo Operator Ltd',
           type: 'compliance-scheme',
           status: 'pending',
-          regulation43: true
+          regulation43: true,
+          // Accepted, then cancelled, before the pending statement was sent.
+          history: [
+            {
+              status: 'cancelled',
+              date: '2026-12-05',
+              acceptedAt: '2026-12-02T10:00:00Z',
+              by: 'Dan Regulator',
+              reason: 'RequestedToCancel'
+            }
+          ]
         },
         {
           name: 'Alpha Scheme',
@@ -1580,10 +1588,35 @@ describe('certificates of compliance — journey', () => {
         ['Bravo Scheme', 'Pending', 'Compliant'],
         ['Charlie Scheme', 'Not submitted', null]
       ])
+      expect(rows[0]).toEqual(
+        expect.objectContaining(blankCancellationBlock(1))
+      )
+      expect(rows[1]).toEqual(
+        expect.objectContaining({
+          Cancellations: 1,
+          'Cancellation 1: Date submitted': new Date('2026-12-05T00:00:00Z'),
+          'Cancellation 1: Date cancelled': new Date('2026-12-05T00:00:00Z'),
+          'Cancellation 1: Cancelled by': 'Dan Regulator',
+          'Cancellation 1: Reason': 'Compliance scheme requested to cancel',
+          'Cancellation 1: Status when cancelled': 'Accepted'
+        })
+      )
     })
 
-    it('keeps the report in English for a Welsh user until the report strings are translated', async () => {
-      app.given([{ name: 'Alpha Producers Ltd', status: 'pending' }])
+    it('uses the English report strings for a Welsh user, with the cancel reasons already in Welsh', async () => {
+      app.given([
+        {
+          name: 'Alpha Producers Ltd',
+          status: 'pending',
+          history: [
+            {
+              status: 'cancelled',
+              date: '2026-12-01',
+              reason: 'Producer requested to cancel'
+            }
+          ]
+        }
+      ])
 
       const response = await app.get(`${reportUrl('direct-producers')}&lang=cy`)
 
@@ -1595,6 +1628,10 @@ describe('certificates of compliance — journey', () => {
         ...CANCELLATION_HEADERS
       ])
       expect(rows[0].Status).toBe('Pending')
+      expect(rows[0]['Cancellation 1: Reason']).toBe(
+        'Mae’r Cynhyrchydd wedi gwneud cais i ganslo'
+      )
+      expect(rows[0]['Cancellation 1: Status when cancelled']).toBe('Pending')
     })
   })
 

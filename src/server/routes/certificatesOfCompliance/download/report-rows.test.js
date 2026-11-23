@@ -254,22 +254,25 @@ describe('#report-rows', () => {
       expect(entry.statusWhenCancelled).toBe('Accepted')
     })
 
-    test('words the reason for the organisation type', () => {
-      const cancelled = {
-        timestamp: '2026-11-10T14:30:00Z',
-        user: regulator('Test User'),
-        reason: 'Compliance scheme can meet recycling obligations'
-      }
+    test.each([
+      ['DirectProducer', 'Producer requested to cancel'],
+      ['ComplianceScheme', 'Compliance scheme requested to cancel']
+    ])(
+      'words the reason for the organisation type: %s',
+      (registrationType, expected) => {
+        const cancelled = {
+          timestamp: '2026-11-10T14:30:00Z',
+          user: regulator('Test User'),
+          reason: 'RequestedToCancel'
+        }
 
-      expect(
-        cancellationToReportEntry(
-          cancelledSubmission({
-            registrationType: 'ComplianceScheme',
-            cancelled
-          })
-        ).reason
-      ).toBe('Compliance scheme can meet recycling obligations')
-    })
+        expect(
+          cancellationToReportEntry(
+            cancelledSubmission({ registrationType, cancelled })
+          ).reason
+        ).toBe(expected)
+      }
+    )
 
     test('keeps a reason it does not recognise as stored', () => {
       const cancelled = {

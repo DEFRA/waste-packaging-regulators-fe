@@ -127,6 +127,16 @@ function buildHistoryRecord(entry, base, index) {
           }
         ]
       : [
+          // acceptedAt: the declaration was accepted before it was cancelled.
+          ...(entry.acceptedAt
+            ? [
+                {
+                  action: 'Accepted',
+                  timestamp: entry.acceptedAt,
+                  user: regulatorUser('A Regulator')
+                }
+              ]
+            : []),
           {
             action: 'Cancelled',
             timestamp,
