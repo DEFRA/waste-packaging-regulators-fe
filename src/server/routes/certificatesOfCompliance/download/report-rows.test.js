@@ -99,7 +99,8 @@ describe('#report-rows', () => {
         dateSubmitted: new Date('2026-12-19T00:00:00Z'),
         dateAccepted: null,
         acceptedBy: null,
-        cancellations: 0
+        cancellations: 0,
+        cancellationHistory: []
       })
     })
 
@@ -177,6 +178,24 @@ describe('#report-rows', () => {
         2
       )
     })
+
+    test('lists the organisation cancellations oldest first', () => {
+      const groups = groupCancellationsByOrganisation([
+        cancelledFor('org-1', '2026-11-20T10:00:00Z'),
+        cancelledFor('org-1', '2026-11-03T10:00:00Z'),
+        cancelledFor('org-1', '2026-11-10T10:00:00Z')
+      ])
+
+      expect(
+        declarationToReportRow(declaration(), groups).cancellationHistory.map(
+          (entry) => entry.dateCancelled
+        )
+      ).toEqual([
+        new Date('2026-11-03T00:00:00Z'),
+        new Date('2026-11-10T00:00:00Z'),
+        new Date('2026-11-20T00:00:00Z')
+      ])
+    })
   })
 
   describe('unsubmittedToReportRow', () => {
@@ -193,7 +212,8 @@ describe('#report-rows', () => {
         dateSubmitted: null,
         dateAccepted: null,
         acceptedBy: null,
-        cancellations: 0
+        cancellations: 0,
+        cancellationHistory: []
       })
     })
 
@@ -226,9 +246,10 @@ describe('#report-rows', () => {
         cancelledFor('org-9', '2026-11-03T10:00:00Z')
       ])
 
-      expect(unsubmittedToReportRow(unsubmitted(), groups).cancellations).toBe(
-        1
-      )
+      const row = unsubmittedToReportRow(unsubmitted(), groups)
+
+      expect(row.cancellations).toBe(1)
+      expect(row.cancellationHistory).toHaveLength(1)
     })
   })
 
@@ -360,6 +381,18 @@ describe('#report-rows', () => {
           rows.map((row) => [row.organisationId, row.cancellations])
         )
       ).toEqual({ 'org-1': 1, 'org-9': 2 })
+    })
+
+    test('leaves out cancellations for an organisation that is not in the report', () => {
+      const rows = buildReportRows({
+        declarations: [declaration()],
+        cancellationsByOrganisation: groupCancellationsByOrganisation([
+          cancelledFor('org-elsewhere', '2026-11-03T10:00:00Z')
+        ])
+      })
+
+      expect(rows.map((row) => row.organisationId)).toEqual(['org-1'])
+      expect(rows[0].cancellationHistory).toEqual([])
     })
 
     test('returns no rows when there are no organisations', () => {

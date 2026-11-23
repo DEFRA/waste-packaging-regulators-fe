@@ -1340,6 +1340,22 @@ describe('certificates of compliance — journey', () => {
       'Cancellations'
     ]
 
+    const CANCELLATION_HEADERS = [
+      'Date submitted',
+      'Date cancelled',
+      'Cancelled by',
+      'Reason',
+      'Status when cancelled'
+    ]
+
+    const blankCancellationBlock = (number) =>
+      Object.fromEntries(
+        CANCELLATION_HEADERS.map((header) => [
+          `Cancellation ${number}: ${header}`,
+          null
+        ])
+      )
+
     describe.each(['direct-producers', 'compliance-schemes'])(
       'on the %s list page',
       (organisationType) => {
@@ -1419,8 +1435,18 @@ describe('certificates of compliance — journey', () => {
           status: 'not-submitted',
           reference: '100002',
           history: [
-            { status: 'cancelled', date: '2026-11-01' },
-            { status: 'cancelled', date: '2026-11-15' }
+            {
+              status: 'cancelled',
+              date: '2026-11-15',
+              by: 'Cara Regulator',
+              reason: 'Producer requested to cancel'
+            },
+            {
+              status: 'cancelled',
+              date: '2026-11-01',
+              by: 'Ben Regulator',
+              reason: 'Recycling obligations changed'
+            }
           ]
         },
         {
@@ -1445,7 +1471,12 @@ describe('certificates of compliance — journey', () => {
       expect(heading).toMatch(
         /^All certificate of compliance submissions, [A-Z][a-z]+day \d{1,2} [A-Z][a-z]+$/
       )
-      expect(headers).toEqual(DIRECT_PRODUCER_HEADERS)
+      // Bravo's 2 cancellations set the number of blocks.
+      expect(headers).toEqual([
+        ...DIRECT_PRODUCER_HEADERS,
+        ...CANCELLATION_HEADERS,
+        ...CANCELLATION_HEADERS
+      ])
       expect(rows).toEqual([
         {
           'Organisation name': 'Alpha Producers Ltd',
@@ -1458,7 +1489,9 @@ describe('certificates of compliance — journey', () => {
           'Date submitted': new Date('2027-01-10T00:00:00Z'),
           'Date accepted': new Date('2027-01-20T00:00:00Z'),
           'Accepted by': 'Ann Regulator',
-          Cancellations: 0
+          Cancellations: 0,
+          ...blankCancellationBlock(1),
+          ...blankCancellationBlock(2)
         },
         expect.objectContaining({
           'Organisation name': 'Bravo Producers Ltd',
@@ -1468,7 +1501,16 @@ describe('certificates of compliance — journey', () => {
           'Date submitted': null,
           'Date accepted': null,
           'Accepted by': null,
-          Cancellations: 2
+          Cancellations: 2,
+          'Cancellation 1: Date submitted': new Date('2026-11-01T00:00:00Z'),
+          'Cancellation 1: Date cancelled': new Date('2026-11-01T00:00:00Z'),
+          'Cancellation 1: Cancelled by': 'Ben Regulator',
+          'Cancellation 1: Reason': 'Recycling obligations changed',
+          'Cancellation 1: Status when cancelled': 'Pending',
+          'Cancellation 2: Date cancelled': new Date('2026-11-15T00:00:00Z'),
+          'Cancellation 2: Cancelled by': 'Cara Regulator',
+          'Cancellation 2: Reason': 'Producer requested to cancel',
+          'Cancellation 2: Status when cancelled': 'Pending'
         }),
         expect.objectContaining({
           'Organisation name': 'Charlie Producers Ltd',
@@ -1481,7 +1523,9 @@ describe('certificates of compliance — journey', () => {
           'Date submitted': new Date('2027-01-15T00:00:00Z'),
           'Date accepted': null,
           'Accepted by': null,
-          Cancellations: 1
+          Cancellations: 1,
+          'Cancellation 1: Date cancelled': new Date('2026-12-01T00:00:00Z'),
+          ...blankCancellationBlock(2)
         })
       ])
     })
@@ -1493,7 +1537,17 @@ describe('certificates of compliance — journey', () => {
           operatorName: 'Bravo Operator Ltd',
           type: 'compliance-scheme',
           status: 'pending',
-          regulation43: true
+          regulation43: true,
+          // Accepted, then cancelled, before the pending statement was sent.
+          history: [
+            {
+              status: 'cancelled',
+              date: '2026-12-05',
+              acceptedAt: '2026-12-02T10:00:00Z',
+              by: 'Dan Regulator',
+              reason: 'RequestedToCancel'
+            }
+          ]
         },
         {
           name: 'Alpha Scheme',
@@ -1521,7 +1575,8 @@ describe('certificates of compliance — journey', () => {
 
       expect(heading).toMatch(/^All statement of compliance submissions, /)
       expect(headers[3]).toBe('Regulation 43')
-      expect(headers.at(-1)).toBe('Cancellations')
+      expect(headers[10]).toBe('Cancellations')
+      expect(headers.slice(11)).toEqual(CANCELLATION_HEADERS)
       expect(
         rows.map((row) => [
           row['Organisation name'],
@@ -1533,18 +1588,50 @@ describe('certificates of compliance — journey', () => {
         ['Bravo Scheme', 'Pending', 'Compliant'],
         ['Charlie Scheme', 'Not submitted', null]
       ])
+      expect(rows[0]).toEqual(
+        expect.objectContaining(blankCancellationBlock(1))
+      )
+      expect(rows[1]).toEqual(
+        expect.objectContaining({
+          Cancellations: 1,
+          'Cancellation 1: Date submitted': new Date('2026-12-05T00:00:00Z'),
+          'Cancellation 1: Date cancelled': new Date('2026-12-05T00:00:00Z'),
+          'Cancellation 1: Cancelled by': 'Dan Regulator',
+          'Cancellation 1: Reason': 'Compliance scheme requested to cancel',
+          'Cancellation 1: Status when cancelled': 'Accepted'
+        })
+      )
     })
 
-    it('keeps the report in English for a Welsh user until the report strings are translated', async () => {
-      app.given([{ name: 'Alpha Producers Ltd', status: 'pending' }])
+    it('uses the English report strings for a Welsh user, with the cancel reasons already in Welsh', async () => {
+      app.given([
+        {
+          name: 'Alpha Producers Ltd',
+          status: 'pending',
+          history: [
+            {
+              status: 'cancelled',
+              date: '2026-12-01',
+              reason: 'Producer requested to cancel'
+            }
+          ]
+        }
+      ])
 
       const response = await app.get(`${reportUrl('direct-producers')}&lang=cy`)
 
       expect(response.statusCode).toBe(statusCodes.ok)
       const { heading, headers, rows } = await loadReport(response.rawPayload)
       expect(heading).toMatch(/^All certificate of compliance submissions, /)
-      expect(headers).toEqual(DIRECT_PRODUCER_HEADERS)
+      expect(headers).toEqual([
+        ...DIRECT_PRODUCER_HEADERS,
+        ...CANCELLATION_HEADERS
+      ])
       expect(rows[0].Status).toBe('Pending')
+      expect(rows[0]['Cancellation 1: Reason']).toBe(
+        'Mae’r Cynhyrchydd wedi gwneud cais i ganslo'
+      )
+      expect(rows[0]['Cancellation 1: Status when cancelled']).toBe('Pending')
     })
   })
 
