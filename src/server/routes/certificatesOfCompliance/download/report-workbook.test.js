@@ -380,10 +380,15 @@ describe('#report-workbook', () => {
           ...acceptedRow,
           cancellationHistory: [olderCancellation, newerCancellation]
         },
-        { ...notSubmittedRow, cancellationHistory: [olderCancellation] },
+        {
+          ...notSubmittedRow,
+          cancellations: 1,
+          cancellationHistory: [olderCancellation]
+        },
         {
           ...acceptedRow,
           organisationName: 'No cancellations Ltd',
+          cancellations: 0,
           cancellationHistory: []
         }
       ])
@@ -411,7 +416,10 @@ describe('#report-workbook', () => {
     })
 
     test('shows one blank Cancellation 1 block when nobody has cancelled', async () => {
-      const { worksheet, rows } = await build(false)
+      const { worksheet, rows } = await build(false, [
+        { ...acceptedRow, cancellations: 0 },
+        notSubmittedRow
+      ])
 
       expect(worksheet.model.merges).toEqual(['K1:O1'])
       expect(worksheet.getCell('K1').value).toBe('Cancellation 1')
@@ -428,9 +436,14 @@ describe('#report-workbook', () => {
       const { worksheet, rows } = await build(false, [
         {
           ...acceptedRow,
+          cancellations: 3,
           cancellationHistory: [oldest, olderCancellation, newerCancellation]
         },
-        { ...notSubmittedRow, cancellationHistory: [olderCancellation] }
+        {
+          ...notSubmittedRow,
+          cancellations: 1,
+          cancellationHistory: [olderCancellation]
+        }
       ])
 
       expect(worksheet.model.merges).toEqual(['K1:O1', 'P1:T1', 'U1:Y1'])

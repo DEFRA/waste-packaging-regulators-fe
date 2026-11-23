@@ -12,7 +12,6 @@ import {
   findAcceptedAuditEntry,
   findAuditEntryByAction
 } from '../detail/audit.js'
-import { cancelledAt } from './cancellations.js'
 import { toLondonCalendarDate } from './report-dates.js'
 import { reportLabels } from './report-labels.js'
 
@@ -103,7 +102,7 @@ export function cancellationToReportEntry(
   )
   return {
     dateSubmitted: toLondonCalendarDate(declaration.created),
-    dateCancelled: toLondonCalendarDate(cancelledAt(declaration)),
+    dateCancelled: toLondonCalendarDate(cancelled?.timestamp),
     cancelledBy: cancelled?.user?.name ?? null,
     reason: displayStoredCancelReason(
       cancelled?.reason,
