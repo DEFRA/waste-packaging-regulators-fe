@@ -68,8 +68,7 @@ const CANCELLATION_COLUMNS = [
   { key: 'statusWhenCancelled', width: 22 }
 ]
 
-// As many blocks as the most cancelled organisation has cancellations, and at
-// least one.
+// Enough blocks for the most cancelled organisation, and at least one.
 export function cancellationBlockCount(rows) {
   return rows.reduce(
     (count, row) => Math.max(count, row.cancellationHistory?.length ?? 0),
@@ -118,9 +117,7 @@ function trimApostrophesAndSpaces(text) {
   return text.slice(start, end)
 }
 
-// Rows above the column headings. The report heading and the Cancellation N
-// headings share this row, so the headings take two rows in all. Everything
-// below is placed from this.
+// Rows above the column headings, shared by the report and Cancellation N headings.
 export const REPORT_TITLE_ROWS = 1
 const CANCELLATION_HEADINGS_ROW = REPORT_TITLE_ROWS
 
@@ -147,7 +144,7 @@ export const CELL_BORDER = {
   right: THIN_GREY_LINE
 }
 
-// Every cell under the merge is boxed in, so the border goes all the way round.
+// Every merged cell gets the border, or the box has gaps.
 function writeCancellationHeadings(worksheet, blocks, firstColumnNumber) {
   blocks.forEach((block, index) => {
     const left = firstColumnNumber + index * CANCELLATION_COLUMNS.length

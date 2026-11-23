@@ -85,8 +85,7 @@ export function totalObligatedTonnes(obligations) {
   return Math.round(total * 1000) / 1000
 }
 
-// An Accepted audit entry means it was accepted before it was cancelled. With
-// neither entry the status is unknown, so it is left blank.
+// Blank when the audit has neither an Accepted nor a Cancelled entry.
 function statusWhenCancelled(audit, cancelled, labels) {
   if (findAcceptedAuditEntry(audit)) {
     return labels.status.accepted
@@ -119,7 +118,6 @@ export function cancellationToReportEntry(
   }
 }
 
-// Oldest first: groupCancellationsByOrganisation sorts each group.
 function cancellationFields(
   cancellationsByOrganisation,
   organisationId,

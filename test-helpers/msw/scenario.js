@@ -127,7 +127,7 @@ function buildHistoryRecord(entry, base, index) {
           }
         ]
       : [
-          // acceptedAt: the declaration was accepted before it was cancelled.
+          // Accepted before it was cancelled.
           ...(entry.acceptedAt
             ? [
                 {

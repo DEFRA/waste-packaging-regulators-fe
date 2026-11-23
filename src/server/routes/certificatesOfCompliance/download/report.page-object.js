@@ -8,14 +8,12 @@ function cellValues(row, columnCount) {
   })
 }
 
-// A cancellation column is keyed by its block, as in 'Cancellation 1: Reason',
-// because every block repeats the same column headings.
+// Blocks repeat their headings, so keys look like 'Cancellation 1: Reason'.
 function columnKey(blockHeading, header) {
   return blockHeading ? `${blockHeading}: ${header}` : header
 }
 
-// Only the merged Cancellation N headings count: the report heading shares
-// their row.
+// Merged cells only: the report heading shares this row.
 function blockHeadings(row, columnCount) {
   return Array.from({ length: columnCount }, (_, index) => {
     const cell = row.getCell(index + 1)
@@ -37,7 +35,7 @@ export async function loadReport(buffer) {
       headers.push(cell.value)
     })
 
-  // Merged cells read back their block's heading in every column they cover.
+  // A merged heading reads back in every column it covers.
   const headingsAbove = blockHeadings(
     worksheet.getRow(headingsRowNumber - 1),
     headers.length

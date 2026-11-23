@@ -4,8 +4,7 @@ function isReadableDate(value) {
   return value != null && !Number.isNaN(Date.parse(value))
 }
 
-// Only the Cancelled audit entry says when a declaration was cancelled. Without
-// a readable one the date is left blank rather than guessed.
+// Blank, not guessed, without a readable Cancelled audit timestamp.
 export function cancelledAt(declaration) {
   const entry = findAuditEntryByAction(declaration.audit, auditAction.cancelled)
   return isReadableDate(entry?.timestamp) ? entry.timestamp : null
