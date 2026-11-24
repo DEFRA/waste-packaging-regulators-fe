@@ -48,8 +48,10 @@ With a story, list its acceptance criteria (from the description or an
 acceptance criteria field) and, for each, decide from the code and tests
 whether the change **meets** it, **does not meet** it, or you **can't tell**.
 
-- A criterion not met, or met only by untested code, is a **Should fix**
-  finding — **Blocking** if the change ships behaviour that contradicts it.
+- A criterion not met, met only by untested code, or that you can't tell
+  about, is a **Should fix** finding. It is **Blocking** only when you can
+  show, from the code, that the change does the _opposite_ of what the
+  criterion says — not merely that it is missing or unclear.
 - Changes the story does not ask for are worth a **Consider** note when they
   are large or risky; small related tidy-ups are fine.
 - The story says what to build, not how — the checklist and `AGENTS.md` still
@@ -75,16 +77,48 @@ Before keeping a finding, confirm all of these:
 
 Drop anything that fails these checks. A short review with three real findings
 beats a long one with fifteen guesses. If you are unsure but the risk is high
-(security, data loss, wrong regulatory status shown), keep it and say what you
-could not confirm.
+(security, data loss, wrong regulatory status shown), keep it as **Should fix**
+marked _(unconfirmed)_ and say what you could not confirm — never as Blocking.
 
 Classify each surviving finding:
 
-| Severity       | Meaning                                                                          |
-| -------------- | -------------------------------------------------------------------------------- |
-| **Blocking**   | Bug, security/access hole, broken invariant from AGENTS.md, wrong data to users. |
-| **Should fix** | Missing tests for new behaviour, missing `cy` translation, fragile error path.   |
-| **Consider**   | Worthwhile simplification or maintainability point. Keep these few.              |
+| Severity       | Meaning                                                                    |
+| -------------- | -------------------------------------------------------------------------- |
+| **Blocking**   | Only the categories below, proven as described below.                      |
+| **Should fix** | Everything else that is a real defect or gap, including unconfirmed risks. |
+| **Consider**   | Worthwhile simplification or maintainability point. Keep these few.        |
+
+### The bar for Blocking
+
+The verdict must not depend on which run of the review someone happened to get.
+Blocking is reserved for defects that any careful reviewer would find and agree
+on, so it needs **proof**, not judgement.
+
+A finding is Blocking only if it is one of:
+
+1. A request that reaches regulator-only behaviour or another nation's data
+   without the checks in checklist §1 (auth, `isRegulator`, nation scoping).
+2. A POST without CSRF protection, an open redirect, or unescaped (`| safe`)
+   backend or user data in a template.
+3. Code that throws or returns a 500 on an input the app normally receives.
+4. A regulator shown the wrong declaration status, organisation or figure, or
+   offered an action the status guards should prevent.
+5. A `MOCK_API` branch in production code, or a mutation in a mock store
+   (AGENTS.md invariants).
+6. Code that does the opposite of a story acceptance criterion (§3).
+7. An existing test that the change makes fail.
+
+And only if you can write the **trace**: the concrete input (route, params,
+session, backend response), then each `path:line` it passes through in the
+current code, ending at the wrong result. If any step is "probably" or "might",
+it is not proven — make it Should fix _(unconfirmed)_.
+
+Before keeping a Blocking finding, **try to disprove it**: search for a plugin,
+route option, helper, guard, default or test that prevents the failure, and
+re-read the lines in your trace. Keep it only if that search finds nothing.
+Anything outside the list above — missing tests, missing `cy` strings,
+naming, structure, error-path robustness — is at most Should fix, however
+strongly you feel about it.
 
 ## 6. Report
 
@@ -101,7 +135,9 @@ Print:
 - ❔ <criterion> — why you can't tell
 
 ### Blocking
-- `path/to/file.js:42` — <defect>. <failure scenario>. <suggested fix>.
+- `path/to/file.js:42` — <defect> (category <n>). Trace: <input> →
+  `a.js:10` → `b.js:22` → <wrong result>. Ruled out: <what you checked>.
+  Fix: <suggested fix>.
 
 ### Should fix
 - ...
