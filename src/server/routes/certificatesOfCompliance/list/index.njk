@@ -3,6 +3,7 @@
 {% from "search/macro.njk" import appSearch %}
 {% from "producer-subnavigation/macro.njk" import appProducerSubnavigation %}
 {% from "tabs-list/macro.njk" import appTabsList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
 {% block content %}
@@ -55,6 +56,12 @@
     ]
   }) }}
 
+  {{ govukButton({
+    text: i18n.t('downloadReport'),
+    href: localeUrl(routePrefix ~ '/download?organisation_type=' ~ organisationType),
+    classes: "govuk-button--secondary govuk-!-margin-top-6 govuk-!-margin-bottom-6",
+    attributes: { "data-testid": "download-report" }
+  }) }}
   <div class="govuk-tabs">
     {{ appTabsList({
       items: [

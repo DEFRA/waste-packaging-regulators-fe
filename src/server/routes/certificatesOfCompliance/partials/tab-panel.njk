@@ -4,14 +4,6 @@
     <strong>{{ tabCount }}</strong>
     {{ tabSummaryText }}
   </p>
-  <p class="govuk-body govuk-!-margin-bottom-4">
-    <a
-      class="govuk-link"
-      data-module="app-table-download"
-      href="{{ localeUrl(routePrefix ~ '/download?organisation_type=' ~ organisationType ~ '&submission_status=' ~ activeTab) }}">
-      {{ i18n.t('downloadLink') }}
-    </a>
-  </p>
   {% if items.length > 0 %}
     <div class="moj-scrollable-pane" role="region" aria-label="{{ tabSummaryText | capitalize }}" tabindex="0">
       <table class="govuk-table v3-compact-table">

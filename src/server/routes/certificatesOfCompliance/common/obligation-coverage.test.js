@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'vitest'
-import { calculateObligationCoveragePercentage } from './display.js'
+import {
+  calculateObligationCoveragePercentage,
+  declarationCoveragePercentage
+} from './display.js'
 
 function makeObligation(accepted, obligated) {
   return { tonnages: { accepted, obligated } }
@@ -119,5 +122,30 @@ describe('calculateObligationCoveragePercentage', () => {
         ).toBe(expected)
       }
     )
+  })
+})
+
+describe('declarationCoveragePercentage', () => {
+  test('uses the percentage the obligations API serves, including 0', () => {
+    expect(
+      declarationCoveragePercentage({
+        obligationCoveragePercentage: 0,
+        obligations: [makeObligation(10, 10)]
+      })
+    ).toBe(0)
+  })
+
+  test('falls back to calculating from the embedded obligations', () => {
+    expect(
+      declarationCoveragePercentage({
+        obligationCoveragePercentage: null,
+        obligations: [makeObligation(850, 925)]
+      })
+    ).toBe(92)
+  })
+
+  test('returns null with neither a percentage nor obligations', () => {
+    expect(declarationCoveragePercentage({ obligations: [] })).toBeNull()
+    expect(declarationCoveragePercentage({})).toBeNull()
   })
 })

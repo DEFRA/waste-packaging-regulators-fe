@@ -251,7 +251,7 @@
         "accepted": "No accepted submissions yet. Submissions you accept will be listed here.",
         "notSubmitted": "There are no outstanding submissions"
       },
-      "downloadLink": "Download list (CSV)",
+      "downloadReport": "Download report (Excel)",
       "searchResults": {
         "caption": "Search results",
         "resultSingular": "{{count}} result for \"{{searchTerm}}\".",
@@ -352,6 +352,49 @@
       },
       "legend": "Are you sure you want to accept this {{docTypeLower}} for {{companyName}}?",
       "error": "Select yes or no"
+    },
+    "report": {
+      "sheetName": "Report",
+      "heading": {
+        "certificates": "All certificate of compliance submissions, {{day}}",
+        "statements": "All statement of compliance submissions, {{day}}"
+      },
+      "columns": {
+        "organisationName": "Organisation name",
+        "organisationReference": "Organisation ID",
+        "status": "Status",
+        "regulation43": "Regulation 43",
+        "recyclingObligations": "Recycling obligations",
+        "percentageMet": "Percentage met",
+        "totalObligationTonnes": "Total obligation (tonnes)",
+        "dateSubmitted": "Date submitted",
+        "dateAccepted": "Date accepted",
+        "acceptedBy": "Accepted by",
+        "cancellations": "Cancellations"
+      },
+      "cancellation": {
+        "heading": "Cancellation {{number}}",
+        "columns": {
+          "dateSubmitted": "Date submitted",
+          "dateCancelled": "Date cancelled",
+          "cancelledBy": "Cancelled by",
+          "reason": "Reason",
+          "statusWhenCancelled": "Status when cancelled"
+        }
+      },
+      "status": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "notSubmitted": "Not submitted"
+      },
+      "recyclingObligations": {
+        "met": "Met",
+        "notMet": "Not met"
+      },
+      "regulation43": {
+        "compliant": "Compliant",
+        "notCompliant": "Not compliant"
+      }
     },
     "cancel": {
       "reason": {

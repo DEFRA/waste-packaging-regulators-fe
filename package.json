@@ -60,9 +60,8 @@
     "convict-format-with-validator": "6.2.0",
     "cssnano": "7.1.5",
     "cssnano-preset-default": "7.0.13",
-    "csv-parse": "7.0.2",
-    "csv-writer": "1.6.0",
     "date-fns": "4.4.0",
+    "exceljs": "4.4.0",
     "global-agent": "3.0.0",
     "govuk-frontend": "6.3.0",
     "hapi-pino": "13.0.0",
@@ -99,6 +98,6 @@
     "vitest": "4.1.11"
   },
   "overrides": {
-    "tmp": "0.2.5"
+    "tmp": "0.2.7"
   }
 }

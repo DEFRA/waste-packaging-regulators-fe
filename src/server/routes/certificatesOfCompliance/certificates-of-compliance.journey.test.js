@@ -1,7 +1,8 @@
+import { load } from 'cheerio'
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { loadDetailPage } from './detail/detail.page-object.js'
-import { loadCsv } from './download/download.page-object.js'
+import { loadReport } from './download/report.page-object.js'
 import { sessionCookieFromResponse } from '#test-helpers/cookies.js'
 import { setupRegulatorsApp } from '#test-helpers/msw/harness.js'
 import { materialRow, noDataRow } from '#test-helpers/msw/obligations.js'
@@ -32,11 +33,6 @@ const mixedObligations = [
   materialRow('GlassRemelt', 420, 380, 'NotMet'),
   noDataRow('Glass', 220)
 ]
-
-const REGISTRATION_TYPE = {
-  'direct-producers': 'DirectProducer',
-  'compliance-schemes': 'ComplianceScheme'
-}
 
 describe('certificates of compliance — journey', () => {
   const app = setupRegulatorsApp()
@@ -1327,50 +1323,67 @@ describe('certificates of compliance — journey', () => {
     })
   })
 
-  describe('CSV download', () => {
-    const pendingDownloadUrl =
-      '/certificates-of-compliance/download?organisation_type=direct-producers&submission_status=pending'
-    let scenario
+  describe('Excel report download', () => {
+    const reportUrl = (organisationType) =>
+      `/certificates-of-compliance/download?organisation_type=${organisationType}`
 
-    beforeEach(() => {
-      scenario = app.given([
-        { name: 'CSV Producer One Ltd', status: 'pending' },
-        { name: 'CSV Producer Two Ltd', status: 'pending' },
-        { name: 'CSV Producer Three Ltd', status: 'accepted' },
-        { name: 'CSV Producer Four Ltd', status: 'not-submitted' },
-        { name: 'CSV Producer Five Ltd', status: 'not-submitted' },
-        {
-          name: 'CSV Scheme One Operators',
-          type: 'compliance-scheme',
-          status: 'pending'
-        },
-        {
-          name: 'CSV Scheme Two Operators',
-          type: 'compliance-scheme',
-          status: 'accepted'
-        },
-        {
-          name: 'CSV Scheme Three Operators',
-          type: 'compliance-scheme',
-          status: 'not-submitted'
-        }
-      ])
-    })
+    const DIRECT_PRODUCER_HEADERS = [
+      'Organisation name',
+      'Organisation ID',
+      'Status',
+      'Recycling obligations',
+      'Percentage met',
+      'Total obligation (tonnes)',
+      'Date submitted',
+      'Date accepted',
+      'Accepted by',
+      'Cancellations'
+    ]
 
-    it('renders the download link on the list page pointing at download', async () => {
-      const response = await app.get(
-        '/certificates-of-compliance?type=direct-producers&tab=pending'
+    const CANCELLATION_HEADERS = [
+      'Date submitted',
+      'Date cancelled',
+      'Cancelled by',
+      'Reason',
+      'Status when cancelled'
+    ]
+
+    const blankCancellationBlock = (number) =>
+      Object.fromEntries(
+        CANCELLATION_HEADERS.map((header) => [
+          `Cancellation ${number}: ${header}`,
+          null
+        ])
       )
 
-      expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.payload).toMatch(
-        /\/certificates-of-compliance\/download\?organisation_type=direct-producers(?:&amp;|&)submission_status=pending/
-      )
-      expect(response.payload).toContain('Download list (CSV)')
-    })
+    describe.each(['direct-producers', 'compliance-schemes'])(
+      'on the %s list page',
+      (organisationType) => {
+        it.each(['pending', 'accepted', 'not-submitted'])(
+          'shows the Download report (Excel) button above the tabs and no CSV link on the %s tab',
+          async (tab) => {
+            const response = await app.get(
+              `/certificates-of-compliance?type=${organisationType}&tab=${tab}`
+            )
+
+            expect(response.statusCode).toBe(statusCodes.ok)
+            const $ = load(response.payload)
+            const button = $('[data-testid="download-report"]')
+            expect(button).toHaveLength(1)
+            expect(button.text().trim()).toBe('Download report (Excel)')
+            expect(button.attr('href')).toBe(
+              `/certificates-of-compliance/download?organisation_type=${organisationType}`
+            )
+            expect(button.nextAll('.govuk-tabs')).toHaveLength(1)
+            expect(response.payload).not.toContain('Download list (CSV)')
+            expect(response.payload).not.toContain('submission_status=')
+          }
+        )
+      }
+    )
 
     it('redirects to /signin-oidc when unauthenticated', async () => {
-      const response = await app.get(pendingDownloadUrl, null)
+      const response = await app.get(reportUrl('direct-producers'), null)
 
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe(
@@ -1379,206 +1392,247 @@ describe('certificates of compliance — journey', () => {
     })
 
     it('returns a bad request for an invalid organisation type', async () => {
-      const response = await app.get(
-        '/certificates-of-compliance/download?organisation_type=invalid&submission_status=pending'
-      )
-      expect(response.statusCode).toBe(statusCodes.badRequest)
-    })
-
-    it('returns a bad request for an invalid submission status', async () => {
-      const response = await app.get(
-        '/certificates-of-compliance/download?organisation_type=direct-producers&submission_status=invalid'
-      )
+      const response = await app.get(reportUrl('invalid'))
       expect(response.statusCode).toBe(statusCodes.badRequest)
     })
 
     it('surfaces a downstream failure as an error response', async () => {
       config.set('mockErrorStatus', statusCodes.internalServerError)
       try {
-        const response = await app.get(pendingDownloadUrl)
+        const response = await app.get(reportUrl('direct-producers'))
         expect(response.statusCode).toBe(statusCodes.internalServerError)
       } finally {
         config.set('mockErrorStatus', null)
       }
     })
 
-    describe('generates CSV downloads for all combinations', () => {
-      it.each([
-        ['direct-producers', 'pending'],
-        ['direct-producers', 'accepted'],
-        ['direct-producers', 'not-submitted'],
-        ['compliance-schemes', 'pending'],
-        ['compliance-schemes', 'accepted'],
-        ['compliance-schemes', 'not-submitted']
-      ])('for %s %s', async (organisationType, submissionStatus) => {
-        const expectedCount = scenario.rowsFor(
-          REGISTRATION_TYPE[organisationType],
-          submissionStatus
-        ).length
-
-        const response = await app.get(
-          `/certificates-of-compliance/download?organisation_type=${organisationType}&submission_status=${submissionStatus}`
-        )
-
-        expect(response.statusCode).toBe(statusCodes.ok)
-        expect(response.headers['content-type']).toContain('text/csv')
-        expect(response.headers['content-disposition']).toMatch(
-          new RegExp(
-            `^attachment; filename="2026-(certificates|statements)-of-compliance-${submissionStatus}-\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{2}\\.csv"$`
-          )
-        )
-
-        const { headers, rows, title } = loadCsv(response.payload)
-
-        expect(rows).toHaveLength(expectedCount)
-
-        // Title: "<Status> <noun> of compliance submissions, <weekday> <day>
-        // <month> <year>, HH:MM:SS".
-        if (submissionStatus === 'pending') {
-          expect(title).toMatch(/^Pending /)
-        } else if (submissionStatus === 'accepted') {
-          expect(title).toMatch(/^Accepted /)
-        } else {
-          expect(title).toMatch(/^Not submitted /)
-        }
-
-        if (organisationType === 'compliance-schemes') {
-          expect(title).toContain('statement of compliance submissions')
-        } else {
-          expect(title).toContain('certificate of compliance submissions')
-        }
-
-        expect(title).toMatch(/, \w+ \d{1,2} \w+ \d{4}, \d{2}:\d{2}:\d{2}$/)
-
-        // Exact ordered header row.
-        if (
-          organisationType === 'compliance-schemes' &&
-          submissionStatus === 'not-submitted'
-        ) {
-          expect(headers).toEqual([
-            'Organisation name',
-            'Organisation ID',
-            'Recycling obligations',
-            'Regulation 43'
-          ])
-        } else if (organisationType === 'compliance-schemes') {
-          expect(headers).toEqual([
-            'Organisation name',
-            'Organisation ID',
-            'Recycling obligations',
-            'Regulation 43',
-            'Date submitted'
-          ])
-        } else if (submissionStatus === 'not-submitted') {
-          expect(headers).toEqual([
-            'Organisation name',
-            'Organisation ID',
-            'Recycling obligations',
-            'Percentage met'
-          ])
-        } else {
-          expect(headers).toEqual([
-            'Organisation name',
-            'Organisation ID',
-            'Recycling obligations',
-            'Percentage met',
-            'Date submitted'
-          ])
-        }
-      })
-    })
-  })
-
-  describe('CSV download ordering', () => {
-    // Each type + status group is seeded reverse-alphabetically so a download
-    // that preserved the API order would fail the A-Z assertion.
-    beforeEach(() => {
+    it('lists every direct producer once under its current status, A to Z, with its cancellations', async () => {
+      // Seeded out of name order so a report that kept the API order fails.
       app.given([
-        { name: 'Delta Producers Ltd', status: 'pending' },
-        { name: 'Alpha Producers Ltd', status: 'pending' },
-        { name: 'Sierra Producers Ltd', status: 'accepted' },
-        { name: 'Papa Producers Ltd', status: 'accepted' },
-        { name: 'Zulu Producers Ltd', status: 'not-submitted' },
-        { name: 'Foxtrot Producers Ltd', status: 'not-submitted' },
         {
-          name: 'Delta Compliance Operators',
+          name: 'Delta Producers Ltd',
+          status: 'pending',
+          reference: '100004',
+          dateSubmitted: '2027-01-15',
+          history: [{ status: 'cancelled', date: '2026-12-01' }]
+        },
+        {
+          name: 'Alpha Producers Ltd',
+          status: 'accepted',
+          reference: '100001',
+          dateSubmitted: '2027-01-10',
+          acceptedDate: '2027-01-20T10:00:00Z',
+          acceptedBy: 'Ann Regulator'
+        },
+        {
+          name: 'Charlie Producers Ltd',
+          status: 'not-submitted',
+          reference: '100003'
+        },
+        // Cancelled twice and nothing sent since: Not submitted.
+        {
+          name: 'Bravo Producers Ltd',
+          status: 'not-submitted',
+          reference: '100002',
+          history: [
+            {
+              status: 'cancelled',
+              date: '2026-11-15',
+              by: 'Cara Regulator',
+              reason: 'Producer requested to cancel'
+            },
+            {
+              status: 'cancelled',
+              date: '2026-11-01',
+              by: 'Ben Regulator',
+              reason: 'Recycling obligations changed'
+            }
+          ]
+        },
+        {
+          name: 'Other Scheme',
           type: 'compliance-scheme',
           status: 'pending'
-        },
-        {
-          name: 'Alpha Compliance Operators',
-          type: 'compliance-scheme',
-          status: 'pending'
-        },
-        {
-          name: 'Sierra Compliance Operators',
-          type: 'compliance-scheme',
-          status: 'accepted'
-        },
-        {
-          name: 'Papa Compliance Operators',
-          type: 'compliance-scheme',
-          status: 'accepted'
-        },
-        {
-          name: 'Zulu Compliance Operators',
-          type: 'compliance-scheme',
-          status: 'not-submitted'
-        },
-        {
-          name: 'Foxtrot Compliance Operators',
-          type: 'compliance-scheme',
-          status: 'not-submitted'
         }
+      ])
+
+      const response = await app.get(reportUrl('direct-producers'))
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.headers['content-type']).toBe(
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      )
+      expect(response.headers['content-disposition']).toMatch(
+        /^attachment; filename="2026-certificates-of-compliance-all-\d{2}-\d{2}-\d{4}\.xlsx"$/
+      )
+
+      const { heading, headers, rows } = await loadReport(response.rawPayload)
+
+      expect(heading).toMatch(
+        /^All certificate of compliance submissions, [A-Z][a-z]+day \d{1,2} [A-Z][a-z]+$/
+      )
+      // Bravo's 2 cancellations set the number of blocks.
+      expect(headers).toEqual([
+        ...DIRECT_PRODUCER_HEADERS,
+        ...CANCELLATION_HEADERS,
+        ...CANCELLATION_HEADERS
+      ])
+      expect(rows).toEqual([
+        {
+          'Organisation name': 'Alpha Producers Ltd',
+          'Organisation ID': 100001,
+          Status: 'Accepted',
+          'Recycling obligations': 'Met',
+          'Percentage met': 100,
+          // allMet preset: Aluminium 100 + Plastic 200 obligated
+          'Total obligation (tonnes)': 300,
+          'Date submitted': new Date('2027-01-10T00:00:00Z'),
+          'Date accepted': new Date('2027-01-20T00:00:00Z'),
+          'Accepted by': 'Ann Regulator',
+          Cancellations: 0,
+          ...blankCancellationBlock(1),
+          ...blankCancellationBlock(2)
+        },
+        expect.objectContaining({
+          'Organisation name': 'Bravo Producers Ltd',
+          'Organisation ID': 100002,
+          Status: 'Not submitted',
+          'Total obligation (tonnes)': null,
+          'Date submitted': null,
+          'Date accepted': null,
+          'Accepted by': null,
+          Cancellations: 2,
+          'Cancellation 1: Date submitted': new Date('2026-11-01T00:00:00Z'),
+          'Cancellation 1: Date cancelled': new Date('2026-11-01T00:00:00Z'),
+          'Cancellation 1: Cancelled by': 'Ben Regulator',
+          'Cancellation 1: Reason': 'Recycling obligations changed',
+          'Cancellation 1: Status when cancelled': 'Pending',
+          'Cancellation 2: Date cancelled': new Date('2026-11-15T00:00:00Z'),
+          'Cancellation 2: Cancelled by': 'Cara Regulator',
+          'Cancellation 2: Reason': 'Producer requested to cancel',
+          'Cancellation 2: Status when cancelled': 'Pending'
+        }),
+        expect.objectContaining({
+          'Organisation name': 'Charlie Producers Ltd',
+          Status: 'Not submitted',
+          Cancellations: 0
+        }),
+        expect.objectContaining({
+          'Organisation name': 'Delta Producers Ltd',
+          Status: 'Pending',
+          'Date submitted': new Date('2027-01-15T00:00:00Z'),
+          'Date accepted': null,
+          'Accepted by': null,
+          Cancellations: 1,
+          'Cancellation 1: Date cancelled': new Date('2026-12-01T00:00:00Z'),
+          ...blankCancellationBlock(2)
+        })
       ])
     })
 
-    it.each([
-      [
-        'direct-producers',
-        'pending',
-        ['Alpha Producers Ltd', 'Delta Producers Ltd']
-      ],
-      [
-        'direct-producers',
-        'accepted',
-        ['Papa Producers Ltd', 'Sierra Producers Ltd']
-      ],
-      [
-        'direct-producers',
-        'not-submitted',
-        ['Foxtrot Producers Ltd', 'Zulu Producers Ltd']
-      ],
-      [
-        'compliance-schemes',
-        'pending',
-        ['Alpha Compliance Operators', 'Delta Compliance Operators']
-      ],
-      [
-        'compliance-schemes',
-        'accepted',
-        ['Papa Compliance Operators', 'Sierra Compliance Operators']
-      ],
-      [
-        'compliance-schemes',
-        'not-submitted',
-        ['Foxtrot Compliance Operators', 'Zulu Compliance Operators']
-      ]
-    ])(
-      'orders %s %s rows by organisation name (A-Z)',
-      async (organisationType, submissionStatus, expectedNames) => {
-        const response = await app.get(
-          `/certificates-of-compliance/download?organisation_type=${organisationType}&submission_status=${submissionStatus}`
-        )
+    it('names compliance schemes by scheme name and shows Regulation 43 for submitted schemes only', async () => {
+      app.given([
+        {
+          name: 'Bravo Scheme',
+          operatorName: 'Bravo Operator Ltd',
+          type: 'compliance-scheme',
+          status: 'pending',
+          regulation43: true,
+          // Accepted, then cancelled, before the pending statement was sent.
+          history: [
+            {
+              status: 'cancelled',
+              date: '2026-12-05',
+              acceptedAt: '2026-12-02T10:00:00Z',
+              by: 'Dan Regulator',
+              reason: 'RequestedToCancel'
+            }
+          ]
+        },
+        {
+          name: 'Alpha Scheme',
+          operatorName: 'Alpha Operator Ltd',
+          type: 'compliance-scheme',
+          status: 'accepted',
+          regulation43: false
+        },
+        {
+          name: 'Charlie Scheme',
+          type: 'compliance-scheme',
+          status: 'not-submitted'
+        },
+        { name: 'A Direct Producer Ltd', status: 'pending' }
+      ])
 
-        expect(response.statusCode).toBe(statusCodes.ok)
-        const { rows } = loadCsv(response.payload)
+      const response = await app.get(reportUrl('compliance-schemes'))
 
-        expect(rows.map((row) => row['Organisation name'])).toEqual(
-          expectedNames
-        )
-      }
-    )
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.headers['content-disposition']).toMatch(
+        /^attachment; filename="2026-statements-of-compliance-all-\d{2}-\d{2}-\d{4}\.xlsx"$/
+      )
+
+      const { heading, headers, rows } = await loadReport(response.rawPayload)
+
+      expect(heading).toMatch(/^All statement of compliance submissions, /)
+      expect(headers[3]).toBe('Regulation 43')
+      expect(headers[10]).toBe('Cancellations')
+      expect(headers.slice(11)).toEqual(CANCELLATION_HEADERS)
+      expect(
+        rows.map((row) => [
+          row['Organisation name'],
+          row.Status,
+          row['Regulation 43']
+        ])
+      ).toEqual([
+        ['Alpha Scheme', 'Accepted', 'Not compliant'],
+        ['Bravo Scheme', 'Pending', 'Compliant'],
+        ['Charlie Scheme', 'Not submitted', null]
+      ])
+      expect(rows[0]).toEqual(
+        expect.objectContaining(blankCancellationBlock(1))
+      )
+      expect(rows[1]).toEqual(
+        expect.objectContaining({
+          Cancellations: 1,
+          'Cancellation 1: Date submitted': new Date('2026-12-05T00:00:00Z'),
+          'Cancellation 1: Date cancelled': new Date('2026-12-05T00:00:00Z'),
+          'Cancellation 1: Cancelled by': 'Dan Regulator',
+          'Cancellation 1: Reason': 'Compliance scheme requested to cancel',
+          'Cancellation 1: Status when cancelled': 'Accepted'
+        })
+      )
+    })
+
+    it('uses the English report strings for a Welsh user, with the cancel reasons already in Welsh', async () => {
+      app.given([
+        {
+          name: 'Alpha Producers Ltd',
+          status: 'pending',
+          history: [
+            {
+              status: 'cancelled',
+              date: '2026-12-01',
+              reason: 'Producer requested to cancel'
+            }
+          ]
+        }
+      ])
+
+      const response = await app.get(`${reportUrl('direct-producers')}&lang=cy`)
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      const { heading, headers, rows } = await loadReport(response.rawPayload)
+      expect(heading).toMatch(/^All certificate of compliance submissions, /)
+      expect(headers).toEqual([
+        ...DIRECT_PRODUCER_HEADERS,
+        ...CANCELLATION_HEADERS
+      ])
+      expect(rows[0].Status).toBe('Pending')
+      expect(rows[0]['Cancellation 1: Reason']).toBe(
+        'Mae’r Cynhyrchydd wedi gwneud cais i ganslo'
+      )
+      expect(rows[0]['Cancellation 1: Status when cancelled']).toBe('Pending')
+    })
   })
 
   describe('mock statefulness — list must not change after accept or cancel', () => {

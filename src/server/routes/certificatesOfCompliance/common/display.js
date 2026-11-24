@@ -41,6 +41,20 @@ export function buildRegulation43Statement(
   )
 }
 
+// The API's percentage, or calculated from the obligations when it is missing
+// (the search endpoint does not return it).
+export function declarationCoveragePercentage({
+  obligationCoveragePercentage,
+  obligations
+}) {
+  if (obligationCoveragePercentage != null) {
+    return obligationCoveragePercentage
+  }
+  return obligations?.length
+    ? calculateObligationCoveragePercentage(obligations)
+    : null
+}
+
 export function calculateObligationCoveragePercentage(obligations = []) {
   const totalAccepted = obligations.reduce(
     (sum, o) => sum + (o.tonnages?.accepted ?? 0),
