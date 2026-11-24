@@ -13,7 +13,10 @@ import {
   isSubmittedRecord,
   listOrganisationName
 } from './waste-obligations/declaration.js'
-import { unsubmittedOrganisationName } from './waste-obligations/unsubmitted.js'
+import {
+  totalObligatedTonnage,
+  unsubmittedOrganisationName
+} from './waste-obligations/unsubmitted.js'
 import { obligationsHandlers } from './waste-obligations/handlers.js'
 import { createOrganisationsStore } from './waste-organisations/store.js'
 import { organisationsHandlers } from './waste-organisations/handlers.js'
@@ -24,6 +27,7 @@ export {
   toDeclaration,
   isSubmittedRecord,
   listOrganisationName,
+  totalObligatedTonnage,
   unsubmittedOrganisationName
 }
 

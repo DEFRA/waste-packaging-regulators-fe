@@ -40,6 +40,7 @@ import {
   mockObligationsMixed,
   mockObligationsMostlyMet,
   mockObligationsAllZero,
+  mockObligationsAllMetLowerTonnage,
   defaultObligations
 } from './obligation-data.js'
 
@@ -427,7 +428,7 @@ export const complianceRecords = [
     organisationReferenceNumber: orgs.coastal.reference,
     submissionStatus: 'not-submitted',
     declarationId: null,
-    obligations: mockObligationsAllMet
+    obligations: mockObligationsAllMetLowerTonnage
   },
   {
     key: 'thornbury-not-submitted',
@@ -438,6 +439,17 @@ export const complianceRecords = [
     submissionStatus: 'not-submitted',
     declarationId: null,
     obligations: mockObligationsMostlyMet
+  },
+  // Obligations not calculated yet: blank total obligation in the report.
+  {
+    key: 'oakfield-not-submitted',
+    registrationType: DIRECT_PRODUCER,
+    organisationId: orgs.oakfield.id,
+    organisationName: orgs.oakfield.name,
+    organisationReferenceNumber: orgs.oakfield.reference,
+    submissionStatus: 'not-submitted',
+    declarationId: null,
+    obligations: null
   },
 
   {
@@ -687,7 +699,7 @@ export const complianceRecords = [
     organisationReferenceNumber: orgs.futurepack.reference,
     submissionStatus: 'not-submitted',
     declarationId: null,
-    obligations: mockObligationsAllMet
+    obligations: mockObligationsAllMetLowerTonnage
   },
   {
     key: 'metroline-not-submitted',

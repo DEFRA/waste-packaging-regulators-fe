@@ -22,6 +22,7 @@ import {
   createBackends,
   backendHandlers,
   toDeclaration,
+  totalObligatedTonnage,
   unsubmittedOrganisationName
 } from '#mocks/backends.js'
 import { OBLIGATION_YEAR } from '#mocks/identities.js'
@@ -303,11 +304,13 @@ function buildOrganisation(spec, index) {
     ? {
         recyclingObligationsMet: deriveRecyclingObligationsMet(obligations),
         obligationCoveragePercentage:
-          calculateObligationCoveragePercentage(obligations)
+          calculateObligationCoveragePercentage(obligations),
+        totalObligatedTonnage: totalObligatedTonnage(obligations)
       }
     : {
         recyclingObligationsMet: null,
-        obligationCoveragePercentage: null
+        obligationCoveragePercentage: null,
+        totalObligatedTonnage: null
       }
 
   const expectedRow =

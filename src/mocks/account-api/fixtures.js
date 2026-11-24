@@ -151,6 +151,19 @@ export const accountOrganisations = [
       )
     ]
   ),
+  directProducerAccount(
+    orgs.oakfield.id,
+    orgs.oakfield.name,
+    orgs.oakfield.reference,
+    [
+      approvedPerson(
+        'Sam',
+        'Okafor',
+        'sam.okafor@oakfield.test',
+        '020 7946 0128'
+      )
+    ]
+  ),
   directProducerAccount(orgs.acme.id, orgs.acme.name, orgs.acme.reference, [
     approvedPerson(
       'Catherine',

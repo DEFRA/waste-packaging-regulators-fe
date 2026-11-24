@@ -14,6 +14,14 @@ import {
 import { deriveRecyclingObligationsMet } from '#server/routes/certificatesOfCompliance/detail/detail-mapping.js'
 import { calculateObligationCoveragePercentage } from '#server/routes/certificatesOfCompliance/common/display.js'
 
+// Whole tonnes across every material, as the backend sums them.
+export function totalObligatedTonnage(obligations) {
+  return obligations.reduce(
+    (sum, obligation) => sum + (obligation.tonnages?.obligated ?? 0),
+    0
+  )
+}
+
 // The endpoint serves materialised columns, so a row whose obligations have not
 // been calculated yet reports null — "no successful calculation", which is not
 // the same as a calculated zero.
@@ -21,14 +29,16 @@ function metricsFor(obligations) {
   if (!obligations?.length) {
     return {
       recyclingObligationsMet: null,
-      obligationCoveragePercentage: null
+      obligationCoveragePercentage: null,
+      totalObligatedTonnage: null
     }
   }
 
   return {
     recyclingObligationsMet: deriveRecyclingObligationsMet(obligations),
     obligationCoveragePercentage:
-      calculateObligationCoveragePercentage(obligations)
+      calculateObligationCoveragePercentage(obligations),
+    totalObligatedTonnage: totalObligatedTonnage(obligations)
   }
 }
 
