@@ -18,7 +18,9 @@
 
 range=$1
 
-git fetch origin main --quiet 2>/dev/null || true
+if ! git fetch origin main --quiet 2>/dev/null; then
+  echo "pr-review: warning: could not fetch origin/main, comparing against your local copy, which may be out of date"
+fi
 
 agent=${PR_REVIEW_AGENT:-$(git config --get pr-review.agent || true)}
 command=${PR_REVIEW_CMD:-$(git config --get pr-review.command || true)}
