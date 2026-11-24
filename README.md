@@ -114,6 +114,96 @@ Install git hooks (optional)
 npm run git:hooks
 ```
 
+### AI code review
+
+`npm run review` asks an AI agent to review your branch against `main` (plus any
+uncommitted work), following the skill in
+[.agents/skills/pr-review](./.agents/skills/pr-review/SKILL.md). It also fetches
+the branch's Jira story and checks the change against its acceptance criteria.
+
+```bash
+npm run review                         # this branch vs origin/main + uncommitted work
+npm run review -- origin/main...HEAD   # a specific git range
+JIRA_ISSUE=AMCR-123 npm run review     # use a different Jira ticket
+```
+
+It exits `0` with no Blocking findings, `1` with Blocking findings and `2` if the
+review did not run. You can also ask an agent directly, e.g. `/pr-review` in
+Claude Code.
+
+#### Choosing the agent
+
+By default the first of `claude`, `codex` or `gemini` on your `PATH` is used. To
+pick one, or use another agent CLI:
+
+| Variable          | Example                    | Purpose                                           |
+| ----------------- | -------------------------- | ------------------------------------------------- |
+| `PR_REVIEW_AGENT` | `codex`                    | `claude`, `codex` or `gemini`                     |
+| `PR_REVIEW_CMD`   | `my-agent run --read-only` | Any command; the prompt is passed as its last arg |
+
+#### Jira
+
+The Jira ticket is taken from the branch name, e.g. `AMCR-506-MapCSONameCorrectly`
+→ `AMCR-506` (falling back to the commit messages). The story is read from the
+ticket's description. If the variables below are not set, or Jira cannot be
+reached, the review runs without the story.
+
+| Variable            | Required | Purpose                                                                            |
+| ------------------- | -------- | ---------------------------------------------------------------------------------- |
+| `JIRA_BASE_URL`     | Yes      | `https://api.atlassian.com/ex/jira/<cloudId>` — see below                          |
+| `JIRA_API_TOKEN`    | Yes      | Your [Jira API token](https://id.atlassian.com/manage-profile/security/api-tokens) |
+| `JIRA_EMAIL`        | Cloud    | Your Jira account email (leave unset for a Data Center personal access token)      |
+| `JIRA_EXTRA_FIELDS` | No       | Extra fields to include, e.g. `customfield_10100`                                  |
+| `JIRA_PROJECT`      | No       | Ticket prefix to look for in the branch name (default `AMCR`)                      |
+
+##### Creating the API token
+
+The review only reads tickets, so give the token read access and nothing else:
+
+1. Go to [Atlassian API tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+   and choose **Create API token with scopes**.
+2. Name it (e.g. `pr-review`) and pick an expiry.
+3. Choose the **Jira** app.
+4. Select the single scope **`read:jira-work`** (read issues and their fields).
+   Do not add any `write:` or `manage:` scopes.
+5. Create the token and copy it — it is only shown once.
+
+A scoped token only works through Atlassian's API gateway, not your site's own
+URL (that returns `401`). Find your site's cloud ID:
+
+```bash
+curl -s https://<site>.atlassian.net/_edge/tenant_info
+# {"cloudId":"abcd1234-..."}
+```
+
+and use `https://api.atlassian.com/ex/jira/<cloudId>` as `JIRA_BASE_URL`.
+
+> A token made with plain **Create API token** (no scopes) works against
+> `https://<site>.atlassian.net` directly, but has your account's full access,
+> including write — prefer the scoped token.
+
+##### Setting the variables
+
+Set them in your shell profile (e.g. `~/.zshrc`), never in a committed file. On
+macOS you can keep the token in the Keychain rather than in plain text:
+
+```bash
+security add-generic-password -a "$USER" -s jira-api-token -w '<your token>'
+```
+
+```bash
+# ~/.zshrc
+export JIRA_BASE_URL=https://api.atlassian.com/ex/jira/<cloudId>
+export JIRA_EMAIL=you@example.com
+export JIRA_API_TOKEN=$(security find-generic-password -s jira-api-token -w)
+```
+
+Open a new terminal, then check the connection:
+
+```bash
+sh scripts/pr-review-jira.sh AMCR-506
+```
+
 ### Development
 
 To run the application in `development` mode run:

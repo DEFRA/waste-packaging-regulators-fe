@@ -187,3 +187,16 @@ it('renders Not met for a partly-met producer', async () => {
   it.
 - Config is `convict` (`src/config`); read it through `config.get(...)`, add new
   settings to the schema with sensible env-var bindings.
+
+## Skills
+
+Agent skills live in `.agents/skills/` (`.claude/skills/` symlinks to them).
+
+- **`pr-review`** (`.agents/skills/pr-review/SKILL.md`) — reviews a branch
+  against this repo's conventions using `checklist.md` beside it. When asked to
+  review changes, follow that skill. Run it by hand with `npm run review`
+  (optionally `npm run review -- <git-range>`), which uses whichever agent CLI
+  is configured (`PR_REVIEW_AGENT` / `PR_REVIEW_CMD`, or the first of claude,
+  codex, gemini found) and exits 1 on Blocking findings. It also fetches the
+  Jira story for the branch (`scripts/pr-review-jira.sh`, a curl request with
+  your own `JIRA_API_TOKEN`) so the review checks the acceptance criteria.

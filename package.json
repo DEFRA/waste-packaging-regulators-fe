@@ -30,7 +30,8 @@
     "setup:certs": "mkdir -p certs && mkcert -install && mkcert -key-file certs/localhost-key.pem -cert-file certs/localhost-cert.pem localhost 127.0.0.1 ::1",
     "prestart": "npm run build:frontend",
     "start": "cross-env NODE_ENV=production node .",
-    "setup:husky": "node -e \"try { (await import('husky')).default() } catch (e) { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e }\" --input-type module"
+    "setup:husky": "node -e \"try { (await import('husky')).default() } catch (e) { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e }\" --input-type module",
+    "review": "sh scripts/pr-review.sh"
   },
   "imports": {
     "#*": "./src/*",
