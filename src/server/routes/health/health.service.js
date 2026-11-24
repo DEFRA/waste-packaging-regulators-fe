@@ -66,21 +66,25 @@ async function checkCaseManagementApi() {
 }
 
 export async function runHealthChecks() {
+  const caseManagementEnabled = config.get('caseManagement.enabled')
+
   const [obligations, organisations, accountToken, notify, caseManagement] =
     await Promise.allSettled([
       checkWasteObligationsApi(),
       checkWasteOrganisationsApi(),
       checkAccountApiToken(),
       checkGovukNotify(),
-      checkCaseManagementApi()
+      caseManagementEnabled ? checkCaseManagementApi() : undefined
     ])
 
   const checks = {
     'waste-obligations': toCheckResult(obligations),
     'waste-organisations': toCheckResult(organisations),
     'account-token': toCheckResult(accountToken),
-    'govuk-notify': toCheckResult(notify),
-    'case-management': toCheckResult(caseManagement)
+    'govuk-notify': toCheckResult(notify)
+  }
+  if (caseManagementEnabled) {
+    checks['case-management'] = toCheckResult(caseManagement)
   }
 
   const allOk = Object.values(checks).every((c) => c.ok)

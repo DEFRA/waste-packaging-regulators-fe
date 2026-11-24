@@ -1,16 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+const configValues = vi.hoisted(() => ({}))
+
 vi.mock('#config/config.js', () => ({
   config: {
-    get: vi.fn((key) => {
-      const values = {
-        'accountApi.clientId': 'test-client-id',
-        'accountApi.clientSecret': 'test-client-secret',
-        'accountApi.scope': 'api://test/.default',
-        'accountApi.tokenEndpoint': 'https://login.test/token'
-      }
-      return values[key]
-    })
+    get: vi.fn((key) => configValues[key])
   }
 }))
 
@@ -48,6 +42,13 @@ describe('runHealthChecks', () => {
   let caseManagementService
 
   beforeEach(() => {
+    Object.assign(configValues, {
+      'accountApi.clientId': 'test-client-id',
+      'accountApi.clientSecret': 'test-client-secret',
+      'accountApi.scope': 'api://test/.default',
+      'accountApi.tokenEndpoint': 'https://login.test/token',
+      'caseManagement.enabled': true
+    })
     obligationsService = {
       listComplianceDeclarations: vi.fn().mockResolvedValue({})
     }
@@ -94,6 +95,24 @@ describe('runHealthChecks', () => {
       caseType: 'CSoC',
       pageSize: 1
     })
+  })
+
+  it('skips the case management check when case management is disabled', async () => {
+    // Arrange
+    configValues['caseManagement.enabled'] = false
+
+    // Act
+    const result = await runHealthChecks()
+
+    // Assert
+    expect(result.message).toBe('success')
+    expect(Object.keys(result.checks)).toEqual([
+      'waste-obligations',
+      'waste-organisations',
+      'account-token',
+      'govuk-notify'
+    ])
+    expect(createCaseManagementApiService).not.toHaveBeenCalled()
   })
 
   it('calls waste obligations with pageSize 1 and a 5s timeout', async () => {
