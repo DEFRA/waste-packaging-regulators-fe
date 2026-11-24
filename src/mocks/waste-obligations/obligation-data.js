@@ -26,6 +26,17 @@ export const mockObligationsAllMet = [
   obligationRow('Glass', 220, 220, 'Met')
 ]
 
+// Every material met on smaller tonnages: 1510 obligated, 100% coverage.
+export const mockObligationsAllMetLowerTonnage = [
+  obligationRow('Aluminium', 120, 120, 'Met'),
+  obligationRow('Paper', 450, 450, 'Met'),
+  obligationRow('Plastic', 600, 600, 'Met'),
+  obligationRow('Steel', 150, 150, 'Met'),
+  obligationRow('Wood', 40, 40, 'Met'),
+  obligationRow('GlassRemelt', 90, 90, 'Met'),
+  obligationRow('Glass', 60, 60, 'Met')
+]
+
 const noDataRow = (material, obligated) => ({
   material,
   recyclingTarget: 1,

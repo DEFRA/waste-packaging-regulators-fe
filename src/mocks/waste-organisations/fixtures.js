@@ -143,6 +143,13 @@ export const wasteOrganisations = [
     'GL1 1AA'
   ),
   directProducerOrganisation(
+    orgs.oakfield.id,
+    orgs.oakfield.name,
+    '52736408',
+    '5 Mill Lane',
+    'LS1 1AA'
+  ),
+  directProducerOrganisation(
     orgs.cwmniPacio.id,
     orgs.cwmniPacio.name,
     '98765432',
