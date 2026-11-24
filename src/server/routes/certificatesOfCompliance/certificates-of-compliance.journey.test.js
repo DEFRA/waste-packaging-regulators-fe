@@ -1424,10 +1424,12 @@ describe('certificates of compliance — journey', () => {
           acceptedDate: '2027-01-20T10:00:00Z',
           acceptedBy: 'Ann Regulator'
         },
+        // No obligations calculated yet: blank total.
         {
           name: 'Charlie Producers Ltd',
           status: 'not-submitted',
-          reference: '100003'
+          reference: '100003',
+          obligations: []
         },
         // Cancelled twice and nothing sent since: Not submitted.
         {
@@ -1497,7 +1499,7 @@ describe('certificates of compliance — journey', () => {
           'Organisation name': 'Bravo Producers Ltd',
           'Organisation ID': 100002,
           Status: 'Not submitted',
-          'Total obligation (tonnes)': null,
+          'Total obligation (tonnes)': 300,
           'Date submitted': null,
           'Date accepted': null,
           'Accepted by': null,
@@ -1515,6 +1517,7 @@ describe('certificates of compliance — journey', () => {
         expect.objectContaining({
           'Organisation name': 'Charlie Producers Ltd',
           Status: 'Not submitted',
+          'Total obligation (tonnes)': null,
           Cancellations: 0
         }),
         expect.objectContaining({

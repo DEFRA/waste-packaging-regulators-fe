@@ -158,7 +158,6 @@ export function declarationToReportRow(
   }
 }
 
-// The unsubmitted endpoint does not return a total obligation yet.
 export function unsubmittedToReportRow(
   row,
   cancellationsByOrganisation = new Map(),
@@ -172,7 +171,7 @@ export function unsubmittedToReportRow(
     regulation43: null,
     recyclingObligations: metOrNotMet(row.recyclingObligationsMet, labels),
     percentageMet: row.obligationCoveragePercentage ?? null,
-    totalObligationTonnes: null,
+    totalObligationTonnes: row.totalObligatedTonnage ?? null,
     dateSubmitted: null,
     dateAccepted: null,
     acceptedBy: null,

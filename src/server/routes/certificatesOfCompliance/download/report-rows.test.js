@@ -71,6 +71,7 @@ function unsubmitted(overrides = {}) {
     schemeOperatorName: null,
     recyclingObligationsMet: false,
     obligationCoveragePercentage: 62,
+    totalObligatedTonnage: 3910,
     ...overrides
   }
 }
@@ -208,7 +209,7 @@ describe('#report-rows', () => {
         regulation43: null,
         recyclingObligations: 'Not met',
         percentageMet: 62,
-        totalObligationTonnes: null,
+        totalObligationTonnes: 3910,
         dateSubmitted: null,
         dateAccepted: null,
         acceptedBy: null,
@@ -229,16 +230,26 @@ describe('#report-rows', () => {
       expect(row.organisationName).toBe('Example Compliance Scheme')
     })
 
-    test('leaves recycling obligations and percentage met blank when there is no data', () => {
+    test('leaves recycling obligations, percentage met and total obligation blank when there is no data', () => {
       const row = unsubmittedToReportRow(
         unsubmitted({
           recyclingObligationsMet: null,
-          obligationCoveragePercentage: null
+          obligationCoveragePercentage: null,
+          totalObligatedTonnage: null
         })
       )
 
       expect(row.recyclingObligations).toBeNull()
       expect(row.percentageMet).toBeNull()
+      expect(row.totalObligationTonnes).toBeNull()
+    })
+
+    test('keeps a calculated total obligation of 0', () => {
+      const row = unsubmittedToReportRow(
+        unsubmitted({ totalObligatedTonnage: 0 })
+      )
+
+      expect(row.totalObligationTonnes).toBe(0)
     })
 
     test('counts the cancellations of an organisation whose only declaration was cancelled', () => {
