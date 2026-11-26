@@ -227,7 +227,7 @@ Switch language locally with the Cymraeg / English toggle in the service navigat
 ### Mock API
 
 With `MOCK_API=true` (the default outside production), the backend calls to the
-waste-obligations, waste-organisations and Account APIs are intercepted in-process
+waste-obligations, waste-organisations, Account and Case Management APIs are intercepted in-process
 by [Mock Service Worker](https://mswjs.io/) and answered from local fixtures. The
 production code makes ordinary `fetch` calls and is unaware of the mock — nothing
 is branched on `MOCK_API` outside the mock layer.
@@ -250,6 +250,17 @@ same environment.
 
 The mock layer's design, structure and how to work with it: see
 [`src/mocks/README.md`](./src/mocks/README.md).
+
+### Case Management API (local)
+
+The Case Management service runs separately ([`waste-regulator-case-management`](https://github.com/DEFRA/waste-regulator-case-management)). By default this frontend targets `http://localhost:8085` (`CASE_MANAGEMENT_API_BASE_URL`), which matches `dotnet run` on that repo.
+
+- **`npm run dev`** — MSW serves Case Management from fixtures (no CM process required).
+- **`npm run dev:local-case-management`** — sets `MOCK_API=false` and calls a real API at `http://localhost:8085`. Start Mongo and the Case Management API first (see that repo's README). Optional overrides: copy `.env.example` to `.env`.
+
+The case list is served at `/cases` only when `CASE_MANAGEMENT_ENABLED=true`.
+
+Deployed dev environments also need `CASE_MANAGEMENT_API_SHARED_SECRET` and `CASE_MANAGEMENT_API_X_API_KEY` so the BFF can sign requests and pass the ephemeral API gateway.
 
 ### Country-specific mock data
 

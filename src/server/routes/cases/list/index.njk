@@ -1,0 +1,111 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "search/macro.njk" import appSearch %}
+{% from "producer-subnavigation/macro.njk" import appProducerSubnavigation %}
+{% from "tabs-list/macro.njk" import appTabsList %}
+{% from "submission-status-tag/macro.njk" import appSubmissionStatusTag %}
+
+{% set listPath = routePrefix ~ '/cases' %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <span class="govuk-caption-l">{{ i18n.t('relevantYearCaption', { complianceYear: complianceYear }) }}</span>
+      <h1 class="govuk-heading-xl govuk-!-margin-bottom-6">{{ heading }}</h1>
+    </div>
+  </div>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appSearch({
+        action: '#todo',
+        locale: locale,
+        label: i18n.t('searchLabel')
+      }) }}
+    </div>
+  </div>
+
+  {{ appProducerSubnavigation({
+    ariaLabel: i18n.t('producerTypeNavAriaLabel'),
+    items: [
+      {
+        text: i18n.t('directProducers'),
+        href: localeUrl(listPath ~ '?type=direct-producers'),
+        current: organisationType == 'direct-producers'
+      },
+      {
+        text: i18n.t('complianceSchemes'),
+        href: localeUrl(listPath ~ '?type=compliance-schemes'),
+        current: organisationType == 'compliance-schemes'
+      }
+    ]
+  }) }}
+
+  {{ govukButton({
+    text: i18n.t('downloadReport'),
+    href: '#todo',
+    classes: 'govuk-button--secondary'
+  }) }}
+
+  <div class="govuk-tabs">
+    {{ appTabsList({ items: tabs }) }}
+
+    <div class="govuk-tabs__panel" id="{{ activeTab }}">
+      <p class="govuk-body-l govuk-!-margin-bottom-4">
+        <strong>{{ tabCount }}</strong>
+        {{ tabSummaryText }}
+      </p>
+      <div class="govuk-button-group govuk-!-margin-bottom-4">
+        {{ govukButton({ text: i18n.t('assign'), href: '#todo' }) }}
+        {{ govukButton({ text: i18n.t('assignToMe'), href: '#todo', classes: 'govuk-button--secondary' }) }}
+      </div>
+      {% if items.length > 0 %}
+        <div class="moj-scrollable-pane" role="region" aria-label="{{ tabSummaryText | capitalize }}" tabindex="0">
+          <table class="govuk-table v3-compact-table">
+            <caption class="govuk-table__caption govuk-visually-hidden">{{ tabSummaryText | capitalize }}</caption>
+            <thead class="govuk-table__head">
+              <tr class="govuk-table__row">
+                <th scope="col" class="govuk-table__header">
+                  <div class="govuk-checkboxes govuk-checkboxes--small">
+                    <div class="govuk-checkboxes__item">
+                      <input class="govuk-checkboxes__input" type="checkbox" id="select-all" data-todo>
+                      <label class="govuk-label govuk-checkboxes__label" for="select-all">
+                        <span class="govuk-visually-hidden">{{ i18n.t('selectAll') }}</span>
+                      </label>
+                    </div>
+                  </div>
+                </th>
+                <th scope="col" class="govuk-table__header">{{ t(locale, 'certificatesOfCompliance.common.columns.organisationName') }}</th>
+                <th scope="col" class="govuk-table__header">{{ t(locale, 'certificatesOfCompliance.common.columns.organisationId') }}</th>
+                <th scope="col" class="govuk-table__header">{{ t(locale, 'certificatesOfCompliance.common.columns.dateSubmitted') }}</th>
+                <th scope="col" class="govuk-table__header">{{ t(locale, 'certificatesOfCompliance.common.columns.submissionStatus') }}</th>
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              {% for item in items %}
+                <tr class="govuk-table__row">
+                  <td class="govuk-table__cell">
+                    <div class="govuk-checkboxes govuk-checkboxes--small">
+                      <div class="govuk-checkboxes__item">
+                        <input class="govuk-checkboxes__input" type="checkbox" id="select-{{ item.caseId }}" data-todo>
+                        <label class="govuk-label govuk-checkboxes__label" for="select-{{ item.caseId }}">
+                          <span class="govuk-visually-hidden">{{ i18n.t('selectCase', { organisationName: item.organisationName }) }}</span>
+                        </label>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="govuk-table__cell">{{ item.organisationName }}</td>
+                  <td class="govuk-table__cell">{{ item.organisationId }}</td>
+                  <td class="govuk-table__cell">{{ item.dateSubmitted }}</td>
+                  <td class="govuk-table__cell">{{ appSubmissionStatusTag({ status: item.submissionStatus, locale: locale }) }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="govuk-body">{{ emptyTabMessage }}</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
