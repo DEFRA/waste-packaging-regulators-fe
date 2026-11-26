@@ -34,7 +34,7 @@ export const caseManagementRecords = [
     }
   },
   {
-    id: '01JBR0ASSIGNEDSCHEME01',
+    id: '01JBR0UNASSIGNEDSCHEME01',
     caseType: 'CSoC',
     stateId: 'SUBMITTED',
     isTerminal: false,
