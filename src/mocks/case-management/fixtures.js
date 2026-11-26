@@ -1,3 +1,5 @@
+import { orgs } from '#mocks/identities.js'
+
 const submittedAt = '2026-11-10T10:30:00.000Z'
 
 export const caseManagementRecords = [
@@ -9,12 +11,12 @@ export const caseManagementRecords = [
     submittedAt,
     lastModifiedAt: submittedAt,
     nation: 'ENGLAND',
-    orgId: '100010',
+    orgId: orgs.howco.reference,
     producerType: 'DIRECT_PRODUCER',
     assignedToId: null,
     displayData: {
-      organisationName: { value: 'Acme Bottles Ltd', type: 'string' },
-      organisationId: { value: '100010', type: 'string' }
+      organisationName: { value: orgs.howco.name, type: 'string' },
+      organisationId: { value: orgs.howco.reference, type: 'string' }
     }
   },
   {
@@ -25,12 +27,12 @@ export const caseManagementRecords = [
     submittedAt,
     lastModifiedAt: submittedAt,
     nation: 'ENGLAND',
-    orgId: '100011',
+    orgId: orgs.sterling.reference,
     producerType: 'DIRECT_PRODUCER',
     assignedToId: null,
     displayData: {
-      organisationName: { value: 'Beta Packaging plc', type: 'string' },
-      organisationId: { value: '100011', type: 'string' }
+      organisationName: { value: orgs.sterling.name, type: 'string' },
+      organisationId: { value: orgs.sterling.reference, type: 'string' }
     }
   },
   {
@@ -41,12 +43,12 @@ export const caseManagementRecords = [
     submittedAt,
     lastModifiedAt: submittedAt,
     nation: 'ENGLAND',
-    orgId: '200001',
+    orgId: orgs.greencircle.reference,
     producerType: 'COMPLIANCE_SCHEME',
     assignedToId: null,
     displayData: {
-      organisationName: { value: 'Green Scheme Operators Ltd', type: 'string' },
-      organisationId: { value: '200001', type: 'string' }
+      organisationName: { value: orgs.greencircle.name, type: 'string' },
+      organisationId: { value: orgs.greencircle.reference, type: 'string' }
     }
   },
   {
@@ -57,12 +59,12 @@ export const caseManagementRecords = [
     submittedAt,
     lastModifiedAt: submittedAt,
     nation: 'WALES',
-    orgId: '300001',
+    orgId: orgs.cwmniPacio.reference,
     producerType: 'DIRECT_PRODUCER',
     assignedToId: null,
     displayData: {
-      organisationName: { value: 'Cymru Containers Ltd', type: 'string' },
-      organisationId: { value: '300001', type: 'string' }
+      organisationName: { value: orgs.cwmniPacio.name, type: 'string' },
+      organisationId: { value: orgs.cwmniPacio.reference, type: 'string' }
     }
   },
   {
@@ -73,13 +75,13 @@ export const caseManagementRecords = [
     submittedAt,
     lastModifiedAt: submittedAt,
     nation: 'ENGLAND',
-    orgId: '100012',
+    orgId: orgs.pinnacle.reference,
     producerType: 'DIRECT_PRODUCER',
     assignedToId: 'caseworker-1',
     assignedToName: 'Case Worker One',
     displayData: {
-      organisationName: { value: 'Assigned Producer Ltd', type: 'string' },
-      organisationId: { value: '100012', type: 'string' }
+      organisationName: { value: orgs.pinnacle.name, type: 'string' },
+      organisationId: { value: orgs.pinnacle.reference, type: 'string' }
     }
   }
 ]
