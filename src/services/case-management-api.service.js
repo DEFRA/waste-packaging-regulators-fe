@@ -108,7 +108,7 @@ export function createCaseManagementApiService({
   return new CaseManagementApiService({
     baseUrl: config.get('caseManagementApi.baseUrl'),
     requestTimeoutMs: config.get('caseManagementApi.requestTimeoutMs'),
-    authMode: config.get('caseManagementApi.authMode'),
+    authMode: 'none',
     headers: {
       ...trustHeaders,
       ...(xApiKey ? { 'x-api-key': xApiKey } : {})

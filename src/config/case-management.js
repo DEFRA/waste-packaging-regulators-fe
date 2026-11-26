@@ -22,12 +22,6 @@ export const caseManagementConfig = {
       default: 30000,
       env: 'CASE_MANAGEMENT_API_REQUEST_TIMEOUT_MS'
     },
-    authMode: {
-      doc: 'Authentication mode for Case Management API. Trust headers and optional HMAC signing only.',
-      format: ['basic', 'bearer', 'none'],
-      default: 'none',
-      env: 'CASE_MANAGEMENT_API_AUTH_MODE'
-    },
     clientId: {
       doc: 'CDP client id sent as x-cdp-client-id. Must match Auth__ManagementFeClientId on the Case Management service.',
       format: String,
