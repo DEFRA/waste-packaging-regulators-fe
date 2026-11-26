@@ -70,6 +70,46 @@ describe('#casesList', () => {
     expect(response.statusCode).toBe(403)
   })
 
+  it.each([
+    ['is down', () => new HttpResponse(null, { status: 503 })],
+    ['is not found', () => new HttpResponse(null, { status: 404 })],
+    ['cannot be reached', () => HttpResponse.error()]
+  ])(
+    'says the service is unavailable when Case Management %s',
+    async (_, resolver) => {
+      // Arrange
+      getMockServer().use(
+        http.get(`${config.get('caseManagementApi.baseUrl')}/cases`, resolver)
+      )
+
+      // Act
+      const response = await app.get('/cases')
+
+      // Assert
+      expect(response.statusCode).toBe(503)
+      expect(response.payload).toContain('Sorry, the service is unavailable')
+    }
+  )
+
+  it('says there is a problem with the service when Case Management errors', async () => {
+    // Arrange
+    getMockServer().use(
+      http.get(
+        `${config.get('caseManagementApi.baseUrl')}/cases`,
+        () => new HttpResponse(null, { status: 500 })
+      )
+    )
+
+    // Act
+    const response = await app.get('/cases')
+
+    // Assert
+    expect(response.statusCode).toBe(500)
+    expect(response.payload).toContain(
+      'Sorry, there is a problem with the service'
+    )
+  })
+
   it('shows a state it has no status for as it is', async () => {
     // Arrange
     givenCases([
