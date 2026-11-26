@@ -228,6 +228,39 @@ describe('#casesList', () => {
     )
   })
 
+  it('lists every unassigned case when there are more than fit on one Case Management page', async () => {
+    // Arrange
+    givenCases(
+      Array.from({ length: 244 }, (_, index) => ({
+        id: randomUUID(),
+        caseType: 'CSoC',
+        stateId: 'SUBMITTED',
+        isTerminal: false,
+        submittedAt: '2026-12-15T10:30:00.000Z',
+        nation: 'ENGLAND',
+        orgId: String(100001 + index),
+        assignedToId: null,
+        producerType: 'DIRECT_PRODUCER',
+        displayData: {
+          organisationName: {
+            value: `Producer ${String(index + 1).padStart(3, '0')} Ltd`,
+            type: 'string'
+          }
+        }
+      }))
+    )
+
+    // Act
+    const response = await app.get('/cases')
+
+    // Assert
+    expect(response.payload).toContain('Unassigned (244)')
+    expect(response.payload).toContain('Producer 001 Ltd')
+    expect(response.payload).toContain('Producer 100 Ltd')
+    expect(response.payload).toContain('Producer 101 Ltd')
+    expect(response.payload).toContain('Producer 244 Ltd')
+  })
+
   it('says there are no unassigned cases when there are none', async () => {
     // Arrange
     givenCases([])

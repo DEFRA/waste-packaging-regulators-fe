@@ -16,7 +16,8 @@ import { fetchUnassignedCsocCases } from './case-list-fetch.service.js'
 
 const TABS = ['unassigned', 'assigned-to-me', 'assigned-to-team', 'completed']
 
-// The Case Management API's largest page; the list is not paginated yet.
+// The Case Management API's largest page; the list is not paginated yet, so
+// every page is fetched.
 const PAGE_SIZE = 100
 
 // Case Management CSoC states, shown with the certificate statuses the
@@ -25,6 +26,22 @@ const SUBMISSION_STATUS_BY_STATE = {
   SUBMITTED: 'Pending',
   ACCEPTED: 'Accepted',
   CANCELLED: 'Cancelled'
+}
+
+async function fetchAllUnassignedCsocCases(sessionUser, traceId) {
+  const items = []
+  let totalCount = 0
+  for (let page = 1; ; page++) {
+    const result = await fetchUnassignedCsocCases(sessionUser, traceId, {
+      page,
+      pageSize: PAGE_SIZE
+    })
+    items.push(...result.items)
+    totalCount = result.totalCount
+    if (result.items.length < PAGE_SIZE || items.length >= totalCount) {
+      return { items, totalCount }
+    }
+  }
 }
 
 function validateListParams(type, tab) {
@@ -57,9 +74,7 @@ export const casesListController = {
 
     const unassigned =
       type === DIRECT_PRODUCERS
-        ? await fetchUnassignedCsocCases(sessionUser, traceId, {
-            pageSize: PAGE_SIZE
-          })
+        ? await fetchAllUnassignedCsocCases(sessionUser, traceId)
         : { items: [], totalCount: 0 }
 
     const counts = {
