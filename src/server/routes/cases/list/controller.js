@@ -38,7 +38,7 @@ async function fetchAllUnassignedCsocCases(sessionUser, traceId) {
     })
     items.push(...result.items)
     totalCount = result.totalCount
-    if (result.items.length < PAGE_SIZE || items.length >= totalCount) {
+    if (result.items.length === 0 || items.length >= totalCount) {
       return { items, totalCount }
     }
   }

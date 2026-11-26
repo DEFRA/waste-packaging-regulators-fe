@@ -301,6 +301,42 @@ describe('#casesList', () => {
     expect(response.payload).toContain('Producer 244 Ltd')
   })
 
+  it('lists every unassigned case when Case Management serves smaller pages than asked for', async () => {
+    // Arrange
+    const store = createCaseManagementStore(
+      Array.from({ length: 120 }, (_, index) => ({
+        id: randomUUID(),
+        caseType: 'CSoC',
+        stateId: 'SUBMITTED',
+        isTerminal: false,
+        submittedAt: '2026-12-15T10:30:00.000Z',
+        nation: 'ENGLAND',
+        orgId: String(100001 + index),
+        assignedToId: null,
+        producerType: 'DIRECT_PRODUCER',
+        displayData: {
+          organisationName: {
+            value: `Producer ${String(index + 1).padStart(3, '0')} Ltd`,
+            type: 'string'
+          }
+        }
+      }))
+    )
+    getMockServer().use(
+      ...caseManagementHandlers({
+        listCases: (query) => store.listCases({ ...query, pageSize: 50 })
+      })
+    )
+
+    // Act
+    const response = await app.get('/cases')
+
+    // Assert
+    expect(response.payload).toContain('Unassigned (120)')
+    expect(response.payload).toContain('Producer 051 Ltd')
+    expect(response.payload).toContain('Producer 120 Ltd')
+  })
+
   it('says there are no unassigned cases when there are none', async () => {
     // Arrange
     givenCases([])
